@@ -1,0 +1,62 @@
+# Static market data for the equity allocation tool.
+#
+# Regenerate with: python tools/refresh_market_data.py --write
+# The model reads this file and never fetches anything itself, so a
+# demo cannot fail because a data provider is unavailable.
+#
+# forward_pe is entered by hand. No free source publishes forward
+# earnings estimates, so those fields survive a refresh untouched and
+# their age is reported instead.
+#
+# SEED FILE. Volatilities and forward P/E ratios are the values from the source
+# spreadsheet. The correlation matrix has NOT been estimated: it is a flat 0.80
+# placeholder, the figure used illustratively in docs/methodology.html Table 3.
+# Run the refresh before drawing any conclusion from the covariance matrix.
+
+[meta]
+generated_at = "2026-06-02T00:00:00+00:00"
+generated_by = "seeded by hand from the source spreadsheet"
+
+[rates]
+nominal_risk_free = 0.035000
+expected_inflation = 0.025000
+as_of = 2026-06-02
+nominal_risk_free_source = "source spreadsheet cell B9"
+expected_inflation_source = "source spreadsheet, hardcoded 2.5% inside cell B10"
+
+[covariance]
+as_of = 2026-06-02
+observations = 0
+window_years = 0
+frequency = "none"
+trading_days_per_year = 252
+source = "PLACEHOLDER, not estimated from data"
+correlation = [
+  [ 1.000000,  0.800000,  0.800000],
+  [ 0.800000,  1.000000,  0.800000],
+  [ 0.800000,  0.800000,  1.000000],
+]
+
+[[sleeve]]
+label = "S&P 500"
+ticker = "spy.us"
+weight = 0.650000
+volatility = 0.157500  # annualised, from daily price returns
+forward_pe = 22.4  # hand-entered
+forward_pe_as_of = 2026-06-02
+
+[[sleeve]]
+label = "MSCI exUS"
+ticker = "vea.us"
+weight = 0.280000
+volatility = 0.152600  # annualised, from daily price returns
+forward_pe = 12.0  # hand-entered
+forward_pe_as_of = 2026-06-02
+
+[[sleeve]]
+label = "MSCI EM"
+ticker = "vwo.us"
+weight = 0.070000
+volatility = 0.168300  # annualised, from daily price returns
+forward_pe = 15.5  # hand-entered
+forward_pe_as_of = 2026-06-02

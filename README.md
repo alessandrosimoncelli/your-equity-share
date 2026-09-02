@@ -109,3 +109,32 @@ python tools/extract_baseline.py "path/to/QUANTO DEVO INVESTIRE IN AZIONI.xlsx"
 Educational and illustrative only. Not investment, financial, tax or legal
 advice, and no advisory relationship is created by its use. Outputs depend
 entirely on the assumptions documented in `docs/methodology.html`.
+
+## Market data
+
+The model reads `config/market_data.toml` and never touches the network, so a
+demo cannot fail because a provider is slow or gone. Refreshing is a separate
+program, run deliberately:
+
+```bash
+python tools/refresh_market_data.py            # dry run, shows what would change
+python tools/refresh_market_data.py --write    # apply
+```
+
+It estimates volatilities and correlations from daily closes (Stooq) and reads
+the nominal risk-free rate and expected inflation from FRED. Forward P/E ratios
+are not published by any free source, so they are hand-entered, survive a
+refresh untouched, and their age is reported instead. Every field in the file
+records its own observation date for that reason.
+
+The run aborts rather than writing a corrupted covariance matrix. Each series is
+checked for length, non-positive prices, duplicate or unordered dates, and
+single-day moves beyond 25%, which almost always mean an unadjusted split or a
+currency change part-way through a series rather than a real market move.
+`--force` overrides and says so.
+
+The file shipped in this repository is a **seed**: volatilities and forward P/E
+come from the source spreadsheet, and the correlation matrix is a flat 0.80
+placeholder that has not been estimated. `observations = 0` records this, and
+the loader reports it as stale. Run the refresh before drawing conclusions from
+the covariance matrix.
