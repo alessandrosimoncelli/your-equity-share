@@ -97,19 +97,6 @@ To regenerate the baseline after the source workbook changes:
 python tools/extract_baseline.py "path/to/QUANTO DEVO INVESTIRE IN AZIONI.xlsx"
 ```
 
-## Sources
-
-- Merton, R. C. (1969). Lifetime Portfolio Selection under Uncertainty. *Review of Economics and Statistics*, 51(3).
-- Bodie, Z., Merton, R. C. and Samuelson, W. F. (1992). Labor Supply Flexibility and Portfolio Choice in a Life Cycle Model. *JEDC*, 16.
-- Cocco, J. F., Gomes, F. J. and Maenhout, P. J. (2005). Consumption and Portfolio Choice over the Life Cycle. *RFS*, 18(2).
-- Choi, J. J., Liu, C. and Liu, P. (2025). Practical Finance: An Approximate Solution to Lifecycle Portfolio Choice.
-
-## Disclaimer
-
-Educational and illustrative only. Not investment, financial, tax or legal
-advice, and no advisory relationship is created by its use. Outputs depend
-entirely on the assumptions documented in `docs/methodology.html`.
-
 ## Market data
 
 The model reads `config/market_data.toml` and never touches the network, so a
@@ -138,3 +125,16 @@ come from the source spreadsheet, and the correlation matrix is a flat 0.80
 placeholder that has not been estimated. `observations = 0` records this, and
 the loader reports it as stale. Run the refresh before drawing conclusions from
 the covariance matrix.
+
+## Sources
+
+- Merton, R. C. (1969). Lifetime Portfolio Selection under Uncertainty. *Review of Economics and Statistics*, 51(3).
+- Bodie, Z., Merton, R. C. and Samuelson, W. F. (1992). Labor Supply Flexibility and Portfolio Choice in a Life Cycle Model. *JEDC*, 16.
+- Cocco, J. F., Gomes, F. J. and Maenhout, P. J. (2005). Consumption and Portfolio Choice over the Life Cycle. *RFS*, 18(2).
+- Choi, J. J., Liu, C. and Liu, P. (2025). Practical Finance: An Approximate Solution to Lifecycle Portfolio Choice.
+
+## Disclaimer
+
+Educational and illustrative only. Not investment, financial, tax or legal
+advice, and no advisory relationship is created by its use. Outputs depend
+entirely on the assumptions documented in `docs/methodology.html`.
