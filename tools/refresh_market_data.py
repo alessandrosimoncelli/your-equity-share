@@ -8,11 +8,14 @@ Run deliberately, never as part of using the tool:
 
 What it can and cannot fetch
 ----------------------------
-Volatilities and correlations are estimated from daily closes (Stooq), and the
-real risk-free rate is read from FRED as a 30-year TIPS yield. Forward
-price-to-earnings ratios are not available from a free source, so they are
-carried over from the existing file unchanged and their age is reported. That
-split is the reason every field in the file records its own observation date.
+The real risk-free rate is read from FRED as a 30-year TIPS yield. Where the
+file describes the equity holding fund by fund, sleeve volatilities and their
+correlations are also estimated from daily closes; those sections are
+optional and the model does not require them.
+
+`expected_stock_real_return` and `stock_volatility` are judgements, not
+observations, so they are carried over unchanged. No free source publishes
+either. Their age is reported instead.
 
 Refusing bad data
 -----------------
@@ -29,6 +32,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import json
 import sys
 import urllib.error
 import urllib.request
@@ -38,7 +42,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from merton_share.market_data import DEFAULT_CONFIG_PATH, load_market_data  # noqa: E402
+from merton_share.market_data import (  # noqa: E402
+    DEFAULT_CONFIG_PATH,
+    MarketData,
+    Sleeve,
+    load_market_data,
+)
 from merton_share.statistics import (  # noqa: E402
     TRADING_DAYS_PER_YEAR,
     align_series,
@@ -48,7 +57,10 @@ from merton_share.statistics import (  # noqa: E402
     validate_prices,
 )
 
-STOOQ_URL = "https://stooq.com/q/d/l/?s={ticker}&i=d"
+PRICE_URL = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+    "?range={range}&interval=1d"
+)
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 
 # 30-year Treasury Inflation-Protected Securities constant maturity. This is a
@@ -57,7 +69,8 @@ FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 # maturity would mismatch the two.
 FRED_REAL_RISK_FREE = "DFII30"
 
-USER_AGENT = "merton-share/0.1 (research tool; contact via repository)"
+# A browser-shaped agent string. The endpoint rejects the default urllib one.
+USER_AGENT = "Mozilla/5.0 (compatible; merton-share/0.1; research tool)"
 TIMEOUT_SECONDS = 30
 
 
@@ -78,27 +91,51 @@ def _get(url: str) -> str:
         raise SystemExit(f"{url}\n  could not reach host: {exc.reason}") from exc
 
 
-def parse_stooq_csv(text: str, ticker: str) -> Fetched:
-    """Parse Stooq's daily CSV into {date: close}."""
-    reader = csv.DictReader(io.StringIO(text))
-    if reader.fieldnames is None or "Close" not in reader.fieldnames:
+def parse_price_json(text: str, ticker: str) -> Fetched:
+    """Parse Yahoo's chart JSON into {date: close}.
+
+    Rows with a null close are dropped. Yahoo emits them for days the exchange
+    was shut, and carrying them through as zeros would manufacture enormous
+    fake returns.
+    """
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
         head = text.strip().splitlines()[:1]
         raise SystemExit(
-            f"{ticker}: response is not the expected CSV. First line: {head}"
+            "{}: response is not JSON. First line: {}".format(ticker, head)
+        ) from None
+
+    error = (payload.get("chart") or {}).get("error")
+    if error:
+        raise SystemExit("{}: provider returned an error: {}".format(ticker, error))
+
+    try:
+        result = payload["chart"]["result"][0]
+        stamps = result["timestamp"]
+        closes = result["indicators"]["quote"][0]["close"]
+    except (KeyError, IndexError, TypeError):
+        raise SystemExit(
+            "{}: response did not contain a price series".format(ticker)
+        ) from None
+
+    if len(stamps) != len(closes):
+        raise SystemExit(
+            "{}: {} timestamps but {} closes".format(
+                ticker, len(stamps), len(closes)
+            )
         )
-    closes: dict[str, float] = {}
-    for row in reader:
-        raw = (row.get("Close") or "").strip()
-        day = (row.get("Date") or "").strip()
-        if not day or raw in ("", "N/A", "null"):
+
+    out: dict[str, float] = {}
+    for stamp, close in zip(stamps, closes):
+        if close is None:
             continue
-        try:
-            closes[day] = float(raw)
-        except ValueError:
-            continue
-    if not closes:
-        raise SystemExit(f"{ticker}: no usable rows in the response")
-    return Fetched(ticker=ticker, closes=closes)
+        day = datetime.fromtimestamp(stamp, tz=timezone.utc).date().isoformat()
+        out[day] = float(close)
+
+    if not out:
+        raise SystemExit("{}: no usable observations in the response".format(ticker))
+    return Fetched(ticker=ticker, closes=out)
 
 
 def parse_fred_csv(text: str, series: str) -> tuple[date, float]:
@@ -139,61 +176,87 @@ def trim_to_window(closes: dict[str, float], years: int) -> dict[str, float]:
 
 def build_toml(
     *,
-    sleeves: list[dict[str, object]],
-    correlation: list[list[float]],
-    observations: int,
-    window_years: int,
-    covariance_as_of: date,
+    market: dict[str, object],
     real_risk_free: float,
     rates_as_of: date,
+    sleeves: list[dict[str, object]] | None = None,
+    correlation: list[list[float]] | None = None,
+    observations: int = 0,
+    window_years: int = 0,
+    covariance_as_of: date | None = None,
 ) -> str:
+    """Render the config file.
+
+    The [market] section is always written. The sleeve breakdown is written only
+    when one was supplied, because the model does not need it.
+    """
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    lines = [
+    out = [
         "# Static market data for the equity allocation tool.",
         "#",
         "# Regenerate with: python tools/refresh_market_data.py --write",
-        "# The model reads this file and never fetches anything itself, so a",
-        "# demo cannot fail because a data provider is unavailable.",
+        "# The model reads this file and never fetches anything itself, so a demo",
+        "# cannot fail because a data provider is unavailable.",
         "#",
-        "# forward_pe is entered by hand. No free source publishes forward",
-        "# earnings estimates, so those fields survive a refresh untouched and",
-        "# their age is reported instead.",
+        "# See docs/inputs.md for what each number means and how to choose it.",
         "",
         "[meta]",
-        f'generated_at = "{now}"',
+        'generated_at = "' + now + '"',
         'generated_by = "tools/refresh_market_data.py"',
         "",
-        "[rates]",
-        f"real_risk_free = {real_risk_free:.6f}",
-        f"as_of = {rates_as_of.isoformat()}",
-        f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}, 30-year TIPS yield"',
+        "# The three inputs the model uses. This section is required.",
+        "[market]",
         "",
-        "[covariance]",
-        f"as_of = {covariance_as_of.isoformat()}",
-        f"observations = {observations}",
-        f"window_years = {window_years}",
-        'frequency = "daily"',
-        f"trading_days_per_year = {TRADING_DAYS_PER_YEAR}",
-        'source = "Stooq daily closes, price returns"',
-        "correlation = [",
+        "# Judgement, not an observation. No free source publishes it, so a",
+        "# refresh carries it over unchanged.",
+        "expected_stock_real_return = {:.6f}".format(
+            float(market["expected_stock_real_return"])
+        ),
+        "",
+        "# Real yield already, so no inflation adjustment is applied.",
+        "real_risk_free = {:.6f}".format(real_risk_free),
+        "",
+        "# The value the fitted human capital discount rates were calibrated on.",
+        "# A refresh carries it over unchanged.",
+        "stock_volatility = {:.6f}".format(float(market["stock_volatility"])),
+        "",
+        "as_of = " + rates_as_of.isoformat(),
+        'real_risk_free_source = "FRED ' + FRED_REAL_RISK_FREE + ', 30-year TIPS yield"',
     ]
-    for row in correlation:
-        lines.append("  [" + ", ".join(f"{v: .6f}" for v in row) + "],")
-    lines.append("]")
-    lines.append("")
 
-    for sleeve in sleeves:
-        lines += [
-            "[[sleeve]]",
-            f'label = "{sleeve["label"]}"',
-            f'ticker = "{sleeve["ticker"]}"',
-            f"weight = {sleeve['weight']:.6f}",
-            f"volatility = {sleeve['volatility']:.6f}  # annualised, from daily price returns",
-            f"forward_pe = {sleeve['forward_pe']}  # hand-entered",
-            f"forward_pe_as_of = {sleeve['forward_pe_as_of']}",
+    if sleeves and correlation and covariance_as_of is not None:
+        rule = "# " + "-" * 74
+        out += [
             "",
+            rule,
+            "# OPTIONAL. The model uses stock_volatility above. These sections only",
+            "# let a multi-fund holder derive that number rather than enter it.",
+            rule,
+            "",
+            "[covariance]",
+            "as_of = " + covariance_as_of.isoformat(),
+            "observations = {}".format(observations),
+            "window_years = {}".format(window_years),
+            'frequency = "daily"',
+            "trading_days_per_year = {}".format(TRADING_DAYS_PER_YEAR),
+            'source = "Yahoo daily closes, price returns"',
+            "correlation = [",
         ]
-    return "\n".join(lines).rstrip() + "\n"
+        for row in correlation:
+            out.append("  [" + ", ".join("{: .6f}".format(v) for v in row) + "],")
+        out += ["]", ""]
+
+        for sleeve in sleeves:
+            out += [
+                "[[sleeve]]",
+                'label = "{}"'.format(sleeve["label"]),
+                'ticker = "{}"'.format(sleeve["ticker"]),
+                "weight = {:.6f}".format(float(sleeve["weight"])),
+                "volatility = {:.6f}".format(float(sleeve["volatility"])),
+                "",
+            ]
+
+    return "\n".join(out).rstrip() + "\n"
 
 
 def main(argv: list[str]) -> int:
@@ -220,95 +283,144 @@ def main(argv: list[str]) -> int:
         parser.error("--window must be at least 1 year")
 
     existing = load_market_data(args.config)
-    print(f"current file: {args.config}")
-    print(f"  covariance as of {existing.covariance_as_of} "
-          f"({existing.covariance_observations} observations)")
-    print(f"  rates as of {existing.rates_as_of}")
+    print("current file: {}".format(args.config))
+    print("  expected stock real return {:6.2%}   (judgement, carried over)".format(
+        existing.expected_stock_real_return))
+    print("  stock volatility           {:6.2%}   (calibration, carried over)".format(
+        existing.stock_volatility))
+    print("  real risk-free             {:6.2%}   as of {}".format(
+        existing.real_risk_free_rate, existing.as_of))
     for warning in existing.stale_fields():
-        print(f"  stale: {warning}")
-    print()
+        print("  stale: {}".format(warning))
 
-    print(f"fetching {len(existing.sleeves)} price series from Stooq")
-    fetched: dict[str, dict[str, float]] = {}
-    for sleeve in existing.sleeves:
-        text = _get(STOOQ_URL.format(ticker=sleeve.ticker))
-        series = parse_stooq_csv(text, sleeve.ticker)
-        trimmed = trim_to_window(series.closes, args.window)
-        fetched[sleeve.ticker] = trimmed
-        first, last = min(trimmed), max(trimmed)
-        print(f"  {sleeve.ticker:10s} {len(trimmed):5d} closes  {first} to {last}")
-
-    dates, aligned = align_series(fetched)
-    print(f"\ncommon calendar: {len(dates)} dates")
-    if len(dates) < 2:
-        raise SystemExit("series do not overlap; nothing to estimate")
-
-    problems = []
-    for ticker, prices in aligned.items():
-        problems.extend(validate_prices(ticker, dates, prices))
-    if problems:
-        print("\nvalidation problems:")
-        for problem in problems:
-            print(f"  {problem}")
-        if not args.force:
-            raise SystemExit(
-                "\nrefusing to write. Inspect the series, then rerun with --force "
-                "if the data is genuinely fine."
-            )
-        print("\n--force given, continuing despite the above")
-
-    returns = {t: log_returns(p) for t, p in aligned.items()}
-    order = [s.ticker for s in existing.sleeves]
-    volatilities = [annualised_volatility(returns[t]) for t in order]
-    correlation = correlation_matrix([returns[t] for t in order])
-
-    print("\nestimates:")
-    for sleeve, vol in zip(existing.sleeves, volatilities):
-        change = vol - sleeve.volatility
-        print(f"  {sleeve.label:16s} volatility {vol:6.2%}  "
-              f"(was {sleeve.volatility:6.2%}, {change:+.2%})")
-    print("  correlation")
-    for label, row in zip((s.label for s in existing.sleeves), correlation):
-        print(f"    {label:16s} " + "  ".join(f"{v:6.3f}" for v in row))
-
+    # --- the one number this tool can actually observe ---------------------
     rf_date, rf = parse_fred_csv(
         _get(FRED_URL.format(series=FRED_REAL_RISK_FREE)), FRED_REAL_RISK_FREE
     )
     print()
-    print(
-        f"  real risk-free  {rf:6.2%}  "
-        f"(was {existing.real_risk_free_rate:6.2%}) as of {rf_date}"
-    )
+    print("fetched real risk-free {:6.2%} as of {}  (change {:+.2%})".format(
+        rf, rf_date, rf - existing.real_risk_free_rate))
 
-    document = build_toml(
-        sleeves=[
+    sleeve_payload = None
+    correlation = None
+    observations = 0
+    covariance_as_of = None
+
+    if not existing.has_sleeve_detail:
+        print()
+        print("no sleeve breakdown in this file, so nothing else to estimate.")
+        print("The model uses stock_volatility from [market], which is unchanged.")
+    else:
+        print()
+        print("optional sleeve breakdown present, estimating its covariance")
+        print("fetching {} price series".format(len(existing.sleeves)))
+        fetched: dict[str, dict[str, float]] = {}
+        for sleeve in existing.sleeves:
+            text = _get(
+                PRICE_URL.format(
+                    ticker=sleeve.ticker,
+                    range="{}y".format(max(args.window, 1)),
+                )
+            )
+            series = parse_price_json(text, sleeve.ticker)
+            trimmed = trim_to_window(series.closes, args.window)
+            fetched[sleeve.ticker] = trimmed
+            print("  {:10s} {:5d} closes  {} to {}".format(
+                sleeve.ticker, len(trimmed), min(trimmed), max(trimmed)))
+
+        dates, aligned = align_series(fetched)
+        print()
+        print("common calendar: {} dates".format(len(dates)))
+        if len(dates) < 2:
+            raise SystemExit("series do not overlap; nothing to estimate")
+
+        problems = []
+        for ticker, prices in aligned.items():
+            problems.extend(validate_prices(ticker, dates, prices))
+        if problems:
+            print()
+            print("validation problems:")
+            for problem in problems:
+                print("  {}".format(problem))
+            if not args.force:
+                raise SystemExit(
+                    "refusing to write. Inspect the series, then rerun with "
+                    "--force if the data is genuinely fine."
+                )
+            print("--force given, continuing despite the above")
+
+        returns = {t: log_returns(pr) for t, pr in aligned.items()}
+        order = [s.ticker for s in existing.sleeves]
+        volatilities = [annualised_volatility(returns[t]) for t in order]
+        correlation = correlation_matrix([returns[t] for t in order])
+        observations = len(dates) - 1
+        covariance_as_of = date.fromisoformat(max(dates))
+
+        print()
+        print("estimates:")
+        for sleeve, vol in zip(existing.sleeves, volatilities):
+            print("  {:18s} volatility {:6.2%}  (was {:6.2%}, {:+.2%})".format(
+                sleeve.label, vol, sleeve.volatility, vol - sleeve.volatility))
+        print("  correlation")
+        for sleeve, row in zip(existing.sleeves, correlation):
+            print("    {:18s} ".format(sleeve.label)
+                  + "  ".join("{:6.3f}".format(v) for v in row))
+
+        sleeve_payload = [
             {
                 "label": s.label,
                 "ticker": s.ticker,
                 "weight": s.weight,
                 "volatility": v,
-                "forward_pe": s.forward_pe,
-                "forward_pe_as_of": s.forward_pe_as_of.isoformat(),
             }
             for s, v in zip(existing.sleeves, volatilities)
-        ],
-        correlation=correlation,
-        observations=len(dates) - 1,
-        window_years=args.window,
-        covariance_as_of=date.fromisoformat(max(dates)),
+        ]
+
+        implied = MarketData(
+            expected_stock_real_return=existing.expected_stock_real_return,
+            real_risk_free_rate=rf,
+            stock_volatility=existing.stock_volatility,
+            as_of=rf_date,
+            source_path=args.config,
+            sleeves=tuple(
+                Sleeve(s.label, s.ticker, s.weight, v)
+                for s, v in zip(existing.sleeves, volatilities)
+            ),
+            correlation=tuple(tuple(r) for r in correlation),
+            covariance_as_of=covariance_as_of,
+            covariance_observations=observations,
+        ).derived_stock_volatility()
+        print()
+        print("  volatility implied by these sleeves: {:6.2%}".format(implied))
+        print("  stock_volatility currently in use:   {:6.2%}".format(
+            existing.stock_volatility))
+        print("  The model uses the second. Copy the first into [market] only if")
+        print("  you intend the recommendation to reflect this fund mix.")
+
+    document = build_toml(
+        market={
+            "expected_stock_real_return": existing.expected_stock_real_return,
+            "stock_volatility": existing.stock_volatility,
+        },
         real_risk_free=rf,
         rates_as_of=rf_date,
+        sleeves=sleeve_payload,
+        correlation=correlation,
+        observations=observations,
+        window_years=args.window if sleeve_payload else 0,
+        covariance_as_of=covariance_as_of,
     )
 
     if not args.write:
-        print("\ndry run. Rerun with --write to apply.")
+        print()
+        print("dry run. Rerun with --write to apply.")
         return 0
 
     args.config.write_text(document, encoding="utf-8")
-    print(f"\nwrote {args.config}")
-    reloaded = load_market_data(args.config)
-    print(f"reloaded and validated: portfolio volatility "
-          f"{reloaded.portfolio_variance() ** 0.5:.2%}")
+    print()
+    print("wrote {}".format(args.config))
+    load_market_data(args.config)
+    print("reloaded and validated")
     return 0
 
 

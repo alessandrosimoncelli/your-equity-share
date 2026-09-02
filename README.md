@@ -99,32 +99,36 @@ python tools/extract_baseline.py "path/to/QUANTO DEVO INVESTIRE IN AZIONI.xlsx"
 
 ## Market data
 
-The model reads `config/market_data.toml` and never touches the network, so a
-demo cannot fail because a provider is slow or gone. Refreshing is a separate
-program, run deliberately:
+The model needs three numbers, the same three Choi's user guide asks for:
+expected real stock return, real risk-free rate, and stock market volatility.
+They live in the `[market]` section of `config/market_data.toml`. The model
+reads that file and never touches the network, so a demo cannot fail because a
+provider is slow or gone.
 
 ```bash
-python tools/refresh_market_data.py            # dry run, shows what would change
+python tools/refresh_market_data.py            # dry run
 python tools/refresh_market_data.py --write    # apply
 ```
 
-It estimates volatilities and correlations from daily closes (Stooq) and reads
-the nominal risk-free rate and expected inflation from FRED. Forward P/E ratios
-are not published by any free source, so they are hand-entered, survive a
-refresh untouched, and their age is reported instead. Every field in the file
-records its own observation date for that reason.
+Only the real risk-free rate is observable: it comes from FRED as the 30-year
+TIPS yield, which is already a real yield and needs no inflation adjustment. The
+expected return and the volatility are judgements, not observations, so a
+refresh carries them over unchanged and reports their age.
 
-The run aborts rather than writing a corrupted covariance matrix. Each series is
+### The optional sleeve breakdown
+
+CGM and Choi model **one** well-diversified equity holding, so `stock_volatility`
+is all the model consumes. The `[[sleeve]]` and `[covariance]` sections are
+optional, and exist only for a household holding several funds that would rather
+derive that number than enter it. `derived_stock_volatility()` computes it;
+`stock_volatility` stays authoritative unless you copy the derived figure up
+into `[market]` yourself.
+
+When present, the refresh estimates their volatilities and correlations from
+daily closes. It aborts rather than writing a corrupted matrix: series are
 checked for length, non-positive prices, duplicate or unordered dates, and
 single-day moves beyond 25%, which almost always mean an unadjusted split or a
-currency change part-way through a series rather than a real market move.
-`--force` overrides and says so.
-
-The file shipped in this repository is a **seed**: volatilities and forward P/E
-come from the source spreadsheet, and the correlation matrix is a flat 0.80
-placeholder that has not been estimated. `observations = 0` records this, and
-the loader reports it as stale. Run the refresh before drawing conclusions from
-the covariance matrix.
+currency change part-way through a series. A 12% fall passes untouched.
 
 ## Sources
 

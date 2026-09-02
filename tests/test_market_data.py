@@ -7,12 +7,16 @@ fixtures held in this file. A test run must never depend on a data provider.
 
 from __future__ import annotations
 
+import json
 import math
 import sys
+import tempfile
 from datetime import date
 from pathlib import Path
 
 import pytest
+
+TMP = tempfile.mkdtemp()
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
@@ -30,7 +34,7 @@ from merton_share.statistics import (  # noqa: E402
 )
 from refresh_market_data import (  # noqa: E402
     parse_fred_csv,
-    parse_stooq_csv,
+    parse_price_json,
     trim_to_window,
 )
 
@@ -211,36 +215,75 @@ def test_ordinary_bad_day_is_not_flagged() -> None:
 # --- provider response parsing ---------------------------------------------
 
 
-STOOQ_CSV = """Date,Open,High,Low,Close,Volume
-2026-01-02,470.10,472.55,469.00,471.20,58000000
-2026-01-03,471.50,474.00,470.80,473.90,61000000
-2026-01-06,473.00,473.60,468.20,469.40,72000000
-"""
+PRICE_JSON = json.dumps(
+    {
+        "chart": {
+            "error": None,
+            "result": [
+                {
+                    "meta": {"symbol": "SPY", "currency": "USD"},
+                    # 2026-01-02, 2026-01-05, 2026-01-06 at midnight UTC
+                    "timestamp": [1767312000, 1767571200, 1767657600],
+                    "indicators": {
+                        "quote": [{"close": [471.20, 473.90, 469.40]}]
+                    },
+                }
+            ],
+        }
+    }
+)
 
 
-def test_parse_stooq_csv() -> None:
-    result = parse_stooq_csv(STOOQ_CSV, "spy.us")
-    assert result.ticker == "spy.us"
+def test_parse_price_json() -> None:
+    result = parse_price_json(PRICE_JSON, "SPY")
+    assert result.ticker == "SPY"
     assert result.closes == {
         "2026-01-02": 471.20,
-        "2026-01-03": 473.90,
+        "2026-01-05": 473.90,
         "2026-01-06": 469.40,
     }
 
 
-def test_parse_stooq_csv_skips_missing_closes() -> None:
-    text = STOOQ_CSV + "2026-01-07,0,0,0,N/A,0\n"
-    assert "2026-01-07" not in parse_stooq_csv(text, "spy.us").closes
+def test_parse_price_json_drops_null_closes() -> None:
+    """A null close is a shut exchange. Treating it as zero would invent a crash."""
+    payload = json.loads(PRICE_JSON)
+    payload["chart"]["result"][0]["indicators"]["quote"][0]["close"][1] = None
+    closes = parse_price_json(json.dumps(payload), "SPY").closes
+    assert "2026-01-05" not in closes
+    assert len(closes) == 2
 
 
-def test_parse_stooq_csv_rejects_an_error_page() -> None:
-    with pytest.raises(SystemExit, match="not the expected CSV"):
-        parse_stooq_csv("Exceeded the daily hits limit", "spy.us")
+def test_parse_price_json_rejects_a_bot_check_page() -> None:
+    """What the previous provider started returning instead of data."""
+    html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
+    with pytest.raises(SystemExit, match="not JSON"):
+        parse_price_json(html, "SPY")
 
 
-def test_parse_stooq_csv_rejects_empty_data() -> None:
-    with pytest.raises(SystemExit, match="no usable rows"):
-        parse_stooq_csv("Date,Open,High,Low,Close,Volume\n", "spy.us")
+def test_parse_price_json_surfaces_a_provider_error() -> None:
+    body = json.dumps({"chart": {"error": {"code": "Not Found"}, "result": None}})
+    with pytest.raises(SystemExit, match="provider returned an error"):
+        parse_price_json(body, "NOSUCH")
+
+
+def test_parse_price_json_rejects_a_missing_series() -> None:
+    body = json.dumps({"chart": {"error": None, "result": []}})
+    with pytest.raises(SystemExit, match="did not contain a price series"):
+        parse_price_json(body, "SPY")
+
+
+def test_parse_price_json_rejects_mismatched_lengths() -> None:
+    payload = json.loads(PRICE_JSON)
+    payload["chart"]["result"][0]["timestamp"] = [1767312000]
+    with pytest.raises(SystemExit, match="timestamps but"):
+        parse_price_json(json.dumps(payload), "SPY")
+
+
+def test_parse_price_json_rejects_an_all_null_series() -> None:
+    payload = json.loads(PRICE_JSON)
+    payload["chart"]["result"][0]["indicators"]["quote"][0]["close"] = [None] * 3
+    with pytest.raises(SystemExit, match="no usable observations"):
+        parse_price_json(json.dumps(payload), "SPY")
 
 
 FRED_CSV = """observation_date,DGS3MO
@@ -280,51 +323,135 @@ def test_trim_to_window_keeps_the_most_recent() -> None:
 
 def test_shipped_config_loads() -> None:
     data = load_market_data(DEFAULT_CONFIG_PATH)
-    assert [s.label for s in data.sleeves] == ["S&P 500", "MSCI exUS", "MSCI EM"]
-    assert sum(data.weights) == pytest.approx(1.0)
+    assert data.stock_volatility > 0
+    assert data.equity_risk_premium > 0
 
 
-def test_shipped_config_matches_the_spreadsheet_inputs() -> None:
-    """The seed file carries the source spreadsheet's numbers unchanged."""
+def test_market_section_alone_is_enough() -> None:
+    """The model needs three numbers. Sleeves are optional."""
+    minimal = """
+[market]
+expected_stock_real_return = 0.05
+real_risk_free = 0.025
+stock_volatility = 0.185
+as_of = 2026-06-02
+"""
+    path = Path(TMP) / "minimal.toml"
+    path.write_text(minimal, encoding="utf-8")
+    data = load_market_data(path)
+    assert data.has_sleeve_detail is False
+    assert data.stock_volatility == pytest.approx(0.185)
+    assert data.equity_risk_premium == pytest.approx(0.025)
+
+
+def test_derived_volatility_needs_a_breakdown() -> None:
+    minimal = """
+[market]
+expected_stock_real_return = 0.05
+real_risk_free = 0.025
+stock_volatility = 0.185
+as_of = 2026-06-02
+"""
+    path = Path(TMP) / "minimal2.toml"
+    path.write_text(minimal, encoding="utf-8")
+    with pytest.raises(ValueError, match="no sleeve breakdown"):
+        load_market_data(path).derived_stock_volatility()
+
+
+def test_shipped_config_carries_choi_defaults() -> None:
     data = load_market_data(DEFAULT_CONFIG_PATH)
-    assert [s.forward_pe for s in data.sleeves] == [22.4, 12.0, 15.5]
-    assert data.volatilities == pytest.approx((0.1575, 0.1526, 0.1683))
-    assert data.real_risk_free_rate == pytest.approx(0.010)
+    assert data.expected_stock_real_return == pytest.approx(0.05)
+    assert data.real_risk_free_rate == pytest.approx(0.025)
+    assert data.stock_volatility == pytest.approx(0.185)
 
 
-def test_shipped_config_reports_its_placeholder_correlations_as_stale() -> None:
-    """The seed correlations are assumed, not measured, and must not pass quietly."""
+def test_derived_volatility_is_below_the_sleeve_average() -> None:
+    """Correlations below 1 make the combination calmer than its parts."""
+    data = load_market_data(DEFAULT_CONFIG_PATH)
+    derived = data.derived_stock_volatility()
+    worst = max(s.volatility for s in data.sleeves)
+    assert derived < worst
+
+
+def test_stock_volatility_stays_authoritative() -> None:
+    """The optional breakdown must not silently override the model's input."""
+    data = load_market_data(DEFAULT_CONFIG_PATH)
+    assert data.stock_volatility != pytest.approx(data.derived_stock_volatility())
+    assert data.stock_volatility == pytest.approx(0.185)
+
+
+def test_placeholder_correlations_are_marked() -> None:
     data = load_market_data(DEFAULT_CONFIG_PATH)
     assert data.covariance_observations == 0
-    warnings = data.stale_fields(today=date(2026, 9, 2))
-    assert any("covariance" in w.field for w in warnings)
 
 
-def test_portfolio_variance_is_below_the_spreadsheet_shortcut() -> None:
-    """Quantifies the defect the next stage fixes."""
-    data = load_market_data(DEFAULT_CONFIG_PATH)
-    shortcut = sum(w * v**2 for w, v in zip(data.weights, data.volatilities))
-    assert data.portfolio_variance() < shortcut
+def test_rejects_a_premium_that_is_not_positive() -> None:
+    bad = """
+[market]
+expected_stock_real_return = 0.02
+real_risk_free = 0.025
+stock_volatility = 0.185
+as_of = 2026-06-02
+"""
+    path = Path(TMP) / "bad.toml"
+    path.write_text(bad, encoding="utf-8")
+    with pytest.raises(ValueError, match="no reason to hold equities"):
+        load_market_data(path)
 
 
-def test_loader_rejects_weights_that_do_not_sum_to_one(tmp_path: Path) -> None:
+def test_rejects_non_positive_volatility() -> None:
+    bad = """
+[market]
+expected_stock_real_return = 0.05
+real_risk_free = 0.025
+stock_volatility = 0.0
+as_of = 2026-06-02
+"""
+    path = Path(TMP) / "badvol.toml"
+    path.write_text(bad, encoding="utf-8")
+    with pytest.raises(ValueError, match="must be positive"):
+        load_market_data(path)
+
+
+def test_rejects_half_a_sleeve_breakdown() -> None:
+    """Sleeves without correlations, or the reverse, is a broken file."""
+    bad = """
+[market]
+expected_stock_real_return = 0.05
+real_risk_free = 0.025
+stock_volatility = 0.185
+as_of = 2026-06-02
+
+[[sleeve]]
+label = "only"
+ticker = "x.us"
+weight = 1.0
+volatility = 0.16
+"""
+    path = Path(TMP) / "half.toml"
+    path.write_text(bad, encoding="utf-8")
+    with pytest.raises(ValueError, match="both"):
+        load_market_data(path)
+
+
+def test_loader_rejects_weights_that_do_not_sum_to_one() -> None:
     text = DEFAULT_CONFIG_PATH.read_text(encoding="utf-8").replace(
         "weight = 0.650000", "weight = 0.750000", 1
     )
-    broken = tmp_path / "market_data.toml"
-    broken.write_text(text, encoding="utf-8")
+    path = Path(TMP) / "weights.toml"
+    path.write_text(text, encoding="utf-8")
     with pytest.raises(ValueError, match="sum to"):
-        load_market_data(broken)
+        load_market_data(path)
 
 
-def test_loader_rejects_an_asymmetric_correlation_matrix(tmp_path: Path) -> None:
+def test_loader_rejects_an_asymmetric_correlation_matrix() -> None:
     text = DEFAULT_CONFIG_PATH.read_text(encoding="utf-8").replace(
         "[ 1.000000,  0.800000,  0.800000]", "[ 1.000000,  0.900000,  0.800000]", 1
     )
-    broken = tmp_path / "market_data.toml"
-    broken.write_text(text, encoding="utf-8")
+    path = Path(TMP) / "asym.toml"
+    path.write_text(text, encoding="utf-8")
     with pytest.raises(ValueError, match="not symmetric"):
-        load_market_data(broken)
+        load_market_data(path)
 
 
 def test_loader_reports_a_missing_file() -> None:

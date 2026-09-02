@@ -389,22 +389,24 @@ td.sym { font-family: var(--mono); white-space: nowrap; }
   </dl>
 </div>
 
-<p>The correlation term is the point. The source spreadsheet used a weighted average of individual variances, <code>&Sigma;<sub>i</sub> w<sub>i</sub> &sigma;<sub>i</sub><sup>2</sup></code>, which ignores correlations and is equivalent to assuming the three markets move in lockstep. That always overstates risk, and because risk sits in the denominator of equation (4), it always understates the allocation. On the source spreadsheet's own inputs, weights of 65, 28 and 7 percent and volatilities of 15.75%, 15.26% and 16.83%:</p>
+<p>The correlation term is the point. The source spreadsheet used a weighted average of individual variances, <code>&Sigma;<sub>i</sub> w<sub>i</sub> &sigma;<sub>i</sub><sup>2</sup></code>, which ignores correlations and is equivalent to assuming the three markets move in lockstep. That always overstates risk, and because risk sits in the denominator of equation (4), it always understates the allocation.</p>
+
+<p>The size of the effect is measured rather than assumed. Five years of daily closes to September 2026 give annual volatilities of 17.23%, 16.99% and 17.63% for the three sleeves, with correlations of 0.803 between the S&amp;P 500 and developed markets, 0.676 between the S&amp;P 500 and emerging markets, and 0.821 between the two non-US sleeves. Holding those volatilities and the 65 / 28 / 7 weights fixed, so that only the treatment of correlation differs:</p>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 3. Effect of the covariance treatment</caption>
+  <caption>Table 3. Effect of the covariance treatment, measured</caption>
   <thead>
     <tr><th>Denominator variance</th><th class="num">Value</th><th class="num">Implied &sigma;</th><th class="num">Merton share</th></tr>
   </thead>
   <tbody>
-    <tr><td>Weighted average of variances</td><td class="num">0.02463</td><td class="num">15.69%</td><td class="num">81.6%</td></tr>
-    <tr><td>Portfolio variance at &rho; = 0.8</td><td class="num">0.02218</td><td class="num">14.89%</td><td class="num">90.6%</td></tr>
+    <tr><td>Weighted average of variances</td><td class="num">0.029555</td><td class="num">17.19%</td><td class="num">68.0%</td></tr>
+    <tr><td>Portfolio variance, estimated correlations</td><td class="num">0.026347</td><td class="num">16.23%</td><td class="num">76.2%</td></tr>
   </tbody>
 </table>
 </div>
 
-<p>Nine percentage points of allocation. That figure is illustrative, not measured: it uses an assumed correlation of 0.8 rather than an estimated matrix. The direction is certain, since any correlation below 1 moves the answer this way, but the size is not established until the correlations are estimated from data.</p>
+<p>The shortcut overstates the variance by 12.2% and costs 8.3 percentage points of allocation. An earlier draft of this document put it at nine points using an assumed correlation of 0.8; the measured figure is 8.3. The flat 0.8 turned out to be a fair guess for two of the three pairs and a poor one for the third, since the S&amp;P 500 and emerging markets correlate at 0.676.</p>
 
 <h3>3.3 The safe rate</h3>
 

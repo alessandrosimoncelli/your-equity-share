@@ -1,25 +1,30 @@
 """Read the static market data file.
 
+The model needs three numbers, which are exactly the three Choi's user guide
+asks for: the expected real return on the stock market, the real risk-free rate,
+and the volatility of the stock market. They live in the `[market]` section and
+that section alone is required.
+
 The safe rate is stored as a *real* rate, taken from a long-dated TIPS yield.
-Choi's user guide asks for exactly that. Deriving it instead as a nominal yield
-less an inflation expectation invites a maturity mismatch, since the obvious
-free sources are a 3-month bill and a 10-year breakeven, and subtracting one
-from the other produces neither a 3-month nor a 10-year real rate.
+Deriving it instead as a nominal yield less an inflation expectation invites a
+maturity mismatch, since the obvious free sources are a 3-month bill and a
+10-year breakeven, and subtracting one from the other produces neither a
+3-month nor a 10-year real rate.
 
-The model reads `config/market_data.toml` and never reaches the network. Data is
-refreshed by `tools/refresh_market_data.py`, which is a separate program run
-deliberately. A demo therefore cannot fail because a data provider is slow,
-rate-limited or gone.
+Sleeves and a correlation matrix are **optional**. CGM and Choi model a single
+well-diversified equity holding, so one volatility is all the model consumes.
+The optional sections exist only for a household that holds several funds and
+would rather derive that one number from them than enter it directly. Nothing in
+the model requires them, and `stock_volatility` is authoritative either way.
 
-Every field carries the date it was observed and where it came from, because
-the file mixes two kinds of input. Volatilities, correlations and interest rates
-are estimated or downloaded. Forward price-to-earnings ratios are not available
-from free price data and are entered by hand, so they go stale silently unless
-their age is visible.
+The model never reaches the network. Data is refreshed by
+`tools/refresh_market_data.py`, a separate program run deliberately, so a demo
+cannot fail because a provider is slow or gone.
 """
 
 from __future__ import annotations
 
+import math
 import tomllib
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
@@ -39,10 +44,7 @@ DEFAULT_CONFIG_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "market_data.toml"
 )
 
-# A forward P/E older than this is reported as stale. Earnings estimates move
-# slowly, but a figure from last year describes a different market.
-FORWARD_PE_STALE_AFTER_DAYS = 120
-RATE_STALE_AFTER_DAYS = 30
+STALE_AFTER_DAYS = 90
 
 
 @dataclass(frozen=True)
@@ -61,69 +63,81 @@ class StaleDataWarning:
 
 @dataclass(frozen=True)
 class Sleeve:
+    """One fund in a multi-fund equity holding. Optional throughout."""
+
     label: str
     ticker: str
     weight: float
-    forward_pe: float
-    forward_pe_as_of: date
     volatility: float
-
-    @property
-    def forward_earnings_yield(self) -> float:
-        return 1.0 / self.forward_pe
 
 
 @dataclass(frozen=True)
 class MarketData:
-    sleeves: tuple[Sleeve, ...]
-    correlation: tuple[tuple[float, ...], ...]
+    """The three inputs the model needs, plus optional detail behind one of them."""
+
+    expected_stock_real_return: float
     real_risk_free_rate: float
-    rates_as_of: date
-    covariance_as_of: date
-    covariance_observations: int
+    stock_volatility: float
+    as_of: date
     source_path: Path
 
-    @property
-    def weights(self) -> tuple[float, ...]:
-        return tuple(s.weight for s in self.sleeves)
+    # Optional: present only when the equity holding is described fund by fund.
+    sleeves: tuple[Sleeve, ...] = ()
+    correlation: tuple[tuple[float, ...], ...] = ()
+    covariance_as_of: date | None = None
+    covariance_observations: int = 0
 
     @property
-    def volatilities(self) -> tuple[float, ...]:
-        return tuple(s.volatility for s in self.sleeves)
+    def equity_risk_premium(self) -> float:
+        """Expected real return above the real safe rate."""
+        return self.expected_stock_real_return - self.real_risk_free_rate
 
-    def covariance(self) -> list[list[float]]:
-        return covariance_matrix(list(self.volatilities), [list(r) for r in self.correlation])
+    @property
+    def has_sleeve_detail(self) -> bool:
+        return bool(self.sleeves) and bool(self.correlation)
 
-    def portfolio_variance(self) -> float:
-        """w' Sigma w, the quantity the Merton denominator needs."""
-        sigma = self.covariance()
-        w = self.weights
-        return sum(
-            w[i] * w[j] * sigma[i][j] for i in range(len(w)) for j in range(len(w))
+    def derived_stock_volatility(self) -> float:
+        """Volatility implied by the optional sleeve breakdown.
+
+        Raises if no breakdown is present. Compare against `stock_volatility`
+        to see whether the number in use reflects the funds actually held.
+        """
+        if not self.has_sleeve_detail:
+            raise ValueError(
+                "no sleeve breakdown in this file; stock_volatility is the only "
+                "volatility available"
+            )
+        weights = [s.weight for s in self.sleeves]
+        sigma = covariance_matrix(
+            [s.volatility for s in self.sleeves], [list(r) for r in self.correlation]
         )
+        variance = sum(
+            weights[i] * weights[j] * sigma[i][j]
+            for i in range(len(weights))
+            for j in range(len(weights))
+        )
+        return math.sqrt(variance)
 
     def stale_fields(self, today: date | None = None) -> list[StaleDataWarning]:
         """Every field older than its limit. Empty means the file is current."""
         today = today or datetime.now(timezone.utc).date()
         warnings: list[StaleDataWarning] = []
 
-        for name, observed, limit in [
-            ("risk-free rate and inflation", self.rates_as_of, RATE_STALE_AFTER_DAYS),
-            ("covariance estimate", self.covariance_as_of, RATE_STALE_AFTER_DAYS),
-        ]:
-            age = (today - observed).days
-            if age > limit:
-                warnings.append(StaleDataWarning(name, observed, age, limit))
+        age = (today - self.as_of).days
+        if age > STALE_AFTER_DAYS:
+            warnings.append(
+                StaleDataWarning("market inputs", self.as_of, age, STALE_AFTER_DAYS)
+            )
 
-        for sleeve in self.sleeves:
-            age = (today - sleeve.forward_pe_as_of).days
-            if age > FORWARD_PE_STALE_AFTER_DAYS:
+        if self.covariance_as_of is not None:
+            age = (today - self.covariance_as_of).days
+            if age > STALE_AFTER_DAYS:
                 warnings.append(
                     StaleDataWarning(
-                        f"forward P/E for {sleeve.label}",
-                        sleeve.forward_pe_as_of,
+                        "sleeve covariance",
+                        self.covariance_as_of,
                         age,
-                        FORWARD_PE_STALE_AFTER_DAYS,
+                        STALE_AFTER_DAYS,
                     )
                 )
         return warnings
@@ -137,47 +151,32 @@ def _as_date(value: object, field: str) -> date:
     raise ValueError(f"{field}: expected a date, got {value!r}")
 
 
-def load_market_data(path: Path | str | None = None) -> MarketData:
-    """Load and validate the market data file.
-
-    Raises ValueError on anything structurally wrong. Staleness is not an error,
-    because a deliberately frozen file is a legitimate way to run the tool;
-    call `stale_fields` to report it.
-    """
-    path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
-    if not path.exists():
-        raise FileNotFoundError(
-            f"no market data at {path}. Run tools/refresh_market_data.py to create it."
+def _load_optional_sleeves(
+    raw: dict, path: Path
+) -> tuple[tuple[Sleeve, ...], tuple[tuple[float, ...], ...], date | None, int]:
+    rows = raw.get("sleeve")
+    cov = raw.get("covariance")
+    if not rows and not cov:
+        return (), (), None, 0
+    if not rows or not cov:
+        raise ValueError(
+            f"{path}: a sleeve breakdown needs both [[sleeve]] entries and a "
+            f"[covariance] section, or neither"
         )
-
-    with path.open("rb") as handle:
-        raw = tomllib.load(handle)
-
-    try:
-        sleeve_rows = raw["sleeve"]
-        cov = raw["covariance"]
-        rates = raw["rates"]
-    except KeyError as exc:
-        raise ValueError(f"{path}: missing section {exc.args[0]!r}") from exc
 
     sleeves = tuple(
         Sleeve(
             label=row["label"],
             ticker=row["ticker"],
             weight=float(row["weight"]),
-            forward_pe=float(row["forward_pe"]),
-            forward_pe_as_of=_as_date(row["forward_pe_as_of"], "forward_pe_as_of"),
             volatility=float(row["volatility"]),
         )
-        for row in sleeve_rows
+        for row in rows
     )
 
-    if not sleeves:
-        raise ValueError(f"{path}: no sleeves defined")
-
-    total_weight = sum(s.weight for s in sleeves)
-    if abs(total_weight - 1.0) > 1e-9:
-        raise ValueError(f"{path}: sleeve weights sum to {total_weight}, not 1")
+    total = sum(s.weight for s in sleeves)
+    if abs(total - 1.0) > 1e-9:
+        raise ValueError(f"{path}: sleeve weights sum to {total}, not 1")
 
     correlation = tuple(tuple(float(v) for v in row) for row in cov["correlation"])
     size = len(sleeves)
@@ -190,16 +189,66 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
             raise ValueError(f"{path}: correlation[{i}][{i}] is not 1")
         for j in range(i + 1, size):
             if abs(correlation[i][j] - correlation[j][i]) > 1e-12:
-                raise ValueError(f"{path}: correlation matrix is not symmetric at {i},{j}")
+                raise ValueError(
+                    f"{path}: correlation matrix is not symmetric at {i},{j}"
+                )
             if not -1.0 <= correlation[i][j] <= 1.0:
                 raise ValueError(f"{path}: correlation[{i}][{j}] outside [-1, 1]")
 
+    return (
+        sleeves,
+        correlation,
+        _as_date(cov["as_of"], "covariance.as_of"),
+        int(cov["observations"]),
+    )
+
+
+def load_market_data(path: Path | str | None = None) -> MarketData:
+    """Load and validate the market data file.
+
+    Raises ValueError on anything structurally wrong. Staleness is not an error,
+    since a deliberately frozen file is a legitimate way to run the tool; call
+    `stale_fields` to report it.
+    """
+    path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
+    if not path.exists():
+        raise FileNotFoundError(
+            f"no market data at {path}. Run tools/refresh_market_data.py to create it."
+        )
+
+    with path.open("rb") as handle:
+        raw = tomllib.load(handle)
+
+    try:
+        market = raw["market"]
+    except KeyError as exc:
+        raise ValueError(f"{path}: missing section 'market'") from exc
+
+    try:
+        expected = float(market["expected_stock_real_return"])
+        real_rf = float(market["real_risk_free"])
+        volatility = float(market["stock_volatility"])
+    except KeyError as exc:
+        raise ValueError(f"{path}: [market] is missing {exc.args[0]!r}") from exc
+
+    if volatility <= 0:
+        raise ValueError(f"{path}: stock_volatility must be positive")
+    if expected <= real_rf:
+        raise ValueError(
+            f"{path}: expected_stock_real_return ({expected}) is not above "
+            f"real_risk_free ({real_rf}), so there is no reason to hold equities"
+        )
+
+    sleeves, correlation, cov_as_of, observations = _load_optional_sleeves(raw, path)
+
     return MarketData(
+        expected_stock_real_return=expected,
+        real_risk_free_rate=real_rf,
+        stock_volatility=volatility,
+        as_of=_as_date(market["as_of"], "market.as_of"),
+        source_path=path,
         sleeves=sleeves,
         correlation=correlation,
-        real_risk_free_rate=float(rates["real_risk_free"]),
-        rates_as_of=_as_date(rates["as_of"], "rates.as_of"),
-        covariance_as_of=_as_date(cov["as_of"], "covariance.as_of"),
-        covariance_observations=int(cov["observations"]),
-        source_path=path,
+        covariance_as_of=cov_as_of,
+        covariance_observations=observations,
     )

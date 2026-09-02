@@ -1,29 +1,45 @@
 # Static market data for the equity allocation tool.
 #
 # Regenerate with: python tools/refresh_market_data.py --write
-# The model reads this file and never fetches anything itself, so a
-# demo cannot fail because a data provider is unavailable.
+# The model reads this file and never fetches anything itself, so a demo cannot
+# fail because a data provider is unavailable.
 #
-# forward_pe is entered by hand. No free source publishes forward
-# earnings estimates, so those fields survive a refresh untouched and
-# their age is reported instead.
-#
-# SEED FILE. Volatilities and forward P/E ratios are the values from the source
-# spreadsheet. The correlation matrix has NOT been estimated: it is a flat 0.80
-# placeholder, the figure used illustratively in docs/methodology.html Table 3.
-# Run the refresh before drawing any conclusion from the covariance matrix.
+# See docs/inputs.md for what each number means and how to choose it.
 
-[meta]
-generated_at = "2026-06-02T00:00:00+00:00"
-generated_by = "seeded by hand from the source spreadsheet"
+# The three inputs the model uses. This section is required.
+[market]
 
-[rates]
-# Real rate, taken directly from a long-dated TIPS yield rather than derived as
-# a nominal yield less an inflation expectation. Choi's user guide asks for the
-# 30-year TIPS yield here.
-real_risk_free = 0.010000
+# Your estimate of the average real return of the stock market over your
+# lifetime. Choi's guide defaults to 5%, roughly what current valuation ratios
+# imply if those ratios hold and earnings growth matches its long-run average.
+expected_stock_real_return = 0.050000
+
+# The real return on the safe asset. Choi's guide suggests the 30-year TIPS
+# yield, which is already a real yield. Reduce it by your marginal income tax
+# rate if your bonds sit in a taxable account.
+real_risk_free = 0.025000
+
+# Annual volatility of the stock market. 18.5% is the value the fitted
+# human capital discount rates were calibrated on, so it is the consistent
+# default. Changing it here does not change that calibration.
+stock_volatility = 0.185000
+
 as_of = 2026-06-02
-real_risk_free_source = "source spreadsheet: cell B9 less its hardcoded 2.5% inflation"
+source = "Choi, Liu and Liu (2025) user guide defaults; CGM calibration for volatility"
+
+# ---------------------------------------------------------------------------
+# OPTIONAL below this line.
+#
+# CGM and Choi model one well-diversified equity holding, so stock_volatility
+# above is all the model consumes. These sections exist only for a household
+# holding several funds that would rather derive that number than enter it.
+# `derived_stock_volatility()` computes it; stock_volatility stays
+# authoritative unless you copy the derived figure up into [market].
+#
+# PLACEHOLDER: the correlations below have NOT been estimated. They are a flat
+# 0.80 used illustratively in docs/methodology.html. observations = 0 records
+# this and the loader reports it as stale.
+# ---------------------------------------------------------------------------
 
 [covariance]
 as_of = 2026-06-02
@@ -40,24 +56,18 @@ correlation = [
 
 [[sleeve]]
 label = "S&P 500"
-ticker = "spy.us"
+ticker = "SPY"
 weight = 0.650000
-volatility = 0.157500  # annualised, from daily price returns
-forward_pe = 22.4  # hand-entered
-forward_pe_as_of = 2026-06-02
+volatility = 0.157500
 
 [[sleeve]]
-label = "MSCI exUS"
-ticker = "vea.us"
+label = "Developed ex-US"
+ticker = "VEA"
 weight = 0.280000
-volatility = 0.152600  # annualised, from daily price returns
-forward_pe = 12.0  # hand-entered
-forward_pe_as_of = 2026-06-02
+volatility = 0.152600
 
 [[sleeve]]
-label = "MSCI EM"
-ticker = "vwo.us"
+label = "Emerging markets"
+ticker = "VWO"
 weight = 0.070000
-volatility = 0.168300  # annualised, from daily price returns
-forward_pe = 15.5  # hand-entered
-forward_pe_as_of = 2026-06-02
+volatility = 0.168300
