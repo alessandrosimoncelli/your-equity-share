@@ -404,25 +404,21 @@ td.sym { font-family: var(--mono); white-space: nowrap; }
 </table>
 </div>
 
-<p>Nine percentage points of allocation. A correction, not a refinement.</p>
+<p>Nine percentage points of allocation. That figure is illustrative, not measured: it uses an assumed correlation of 0.8 rather than an estimated matrix. The direction is certain, since any correlation below 1 moves the answer this way, but the size is not established until the correlations are estimated from data.</p>
 
 <h3>3.3 The safe rate</h3>
 
-<p>A short Treasury bill yield less expected inflation. This is safe in nominal rather than real terms, so it is itself an approximation; Treasury Inflation-Protected Securities would be the exact instrument, and a later version may use them.</p>
+<p>Taken as a real rate directly, from the 30-year Treasury Inflation-Protected Securities yield, which is what Choi's guide asks for. Deriving it instead as a nominal yield less an inflation expectation would mismatch maturities, since the freely available series are a 3-month bill and a 10-year breakeven and their difference is neither a 3-month nor a 10-year real rate. Where bonds sit in a taxable account the guide reduces the rate by the marginal income tax rate.</p>
 
 <h3>3.4 Risk aversion</h3>
 
 <p><code>&gamma;</code> describes the household, not the market. It cannot be estimated from prices and there is no value to look up. Household portfolio studies and experimental elicitation both produce values between 2 and 10, a range wide enough to change the recommendation by a factor of five.</p>
 
-<p>The tool elicits it from three questions, because the constraint binds from three independent directions:</p>
+<p>Choi's user guide elicits it with a single question rather than a questionnaire. You face a coin flip: heads you live on $100,000 for the next year, tails on $50,000. A genie offers to cancel the gamble for a guaranteed amount. The amount that leaves you indifferent is the certainty equivalent of the gamble, and under constant relative risk aversion it identifies <code>&gamma;</code> exactly.</p>
 
-<ul>
-  <li><strong>Willingness.</strong> Volatility the household can tolerate without abandoning the strategy.</li>
-  <li><strong>Ability.</strong> Loss it can absorb without damage to its standard of living.</li>
-  <li><strong>Need.</strong> Risk its objectives actually require.</li>
-</ul>
+<p>An answer of $70,710 is <code>&gamma;</code> = 1, $63,246 is 3, $58,566 is 5, and $53,991 is 10. This project computes those figures from equation (2) rather than storing the guide's table, and inverts the relation so that any answer maps to a value.</p>
 
-<p>The scale is 1 to 10 rather than the source spreadsheet's 2 to 5, because the layer two discount rate equations take <code>&gamma;/10</code> as an input and were fitted on that scale. Section 6 shows this is the input that matters most.</p>
+<p>This replaces the willingness, ability and need scoring an earlier draft of this document used. That scoring is advisory practice; the question above is the definition of the parameter the model contains. The scale is 1 to 10 because the layer two discount rate equations take <code>&gamma;/10</code> as an input and were fitted on it. Section 6 shows this is the input that matters most.</p>
 
 <h2>4. Layer two: the human capital multiplier</h2>
 
@@ -532,6 +528,8 @@ td.sym { font-family: var(--mono); white-space: nowrap; }
 <p>Two coefficients are worth reading. The loading on <code>&gamma;</code> is 0.087 for wages and 0.0003 for Social Security: a cautious household marks down a risky salary sharply and an inflation-indexed government annuity not at all. And the wage rate is highest early in life, falls to a mid-life minimum near age 53, and drops discretely at retirement when income becomes risk-free. Social Security is therefore treated as an inflation-indexed government bond, which is what it is, and that is a large part of why the model tolerates high equity shares late in life.</p>
 
 <h3>5.2 Calibration constants</h3>
+
+<p>These values are fixed inside the approximation. The spreadsheet this project follows uses the <strong>college graduate</strong> calibration of earnings risk; the paper solves separately for other education levels. The discount rates also embed a probability of dying each year taken from United States mortality statistics, so income in later years is already weighted by the chance of being alive to receive it.</p>
 
 <div class="tablewrap">
 <table>

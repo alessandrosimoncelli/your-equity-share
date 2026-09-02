@@ -289,7 +289,6 @@ def test_shipped_config_matches_the_spreadsheet_inputs() -> None:
     data = load_market_data(DEFAULT_CONFIG_PATH)
     assert [s.forward_pe for s in data.sleeves] == [22.4, 12.0, 15.5]
     assert data.volatilities == pytest.approx((0.1575, 0.1526, 0.1683))
-    assert data.nominal_risk_free_rate == pytest.approx(0.035)
     assert data.real_risk_free_rate == pytest.approx(0.010)
 
 

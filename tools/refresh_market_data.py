@@ -9,7 +9,7 @@ Run deliberately, never as part of using the tool:
 What it can and cannot fetch
 ----------------------------
 Volatilities and correlations are estimated from daily closes (Stooq), and the
-nominal risk-free rate and expected inflation are read from FRED. Forward
+real risk-free rate is read from FRED as a 30-year TIPS yield. Forward
 price-to-earnings ratios are not available from a free source, so they are
 carried over from the existing file unchanged and their age is reported. That
 split is the reason every field in the file records its own observation date.
@@ -51,9 +51,11 @@ from merton_share.statistics import (  # noqa: E402
 STOOQ_URL = "https://stooq.com/q/d/l/?s={ticker}&i=d"
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 
-# 3-month Treasury bill, and the 10-year breakeven as the inflation expectation.
-FRED_NOMINAL_RISK_FREE = "DGS3MO"
-FRED_EXPECTED_INFLATION = "T10YIE"
+# 30-year Treasury Inflation-Protected Securities constant maturity. This is a
+# real yield already, which is what the model needs and what Choi's guide asks
+# for. Deriving a real rate as a nominal yield less a breakeven of a different
+# maturity would mismatch the two.
+FRED_REAL_RISK_FREE = "DFII30"
 
 USER_AGENT = "merton-share/0.1 (research tool; contact via repository)"
 TIMEOUT_SECONDS = 30
@@ -142,8 +144,7 @@ def build_toml(
     observations: int,
     window_years: int,
     covariance_as_of: date,
-    nominal_risk_free: float,
-    expected_inflation: float,
+    real_risk_free: float,
     rates_as_of: date,
 ) -> str:
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -163,11 +164,9 @@ def build_toml(
         'generated_by = "tools/refresh_market_data.py"',
         "",
         "[rates]",
-        f"nominal_risk_free = {nominal_risk_free:.6f}",
-        f"expected_inflation = {expected_inflation:.6f}",
+        f"real_risk_free = {real_risk_free:.6f}",
         f"as_of = {rates_as_of.isoformat()}",
-        f'nominal_risk_free_source = "FRED {FRED_NOMINAL_RISK_FREE}, 3-month Treasury bill"',
-        f'expected_inflation_source = "FRED {FRED_EXPECTED_INFLATION}, 10-year breakeven"',
+        f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}, 30-year TIPS yield"',
         "",
         "[covariance]",
         f"as_of = {covariance_as_of.isoformat()}",
@@ -272,15 +271,14 @@ def main(argv: list[str]) -> int:
     for label, row in zip((s.label for s in existing.sleeves), correlation):
         print(f"    {label:16s} " + "  ".join(f"{v:6.3f}" for v in row))
 
-    rf_date, rf = parse_fred_csv(_get(FRED_URL.format(series=FRED_NOMINAL_RISK_FREE)),
-                                 FRED_NOMINAL_RISK_FREE)
-    infl_date, infl = parse_fred_csv(_get(FRED_URL.format(series=FRED_EXPECTED_INFLATION)),
-                                     FRED_EXPECTED_INFLATION)
-    print(f"\n  nominal risk-free  {rf:6.2%}  (was {existing.nominal_risk_free_rate:6.2%}) "
-          f"as of {rf_date}")
-    print(f"  expected inflation {infl:6.2%}  (was {existing.expected_inflation:6.2%}) "
-          f"as of {infl_date}")
-    print(f"  implied real rate  {rf - infl:6.2%}")
+    rf_date, rf = parse_fred_csv(
+        _get(FRED_URL.format(series=FRED_REAL_RISK_FREE)), FRED_REAL_RISK_FREE
+    )
+    print()
+    print(
+        f"  real risk-free  {rf:6.2%}  "
+        f"(was {existing.real_risk_free_rate:6.2%}) as of {rf_date}"
+    )
 
     document = build_toml(
         sleeves=[
@@ -298,9 +296,8 @@ def main(argv: list[str]) -> int:
         observations=len(dates) - 1,
         window_years=args.window,
         covariance_as_of=date.fromisoformat(max(dates)),
-        nominal_risk_free=rf,
-        expected_inflation=infl,
-        rates_as_of=min(rf_date, infl_date),
+        real_risk_free=rf,
+        rates_as_of=rf_date,
     )
 
     if not args.write:

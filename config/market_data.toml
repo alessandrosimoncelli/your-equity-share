@@ -18,11 +18,12 @@ generated_at = "2026-06-02T00:00:00+00:00"
 generated_by = "seeded by hand from the source spreadsheet"
 
 [rates]
-nominal_risk_free = 0.035000
-expected_inflation = 0.025000
+# Real rate, taken directly from a long-dated TIPS yield rather than derived as
+# a nominal yield less an inflation expectation. Choi's user guide asks for the
+# 30-year TIPS yield here.
+real_risk_free = 0.010000
 as_of = 2026-06-02
-nominal_risk_free_source = "source spreadsheet cell B9"
-expected_inflation_source = "source spreadsheet, hardcoded 2.5% inside cell B10"
+real_risk_free_source = "source spreadsheet: cell B9 less its hardcoded 2.5% inflation"
 
 [covariance]
 as_of = 2026-06-02

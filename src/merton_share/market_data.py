@@ -1,5 +1,11 @@
 """Read the static market data file.
 
+The safe rate is stored as a *real* rate, taken from a long-dated TIPS yield.
+Choi's user guide asks for exactly that. Deriving it instead as a nominal yield
+less an inflation expectation invites a maturity mismatch, since the obvious
+free sources are a 3-month bill and a 10-year breakeven, and subtracting one
+from the other produces neither a 3-month nor a 10-year real rate.
+
 The model reads `config/market_data.toml` and never reaches the network. Data is
 refreshed by `tools/refresh_market_data.py`, which is a separate program run
 deliberately. A demo therefore cannot fail because a data provider is slow,
@@ -71,8 +77,7 @@ class Sleeve:
 class MarketData:
     sleeves: tuple[Sleeve, ...]
     correlation: tuple[tuple[float, ...], ...]
-    nominal_risk_free_rate: float
-    expected_inflation: float
+    real_risk_free_rate: float
     rates_as_of: date
     covariance_as_of: date
     covariance_observations: int
@@ -85,15 +90,6 @@ class MarketData:
     @property
     def volatilities(self) -> tuple[float, ...]:
         return tuple(s.volatility for s in self.sleeves)
-
-    @property
-    def real_risk_free_rate(self) -> float:
-        """Nominal rate less expected inflation.
-
-        The forward earnings yield is a real return, so the safe rate it is
-        compared against has to be real too.
-        """
-        return self.nominal_risk_free_rate - self.expected_inflation
 
     def covariance(self) -> list[list[float]]:
         return covariance_matrix(list(self.volatilities), [list(r) for r in self.correlation])
@@ -201,8 +197,7 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
     return MarketData(
         sleeves=sleeves,
         correlation=correlation,
-        nominal_risk_free_rate=float(rates["nominal_risk_free"]),
-        expected_inflation=float(rates["expected_inflation"]),
+        real_risk_free_rate=float(rates["real_risk_free"]),
         rates_as_of=_as_date(rates["as_of"], "rates.as_of"),
         covariance_as_of=_as_date(cov["as_of"], "covariance.as_of"),
         covariance_observations=int(cov["observations"]),
