@@ -1,0 +1,724 @@
+<title>The Merton Share</title>
+
+<style>
+:root {
+  --bg:      #FFFFFF;
+  --text:    #000000;
+  --navy:    #1F3864;
+  --green:   #375623;
+  --rule:    #A6A6A6;
+  --rule-lt: #DCDCDC;
+  --body: Aptos, Calibri, "Segoe UI", Arial, Helvetica, sans-serif;
+  --mono: Consolas, "Courier New", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:      #15181B;
+    --text:    #E8E8E8;
+    --navy:    #A2BAE0;
+    --green:   #9FC77E;
+    --rule:    #4C5157;
+    --rule-lt: #2C3237;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:      #15181B;
+  --text:    #E8E8E8;
+  --navy:    #A2BAE0;
+  --green:   #9FC77E;
+  --rule:    #4C5157;
+  --rule-lt: #2C3237;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.58;
+}
+
+.doc {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 7vw, 5rem) 5rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 0.5rem;
+  line-height: 1.25;
+}
+
+.subtitle { margin: 0 0 0.2rem; }
+.docmeta { margin: 0 0 1.4rem; font-size: 0.92rem; }
+
+.titlerule { border: 0; border-top: 1.5px solid var(--navy); margin: 0 0 2.2rem; }
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 2.6rem 0 0.75rem;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin: 1.7rem 0 0.55rem;
+}
+
+p { margin: 0 0 0.9rem; }
+ul, ol { margin: 0 0 0.95rem; padding-left: 1.5rem; }
+li { margin-bottom: 0.4rem; }
+strong { font-weight: 700; }
+
+code { font-family: var(--mono); font-size: 0.9em; }
+
+a { color: var(--navy); }
+a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+
+.contents { margin: 0 0 1rem; padding-left: 0; list-style: none; }
+.contents li { margin-bottom: 0.25rem; font-size: 0.95rem; }
+
+.eqn {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  margin: 1.3rem 0 1.1rem;
+  padding-left: 2rem;
+}
+
+.eqn .body {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 0.93rem;
+  line-height: 1.9;
+  overflow-x: auto;
+}
+
+.eqn .no { font-family: var(--mono); font-size: 0.9rem; flex: none; }
+
+.where {
+  margin: 0 0 1.2rem;
+  padding-left: 2rem;
+  font-size: 0.94rem;
+}
+
+.where > p { margin: 0 0 0.35rem; }
+
+.where dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3rem 1.1rem;
+  margin: 0;
+  max-width: 40rem;
+}
+
+.where dt { font-family: var(--mono); white-space: nowrap; }
+.where dd { margin: 0; }
+
+.src { padding-left: 2rem; font-size: 0.9rem; margin: 0.7rem 0 1.4rem; color: var(--green); }
+
+.tablewrap { overflow-x: auto; margin: 1.2rem 0 1.7rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+
+caption {
+  caption-side: top;
+  text-align: left;
+  font-weight: 700;
+  padding-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--navy);
+  padding: 0.45rem 0.9rem 0.45rem 0;
+  border-bottom: 1px solid var(--navy);
+  vertical-align: bottom;
+}
+
+td {
+  padding: 0.48rem 0.9rem 0.48rem 0;
+  border-bottom: 1px solid var(--rule-lt);
+  vertical-align: top;
+}
+
+tr:last-child td { border-bottom: 1px solid var(--rule); }
+
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+td.sym { font-family: var(--mono); white-space: nowrap; }
+
+.refs { padding-left: 1.5rem; font-size: 0.93rem; }
+.refs li { margin-bottom: 0.55rem; }
+
+.footnote {
+  margin-top: 2.8rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.88rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="doc">
+
+<h1>The Merton Share</h1>
+<p class="subtitle">Technical methodology for the equity allocation tool</p>
+<p class="docmeta">Version 1.0, September 2026</p>
+<hr class="titlerule">
+
+<h2>Contents</h2>
+<ol class="contents">
+  <li>1. Approach and scope</li>
+  <li>2. Layer one: the Merton share</li>
+  <li>3. Layer one: the four inputs</li>
+  <li>4. Layer two: the human capital multiplier</li>
+  <li>5. Layer two: valuing human capital</li>
+  <li>6. Accuracy, and what the alternative rules cost</li>
+  <li>7. Declared deviations</li>
+  <li>8. Components included, postponed and excluded</li>
+  <li>9. References</li>
+</ol>
+
+<h2>1. Approach and scope</h2>
+
+<p>This tool implements the approximation in Choi, Liu and Liu (2025), which builds on Merton (1969). The structure has two layers.</p>
+
+<p><strong>Layer one</strong> gives the share of <strong>total</strong> wealth that belongs in equities. This is the Merton share, covered in sections 2 and 3.</p>
+
+<p><strong>Layer two</strong> accounts for the fact that most of a working household's total wealth is the present value of wages not yet earned, which cannot be sold or borrowed against. It converts the layer one answer into an instruction about the tradeable portion. This is Bodie, Merton and Samuelson (1992), implemented through an approximation fitted to the numerical solution of Cocco, Gomes and Maenhout (2005). Sections 4 and 5.</p>
+
+<p>Combined, the calculation is one expression:</p>
+
+<div class="eqn">
+  <div class="body">w<sub>fin</sub> = clip( [ln(1+&mu;) &minus; ln(1+r)] / (&gamma; &sdot; &sigma;<sup>2</sup>) &times; (1 + HC/W), 0, 1 )</div>
+  <div class="no">(1)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>w<sub>fin</sub></dt><dd>is the share of the investable portfolio to hold in equities, the figure the tool reports</dd>
+    <dt>&mu;</dt><dd>is the expected annual return on the equity portfolio, after inflation</dd>
+    <dt>r</dt><dd>is the annual return on a safe asset, also after inflation</dd>
+    <dt>&gamma;</dt><dd>is relative risk aversion, on a scale of 1 to 10</dd>
+    <dt>&sigma;</dt><dd>is the annual volatility of the equity portfolio</dd>
+    <dt>HC</dt><dd>is human capital: the present value of future wages and Social Security benefits</dd>
+    <dt>W</dt><dd>is investable financial wealth today</dd>
+    <dt>clip</dt><dd>holds the result between 0 and 1, ruling out shorting and leverage</dd>
+  </dl>
+</div>
+
+<p>The first factor is the Merton share. The second, <code>1 + HC/W</code>, is total wealth divided by financial wealth. The clip is a constraint imposed from outside, not a result of the model.</p>
+
+<p>The source spreadsheet this tool replaces computes only the first factor. Choi's spreadsheet computes the whole expression but with simpler inputs: one equity asset, a fixed 5% expected return, no valuation input. This tool takes the input estimation from the former and the human capital treatment from the latter. It is calibrated for a household in the United States, for the reason given in section 7.2.</p>
+
+<h2>2. Layer one: the Merton share</h2>
+
+<p>The investor has <strong>constant relative risk aversion</strong>, meaning the percentage of wealth put at risk does not change as wealth changes. Utility is</p>
+
+<div class="eqn">
+  <div class="body">U(W) = W<sup>(1 &minus; &gamma;)</sup> / (1 &minus; &gamma;)</div>
+  <div class="no">(2)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>U(W)</dt><dd>is utility from ending with wealth W</dd>
+    <dt>W</dt><dd>is final wealth</dd>
+    <dt>&gamma;</dt><dd>is relative risk aversion, controlling how sharply utility flattens as wealth rises</dd>
+  </dl>
+</div>
+
+<p>The flattening is what produces risk aversion: each additional dollar adds less utility than the one before, so a gain does not offset an equally likely loss of the same size. Higher <code>&gamma;</code> means faster flattening.</p>
+
+<h3>2.1 The trade-off</h3>
+
+<p>Place a fraction <code>w</code> of wealth in equities and <code>1 &minus; w</code> in the safe asset. Over a short period, maximising expected utility is equivalent to maximising the certainty equivalent, the guaranteed return the investor would accept in place of the uncertain one. To second order:</p>
+
+<div class="eqn">
+  <div class="body">CE(w) = r + w(&mu; &minus; r) &minus; (&gamma;/2) &sdot; w<sup>2</sup>&sigma;<sup>2</sup></div>
+  <div class="no">(3)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>CE(w)</dt><dd>is the certainty equivalent return of the portfolio</dd>
+    <dt>w</dt><dd>is the fraction held in equities</dd>
+    <dt>r</dt><dd>is the safe rate</dd>
+    <dt>&mu; &minus; r</dt><dd>is the equity risk premium</dd>
+    <dt>&gamma;</dt><dd>is risk aversion, from equation (2)</dd>
+    <dt>&sigma;<sup>2</sup></dt><dd>is the variance of equity returns</dd>
+  </dl>
+</div>
+
+<p>The gain term <code>w(&mu; &minus; r)</code> is linear in the position. The cost term is quadratic. Reward therefore grows in a straight line while the penalty accelerates, so there is exactly one position where they balance. Differentiating and setting to zero:</p>
+
+<div class="eqn">
+  <div class="body">w* = (&mu; &minus; r) / (&gamma; &sdot; &sigma;<sup>2</sup>)</div>
+  <div class="no">(4)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>w*</dt><dd>is the optimal share of total wealth in equities</dd>
+    <dt>&mu; &minus; r</dt><dd>is the equity risk premium</dd>
+    <dt>&gamma;</dt><dd>is risk aversion</dd>
+    <dt>&sigma;<sup>2</sup></dt><dd>is the variance of equity returns</dd>
+  </dl>
+</div>
+
+<p class="src">Source: Merton (1969). Samuelson (1969) derives the discrete-time equivalent.</p>
+
+<p>Hold equities in proportion to the reward for risk, and in inverse proportion to the amount of risk and the investor's dislike of it.</p>
+
+<p>Note that the numerator in equation (1) is written <code>ln(1+&mu;) &minus; ln(1+r)</code>. Under geometric Brownian motion an annual return quoted as <code>&mu;</code> corresponds to a drift of <code>ln(1+&mu;)</code>, and the Merton numerator is a difference of drifts. The source spreadsheet uses <code>&mu; &minus; r</code> directly, which at a 4.7% real return and a 1% real safe rate differs by about 2.8% of the numerator.</p>
+
+<h3>2.2 Why volatility is squared</h3>
+
+<p>Equation (3) penalises variance, not volatility, because to second order only the mean and variance of the return enter an expected utility calculation. The consequence is an asymmetry: doubling the risk premium doubles the position, while doubling volatility cuts it to a quarter. The result is about twice as sensitive to the volatility estimate as to the return estimate.</p>
+
+<h3>2.3 Why time horizon does not appear</h3>
+
+<p>Equation (4) contains no term for holding period. Two households with the same <code>&gamma;</code> hold the same share of financial wealth in equities whether they are 30 or 70.</p>
+
+<p>This is a result, not an omission, and it requires two conditions: returns independent from year to year, and constant relative risk aversion. Under both, the multi-year problem reduces to repeating the one-year problem, which is why the solution is called myopic (Samuelson, 1969).</p>
+
+<p>The common contrary argument observes that long-run returns are more predictable. That observation is correct but concerns the wrong quantity. Let annual log returns be independent and normal with mean <code>m</code> and standard deviation <code>s</code>. The standard deviation of the cumulative return is <code>s&radic;T</code>, which grows with the horizon, while the standard deviation of the annualised average is <code>s/&radic;T</code>, which shrinks. At <code>m</code> = 5% and <code>s</code> = 16%, on $10,000, with 90% intervals:</p>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 1. Two measurements of the same investment</caption>
+  <thead>
+    <tr>
+      <th>Horizon</th>
+      <th class="num">Annualised return, 90% range</th>
+      <th class="num">Ending value, 90% range</th>
+      <th class="num">Best divided by worst</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>10 years</td><td class="num">&minus;3.3% to +13.3%</td><td class="num">$7,173 to $37,896</td><td class="num">5.3&times;</td></tr>
+    <tr><td>30 years</td><td class="num">+0.2% to +9.8%</td><td class="num">$10,602 to $189,446</td><td class="num">17.9&times;</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The annualised range narrows and the spread of outcomes widens. A household consumes the ending balance, not the annualised average. The third column is the scale-free version of the second: it removes the effect of compounding, which would otherwise widen any dollar range mechanically, and it still triples.</p>
+
+<p>Two further points close the argument.</p>
+
+<p><strong>The narrowing carries no information.</strong> The annualised range narrows by a factor of <code>&radic;(T<sub>2</sub>/T<sub>1</sub>)</code>, an expression containing the two horizons and nothing about the asset. Every investment narrows at the identical rate, so the measurement cannot distinguish a Treasury bill from a penny stock.</p>
+
+<p><strong>The gap between assets never closes.</strong> Because the narrowing factor is the same for both, comparing two assets over the same horizon leaves their ratio fixed.</p>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 2. Annualised 90% width, both assets over the same horizon</caption>
+  <thead>
+    <tr><th>Horizon</th><th class="num">Bond-like, 5% volatility</th><th class="num">Equity, 16% volatility</th><th class="num">Ratio</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>10 years</td><td class="num">5.2 points</td><td class="num">16.6 points</td><td class="num">3.20&times;</td></tr>
+    <tr><td>30 years</td><td class="num">3.0 points</td><td class="num">9.6 points</td><td class="num">3.20&times;</td></tr>
+    <tr><td>100 years</td><td class="num">1.6 points</td><td class="num">5.3 points</td><td class="num">3.20&times;</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The ratio holds at 3.20, which is 16 divided by 5. Time rescales both assets identically and therefore contributes nothing to the choice between them. A longer horizon would favour equities only if it narrowed their range faster than it narrowed the alternative's, which it does not.</p>
+
+<p>Two supporting results point the same way. Bodie (1995) shows that the cost of insuring an equity position against underperforming cash rises with the horizon, from 20.0% of the amount invested over ten years to 33.9% over thirty at 16% volatility; if long horizons reduced equity risk, that insurance would get cheaper. And the probability of underperforming cash does fall with the horizon, from 27.7% to 15.2% on the same parameters, but the average shortfall when one occurs nearly doubles, leaving the expected shortfall flat.</p>
+
+<h3>2.4 The empirical question</h3>
+
+<p>All of the above assumes returns are independent from year to year. Whether they are is empirical and unsettled.</p>
+
+<p>Fama and French (1988) and Poterba and Summers (1988) find a slowly mean-reverting component in long-horizon returns, and Siegel documents that thirty year annualised real returns in United States data have dispersed less than independence implies. Against this: two centuries of data contain only about seven non-overlapping thirty year periods, so the estimate is weak, and the rolling windows normally used overlap heavily. Dimson, Marsh and Staunton show the United States was among the strongest markets of the twentieth century, so a conclusion drawn from it alone selects on the outcome. Pástor and Stambaugh (2012) find that once parameter uncertainty is included, predictive variance per year <em>rises</em> with the horizon. Barberis (2000) contains both effects and finds the optimal equity share does rise with horizon, but by much less than mean reversion alone implies.</p>
+
+<p>Version 1 assumes independence, which sits between the two positions. Testing it properly means a variance ratio test with the standard errors of Lo and MacKinlay (1988) on the same return series the covariance matrix uses. That is recorded in Table 8 as planned work, not claimed as done.</p>
+
+<p>Section 6 gives the practical size of this question: the age-based rule that the horizon argument produces costs 2.00% of lifetime consumption against 0.06% for the approach used here.</p>
+
+<h2>3. Layer one: the four inputs</h2>
+
+<h3>3.1 Expected equity return</h3>
+
+<p>The tool sets <code>&mu;</code> to the forward earnings yield, the inverse of the forward price to earnings ratio. At a forward P/E of 22 this is 4.5%.</p>
+
+<p>The basis is the Gordon growth relationship: in a steady state the expected real return on equity converges to the earnings yield, because earnings not distributed are reinvested and reappear as growth. Campbell and Shiller (1988, 1998) established that valuation ratios carry information about long-horizon returns.</p>
+
+<p>The alternative, a historical average near 7% real, is rejected because a century of annual data still leaves a standard error of 1.5 to 2 percentage points on the mean, and because it ignores the price being paid today.</p>
+
+<p>The earnings yield is a real return, so <code>r</code> must be real: the tool subtracts expected inflation from the nominal Treasury yield. Pairing a real equity return with a nominal safe rate would overstate the risk premium by the full rate of inflation.</p>
+
+<h3>3.2 Volatility</h3>
+
+<p>The equity sleeve holds the S&amp;P 500, developed markets outside the United States, and emerging markets. Its variance is</p>
+
+<div class="eqn">
+  <div class="body">&sigma;<sup>2</sup> = w&prime;&Sigma;w = &Sigma;<sub>i</sub> &Sigma;<sub>j</sub> w<sub>i</sub> w<sub>j</sub> &sigma;<sub>i</sub> &sigma;<sub>j</sub> &rho;<sub>ij</sub></div>
+  <div class="no">(5)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>&sigma;<sup>2</sup></dt><dd>is the variance of the combined equity portfolio</dd>
+    <dt>w<sub>i</sub></dt><dd>is the weight of asset i within the sleeve</dd>
+    <dt>&sigma;<sub>i</sub></dt><dd>is the volatility of asset i alone</dd>
+    <dt>&rho;<sub>ij</sub></dt><dd>is the correlation between assets i and j</dd>
+    <dt>&Sigma;</dt><dd>is the covariance matrix</dd>
+  </dl>
+</div>
+
+<p>The correlation term is the point. The source spreadsheet used a weighted average of individual variances, <code>&Sigma;<sub>i</sub> w<sub>i</sub> &sigma;<sub>i</sub><sup>2</sup></code>, which ignores correlations and is equivalent to assuming the three markets move in lockstep. That always overstates risk, and because risk sits in the denominator of equation (4), it always understates the allocation. On the source spreadsheet's own inputs, weights of 65, 28 and 7 percent and volatilities of 15.75%, 15.26% and 16.83%:</p>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 3. Effect of the covariance treatment</caption>
+  <thead>
+    <tr><th>Denominator variance</th><th class="num">Value</th><th class="num">Implied &sigma;</th><th class="num">Merton share</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Weighted average of variances</td><td class="num">0.02463</td><td class="num">15.69%</td><td class="num">81.6%</td></tr>
+    <tr><td>Portfolio variance at &rho; = 0.8</td><td class="num">0.02218</td><td class="num">14.89%</td><td class="num">90.6%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Nine percentage points of allocation. A correction, not a refinement.</p>
+
+<h3>3.3 The safe rate</h3>
+
+<p>A short Treasury bill yield less expected inflation. This is safe in nominal rather than real terms, so it is itself an approximation; Treasury Inflation-Protected Securities would be the exact instrument, and a later version may use them.</p>
+
+<h3>3.4 Risk aversion</h3>
+
+<p><code>&gamma;</code> describes the household, not the market. It cannot be estimated from prices and there is no value to look up. Household portfolio studies and experimental elicitation both produce values between 2 and 10, a range wide enough to change the recommendation by a factor of five.</p>
+
+<p>The tool elicits it from three questions, because the constraint binds from three independent directions:</p>
+
+<ul>
+  <li><strong>Willingness.</strong> Volatility the household can tolerate without abandoning the strategy.</li>
+  <li><strong>Ability.</strong> Loss it can absorb without damage to its standard of living.</li>
+  <li><strong>Need.</strong> Risk its objectives actually require.</li>
+</ul>
+
+<p>The scale is 1 to 10 rather than the source spreadsheet's 2 to 5, because the layer two discount rate equations take <code>&gamma;/10</code> as an input and were fitted on that scale. Section 6 shows this is the input that matters most.</p>
+
+<h2>4. Layer two: the human capital multiplier</h2>
+
+<p>Equation (4) gives the equity share of <strong>total</strong> wealth, which has two components:</p>
+
+<div class="eqn">
+  <div class="body">Total wealth = W + HC</div>
+  <div class="no">(6)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>W</dt><dd>is financial wealth, the money in accounts today</dd>
+    <dt>HC</dt><dd>is human capital, the value today of wages and benefits still to come</dd>
+  </dl>
+</div>
+
+<p>Human capital cannot be traded, so the whole equity position must sit inside the financial portion. The target dollar amount in equities is <code>w* &times; (W + HC)</code>; dividing by the money actually available gives</p>
+
+<div class="eqn">
+  <div class="body">w<sub>fin</sub> = w* &times; (W + HC) / W = w* &times; (1 + HC/W)</div>
+  <div class="no">(7)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>w<sub>fin</sub></dt><dd>is the share of the investable portfolio in equities</dd>
+    <dt>w*</dt><dd>is the Merton share from equation (4)</dd>
+    <dt>HC/W</dt><dd>is human capital divided by financial wealth, the quantity driving the result</dd>
+  </dl>
+</div>
+
+<p class="src">Source: Bodie, Merton and Samuelson (1992); Merton (1971).</p>
+
+<p>Age enters here, indirectly. The variable doing the work is <code>HC/W</code>, not age. Where the two diverge, the model and the age rule give different answers:</p>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 4. Where this model and the age rule disagree</caption>
+  <thead>
+    <tr><th>Household</th><th>Age rule</th><th>This model</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Aged 25, inherited wealth, no intention of working</td>
+      <td>High equity share, long horizon</td>
+      <td>Close to the Merton share alone, since there is little human capital to offset</td>
+    </tr>
+    <tr>
+      <td>Aged 62, secure salary and a full Social Security record</td>
+      <td>Conservative, retirement is near</td>
+      <td>High equity share, since that income is a large bond-like holding</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>The multiplier is large. At Choi's default inputs <code>HC/W</code> is about 4.4, turning a Merton share of 16.9% into a financial allocation of 91.5%.</p>
+
+<p>For younger workers the product exceeds 1, meaning the model calls for leverage. The clip prevents it. That cap is our constraint, not the model's conclusion. It binds until human capital falls below roughly 10 to 23% of financial wealth, which for a typical saver occurs in the late fifties, so the glide path is flat near 100% for most of a working life and then declines.</p>
+
+<h2>5. Layer two: valuing human capital</h2>
+
+<p>Everything in layer two reduces to one question: what discount rate applies to a wage to be received in twenty years?</p>
+
+<p>Not the safe rate. A salary carries individual risk, is illiquid, and is correlated with equity markets, since job losses cluster in recessions. Each makes a future wage worth less today than a Treasury paying the same amount, expressed as a higher discount rate.</p>
+
+<p>No formula gives that rate. Obtaining it means solving the full life-cycle problem: consumption, saving and portfolio choice in every year of an eighty year life under uncertain wages, returns and lifespan, with no ability to borrow. Cocco, Gomes and Maenhout (2005) solved it numerically by backward induction. The output is a table of policies, not an equation.</p>
+
+<p>Choi, Liu and Liu (2025) solved that model for 5,103 parameter sets, then fitted closed-form expressions to the resulting discount rates. This delivers the numerical result at the cost of one line of arithmetic, and adopting it rather than re-solving the model is the highest-value decision in this design.</p>
+
+<h3>5.1 The fitted discount rates</h3>
+
+<p>Two expressions, taken from Choi's spreadsheet. Write <code>x</code> for age divided by 100 and <code>&pi;</code> for the log excess drift <code>ln(1+&mu;) &minus; &sigma;<sup>2</sup>/2 &minus; ln(1+r)</code>.</p>
+
+<div class="eqn">
+  <div class="body">r<sub>wage</sub> = &minus;0.020 + 0.087(&gamma;/10) &minus; 0.267&pi; + 1.132 ln(1+r) + 4.332&sigma;<sup>2</sup><sub>perm</sub> + 0.028&sigma;<sup>2</sup><sub>tran</sub> + 0.010&beta;<sub>LS</sub> &minus; 0.149x + 0.142x<sup>2</sup></div>
+  <div class="no">(8)</div>
+</div>
+
+<div class="eqn">
+  <div class="body">r<sub>SS</sub> = &minus;0.166 + 0.0003(&gamma;/10) &minus; 0.217&pi; + 0.893 ln(1+r) + 0.476x &minus; 0.295x<sup>2</sup></div>
+  <div class="no">(9)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>r<sub>wage</sub></dt><dd>is the annual rate discounting a future wage</dd>
+    <dt>r<sub>SS</sub></dt><dd>is the annual rate discounting a future Social Security benefit</dd>
+    <dt>&gamma;</dt><dd>is risk aversion on the 1 to 10 scale</dd>
+    <dt>&pi;</dt><dd>is the log excess drift of equities</dd>
+    <dt>r</dt><dd>is the real safe rate</dd>
+    <dt>&sigma;<sub>perm</sub></dt><dd>is the volatility of permanent wage shocks, pay changes that never reverse</dd>
+    <dt>&sigma;<sub>tran</sub></dt><dd>is the volatility of temporary wage shocks</dd>
+    <dt>&beta;<sub>LS</sub></dt><dd>is the regression coefficient of log labour income shocks on log stock returns</dd>
+    <dt>x</dt><dd>is age divided by 100</dd>
+  </dl>
+</div>
+
+<p class="src">Source: Choi, Liu and Liu (2025). Both expressions reproduce the stored spreadsheet values to eight decimal places.</p>
+
+<p>At <code>&gamma;</code> = 5, <code>&mu;</code> = 5% and <code>r</code> = 2%, wages discount at about 9.7% and Social Security at about 3.3%. The gap between 9.7% and a 2% real Treasury yield is the annual price the model places on wage risk, illiquidity and timing combined.</p>
+
+<p>Two coefficients are worth reading. The loading on <code>&gamma;</code> is 0.087 for wages and 0.0003 for Social Security: a cautious household marks down a risky salary sharply and an inflation-indexed government annuity not at all. And the wage rate is highest early in life, falls to a mid-life minimum near age 53, and drops discretely at retirement when income becomes risk-free. Social Security is therefore treated as an inflation-indexed government bond, which is what it is, and that is a large part of why the model tolerates high equity shares late in life.</p>
+
+<h3>5.2 Calibration constants</h3>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 5. Values fixed inside the approximation</caption>
+  <thead>
+    <tr><th>Parameter</th><th>Symbol</th><th class="num">Value</th><th>Role</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Equity volatility</td><td class="sym">&sigma;</td><td class="num">18.5%</td><td>fixed inside equations (8) and (9)</td></tr>
+    <tr><td>Permanent wage shock volatility</td><td class="sym">&sigma;<sub>perm</sub></td><td class="num">13.0%</td><td>largest driver of the wage discount rate</td></tr>
+    <tr><td>Temporary wage shock volatility</td><td class="sym">&sigma;<sub>tran</sub></td><td class="num">24.2%</td><td>negligible, since it averages out over a career</td></tr>
+    <tr><td>Labour income to equity beta</td><td class="sym">&beta;<sub>LS</sub></td><td class="num">0.40</td><td>enters only through the 0.010 coefficient</td></tr>
+    <tr><td>Retirement age</td><td class="sym">&mdash;</td><td class="num">67</td><td>wages stop, benefits begin</td></tr>
+    <tr><td>Social Security replacement rate</td><td class="sym">&mdash;</td><td class="num">40%</td><td>of final wage, unless entered directly</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>5.3 The imputed earnings path</h3>
+
+<p>The tool asks for a current salary and fills in the career using the CGM age profile:</p>
+
+<div class="eqn">
+  <div class="body">wage(a) = W<sub>0</sub> &sdot; exp[ 0.5((a&minus;a<sub>0</sub>)&sigma;<sup>2</sup><sub>perm</sub> + &sigma;<sup>2</sup><sub>tran</sub>) + 0.3194(a&minus;a<sub>0</sub>) &minus; 0.00577(a<sup>2</sup>&minus;a<sub>0</sub><sup>2</sup>) + 0.000033(a<sup>3</sup>&minus;a<sub>0</sub><sup>3</sup>) ]</div>
+  <div class="no">(10)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>wage(a)</dt><dd>is expected salary at age a</dd>
+    <dt>W<sub>0</sub></dt><dd>is the salary entered today</dd>
+    <dt>a<sub>0</sub></dt><dd>is current age</dd>
+    <dt>a</dt><dd>is the projected age, running to retirement at 67</dd>
+    <dt>&sigma;<sub>perm</sub>, &sigma;<sub>tran</sub></dt><dd>are the wage shock volatilities from Table 5</dd>
+  </dl>
+</div>
+
+<p class="src">Source: Cocco, Gomes and Maenhout (2005), as implemented by Choi.</p>
+
+<p>The cubic in <code>a</code> produces the career hump: earnings rise through the thirties, peak near fifty, then flatten. The leading term is a statistical adjustment, not a feature of careers. Wage shocks are multiplicative, so projected wages are lognormal, and a lognormal's mean exceeds its median by half its variance. Adding that half variance converts the typical path into the expected path, which is what a present value requires.</p>
+
+<p>The tool supports one earner or two, with separate wage and benefit streams, and a benefit may be entered directly in place of the 40% replacement assumption.</p>
+
+<h2>6. Accuracy, and what the alternative rules cost</h2>
+
+<p>Choi, Liu and Liu report both figures a user should want: how closely the approximation tracks the exact numerical solution, and how much worse the common rules of thumb are.</p>
+
+<p>On accuracy, regressing the true optimal equity share on the approximation across all 5,103 parameter sets and grid points gives an R<sup>2</sup> of 0.99, a slope of 0.95 and an intercept of 0.05, with a root mean square error of 3.66 percentage points. Sixty-six percent of parameter sets have an error of 4 percentage points or less.</p>
+
+<p>On the alternatives, welfare loss is measured as the reduction in lifetime consumption that would produce the same drop in expected utility, from the perspective of a 22 year old.</p>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 6. Average welfare loss against the optimal policy, across 5,103 parameter sets</caption>
+  <thead>
+    <tr><th>Portfolio rule</th><th class="num">All parameter sets</th><th class="num">At &gamma; = 4</th><th class="num">At &gamma; = 10</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>This approximation</td><td class="num">0.06%</td><td class="num">0.03%</td><td class="num">0.07%</td></tr>
+    <tr><td>100 minus your age in equities</td><td class="num">2.00%</td><td class="num">2.11%</td><td class="num">4.11%</td></tr>
+    <tr><td>Constant 60% equities</td><td class="num">3.75%</td><td class="num">1.58%</td><td class="num">9.27%</td></tr>
+    <tr><td>Never hold equities</td><td class="num">7.86%</td><td class="num">7.93%</td><td class="num">7.09%</td></tr>
+    <tr><td>Always 100% equities</td><td class="num">11.85%</td><td class="num">0.56%</td><td class="num">29.55%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="src">Source: Choi, Liu and Liu (2025), Table 4.</p>
+
+<p>Three results follow directly from this table.</p>
+
+<p><strong>The approximation is close enough to use.</strong> A loss of 0.06% of lifetime consumption is smaller than the fee difference between two reasonable index funds, and roughly thirty times smaller than the best rule of thumb tested.</p>
+
+<p><strong>The age rule is the best of the simple rules and still costs thirty times more.</strong> This is the practical measure of section 2.3. The horizon argument is not catastrophic, but it is not free either.</p>
+
+<p><strong>Holding 100% equities is the worst rule tested, and risk aversion decides everything.</strong> At <code>&gamma;</code> = 4 it costs 0.56%, less than the age rule. At <code>&gamma;</code> = 10 it costs 29.55%. This is why <code>&gamma;</code> is elicited carefully in section 3.4 and why the tool reports a range across plausible values rather than a single figure. The same table shows why no fixed allocation, including 60%, can serve every household.</p>
+
+<p>A theoretical result complements this. Subtracting the certainty equivalent at an arbitrary allocation from that at the optimum leaves</p>
+
+<div class="eqn">
+  <div class="body">CE(w*) &minus; CE(w) = (&gamma;&sigma;<sup>2</sup>/2) &sdot; (w &minus; w*)<sup>2</sup></div>
+  <div class="no">(11)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>w &minus; w*</dt><dd>is the allocation error as a decimal, so 0.10 is ten percentage points</dd>
+    <dt>&gamma;&sigma;<sup>2</sup>/2</dt><dd>is the curvature, setting how costly a given error is</dd>
+  </dl>
+</div>
+
+<p>The loss is quadratic, so it is flat near the optimum. At <code>&gamma;</code> = 3 and <code>&sigma;</code> = 16%, an error of ten percentage points costs 3.8 basis points a year and an error of forty costs 61.4. The tool therefore aims to identify a defensible region rather than a figure to the percentage point.</p>
+
+<h2>7. Declared deviations</h2>
+
+<h3>7.1 Conflicting volatility assumptions</h3>
+
+<p>Equations (8) and (9) fix equity volatility at 18.5%, the value used when the underlying model was solved. This tool's equity sleeve computes to roughly 14.9%. The tool uses its own <code>&sigma;</code> in equation (4), where the quantity is measurable, and retains 18.5% inside equations (8) and (9), where it is part of a fitted calibration. Substituting 14.9% into the fitted equations would use them outside their fitted range; adopting 18.5% in equation (4) would apply a known-wrong number to the actual portfolio.</p>
+
+<h3>7.2 United States calibration</h3>
+
+<p>The constants in Table 5 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
+
+<h3>7.3 Labour income correlated with equities</h3>
+
+<p>Choi, Liu and Liu extend the formula to households whose pay moves with the market, subtracting <code>(&beta;<sub>perm</sub> + &beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, on the reasoning that such human capital is partly an implicit equity holding. <strong>This tool does not implement that extension</strong>, because the spreadsheet it is built on does not. The contemporaneous correlation is near zero for the average household, so the omission is immaterial for most users, but it matters for anyone paid substantially in equity or employed in a market-linked role. Recorded in Table 8.</p>
+
+<h3>7.4 Departures from the source spreadsheet</h3>
+
+<p>Four features of the original workbook are deliberately not reproduced: the weighted average variance denominator of section 3.2, arithmetic rather than logarithmic excess returns, a risk aversion dropdown missing one of its four documented levels, and a goals worksheet stored as pasted values rather than formulas, which did not recalculate when inputs changed.</p>
+
+<p>The first implementation stage reproduces the original outputs exactly as a regression baseline. Each correction then lands separately, so its effect is measured rather than asserted.</p>
+
+<h2>8. Components included, postponed and excluded</h2>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 7. Included in version 1</caption>
+  <thead>
+    <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Merton share</td><td>Merton (1969), Samuelson (1969)</td><td>The foundation. Everything else is a correction to it.</td></tr>
+    <tr><td>Human capital multiplier</td><td>Bodie, Merton and Samuelson (1992)</td><td>Largest single effect, at the cost of one multiplication, and the only rigorous basis for varying allocation with age.</td></tr>
+    <tr><td>Risk-adjusted wage discounting</td><td>Choi, Liu and Liu (2025), fitted to Cocco, Gomes and Maenhout (2005)</td><td>Reduces welfare loss from 2.00% under the best rule of thumb to 0.06%, at the cost of two equations.</td></tr>
+    <tr><td>Valuation-based expected return</td><td>Campbell and Shiller (1988, 1998)</td><td>Conditions on current prices rather than an unconditional average with a two point standard error.</td></tr>
+    <tr><td>Full covariance matrix</td><td>Standard portfolio theory</td><td>Corrects a nine point error in the source spreadsheet.</td></tr>
+    <tr><td>Sensitivity across &gamma; and &mu;</td><td>Addition of this tool</td><td>Table 6 shows the answer depends on &gamma; more than on anything else, and &gamma; cannot be measured.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 8. Postponed</caption>
+  <thead>
+    <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Equity-correlated labour income</td><td>Choi, Liu and Liu (2025), equation (19)</td><td>Already derived and tested by the authors, so this is implementation rather than research. Matters for equity-compensated households. See section 7.3.</td></tr>
+    <tr><td>Variance ratio test on the independence assumption</td><td>Lo and MacKinlay (1988)</td><td>Would replace the assumption in section 2.4 with a measurement, using return series the covariance matrix needs anyway.</td></tr>
+    <tr><td>Uncertainty in the expected return</td><td>Barberis (2000)</td><td>Version 1 treats a point estimate of the risk premium as certain. Allowing for the uncertainty lowers the equity share, more so at long horizons. Requires a Bayesian layer.</td></tr>
+    <tr><td>Return predictability</td><td>Campbell and Viceira (2002)</td><td>The only clean route to making horizon matter. Requires a vector autoregression plus a hedging demand term.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 9. Excluded</caption>
+  <thead>
+    <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Skewness and fat tails</td><td>Higher-moment portfolio choice</td><td>Requires estimating co-skewness and co-kurtosis, which are noisy in the sample sizes available, for a small shift in the recommendation.</td></tr>
+    <tr><td>Direct solution of the life-cycle model</td><td>Cocco, Gomes and Maenhout (2005)</td><td>The approximation costs 0.06% of lifetime consumption against the exact solution. Re-solving it is months of work for that margin.</td></tr>
+    <tr><td>Leverage when young</td><td>Ayres and Nalebuff (2010)</td><td>The extrapolation of the capped result in section 4, noted but not adopted. The model prices neither margin calls, nor the link between job loss and market falls, nor investors abandoning leveraged strategies at the bottom.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>9. References</h2>
+
+<ol class="refs">
+  <li>Ayres, I. and Nalebuff, B. (2010). <em>Lifecycle Investing</em>. Basic Books.</li>
+  <li>Barberis, N. (2000). Investing for the Long Run when Returns Are Predictable. <em>Journal of Finance</em>, 55(1), 225 to 264.</li>
+  <li>Bodie, Z. (1995). On the Risk of Stocks in the Long Run. <em>Financial Analysts Journal</em>, 51(3), 18 to 22.</li>
+  <li>Bodie, Z., Merton, R. C. and Samuelson, W. F. (1992). Labor Supply Flexibility and Portfolio Choice in a Life Cycle Model. <em>Journal of Economic Dynamics and Control</em>, 16(3 to 4), 427 to 449.</li>
+  <li>Campbell, J. Y. and Shiller, R. J. (1988, 1998). Work on valuation ratios and long-horizon returns.</li>
+  <li>Campbell, J. Y. and Viceira, L. M. (2002). <em>Strategic Asset Allocation: Portfolio Choice for Long-Term Investors</em>. Oxford University Press.</li>
+  <li>Choi, J. J., Liu, C. and Liu, P. (2025). Practical Finance: An Approximate Solution to Lifecycle Portfolio Choice. Yale University and NBER, November 2025. The paper and spreadsheet this tool implements.</li>
+  <li>Cocco, J. F., Gomes, F. J. and Maenhout, P. J. (2005). Consumption and Portfolio Choice over the Life Cycle. <em>Review of Financial Studies</em>, 18(2), 491 to 533.</li>
+  <li>Dimson, E., Marsh, P. and Staunton, M. (2002). <em>Triumph of the Optimists: 101 Years of Global Investment Returns</em>. Princeton University Press.</li>
+  <li>Fama, E. F. and French, K. R. (1988). Permanent and Temporary Components of Stock Prices. <em>Journal of Political Economy</em>, 96(2), 246 to 273.</li>
+  <li>Lo, A. W. and MacKinlay, A. C. (1988). Stock Market Prices Do Not Follow Random Walks: Evidence from a Simple Specification Test. <em>Review of Financial Studies</em>, 1(1), 41 to 66.</li>
+  <li>Merton, R. C. (1969). Lifetime Portfolio Selection under Uncertainty: The Continuous-Time Case. <em>Review of Economics and Statistics</em>, 51(3), 247 to 257.</li>
+  <li>Merton, R. C. (1971). Optimum Consumption and Portfolio Rules in a Continuous-Time Model. <em>Journal of Economic Theory</em>, 3(4), 373 to 413.</li>
+  <li>Pástor, Ľ. and Stambaugh, R. F. (2012). Are Stocks Really Less Volatile in the Long Run? <em>Journal of Finance</em>, 67(2), 431 to 477.</li>
+  <li>Poterba, J. M. and Summers, L. H. (1988). Mean Reversion in Stock Prices: Evidence and Implications. <em>Journal of Financial Economics</em>, 22(1), 27 to 59.</li>
+  <li>Samuelson, P. A. (1969). Lifetime Portfolio Selection by Dynamic Stochastic Programming. <em>Review of Economics and Statistics</em>, 51(3), 239 to 246.</li>
+  <li>Siegel, J. J. <em>Stocks for the Long Run</em>. McGraw-Hill, multiple editions since 1994.</li>
+</ol>
+
+<div class="footnote">
+<p>This tool and this document are provided for educational and illustrative purposes only. They do not constitute investment, financial, tax or legal advice, and their use creates no advisory or fiduciary relationship. All outputs depend on the assumptions documented above, several of which are estimates that competent practitioners would set differently. Past and simulated results do not predict future outcomes. Consult a qualified professional before making financial decisions.</p>
+</div>
+
+</div>
