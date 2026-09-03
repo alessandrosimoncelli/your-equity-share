@@ -95,8 +95,8 @@ asserted.
 | 2. Market data pipeline and risk-aversion elicitation | **done** |
 | 3. Choi's formula: human capital, discount rates, imputed earnings | **done** |
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |
-| 5. Streamlit front end | next |
-| 6. Sensitivity across gamma and the expected return | planned |
+| 5. Streamlit front end | **done** |
+| 6. Portfolio analytics and factor exposure | planned |
 
 ### Stage 1: the baseline
 
@@ -131,7 +131,20 @@ python -m venv .venv
 .venv/Scripts/python -m pytest
 ```
 
-Then ask it the question:
+Then ask it the question. There are two front ends.
+
+**In the browser:**
+
+```bash
+pip install -e ".[app]"
+streamlit run app.py
+```
+
+Sliders for risk aversion and the expected return, so you can see by dragging
+how much the answer depends on each. The recommendation, its working, a
+sensitivity curve and a glide path across ages.
+
+**In the terminal:**
 
 ```bash
 python recommend.py                                          # asks you the inputs

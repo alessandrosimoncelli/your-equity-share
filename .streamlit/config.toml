@@ -1,0 +1,11 @@
+# Restrained defaults so the page reads as a document, not a dashboard.
+[theme]
+base = "light"
+primaryColor = "#1F3864"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F7F7F7"
+textColor = "#000000"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
