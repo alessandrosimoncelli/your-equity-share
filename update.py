@@ -1,34 +1,29 @@
 #!/usr/bin/env python3
 """Update the tool's market data. Run this before using the tool.
 
-    python update.py              # fetch the latest data and save it
-    python update.py --dry-run    # show what would change, save nothing
-    python update.py --years 10   # estimate volatility over ten years instead of five
+    python update.py                     # fetch the latest data and save it
+    python update.py --dry-run           # show what would change, save nothing
+    python update.py --years 10          # volatility over ten years, not five
+    python update.py --fixed-return 0.05 # set the expected return by hand
 
-Two of the three numbers the model uses can be observed, and this script
-refreshes both:
+All three inputs the model uses are now fetched, from three free sources that
+need no key or account:
 
-    real risk-free rate     the 30-year TIPS yield, from FRED
-    stock market volatility estimated from daily closes of your chosen index
-
-The third, the expected real return on the stock market, is a judgement about
-the future rather than an observation of the past. No source publishes it. It
-stays as you set it in config/market_data.toml and this script reports its age.
+    real risk-free rate       FRED, the 30-year TIPS yield
+    stock market volatility   Yahoo, daily adjusted closes
+    expected stock return     Damodaran's implied equity risk premium,
+                              published monthly, plus the real risk-free rate
 
 Nothing here runs when you use the tool. The model reads the saved file, so a
-slow or unreachable data provider can never break a demonstration.
+slow or unreachable provider can never break a demonstration.
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
-import io
-import json
 import sys
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -36,15 +31,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from merton_share.market_data import (  # noqa: E402
     DEFAULT_CONFIG_PATH,
-    MarketData,
-    Sleeve,
     load_market_data,
+)
+from merton_share.providers import (  # noqa: E402
+    DataUnavailable,
+    parse_damodaran_erp,
+    parse_fred_csv,
+    parse_price_json,
 )
 from merton_share.statistics import (  # noqa: E402
     TRADING_DAYS_PER_YEAR,
-    align_series,
     annualised_volatility,
-    correlation_matrix,
     log_returns,
     validate_prices,
 )
@@ -54,33 +51,22 @@ PRICE_URL = (
     "?range={range}&interval=1d"
 )
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
+ERP_URL = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx"
 
-# 30-year Treasury Inflation-Protected Securities, constant maturity. Already a
-# real yield, which is what the model needs and what Choi's guide asks for.
-# Deriving a real rate as a nominal yield less a breakeven of a different
-# maturity would mismatch the two.
+# 30-year Treasury Inflation-Protected Securities, constant maturity. A real
+# yield already, which is what the model needs and what Choi's guide asks for.
 FRED_REAL_RISK_FREE = "DFII30"
 
-# The endpoint rejects the default urllib agent string.
+# The price endpoint rejects the default urllib agent string.
 USER_AGENT = "Mozilla/5.0 (compatible; merton-share/0.1; research tool)"
-TIMEOUT_SECONDS = 30
+TIMEOUT_SECONDS = 40
 
 
-class DataUnavailable(Exception):
-    """A provider could not be reached or returned something unusable."""
-
-
-@dataclass
-class Fetched:
-    ticker: str
-    closes: dict[str, float]
-
-
-def _get(url: str) -> str:
+def _get(url: str) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            return response.read().decode("utf-8", errors="replace")
+            return response.read()
     except urllib.error.HTTPError as exc:
         raise DataUnavailable(f"HTTP {exc.code} {exc.reason} from {url}") from exc
     except urllib.error.URLError as exc:
@@ -89,79 +75,11 @@ def _get(url: str) -> str:
         raise DataUnavailable(f"timed out after {TIMEOUT_SECONDS}s: {url}") from exc
 
 
-def parse_price_json(text: str, ticker: str) -> Fetched:
-    """Parse Yahoo's chart JSON into {date: close}.
-
-    Rows with a null close are dropped. The provider emits them for days the
-    exchange was shut, and carrying them through as zeros would manufacture
-    enormous fake returns.
-    """
-    try:
-        payload = json.loads(text)
-    except json.JSONDecodeError:
-        head = text.strip().splitlines()[:1]
-        raise DataUnavailable(
-            f"{ticker}: response is not JSON. First line: {head}"
-        ) from None
-
-    error = (payload.get("chart") or {}).get("error")
-    if error:
-        raise DataUnavailable(f"{ticker}: provider returned an error: {error}")
-
-    try:
-        result = payload["chart"]["result"][0]
-        stamps = result["timestamp"]
-        closes = result["indicators"]["quote"][0]["close"]
-    except (KeyError, IndexError, TypeError):
-        raise DataUnavailable(
-            f"{ticker}: response did not contain a price series"
-        ) from None
-
-    if len(stamps) != len(closes):
-        raise DataUnavailable(
-            f"{ticker}: {len(stamps)} timestamps but {len(closes)} closes"
-        )
-
-    out: dict[str, float] = {}
-    for stamp, close in zip(stamps, closes):
-        if close is None:
-            continue
-        day = datetime.fromtimestamp(stamp, tz=timezone.utc).date().isoformat()
-        out[day] = float(close)
-
-    if not out:
-        raise DataUnavailable(f"{ticker}: no usable observations in the response")
-    return Fetched(ticker=ticker, closes=out)
-
-
-def parse_fred_csv(text: str, series: str) -> tuple[date, float]:
-    """Return the most recent non-missing observation of a FRED series."""
-    reader = csv.reader(io.StringIO(text))
-    header = next(reader, None)
-    if not header or len(header) < 2:
-        raise DataUnavailable(f"{series}: unexpected response from FRED")
-    latest: tuple[date, float] | None = None
-    for row in reader:
-        if len(row) < 2:
-            continue
-        day, raw = row[0].strip(), row[1].strip()
-        if raw in ("", "."):
-            continue
-        try:
-            latest = (date.fromisoformat(day), float(raw) / 100.0)
-        except ValueError:
-            continue
-    if latest is None:
-        raise DataUnavailable(f"{series}: no observations in the response")
-    return latest
-
-
 def trim_to_window(closes: dict[str, float], years: int) -> dict[str, float]:
     """Keep roughly the last `years` of observations.
 
-    The guard on `wanted` is not decorative: `sorted(closes)[-0:]` is
-    `sorted(closes)[0:]`, so without it a window of zero would silently return
-    the entire history instead of nothing.
+    The guard is not decorative: `sorted(x)[-0:]` is `sorted(x)[0:]`, so without
+    it a window of zero would return the whole history instead of nothing.
     """
     wanted = years * TRADING_DAYS_PER_YEAR
     if wanted <= 0:
@@ -172,10 +90,13 @@ def trim_to_window(closes: dict[str, float], years: int) -> dict[str, float]:
 
 def estimate_volatility(
     ticker: str, years: int, force: bool
-) -> tuple[float, date, int]:
-    """Annualised volatility of one instrument, with the data checked first."""
+) -> tuple[float, date, int, bool]:
+    """Annualised volatility of one instrument, with the series checked first."""
     series = parse_price_json(
-        _get(PRICE_URL.format(ticker=ticker, range=f"{max(years, 1)}y")), ticker
+        _get(PRICE_URL.format(ticker=ticker, range=f"{max(years, 1)}y")).decode(
+            "utf-8", "replace"
+        ),
+        ticker,
     )
     closes = trim_to_window(series.closes, years)
     dates = sorted(closes)
@@ -186,7 +107,7 @@ def estimate_volatility(
         detail = "; ".join(str(p) for p in problems)
         if not force:
             raise DataUnavailable(
-                f"{ticker} failed validation: {detail}. "
+                f"{ticker} failed its checks: {detail}. "
                 f"Rerun with --force if the data is genuinely fine."
             )
         print(f"  warning, continuing under --force: {detail}")
@@ -195,24 +116,11 @@ def estimate_volatility(
         annualised_volatility(log_returns(prices)),
         date.fromisoformat(dates[-1]),
         len(prices) - 1,
+        series.adjusted,
     )
 
 
-def render_config(
-    *,
-    expected_return: float,
-    real_risk_free: float,
-    stock_volatility: float,
-    market_ticker: str,
-    as_of: date,
-    window_years: int,
-    observations: int,
-    sleeves: list[dict[str, object]] | None = None,
-    correlation: list[list[float]] | None = None,
-    covariance_as_of: date | None = None,
-    covariance_observations: int = 0,
-) -> str:
-    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+def render_config(**f) -> str:
     nl = chr(10)
     out = [
         "# Market data for the Merton Share tool.",
@@ -220,75 +128,76 @@ def render_config(
         "# Refresh with:  python update.py",
         "#",
         "# The model reads this file and never fetches anything itself, so an",
-        "# unreachable data provider can never break a demonstration.",
+        "# unreachable provider can never break a demonstration.",
         "#",
         "# See docs/inputs.md for what each number means.",
         "",
         "[meta]",
-        f'generated_at = "{now}"',
+        f'generated_at = "{f["generated_at"]}"',
         'generated_by = "update.py"',
         "",
         "# The three numbers the model uses. This section is required.",
         "[market]",
         "",
-        "# YOUR JUDGEMENT. Not fetched, because nobody publishes a forecast of",
-        "# this. Choi's guide defaults to 5%, roughly what current valuation",
-        "# ratios imply if they hold and earnings growth matches its history.",
-        f"expected_stock_real_return = {expected_return:.6f}",
-        "",
-        f"# Fetched: FRED {FRED_REAL_RISK_FREE}, the 30-year TIPS yield. Already a",
-        "# real yield, so no inflation adjustment is applied. Reduce it by your",
-        "# marginal income tax rate if your bonds sit in a taxable account.",
-        f"real_risk_free = {real_risk_free:.6f}",
-        "",
-        f"# Fetched: {window_years} years of daily closes of {market_ticker},",
-        f"# {observations} returns, annualised.",
-        f"stock_volatility = {stock_volatility:.6f}",
-        f'market_ticker = "{market_ticker}"',
-        "",
-        f"as_of = {as_of.isoformat()}",
     ]
-
-    if sleeves and correlation and covariance_as_of is not None:
-        rule = "# " + "-" * 72
+    if f["method"] == "implied":
         out += [
-            "",
-            rule,
-            "# OPTIONAL. The model uses stock_volatility above. These sections",
-            "# only let a multi-fund holder derive that number instead. Nothing",
-            "# reads them unless you copy the derived figure up into [market].",
-            rule,
-            "",
-            "[covariance]",
-            f"as_of = {covariance_as_of.isoformat()}",
-            f"observations = {covariance_observations}",
-            f"window_years = {window_years}",
-            'frequency = "daily"',
-            f"trading_days_per_year = {TRADING_DAYS_PER_YEAR}",
-            'source = "Yahoo daily closes, price returns"',
-            "correlation = [",
+            "# Implied equity risk premium plus the real risk-free rate. The",
+            "# premium is Damodaran's, published monthly, and is derived by",
+            "# discounting expected index cash flows back to the current level.",
+            f"#   implied premium {f['erp']:.4f} as of {f['erp_as_of']}",
+            f"#   plus real rate  {f['real_risk_free']:.4f}",
+            "# CAVEAT. The premium is quoted against the 10-year NOMINAL",
+            "# Treasury. Adding it to a 30-year REAL yield treats the premium",
+            "# as neutral to both maturity and inflation, which it is not",
+            "# exactly. Pairing it with Damodaran's own 10-year nominal and a",
+            "# 10-year breakeven gives a real expected return about half a",
+            "# point lower. The 30-year real yield is used here because the",
+            "# model's horizon is a whole lifetime.",
         ]
-        for row in correlation:
-            out.append("  [" + ", ".join(f"{v: .6f}" for v in row) + "],")
-        out += ["]", ""]
-        for sleeve in sleeves:
-            out += [
-                "[[sleeve]]",
-                f'label = "{sleeve["label"]}"',
-                f'ticker = "{sleeve["ticker"]}"',
-                f"weight = {float(sleeve['weight']):.6f}",
-                f"volatility = {float(sleeve['volatility']):.6f}",
-                "",
-            ]
-
+    else:
+        out += [
+            "# Set by hand. Choi's guide defaults to 5%, roughly what current",
+            "# valuation ratios imply if they hold and earnings growth matches",
+            "# its long-run average.",
+        ]
+    out += [
+        f"expected_stock_real_return = {f['expected_return']:.6f}",
+        "",
+        f"# FRED {FRED_REAL_RISK_FREE}, the 30-year TIPS yield. A real yield",
+        "# already, so no inflation adjustment is applied. Reduce it by your",
+        "# marginal income tax rate if your bonds sit in a taxable account.",
+        f"real_risk_free = {f['real_risk_free']:.6f}",
+        "",
+        f"# {f['window_years']} years of daily "
+        f"{'adjusted' if f['adjusted'] else 'UNADJUSTED'} closes of "
+        f"{f['ticker']},",
+        f"# {f['observations']} returns, annualised.",
+        f"stock_volatility = {f['volatility']:.6f}",
+        f'market_ticker = "{f["ticker"]}"',
+        "",
+        f"as_of = {f['as_of'].isoformat()}",
+        "",
+        "# Where each number came from. The model does not read this section.",
+        "[provenance]",
+        f'expected_return_method = "{f["method"]}"',
+        f"implied_erp = {f['erp']:.6f}" if f["erp"] is not None else "implied_erp = 0.0",
+        f"erp_as_of = {f['erp_as_of']}" if f["erp_as_of"] else "# erp_as_of = none",
+        f"volatility_window_years = {f['window_years']}",
+        f"volatility_observations = {f['observations']}",
+        f"volatility_dividend_adjusted = {'true' if f['adjusted'] else 'false'}",
+        f'volatility_source = "Yahoo daily closes"',
+        f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
+        'expected_return_source = "Damodaran implied ERP + real risk-free rate"'
+        if f["method"] == "implied"
+        else 'expected_return_source = "set by hand"',
+    ]
     return nl.join(out).rstrip() + nl
 
 
 def _change(new: float, old: float) -> str:
     delta = (new - old) * 100
-    if abs(delta) < 0.005:
-        return "unchanged"
-    return f"{delta:+.2f} points"
+    return "unchanged" if abs(delta) < 0.005 else f"{delta:+.2f} points"
 
 
 def main(argv: list[str]) -> int:
@@ -296,32 +205,28 @@ def main(argv: list[str]) -> int:
         prog="update.py",
         description="Fetch the latest market data for the Merton Share tool.",
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="show what would change without saving",
-    )
-    parser.add_argument(
-        "--years",
-        type=int,
-        default=5,
-        help="years of history used to estimate volatility (default 5)",
-    )
-    parser.add_argument(
-        "--config", type=Path, default=DEFAULT_CONFIG_PATH, help=argparse.SUPPRESS
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="save even if a price series fails its checks",
-    )
+    parser.add_argument("--dry-run", action="store_true",
+                        help="show what would change without saving")
+    parser.add_argument("--years", type=int, default=5,
+                        help="years of history for the volatility estimate")
+    parser.add_argument("--fixed-return", type=float, default=None,
+                        help="set the expected real return by hand, e.g. 0.05")
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH,
+                        help=argparse.SUPPRESS)
+    parser.add_argument("--force", action="store_true",
+                        help="save even if a price series fails its checks")
     args = parser.parse_args(argv[1:])
 
     if args.years < 1:
         parser.error("--years must be at least 1")
+    if args.fixed_return is not None and not -0.05 < args.fixed_return < 0.30:
+        parser.error(
+            f"--fixed-return {args.fixed_return} is outside any plausible range; "
+            f"it is a decimal, so 5 percent is 0.05"
+        )
 
     print("Updating market data for the Merton Share tool")
-    print("=" * 62)
+    print("=" * 64)
 
     try:
         existing = load_market_data(args.config)
@@ -329,123 +234,75 @@ def main(argv: list[str]) -> int:
         print(f"\n{exc}")
         return 1
 
+    erp: float | None = None
+    erp_as_of: date | None = None
+
     try:
         print("\nFetching...")
 
         rf_date, real_rf = parse_fred_csv(
-            _get(FRED_URL.format(series=FRED_REAL_RISK_FREE)), FRED_REAL_RISK_FREE
+            _get(FRED_URL.format(series=FRED_REAL_RISK_FREE)).decode(
+                "utf-8", "replace"
+            ),
+            FRED_REAL_RISK_FREE,
         )
-        print(
-            f"  real risk-free rate (30y TIPS)   {real_rf:7.2%}"
-            f"   was {existing.real_risk_free_rate:6.2%}"
-            f"   {_change(real_rf, existing.real_risk_free_rate)}"
-        )
+        print(f"  real risk-free rate (30y TIPS)   {real_rf:>8.2%}"
+              f"   was {existing.real_risk_free_rate:>6.2%}"
+              f"   {_change(real_rf, existing.real_risk_free_rate)}")
 
-        vol, vol_date, observations = estimate_volatility(
+        vol, vol_date, observations, adjusted = estimate_volatility(
             existing.market_ticker, args.years, args.force
         )
-        print(
-            f"  stock volatility ({existing.market_ticker}, {args.years}y)"
-            f"{'':>{max(0, 9 - len(existing.market_ticker))}}{vol:7.2%}"
-            f"   was {existing.stock_volatility:6.2%}"
-            f"   {_change(vol, existing.stock_volatility)}"
-        )
+        label = f"stock volatility ({existing.market_ticker}, {args.years}y)"
+        print(f"  {label:<32.32s} {vol:>8.2%}"
+              f"   was {existing.stock_volatility:>6.2%}"
+              f"   {_change(vol, existing.stock_volatility)}")
+        if not adjusted:
+            print("    note: provider returned unadjusted closes, so this is a")
+            print("    price-return estimate and reads a few basis points high")
 
-        sleeves_payload = None
-        correlation = None
-        cov_as_of = None
-        cov_observations = 0
+        if args.fixed_return is not None:
+            method = "fixed"
+            expected = args.fixed_return
+            print(f"  expected stock real return       {expected:>8.2%}"
+                  f"   set by hand")
+        else:
+            method = "implied"
+            erp_as_of, erp = parse_damodaran_erp(_get(ERP_URL))
+            expected = erp + real_rf
+            print(f"  implied equity risk premium      {erp:>8.2%}"
+                  f"   Damodaran, {erp_as_of}")
+            print(f"  expected stock real return       {expected:>8.2%}"
+                  f"   was {existing.expected_stock_real_return:>6.2%}"
+                  f"   {_change(expected, existing.expected_stock_real_return)}")
+            print(f"    = implied premium {erp:.2%} + real rate {real_rf:.2%}")
 
-        if existing.has_sleeve_detail:
-            fetched: dict[str, dict[str, float]] = {}
-            for sleeve in existing.sleeves:
-                series = parse_price_json(
-                    _get(
-                        PRICE_URL.format(
-                            ticker=sleeve.ticker, range=f"{max(args.years, 1)}y"
-                        )
-                    ),
-                    sleeve.ticker,
-                )
-                fetched[sleeve.ticker] = trim_to_window(series.closes, args.years)
-
-            dates, aligned = align_series(fetched)
-            if len(dates) < 2:
-                raise DataUnavailable("the sleeve series do not overlap")
-
-            problems = []
-            for ticker, prices in aligned.items():
-                problems.extend(validate_prices(ticker, dates, prices))
-            if problems and not args.force:
-                raise DataUnavailable(
-                    "sleeve data failed validation: "
-                    + "; ".join(str(p) for p in problems)
-                )
-
-            returns = {t: log_returns(p) for t, p in aligned.items()}
-            order = [s.ticker for s in existing.sleeves]
-            vols = [annualised_volatility(returns[t]) for t in order]
-            correlation = correlation_matrix([returns[t] for t in order])
-            cov_as_of = date.fromisoformat(max(dates))
-            cov_observations = len(dates) - 1
-            sleeves_payload = [
-                {
-                    "label": s.label,
-                    "ticker": s.ticker,
-                    "weight": s.weight,
-                    "volatility": v,
-                }
-                for s, v in zip(existing.sleeves, vols)
-            ]
-
-            derived = MarketData(
-                expected_stock_real_return=existing.expected_stock_real_return,
-                real_risk_free_rate=real_rf,
-                stock_volatility=vol,
-                market_ticker=existing.market_ticker,
-                as_of=rf_date,
-                source_path=args.config,
-                sleeves=tuple(
-                    Sleeve(s.label, s.ticker, s.weight, v)
-                    for s, v in zip(existing.sleeves, vols)
-                ),
-                correlation=tuple(tuple(r) for r in correlation),
-                covariance_as_of=cov_as_of,
-                covariance_observations=cov_observations,
-            ).derived_stock_volatility()
-            print(
-                f"\n  (optional) your three-fund mix implies {derived:.2%}. "
-                f"The model uses {vol:.2%}"
+        if expected <= real_rf:
+            raise DataUnavailable(
+                f"expected return {expected:.2%} is not above the real risk-free "
+                f"rate {real_rf:.2%}, which would mean holding no equities at all. "
+                f"Refusing to save."
             )
-            print("  above. Copy it up into [market] only if you mean to.")
 
     except DataUnavailable as exc:
         print(f"\nCould not update: {exc}")
-        print(f"\n{args.config} is unchanged. The tool still works on the data")
-        print(f"it already has, from {existing.as_of}.")
+        print(f"\n{args.config.name} is unchanged. The tool still works on the")
+        print(f"data it already has, from {existing.as_of}.")
         return 1
 
-    age = (date.today() - existing.as_of).days
-    print("\nNot fetched, this one is your judgement:")
-    print(
-        f"  expected stock real return       "
-        f"{existing.expected_stock_real_return:7.2%}"
-        f"   set {age} days ago"
-    )
-    print(f"  edit it in {args.config.name} if your view has changed")
-
     document = render_config(
-        expected_return=existing.expected_stock_real_return,
+        generated_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        method=method,
+        expected_return=expected,
         real_risk_free=real_rf,
-        stock_volatility=vol,
-        market_ticker=existing.market_ticker,
+        volatility=vol,
+        ticker=existing.market_ticker,
         as_of=min(rf_date, vol_date),
         window_years=args.years,
         observations=observations,
-        sleeves=sleeves_payload,
-        correlation=correlation,
-        covariance_as_of=cov_as_of,
-        covariance_observations=cov_observations,
+        adjusted=adjusted,
+        erp=erp,
+        erp_as_of=erp_as_of.isoformat() if erp_as_of else None,
     )
 
     if args.dry_run:

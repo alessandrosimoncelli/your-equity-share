@@ -40,18 +40,25 @@ Not fetched, this one is your judgement:
 Saved. Market data is now current to 2026-09-01.
 ```
 
-Two of the three numbers the model uses are observable and both are refreshed:
-the **real risk-free rate** from FRED as the 30-year TIPS yield, already a real
-yield so no inflation adjustment is applied; and **stock market volatility**,
-estimated from five years of daily closes. The third, the **expected real
-return**, is a forecast rather than an observation. Nobody publishes it, so it
-stays as you set it and the script reports its age.
+**All three** numbers the model uses are fetched, from three free sources that
+need no key or account:
+
+| Input | Source | Note |
+| --- | --- | --- |
+| real risk-free rate | FRED, 30-year TIPS yield | a real yield already, no inflation adjustment |
+| stock volatility | Yahoo, daily **adjusted** closes | dividend and split adjusted, so total returns |
+| expected stock return | Damodaran implied ERP + the real rate | forward looking, published monthly |
+
+Override the expected return with `--fixed-return 0.05` if you prefer your own
+view. See [docs/inputs.md](docs/inputs.md) for the caveat on combining a
+10-year-based premium with a 30-year real yield.
 
 Options:
 
 ```bash
 python update.py --dry-run    # show what would change, save nothing
 python update.py --years 10   # estimate volatility over ten years
+python update.py --fixed-return 0.05   # set the expected return by hand
 python update.py --force      # save even if a price series fails its checks
 ```
 

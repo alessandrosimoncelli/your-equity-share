@@ -77,10 +77,34 @@ the spousal benefit instead, **50% of the higher earner's**.
 
 ## Expected stock market real return
 
-Your estimate of the average return of the stock market over your lifetime,
-above inflation. The guide's default is **5%**.
+Your estimate of the average real return of the stock market over your lifetime.
 
-A more precise way to set it than a single guess is to build it from parts:
+**This is now fetched rather than guessed.** `python update.py` takes Damodaran's
+implied equity risk premium, published monthly and derived by discounting
+expected index cash flows back to the current index level, and adds the real
+risk-free rate:
+
+    expected real return = implied equity risk premium + real risk-free rate
+
+That is a forward-looking number that moves with the market, which is what the
+model wants, rather than a historical average that ignores today's price.
+
+**One caveat, and it is worth knowing.** Damodaran quotes his premium against
+the 10-year **nominal** Treasury. Adding it to a 30-year **real** yield treats
+the premium as neutral to both maturity and inflation, which it is not exactly.
+Pairing it instead with his own 10-year nominal and a 10-year breakeven gives a
+real expected return roughly half a percentage point lower. The 30-year real
+yield is used because the model's horizon is a whole lifetime, not ten years.
+
+To override with your own view:
+
+```bash
+python update.py --fixed-return 0.05
+```
+
+Choi's guide defaults to 5%, on the reasoning that this is what valuation ratios
+imply if they hold and earnings growth matches its long-run average. A more
+precise way to reach your own figure is to build it from parts:
 
     expected real return
       = dividend yield
@@ -89,13 +113,9 @@ A more precise way to set it than a single guess is to build it from parts:
       + repricing
 
 The first three are close to observable. Only repricing, the change in the
-multiple the market pays, is a forecast of sentiment. Setting it to zero and
-adding the rest is exactly how the guide's 5% arises: a dividend yield around
-1.3%, a net buyback yield around 0.5% and real earnings growth around 3.2%.
-
-Setting repricing to zero is an assumption, not a neutral choice. A market
-priced above its own history has a negative expected repricing term that this
-sum ignores, so 5% would then be too high.
+multiple the market pays, is a forecast of sentiment. Setting it to zero is an
+assumption, not a neutral choice: a market priced above its own history has a
+negative expected repricing term that this sum ignores.
 
 ## Real risk-free interest rate
 

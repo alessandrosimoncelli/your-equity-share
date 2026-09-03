@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import math
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -82,11 +82,25 @@ class MarketData:
     as_of: date
     source_path: Path
 
+    # How each number was obtained. Descriptive only; the model ignores it.
+    provenance: dict = field(default_factory=dict)
+
     # Optional: present only when the equity holding is described fund by fund.
     sleeves: tuple[Sleeve, ...] = ()
     correlation: tuple[tuple[float, ...], ...] = ()
     covariance_as_of: date | None = None
     covariance_observations: int = 0
+
+    @property
+    def expected_return_is_market_implied(self) -> bool:
+        """True when the expected return was derived from a live premium."""
+        return self.provenance.get("expected_return_method") == "implied"
+
+    @property
+    def expected_return_source(self) -> str:
+        return str(
+            self.provenance.get("expected_return_source", "set by hand")
+        )
 
     @property
     def equity_risk_premium(self) -> float:
@@ -250,6 +264,7 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
         market_ticker=ticker,
         as_of=_as_date(market["as_of"], "market.as_of"),
         source_path=path,
+        provenance=dict(raw.get("provenance", {})),
         sleeves=sleeves,
         correlation=correlation,
         covariance_as_of=cov_as_of,

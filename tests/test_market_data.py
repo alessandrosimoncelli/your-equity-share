@@ -41,12 +41,12 @@ from merton_share.statistics import (  # noqa: E402
     log_returns,
     validate_prices,
 )
-from update import (  # noqa: E402
+from merton_share.providers import (  # noqa: E402
     DataUnavailable,
     parse_fred_csv,
     parse_price_json,
-    trim_to_window,
 )
+from update import trim_to_window  # noqa: E402
 
 
 # --- statistics ------------------------------------------------------------

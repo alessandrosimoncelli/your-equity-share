@@ -3,67 +3,47 @@
 # Refresh with:  python update.py
 #
 # The model reads this file and never fetches anything itself, so an
-# unreachable data provider can never break a demonstration.
+# unreachable provider can never break a demonstration.
 #
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-09-03T15:11:12+00:00"
+generated_at = "2026-09-03T20:10:37+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
 [market]
 
-# YOUR JUDGEMENT. Not fetched, because nobody publishes a forecast of
-# this. Choi's guide defaults to 5%, roughly what current valuation
-# ratios imply if they hold and earnings growth matches its history.
-expected_stock_real_return = 0.050000
+# Implied equity risk premium plus the real risk-free rate. The
+# premium is Damodaran's, published monthly, and is derived by
+# discounting expected index cash flows back to the current level.
+#   implied premium 0.0409 as of 2026-09-01
+#   plus real rate  0.0298
+# The premium is quoted against the 10-year nominal Treasury, so
+# adding it to a 30-year real yield treats it as maturity and
+# inflation neutral. That is an approximation.
+expected_stock_real_return = 0.070700
 
-# Fetched: FRED DFII30, the 30-year TIPS yield. Already a
-# real yield, so no inflation adjustment is applied. Reduce it by your
+# FRED DFII30, the 30-year TIPS yield. A real yield
+# already, so no inflation adjustment is applied. Reduce it by your
 # marginal income tax rate if your bonds sit in a taxable account.
 real_risk_free = 0.029800
 
-# Fetched: 5 years of daily closes of SPY,
-# 1254 returns, annualised.
-stock_volatility = 0.172170
+# 5 years of daily adjusted closes of SPY,
+# 1253 returns, annualised.
+stock_volatility = 0.171866
 market_ticker = "SPY"
 
 as_of = 2026-09-01
 
-# ------------------------------------------------------------------------
-# OPTIONAL. The model uses stock_volatility above. These sections
-# only let a multi-fund holder derive that number instead. Nothing
-# reads them unless you copy the derived figure up into [market].
-# ------------------------------------------------------------------------
-
-[covariance]
-as_of = 2026-09-03
-observations = 1253
-window_years = 5
-frequency = "daily"
-trading_days_per_year = 252
-source = "Yahoo daily closes, price returns"
-correlation = [
-  [ 1.000000,  0.802740,  0.675494],
-  [ 0.802740,  1.000000,  0.820904],
-  [ 0.675494,  0.820904,  1.000000],
-]
-
-[[sleeve]]
-label = "S&P 500"
-ticker = "SPY"
-weight = 0.650000
-volatility = 0.172247
-
-[[sleeve]]
-label = "Developed ex-US"
-ticker = "VEA"
-weight = 0.280000
-volatility = 0.169871
-
-[[sleeve]]
-label = "Emerging markets"
-ticker = "VWO"
-weight = 0.070000
-volatility = 0.176218
+# Where each number came from. The model does not read this section.
+[provenance]
+expected_return_method = "implied"
+implied_erp = 0.040900
+erp_as_of = 2026-09-01
+volatility_window_years = 5
+volatility_observations = 1253
+volatility_dividend_adjusted = true
+volatility_source = "Yahoo daily closes"
+real_risk_free_source = "FRED DFII30"
+expected_return_source = "Damodaran implied ERP + real risk-free rate"

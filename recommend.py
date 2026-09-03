@@ -124,12 +124,21 @@ def print_report(result, market, household) -> None:
     print(THIN)
     print(f"  Market data, as of {market.as_of}")
     print()
+    if market.expected_return_is_market_implied:
+        erp = market.provenance.get("implied_erp")
+        note = f"implied premium {erp:.2%} + real rate" if erp else "market implied"
+    else:
+        note = "set by hand"
     print(f"  expected stock real return       "
-          f"{market.expected_stock_real_return:>13.2%}   your judgement")
+          f"{market.expected_stock_real_return:>13.2%}   {note}")
     print(f"  real risk-free rate              "
           f"{market.real_risk_free_rate:>13.2%}   30-year TIPS")
+    window = market.provenance.get("volatility_window_years")
+    span = f"{window} years" if window else "history"
+    adjusted = market.provenance.get("volatility_dividend_adjusted", True)
     print(f"  stock volatility                 "
-          f"{market.stock_volatility:>13.2%}   {market.market_ticker}, 5 years")
+          f"{market.stock_volatility:>13.2%}   {market.market_ticker}, {span}"
+          + ("" if adjusted else ", unadjusted"))
     print(f"  risk aversion                    "
           f"{household.risk_aversion:>13.1f}   your answer")
     print()
@@ -165,8 +174,10 @@ def print_glide(household, market) -> None:
         print(f"   {age:>3}   {r.equity_share:>6.0%}   {money(r.human_capital):>14}"
               f"   {r.human_capital_ratio:>10.1f}")
     print()
-    print("  The decline is driven by human capital shrinking against savings,")
-    print("  not by the horizon shortening. Section 2.3 of the methodology.")
+    print("  Wealth is held fixed here, which no real saver does, so treat this")
+    print("  as the effect of age alone rather than a forecast of your path.")
+    print("  What moves the share is human capital shrinking against savings,")
+    print("  not the horizon shortening. Section 2.3 of the methodology.")
     print()
 
 
@@ -213,7 +224,14 @@ def main(argv: list[str]) -> int:
 
     adults = [Person(age, wage, args.benefit)]
     if partner_age is not None:
-        adults.append(Person(partner_age, partner_wage or 0.0))
+        if partner_wage is None:
+            print("\n--partner-age needs --partner-wage. Pass 0 if they do not")
+            print("earn, so that the zero is deliberate rather than assumed.")
+            return 1
+        adults.append(Person(partner_age, partner_wage))
+    elif partner_wage is not None:
+        print("\n--partner-wage needs --partner-age.")
+        return 1
 
     try:
         household = Household(wealth, adults, gamma)
