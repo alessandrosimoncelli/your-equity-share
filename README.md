@@ -86,10 +86,10 @@ asserted.
 | --- | --- |
 | 1. Faithful port of the source spreadsheet, with regression baseline | **done** |
 | 2. Market data pipeline and risk-aversion elicitation | **done** |
-| 3. Choi's formula: human capital, discount rates, imputed earnings | next |
-| 4. Validate against Choi's own spreadsheet outputs | planned |
-| 5. Glide path and sensitivity across gamma and mu | planned |
-| 6. Streamlit front end | planned |
+| 3. Choi's formula: human capital, discount rates, imputed earnings | **done** |
+| 4. Validated against Choi's own spreadsheet, both tabs | **done** |
+| 5. Streamlit front end | next |
+| 6. Sensitivity across gamma and the expected return | planned |
 
 ### Stage 1: the baseline
 
@@ -124,12 +124,43 @@ python -m venv .venv
 .venv/Scripts/python -m pytest
 ```
 
-```python
-from merton_share import LegacyInputs, merton_share, gamma_from_certainty_equivalent
+Then ask it the question:
 
-merton_share(LegacyInputs())                  # 0.8156054116198155
-gamma_from_certainty_equivalent(60_000)       # 4.26
+```bash
+python recommend.py                                          # asks you the inputs
+python recommend.py --age 45 --wage 100000 --wealth 500000   # or pass them
+python recommend.py --age 45 --wage 100000 --wealth 500000 --glide
 ```
+
+From Python:
+
+```python
+from merton_share import Household, Person, recommend
+from merton_share.market_data import load_market_data
+
+market = load_market_data()
+result = recommend(
+    Household(500_000, [Person(45, 100_000)], risk_aversion=5),
+    market.expected_stock_real_return,
+    market.real_risk_free_rate,
+    market.stock_volatility,
+)
+result.equity_share          # the recommendation
+result.uncapped_share        # before the no-leverage cap
+result.human_capital         # present value of future earnings
+```
+
+### Validation
+
+Both tabs of Choi's published spreadsheet are reproduced exactly, which is the
+regression baseline for stage 3:
+
+| Case | Quantity | Spreadsheet | This code |
+| --- | --- | --- | --- |
+| Wage imputed | human capital | 2,133,150.455 | matches to the cent |
+| Wage imputed | equity share | 0.8920794261 | matches to 1e-9 |
+| Full inputs | human capital | 2,199,507.502 | matches to the cent |
+| Full inputs | equity share | 0.9145603885 | matches to 1e-9 |
 
 ## Sources
 
