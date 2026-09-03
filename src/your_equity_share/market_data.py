@@ -30,7 +30,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from merton_share.statistics import covariance_matrix
+from your_equity_share.statistics import covariance_matrix
 
 __all__ = [
     "DEFAULT_CONFIG_PATH",

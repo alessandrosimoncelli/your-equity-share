@@ -44,7 +44,7 @@ INDEX = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>The Merton Share</title>
+<title>Your Equity Share</title>
 <meta name="description" content="How much of your portfolio belongs in equities. Merton (1969) with the human capital adjustment of Choi, Liu and Liu (2025).">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@__STLITE__/build/stlite.css">
 <style>
@@ -79,7 +79,7 @@ INDEX = """<!doctype html>
 <body>
 <div id="boot">
   <div class="boot-inner">
-    <p class="boot-title">The Merton Share</p>
+    <p class="boot-title">Your Equity Share</p>
     <hr class="boot-rule">
     <p class="boot-text">
       Starting the calculator. The first visit downloads a Python runtime,
@@ -139,7 +139,7 @@ setTimeout(() => { observer.disconnect(); clear(); }, 120000);
 
 
 def main() -> int:
-    package = sorted((ROOT / "src" / "merton_share").glob("*.py"))
+    package = sorted((ROOT / "src" / "your_equity_share").glob("*.py"))
     if not package:
         print("no package sources found; is this the right directory?")
         return 1

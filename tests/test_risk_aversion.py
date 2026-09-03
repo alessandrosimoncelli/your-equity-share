@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from merton_share.risk_aversion import (
+from your_equity_share.risk_aversion import (
     GUIDE_GAMBLE_HIGH,
     GUIDE_GAMBLE_LOW,
     certainty_equivalent,

@@ -1,4 +1,4 @@
-# merton-share
+# your-equity-share
 
 How much of a household's portfolio belongs in equities, from the Merton share
 and a human capital multiplier.
@@ -26,7 +26,7 @@ That is the whole thing. It fetches the latest market data, saves it, and tells
 you what changed. Windows users can double-click `update.bat` instead.
 
 ```
-Updating market data for the Merton Share tool
+Updating market data for Your Equity Share
 ==============================================================
 
 Fetching...
@@ -100,7 +100,7 @@ asserted.
 
 ### Stage 1: the baseline
 
-`merton_share.legacy` reproduces the "Merton Share" worksheet of
+`your_equity_share.legacy` reproduces the "Merton Share" worksheet of
 `QUANTO DEVO INVESTIRE IN AZIONI.xlsx` exactly, **defects included**. It exists
 to be a fixed reference point, not to give advice.
 
@@ -155,8 +155,8 @@ python recommend.py --age 45 --wage 100000 --wealth 500000 --glide
 From Python:
 
 ```python
-from merton_share import Household, Person, recommend
-from merton_share.market_data import load_market_data
+from your_equity_share import Household, Person, recommend
+from your_equity_share.market_data import load_market_data
 
 market = load_market_data()
 result = recommend(

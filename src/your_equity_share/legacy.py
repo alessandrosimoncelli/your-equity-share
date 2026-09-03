@@ -10,7 +10,7 @@ Known defects, reproduced deliberately and corrected in later modules:
 1. `_weighted_average_variance` averages the sleeves' individual variances
    instead of computing the portfolio variance w'Σw. It ignores correlations,
    which always overstates risk and so always understates the allocation.
-2. `merton_share` uses the arithmetic excess return mu - r. The Merton
+2. `your_equity_share` uses the arithmetic excess return mu - r. The Merton
    numerator is a difference of drifts, so it should be ln(1+mu) - ln(1+r).
 3. `gamma` averages three scores on a 2 to 5 scale. The discount-rate equations
    of the human capital layer expect a 1 to 10 scale.
@@ -30,7 +30,7 @@ __all__ = [
     "real_risk_free_rate",
     "real_expected_excess_return",
     "gamma",
-    "merton_share",
+    "your_equity_share",
     "bull_formula_share",
 ]
 
@@ -53,7 +53,7 @@ class LegacyInputs:
     """Every input cell of the worksheet.
 
     The default values are the ones stored in the source workbook, so
-    `merton_share(LegacyInputs())` reproduces cell G4.
+    `your_equity_share(LegacyInputs())` reproduces cell G4.
     """
 
     sleeves: tuple[LegacySleeve, ...] = field(
@@ -121,7 +121,7 @@ def _weighted_average_variance(inputs: LegacyInputs) -> float:
     return total
 
 
-def merton_share(inputs: LegacyInputs | None = None) -> float:
+def your_equity_share(inputs: LegacyInputs | None = None) -> float:
     """Cell G4, the equity share of total wealth.
 
     `=(B7*B4+C7*C4+D7*D4)/((B8^2*B4+C8^2*C4+D8^2*D4)*B16)`

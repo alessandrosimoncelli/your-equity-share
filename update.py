@@ -29,11 +29,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from merton_share.market_data import (  # noqa: E402
+from your_equity_share.market_data import (  # noqa: E402
     DEFAULT_CONFIG_PATH,
     load_market_data,
 )
-from merton_share.expected_return import (  # noqa: E402
+from your_equity_share.expected_return import (  # noqa: E402
     CHOI_FITTED_LOG_PREMIUM_RANGE,
     arithmetic_from_compound,
     building_block_estimate,
@@ -45,7 +45,7 @@ from merton_share.expected_return import (  # noqa: E402
     valuation_regression_estimate,
     within_fitted_range,
 )
-from merton_share.providers import (  # noqa: E402
+from your_equity_share.providers import (  # noqa: E402
     DataUnavailable,
     parse_damodaran_components,
     parse_damodaran_erp,
@@ -54,7 +54,7 @@ from merton_share.providers import (  # noqa: E402
     parse_price_json,
     parse_shiller_csv,
 )
-from merton_share.statistics import (  # noqa: E402
+from your_equity_share.statistics import (  # noqa: E402
     TRADING_DAYS_PER_YEAR,
     annualised_volatility,
     log_returns,
@@ -88,7 +88,7 @@ GROWTH_WINDOW_YEARS = 100
 FRED_REAL_RISK_FREE = "DFII30"
 
 # The price endpoint rejects the default urllib agent string.
-USER_AGENT = "Mozilla/5.0 (compatible; merton-share/0.1; research tool)"
+USER_AGENT = "Mozilla/5.0 (compatible; your-equity-share/0.1; research tool)"
 TIMEOUT_SECONDS = 40
 
 
@@ -153,7 +153,7 @@ def estimate_volatility(
 def render_config(**f) -> str:
     nl = chr(10)
     out = [
-        "# Market data for the Merton Share tool.",
+        "# Market data for Your Equity Share.",
         "#",
         "# Refresh with:  python update.py",
         "#",
@@ -297,7 +297,7 @@ def _change(new: float, old: float) -> str:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="update.py",
-        description="Fetch the latest market data for the Merton Share tool.",
+        description="Fetch the latest market data for Your Equity Share.",
     )
     parser.add_argument("--dry-run", action="store_true",
                         help="show what would change without saving")
@@ -319,7 +319,7 @@ def main(argv: list[str]) -> int:
             f"it is a decimal, so 5 percent is 0.05"
         )
 
-    print("Updating market data for the Merton Share tool")
+    print("Updating market data for Your Equity Share")
     print("=" * 64)
 
     try:

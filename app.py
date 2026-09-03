@@ -31,14 +31,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 # told to do: they have no terminal and no copy of the repository.
 IN_BROWSER = sys.platform == "emscripten"
 
-from merton_share.allocation import Household, recommend  # noqa: E402
-from merton_share.expected_return import (  # noqa: E402
+from your_equity_share.allocation import Household, recommend  # noqa: E402
+from your_equity_share.expected_return import (  # noqa: E402
     CHOI_FITTED_LOG_PREMIUM_RANGE,
     log_premium,
 )
-from merton_share.human_capital import Person  # noqa: E402
-from merton_share.market_data import load_market_data  # noqa: E402
-from merton_share.risk_aversion import gamma_from_certainty_equivalent  # noqa: E402
+from your_equity_share.human_capital import Person  # noqa: E402
+from your_equity_share.market_data import load_market_data  # noqa: E402
+from your_equity_share.risk_aversion import gamma_from_certainty_equivalent  # noqa: E402
 
 # Structure
 NAVY = "#1F3864"
@@ -53,7 +53,7 @@ TRACK = "#E7E6DF"
 GOOD = "#006300"
 WARN = "#8A6314"
 
-st.set_page_config(page_title="The Merton Share", layout="wide")
+st.set_page_config(page_title="Your Equity Share", layout="wide")
 
 st.markdown(
     f"""
@@ -221,7 +221,7 @@ result = recommend(
     household, expected, market.real_risk_free_rate, market.stock_volatility
 )
 
-st.markdown("# The Merton Share")
+st.markdown("# Your Equity Share")
 st.markdown(
     '<div class="lede">How much of your portfolio belongs in equities. '
     "Merton (1969), with the human capital adjustment of Choi, Liu and Liu "
@@ -281,7 +281,7 @@ with right:
 st.markdown("## How this was reached")
 
 steps = [
-    ("Equity share of <b>total</b> wealth", f"{result.merton_share:.1%}",
+    ("Equity share of <b>total</b> wealth", f"{result.your_equity_share:.1%}",
      "Merton (1969): the reward for risk, divided by risk and by your dislike "
      "of it"),
     (f"Times 1 + {result.human_capital_ratio:.2f}", f"{result.uncapped_share:.1%}",

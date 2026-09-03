@@ -7,7 +7,7 @@ from datetime import date
 
 import pytest
 
-from merton_share.expected_return import (
+from your_equity_share.expected_return import (
     arithmetic_from_compound,
     compound_from_arithmetic,
     CHOI_FITTED_LOG_PREMIUM_RANGE,

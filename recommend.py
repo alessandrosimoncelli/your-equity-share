@@ -22,10 +22,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from merton_share.allocation import Household, recommend  # noqa: E402
-from merton_share.human_capital import Person  # noqa: E402
-from merton_share.market_data import load_market_data  # noqa: E402
-from merton_share.risk_aversion import (  # noqa: E402
+from your_equity_share.allocation import Household, recommend  # noqa: E402
+from your_equity_share.human_capital import Person  # noqa: E402
+from your_equity_share.market_data import load_market_data  # noqa: E402
+from your_equity_share.risk_aversion import (  # noqa: E402
     gamma_from_certainty_equivalent,
     guide_table,
 )
@@ -107,7 +107,7 @@ def print_report(result, market, household) -> None:
         for i, value in enumerate(result.per_adult_human_capital, start=1):
             print(f"      adult {i}                     {money(value):>14}")
     print()
-    print(f"  Equity share of TOTAL wealth     {result.merton_share:>13.1%}"
+    print(f"  Equity share of TOTAL wealth     {result.your_equity_share:>13.1%}"
           f"   Merton (1969)")
     print(f"  Times (1 + {result.human_capital_ratio:.2f}) for the part you can trade"
           f"  {result.uncapped_share:>8.1%}")

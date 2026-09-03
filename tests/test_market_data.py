@@ -29,11 +29,11 @@ as_of = 2026-06-02
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from merton_share.market_data import (  # noqa: E402
+from your_equity_share.market_data import (  # noqa: E402
     DEFAULT_CONFIG_PATH,
     load_market_data,
 )
-from merton_share.statistics import (  # noqa: E402
+from your_equity_share.statistics import (  # noqa: E402
     align_series,
     annualised_volatility,
     correlation_matrix,
@@ -41,7 +41,7 @@ from merton_share.statistics import (  # noqa: E402
     log_returns,
     validate_prices,
 )
-from merton_share.providers import (  # noqa: E402
+from your_equity_share.providers import (  # noqa: E402
     DataUnavailable,
     parse_fred_csv,
     parse_price_json,

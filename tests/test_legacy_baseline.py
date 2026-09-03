@@ -18,14 +18,14 @@ from pathlib import Path
 
 import pytest
 
-from merton_share.legacy import (
+from your_equity_share.legacy import (
     LegacyInputs,
     _weighted_average_variance,
     _weighted_excess_return,
     bull_formula_share,
     forward_earnings_yield,
     gamma,
-    merton_share,
+    your_equity_share,
     real_expected_excess_return,
     real_risk_free_rate,
 )
@@ -107,12 +107,12 @@ def test_gamma_b16() -> None:
 # --- the outputs -----------------------------------------------------------
 
 
-def test_merton_share_g4() -> None:
-    assert merton_share(INPUTS) == cell("G4")
+def test_your_equity_share_g4() -> None:
+    assert your_equity_share(INPUTS) == cell("G4")
 
 
 def test_safe_asset_share_g5() -> None:
-    assert 1 - merton_share(INPUTS) == cell("G5")
+    assert 1 - your_equity_share(INPUTS) == cell("G5")
 
 
 def test_bull_formula_share_g9() -> None:
@@ -175,8 +175,8 @@ def test_expected_inflation_is_hardcoded() -> None:
 # --- the share is unclipped, which matters once the multiplier arrives -----
 
 
-def test_merton_share_is_not_clipped() -> None:
+def test_your_equity_share_is_not_clipped() -> None:
     """The worksheet applies no bounds. Raising the premium pushes it over 1."""
     aggressive = LegacyInputs(risk_tolerance=2.0, risk_capacity=2.0, risk_need=2.0)
-    assert merton_share(aggressive) > 0.9
-    assert merton_share(aggressive) == pytest.approx(0.9515396, abs=1e-7)
+    assert your_equity_share(aggressive) > 0.9
+    assert your_equity_share(aggressive) == pytest.approx(0.9515396, abs=1e-7)

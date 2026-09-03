@@ -13,7 +13,7 @@ from datetime import date
 
 import pytest
 
-from merton_share.providers import (
+from your_equity_share.providers import (
     DataUnavailable,
     parse_damodaran_erp,
     parse_fred_csv,

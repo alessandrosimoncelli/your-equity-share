@@ -4,8 +4,8 @@ Implements the approximation of Choi, Liu and Liu (2025), validated against
 their published spreadsheet. See docs/inputs.md for what each input means and
 docs/methodology.html for the derivation.
 
-    from merton_share import Household, Person, recommend
-    from merton_share.market_data import load_market_data
+    from your_equity_share import Household, Person, recommend
+    from your_equity_share.market_data import load_market_data
 
     market = load_market_data()
     result = recommend(
@@ -17,13 +17,13 @@ docs/methodology.html for the derivation.
     result.equity_share
 """
 
-from merton_share.allocation import (
+from your_equity_share.allocation import (
     Household,
     Recommendation,
-    merton_share,
+    your_equity_share,
     recommend,
 )
-from merton_share.human_capital import (
+from your_equity_share.human_capital import (
     CGM_CALIBRATION,
     Calibration,
     Person,
@@ -33,9 +33,9 @@ from merton_share.human_capital import (
     project_earnings,
     wage_discount_rate,
 )
-from merton_share.legacy import LegacyInputs, LegacySleeve, bull_formula_share
-from merton_share.legacy import merton_share as legacy_merton_share
-from merton_share.risk_aversion import (
+from your_equity_share.legacy import LegacyInputs, LegacySleeve, bull_formula_share
+from your_equity_share.legacy import your_equity_share as legacy_your_equity_share
+from your_equity_share.risk_aversion import (
     certainty_equivalent,
     gamma_from_certainty_equivalent,
     guide_table,
@@ -56,8 +56,8 @@ __all__ = [
     "guide_table",
     "human_capital",
     "imputed_wage",
-    "legacy_merton_share",
-    "merton_share",
+    "legacy_your_equity_share",
+    "your_equity_share",
     "project_earnings",
     "recommend",
     "wage_discount_rate",

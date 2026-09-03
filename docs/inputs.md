@@ -29,7 +29,7 @@ One question, from the guide.
 A lower answer means you dislike risk more. Economists generally work in the 1
 to 10 range.
 
-That table is not a lookup table in this codebase: `merton_share.risk_aversion`
+That table is not a lookup table in this codebase: `your_equity_share.risk_aversion`
 computes it, because each row is simply the certainty equivalent of the gamble
 at that level of risk aversion. `gamma_from_certainty_equivalent` inverts it, so
 any answer maps to a value, not only the ten printed above.
