@@ -8,7 +8,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-09-03T21:06:39+00:00"
+generated_at = "2026-09-03T21:20:28+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
@@ -17,7 +17,7 @@ generated_by = "update.py"
 # Set by hand. Choi's guide defaults to 5%, roughly what current
 # valuation ratios imply if they hold and earnings growth matches
 # its long-run average.
-expected_stock_real_return = 0.051745
+expected_stock_real_return = 0.067394
 
 # FRED DFII30, the 30-year TIPS yield. A real yield
 # already, so no inflation adjustment is applied. Reduce it by your
@@ -40,6 +40,7 @@ volatility_window_years = 5
 volatility_observations = 1253
 volatility_dividend_adjusted = true
 expected_return_spread = 0.019355
+expected_return_basis = "arithmetic mean, converted from compound"
 expected_return_estimates = "implied premium 0.0707; building blocks 0.0513; valuation regression, 30y 0.0517"
 volatility_source = "Yahoo daily closes"
 real_risk_free_source = "FRED DFII30"

@@ -8,6 +8,8 @@ from datetime import date
 import pytest
 
 from merton_share.expected_return import (
+    arithmetic_from_compound,
+    compound_from_arithmetic,
     CHOI_FITTED_LOG_PREMIUM_RANGE,
     building_block_estimate,
     consensus,
@@ -138,3 +140,56 @@ def test_spread_reports_the_disagreement() -> None:
 def test_combining_nothing_is_an_error() -> None:
     with pytest.raises(ValueError, match="no estimates"):
         consensus([])
+
+
+# --- compound versus arithmetic ---------------------------------------------
+
+
+def test_arithmetic_exceeds_compound_by_roughly_half_the_variance() -> None:
+    """The volatility drag. Not a rounding difference."""
+    compound, sigma = 0.0517, 0.1719
+    arithmetic = arithmetic_from_compound(compound, sigma)
+    assert arithmetic > compound
+    assert arithmetic - compound == pytest.approx(0.5 * sigma**2, abs=0.001)
+
+
+def test_conversion_round_trips() -> None:
+    for compound in (0.02, 0.0517, 0.09):
+        for sigma in (0.10, 0.1719, 0.30):
+            back = compound_from_arithmetic(
+                arithmetic_from_compound(compound, sigma), sigma
+            )
+            assert back == pytest.approx(compound)
+
+
+def test_zero_volatility_leaves_the_return_alone() -> None:
+    assert arithmetic_from_compound(0.05, 0.0) == pytest.approx(0.05)
+
+
+def test_estimates_are_compound_by_default() -> None:
+    """Every estimator here produces a compound return, so the flag must say so."""
+    for estimate in (
+        implied_premium_estimate(0.0409, 0.0298),
+        building_block_estimate(0.0263, 0.0251),
+    ):
+        assert estimate.basis == "compound"
+
+
+def test_as_arithmetic_converts_once_and_marks_it() -> None:
+    original = building_block_estimate(0.0263, 0.0251)
+    converted = original.as_arithmetic(0.1719)
+    assert converted.basis == "arithmetic"
+    assert converted.value > original.value
+    assert converted.method == original.method
+    # converting again is a no-op, not a second conversion
+    assert converted.as_arithmetic(0.1719).value == pytest.approx(converted.value)
+
+
+def test_the_conversion_decides_whether_we_are_in_choi_range() -> None:
+    """The bug this guards: feeding a compound figure into an arithmetic slot."""
+    compound, rf, sigma = 0.0517, 0.0298, 0.1719
+    arithmetic = arithmetic_from_compound(compound, sigma)
+    assert log_premium(compound, rf) == pytest.approx(0.0039, abs=5e-4)
+    assert log_premium(arithmetic, rf) == pytest.approx(0.0187, abs=5e-4)
+    # the correction is worth more than a percentage point of log premium
+    assert log_premium(arithmetic, rf) - log_premium(compound, rf) > 0.013

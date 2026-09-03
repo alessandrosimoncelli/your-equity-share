@@ -118,6 +118,48 @@ about **four independent** thirty-year periods. The reported error divides the
 residual spread by the square root of that number, not of 1,350. It is roughly
 0.7 percentage points, and that is generous.
 
+### Compound is not arithmetic, and the gap is 1.5 points
+
+Every forward-looking estimate of equity returns is naturally a **compound**
+return. A discounted cash flow gives an internal rate of return. Gordon's
+formula gives a discount rate. A regression on realised annualised returns gives
+an annualised return. All three compound.
+
+Choi's input slot is an **arithmetic mean**, which you can see in his own
+regressor subtracting sigma squared over two. So the estimate is converted once,
+at the point it is handed to the model:
+
+    arithmetic = exp( ln(1 + compound) + sigma^2 / 2 ) - 1
+
+At 17.2% volatility that is worth **1.56 percentage points**: our median of
+5.17% compound becomes 6.74% arithmetic. Feeding the compound figure straight in
+would understate the input by more than the entire equity risk premium is
+currently worth.
+
+The intuition: +50% then −50% averages to zero, but leaves you down 25%. The
+arithmetic mean always sits above what money actually grows at, by roughly half
+the variance.
+
+### A cross-check worth entering by hand: AQR
+
+Choi anchors his own 2% figure to AQR's year-end 2023 forecast of **1.9%** for
+US large-cap equities' log excess return over cash, from their Capital Market
+Assumptions. That publication is free but arrives as an annual PDF, so it is not
+automated here.
+
+It is worth knowing how it maps onto this model, because it maps unusually well:
+
+- It is already a **log** excess return, so it is directly comparable to the
+  `pi` the tool prints, with no conversion.
+- It is measured **over cash**, whereas this model's safe asset is a 30-year
+  TIPS. With the real curve upward sloping, an excess over cash is larger than
+  an excess over a long real bond by roughly the real term premium, currently
+  about half a point.
+
+So AQR's 1.9% over cash is roughly 1.4% over a long real bond, against the 1.87%
+this tool currently computes. Close enough to be reassuring, and a sensible
+annual sanity check.
+
 ### To override
 
 ```bash

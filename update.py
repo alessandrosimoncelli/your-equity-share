@@ -34,6 +34,8 @@ from merton_share.market_data import (  # noqa: E402
     load_market_data,
 )
 from merton_share.expected_return import (  # noqa: E402
+    CHOI_FITTED_LOG_PREMIUM_RANGE,
+    arithmetic_from_compound,
     building_block_estimate,
     consensus,
     implied_premium_estimate,
@@ -217,6 +219,7 @@ def render_config(**f) -> str:
         *(
             [
                 f"expected_return_spread = {f['spread']:.6f}",
+                'expected_return_basis = "arithmetic mean, converted from compound"',
                 f'expected_return_estimates = "{f["estimate_summary"]}"',
             ]
             if f.get("estimates")
@@ -361,12 +364,14 @@ def main(argv: list[str]) -> int:
         else:
             method = "consensus"
             estimates = estimate_expected_return(real_rf)
-            expected = consensus(estimates)
             erp_as_of = estimates[0].as_of
             erp = estimates[0].value - real_rf
 
             print()
-            print("  Expected real return on equities, three ways:")
+            print("  Expected real return on equities, three ways.")
+            print("  Each of these is a COMPOUND return, which is what a")
+            print("  discounted cash flow, a Gordon discount rate and a")
+            print("  regression on annualised returns all produce.")
             for estimate in estimates:
                 error = (
                     f" +/- {estimate.standard_error:.2%}"
@@ -375,27 +380,38 @@ def main(argv: list[str]) -> int:
                 )
                 print(f"    {estimate.method:<28s} {estimate.value:>7.2%}{error}")
                 print(f"      {estimate.detail}")
-            print(f"    {'median, which is used':<28s} {expected:>7.2%}")
-            print(f"    {'spread between them':<28s} "
+
+            compound = consensus(estimates)
+            expected = arithmetic_from_compound(compound, vol)
+            print(f"    {'median of the three':<28s} {compound:>7.2%}   compound")
+            print(f"    {'as an arithmetic mean':<28s} {expected:>7.2%}   "
+                  f"+{(expected - compound) * 100:.2f} from the volatility drag")
+            print(f"      Choi's input is an arithmetic mean, which is visible in")
+            print(f"      his own regressor subtracting sigma squared over two.")
+            print(f"    {'spread across the three':<28s} "
                   f"{spread(estimates):>7.2%}   <- how little is known here")
             print(f"  was {existing.expected_stock_real_return:.2%}, "
                   f"{_change(expected, existing.expected_stock_real_return)}")
 
         pi = log_premium(expected, real_rf)
-        low, high = 0.02, 0.04
+        low, high = CHOI_FITTED_LOG_PREMIUM_RANGE
         print()
         print(f"  log excess drift (Choi's pi)     {pi:>8.2%}")
         if within_fitted_range(expected, real_rf):
-            print(f"    inside the {low:.0%} to {high:.0%} range the approximation "
-                  f"was fitted over")
+            print(f"    inside the {low:.0%} to {high:.0%} band the approximation was")
+            print(f"    fitted over.")
         else:
-            print(f"    OUTSIDE the {low:.0%} to {high:.0%} range the approximation")
-            print(f"    was fitted over. Choi solved the model only for log excess")
-            print(f"    drifts in that band, so the discount-rate coefficients are")
-            print(f"    an extrapolation here. At a real rate of {real_rf:.2%} you")
-            print(f"    would need an expected return near "
-                  f"{(2.718281828 ** (0.02 + 0.5 * 0.185 ** 2 + __import__('math').log(1 + real_rf)) - 1):.2%}")
-            print(f"    to reach the bottom of it. Treat the answer as indicative.")
+            distance = low - pi if pi < low else pi - high
+            side = "below" if pi < low else "above"
+            print(f"    {distance:.2%} {side} the {low:.0%} to {high:.0%} band the")
+            print(f"    approximation was fitted over.")
+            if pi > high:
+                print(f"    Choi notes allocations saturate at 100% by {high:.0%}, so")
+                print(f"    being above the band is benign.")
+            else:
+                print(f"    Below the band is the unvalidated side: he does not")
+                print(f"    address it. Today's high real rates compress the premium,")
+                print(f"    which is what puts us here. Read the answer as indicative.")
 
         if expected <= real_rf:
             raise DataUnavailable(

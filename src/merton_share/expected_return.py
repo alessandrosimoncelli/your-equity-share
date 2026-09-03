@@ -39,6 +39,8 @@ from datetime import date
 __all__ = [
     "CHOI_FITTED_LOG_PREMIUM_RANGE",
     "Estimate",
+    "arithmetic_from_compound",
+    "compound_from_arithmetic",
     "building_block_estimate",
     "consensus",
     "implied_premium_estimate",
@@ -58,9 +60,37 @@ CHOI_FITTED_LOG_PREMIUM_RANGE = (0.02, 0.04)
 CALIBRATION_VOLATILITY = 0.185
 
 
+def arithmetic_from_compound(compound: float, volatility: float) -> float:
+    """Convert a compound (geometric) return into an arithmetic mean.
+
+    They are not the same number and the gap is not small. A compound return is
+    what money actually grows at; an arithmetic mean is the average of the
+    yearly returns, and it sits higher by roughly half the variance. At 17%
+    volatility that is 1.5 percentage points.
+
+    This matters because every forward-looking estimate of equity returns is
+    naturally compound. A discounted cash flow yields an internal rate of
+    return. Gordon's formula yields a discount rate. A regression on realised
+    annualised returns yields an annualised return. All compound. Choi's input
+    slot is arithmetic, which is visible in his own regressor subtracting
+    sigma^2 / 2. Feeding a compound figure straight in understates the input.
+    """
+    return math.exp(math.log(1.0 + compound) + 0.5 * volatility**2) - 1.0
+
+
+def compound_from_arithmetic(arithmetic: float, volatility: float) -> float:
+    """The inverse. What an arithmetic mean actually compounds at."""
+    return math.exp(math.log(1.0 + arithmetic) - 0.5 * volatility**2) - 1.0
+
+
 @dataclass(frozen=True)
 class Estimate:
-    """One expected real return, with enough to judge how much to trust it."""
+    """One expected real return, with enough to judge how much to trust it.
+
+    `basis` records whether `value` is a compound or an arithmetic return.
+    Every estimator here produces compound returns; the conversion happens once,
+    at the point the number is handed to the model.
+    """
 
     method: str
     value: float
@@ -69,6 +99,23 @@ class Estimate:
     standard_error: float | None = None
     observations: int = 0
     independent_observations: int = 0
+    basis: str = "compound"
+
+    def as_arithmetic(self, volatility: float) -> "Estimate":
+        """The same estimate expressed as an arithmetic mean."""
+        if self.basis == "arithmetic":
+            return self
+        converted = arithmetic_from_compound(self.value, volatility)
+        return Estimate(
+            method=self.method,
+            value=converted,
+            as_of=self.as_of,
+            detail=self.detail,
+            standard_error=self.standard_error,
+            observations=self.observations,
+            independent_observations=self.independent_observations,
+            basis="arithmetic",
+        )
 
     def __str__(self) -> str:
         error = (
