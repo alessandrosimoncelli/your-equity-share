@@ -1,0 +1,48 @@
+# Frozen fixture for the config loader tests.
+#
+# Deliberately NOT the live config/market_data.toml. That file is rewritten
+# every time `python update.py` runs, so pinning its values in a test would
+# make the suite fail the moment anyone refreshed the data. Structure is tested
+# against the live file; values are tested against this one.
+
+[meta]
+generated_at = "2026-06-02T00:00:00+00:00"
+generated_by = "frozen test fixture"
+
+[market]
+expected_stock_real_return = 0.050000
+real_risk_free = 0.025000
+stock_volatility = 0.185000
+market_ticker = "SPY"
+as_of = 2026-06-02
+
+[covariance]
+as_of = 2026-06-02
+observations = 1253
+window_years = 5
+frequency = "daily"
+trading_days_per_year = 252
+source = "frozen fixture values"
+correlation = [
+  [ 1.000000,  0.802740,  0.675494],
+  [ 0.802740,  1.000000,  0.820904],
+  [ 0.675494,  0.820904,  1.000000],
+]
+
+[[sleeve]]
+label = "S&P 500"
+ticker = "SPY"
+weight = 0.650000
+volatility = 0.172247
+
+[[sleeve]]
+label = "Developed ex-US"
+ticker = "VEA"
+weight = 0.280000
+volatility = 0.169871
+
+[[sleeve]]
+label = "Emerging markets"
+ticker = "VWO"
+weight = 0.070000
+volatility = 0.176218

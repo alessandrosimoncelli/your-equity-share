@@ -1,73 +1,69 @@
-# Static market data for the equity allocation tool.
+# Market data for the Merton Share tool.
 #
-# Regenerate with: python tools/refresh_market_data.py --write
-# The model reads this file and never fetches anything itself, so a demo cannot
-# fail because a data provider is unavailable.
+# Refresh with:  python update.py
 #
-# See docs/inputs.md for what each number means and how to choose it.
+# The model reads this file and never fetches anything itself, so an
+# unreachable data provider can never break a demonstration.
+#
+# See docs/inputs.md for what each number means.
 
-# The three inputs the model uses. This section is required.
+[meta]
+generated_at = "2026-09-03T15:11:12+00:00"
+generated_by = "update.py"
+
+# The three numbers the model uses. This section is required.
 [market]
 
-# Your estimate of the average real return of the stock market over your
-# lifetime. Choi's guide defaults to 5%, roughly what current valuation ratios
-# imply if those ratios hold and earnings growth matches its long-run average.
+# YOUR JUDGEMENT. Not fetched, because nobody publishes a forecast of
+# this. Choi's guide defaults to 5%, roughly what current valuation
+# ratios imply if they hold and earnings growth matches its history.
 expected_stock_real_return = 0.050000
 
-# The real return on the safe asset. Choi's guide suggests the 30-year TIPS
-# yield, which is already a real yield. Reduce it by your marginal income tax
-# rate if your bonds sit in a taxable account.
-real_risk_free = 0.025000
+# Fetched: FRED DFII30, the 30-year TIPS yield. Already a
+# real yield, so no inflation adjustment is applied. Reduce it by your
+# marginal income tax rate if your bonds sit in a taxable account.
+real_risk_free = 0.029800
 
-# Annual volatility of the stock market. 18.5% is the value the fitted
-# human capital discount rates were calibrated on, so it is the consistent
-# default. Changing it here does not change that calibration.
-stock_volatility = 0.185000
+# Fetched: 5 years of daily closes of SPY,
+# 1254 returns, annualised.
+stock_volatility = 0.172170
+market_ticker = "SPY"
 
-as_of = 2026-06-02
-source = "Choi, Liu and Liu (2025) user guide defaults; CGM calibration for volatility"
+as_of = 2026-09-01
 
-# ---------------------------------------------------------------------------
-# OPTIONAL below this line.
-#
-# CGM and Choi model one well-diversified equity holding, so stock_volatility
-# above is all the model consumes. These sections exist only for a household
-# holding several funds that would rather derive that number than enter it.
-# `derived_stock_volatility()` computes it; stock_volatility stays
-# authoritative unless you copy the derived figure up into [market].
-#
-# PLACEHOLDER: the correlations below have NOT been estimated. They are a flat
-# 0.80 used illustratively in docs/methodology.html. observations = 0 records
-# this and the loader reports it as stale.
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------
+# OPTIONAL. The model uses stock_volatility above. These sections
+# only let a multi-fund holder derive that number instead. Nothing
+# reads them unless you copy the derived figure up into [market].
+# ------------------------------------------------------------------------
 
 [covariance]
-as_of = 2026-06-02
-observations = 0
-window_years = 0
-frequency = "none"
+as_of = 2026-09-03
+observations = 1253
+window_years = 5
+frequency = "daily"
 trading_days_per_year = 252
-source = "PLACEHOLDER, not estimated from data"
+source = "Yahoo daily closes, price returns"
 correlation = [
-  [ 1.000000,  0.800000,  0.800000],
-  [ 0.800000,  1.000000,  0.800000],
-  [ 0.800000,  0.800000,  1.000000],
+  [ 1.000000,  0.802740,  0.675494],
+  [ 0.802740,  1.000000,  0.820904],
+  [ 0.675494,  0.820904,  1.000000],
 ]
 
 [[sleeve]]
 label = "S&P 500"
 ticker = "SPY"
 weight = 0.650000
-volatility = 0.157500
+volatility = 0.172247
 
 [[sleeve]]
 label = "Developed ex-US"
 ticker = "VEA"
 weight = 0.280000
-volatility = 0.152600
+volatility = 0.169871
 
 [[sleeve]]
 label = "Emerging markets"
 ticker = "VWO"
 weight = 0.070000
-volatility = 0.168300
+volatility = 0.176218

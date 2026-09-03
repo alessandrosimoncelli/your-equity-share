@@ -17,8 +17,17 @@ from pathlib import Path
 import pytest
 
 TMP = tempfile.mkdtemp()
+FIXTURE = Path(__file__).parent / "fixture_market_data.toml"
+MINIMAL = """
+[market]
+expected_stock_real_return = 0.05
+real_risk_free = 0.025
+stock_volatility = 0.185
+market_ticker = "SPY"
+as_of = 2026-06-02
+"""
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from merton_share.market_data import (  # noqa: E402
     DEFAULT_CONFIG_PATH,
@@ -32,7 +41,8 @@ from merton_share.statistics import (  # noqa: E402
     log_returns,
     validate_prices,
 )
-from refresh_market_data import (  # noqa: E402
+from update import (  # noqa: E402
+    DataUnavailable,
     parse_fred_csv,
     parse_price_json,
     trim_to_window,
@@ -256,33 +266,33 @@ def test_parse_price_json_drops_null_closes() -> None:
 def test_parse_price_json_rejects_a_bot_check_page() -> None:
     """What the previous provider started returning instead of data."""
     html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
-    with pytest.raises(SystemExit, match="not JSON"):
+    with pytest.raises(DataUnavailable, match="not JSON"):
         parse_price_json(html, "SPY")
 
 
 def test_parse_price_json_surfaces_a_provider_error() -> None:
     body = json.dumps({"chart": {"error": {"code": "Not Found"}, "result": None}})
-    with pytest.raises(SystemExit, match="provider returned an error"):
+    with pytest.raises(DataUnavailable, match="provider returned an error"):
         parse_price_json(body, "NOSUCH")
 
 
 def test_parse_price_json_rejects_a_missing_series() -> None:
     body = json.dumps({"chart": {"error": None, "result": []}})
-    with pytest.raises(SystemExit, match="did not contain a price series"):
+    with pytest.raises(DataUnavailable, match="did not contain a price series"):
         parse_price_json(body, "SPY")
 
 
 def test_parse_price_json_rejects_mismatched_lengths() -> None:
     payload = json.loads(PRICE_JSON)
     payload["chart"]["result"][0]["timestamp"] = [1767312000]
-    with pytest.raises(SystemExit, match="timestamps but"):
+    with pytest.raises(DataUnavailable, match="timestamps but"):
         parse_price_json(json.dumps(payload), "SPY")
 
 
 def test_parse_price_json_rejects_an_all_null_series() -> None:
     payload = json.loads(PRICE_JSON)
     payload["chart"]["result"][0]["indicators"]["quote"][0]["close"] = [None] * 3
-    with pytest.raises(SystemExit, match="no usable observations"):
+    with pytest.raises(DataUnavailable, match="no usable observations"):
         parse_price_json(json.dumps(payload), "SPY")
 
 
@@ -306,7 +316,7 @@ def test_parse_fred_csv_skips_missing_markers() -> None:
 
 
 def test_parse_fred_csv_rejects_an_empty_series() -> None:
-    with pytest.raises(SystemExit, match="no observations"):
+    with pytest.raises(DataUnavailable, match="no observations"):
         parse_fred_csv("observation_date,DGS3MO\n2026-08-26,.\n", "DGS3MO")
 
 
@@ -318,142 +328,148 @@ def test_trim_to_window_keeps_the_most_recent() -> None:
     assert len(kept) == 28
 
 
-# --- the shipped config ----------------------------------------------------
+# --- the live config: structure only ---------------------------------------
+#
+# config/market_data.toml is rewritten every time `python update.py` runs, so
+# these tests check that it is well formed, never what its numbers are.
 
 
-def test_shipped_config_loads() -> None:
+def test_live_config_loads() -> None:
     data = load_market_data(DEFAULT_CONFIG_PATH)
     assert data.stock_volatility > 0
     assert data.equity_risk_premium > 0
+    assert data.market_ticker
 
 
-def test_market_section_alone_is_enough() -> None:
-    """The model needs three numbers. Sleeves are optional."""
-    minimal = """
-[market]
-expected_stock_real_return = 0.05
-real_risk_free = 0.025
-stock_volatility = 0.185
-as_of = 2026-06-02
-"""
-    path = Path(TMP) / "minimal.toml"
-    path.write_text(minimal, encoding="utf-8")
-    data = load_market_data(path)
-    assert data.has_sleeve_detail is False
+def test_live_config_holds_plausible_values() -> None:
+    """Wide bounds. A refresh that lands outside these is a bug, not a market move."""
+    data = load_market_data(DEFAULT_CONFIG_PATH)
+    assert 0.05 < data.stock_volatility < 0.60
+    assert -0.02 < data.real_risk_free_rate < 0.10
+    assert 0.0 < data.expected_stock_real_return < 0.20
+
+
+def test_live_config_is_not_stale_by_more_than_a_year() -> None:
+    data = load_market_data(DEFAULT_CONFIG_PATH)
+    assert (date.today() - data.as_of).days < 365
+
+
+# --- the frozen fixture: values --------------------------------------------
+
+
+def test_fixture_values() -> None:
+    data = load_market_data(FIXTURE)
+    assert data.expected_stock_real_return == pytest.approx(0.05)
+    assert data.real_risk_free_rate == pytest.approx(0.025)
     assert data.stock_volatility == pytest.approx(0.185)
     assert data.equity_risk_premium == pytest.approx(0.025)
 
 
+def test_market_section_alone_is_enough() -> None:
+    """The model needs three numbers. Sleeves are optional."""
+    path = Path(TMP) / "minimal.toml"
+    path.write_text(MINIMAL, encoding="utf-8")
+    data = load_market_data(path)
+    assert data.has_sleeve_detail is False
+    assert data.stock_volatility == pytest.approx(0.185)
+
+
+def test_market_ticker_defaults_when_absent() -> None:
+    path = Path(TMP) / "noticker.toml"
+    path.write_text(MINIMAL.replace('market_ticker = "SPY"', ""), encoding="utf-8")
+    assert load_market_data(path).market_ticker == "SPY"
+
+
 def test_derived_volatility_needs_a_breakdown() -> None:
-    minimal = """
-[market]
-expected_stock_real_return = 0.05
-real_risk_free = 0.025
-stock_volatility = 0.185
-as_of = 2026-06-02
-"""
     path = Path(TMP) / "minimal2.toml"
-    path.write_text(minimal, encoding="utf-8")
+    path.write_text(MINIMAL, encoding="utf-8")
     with pytest.raises(ValueError, match="no sleeve breakdown"):
         load_market_data(path).derived_stock_volatility()
 
 
-def test_shipped_config_carries_choi_defaults() -> None:
-    data = load_market_data(DEFAULT_CONFIG_PATH)
-    assert data.expected_stock_real_return == pytest.approx(0.05)
-    assert data.real_risk_free_rate == pytest.approx(0.025)
-    assert data.stock_volatility == pytest.approx(0.185)
-
-
-def test_derived_volatility_is_below_the_sleeve_average() -> None:
+def test_derived_volatility_is_below_the_worst_sleeve() -> None:
     """Correlations below 1 make the combination calmer than its parts."""
-    data = load_market_data(DEFAULT_CONFIG_PATH)
-    derived = data.derived_stock_volatility()
-    worst = max(s.volatility for s in data.sleeves)
-    assert derived < worst
+    data = load_market_data(FIXTURE)
+    assert data.derived_stock_volatility() < max(s.volatility for s in data.sleeves)
 
 
 def test_stock_volatility_stays_authoritative() -> None:
     """The optional breakdown must not silently override the model's input."""
-    data = load_market_data(DEFAULT_CONFIG_PATH)
-    assert data.stock_volatility != pytest.approx(data.derived_stock_volatility())
+    data = load_market_data(FIXTURE)
     assert data.stock_volatility == pytest.approx(0.185)
-
-
-def test_placeholder_correlations_are_marked() -> None:
-    data = load_market_data(DEFAULT_CONFIG_PATH)
-    assert data.covariance_observations == 0
+    assert data.stock_volatility != pytest.approx(data.derived_stock_volatility())
 
 
 def test_rejects_a_premium_that_is_not_positive() -> None:
-    bad = """
-[market]
-expected_stock_real_return = 0.02
-real_risk_free = 0.025
-stock_volatility = 0.185
-as_of = 2026-06-02
-"""
     path = Path(TMP) / "bad.toml"
-    path.write_text(bad, encoding="utf-8")
+    path.write_text(
+        MINIMAL.replace(
+            "expected_stock_real_return = 0.05", "expected_stock_real_return = 0.02"
+        ),
+        encoding="utf-8",
+    )
     with pytest.raises(ValueError, match="no reason to hold equities"):
         load_market_data(path)
 
 
 def test_rejects_non_positive_volatility() -> None:
-    bad = """
-[market]
-expected_stock_real_return = 0.05
-real_risk_free = 0.025
-stock_volatility = 0.0
-as_of = 2026-06-02
-"""
     path = Path(TMP) / "badvol.toml"
-    path.write_text(bad, encoding="utf-8")
+    path.write_text(
+        MINIMAL.replace("stock_volatility = 0.185", "stock_volatility = 0.0"),
+        encoding="utf-8",
+    )
     with pytest.raises(ValueError, match="must be positive"):
         load_market_data(path)
 
 
 def test_rejects_half_a_sleeve_breakdown() -> None:
     """Sleeves without correlations, or the reverse, is a broken file."""
-    bad = """
-[market]
-expected_stock_real_return = 0.05
-real_risk_free = 0.025
-stock_volatility = 0.185
-as_of = 2026-06-02
-
-[[sleeve]]
-label = "only"
-ticker = "x.us"
-weight = 1.0
-volatility = 0.16
-"""
     path = Path(TMP) / "half.toml"
-    path.write_text(bad, encoding="utf-8")
+    path.write_text(
+        MINIMAL
+        + chr(10)
+        + '[[sleeve]]'
+        + chr(10)
+        + 'label = "only"'
+        + chr(10)
+        + 'ticker = "X"'
+        + chr(10)
+        + "weight = 1.0"
+        + chr(10)
+        + "volatility = 0.16"
+        + chr(10),
+        encoding="utf-8",
+    )
     with pytest.raises(ValueError, match="both"):
         load_market_data(path)
 
 
-def test_loader_rejects_weights_that_do_not_sum_to_one() -> None:
-    text = DEFAULT_CONFIG_PATH.read_text(encoding="utf-8").replace(
-        "weight = 0.650000", "weight = 0.750000", 1
-    )
+def test_rejects_weights_that_do_not_sum_to_one() -> None:
     path = Path(TMP) / "weights.toml"
-    path.write_text(text, encoding="utf-8")
+    path.write_text(
+        FIXTURE.read_text(encoding="utf-8").replace(
+            "weight = 0.650000", "weight = 0.750000", 1
+        ),
+        encoding="utf-8",
+    )
     with pytest.raises(ValueError, match="sum to"):
         load_market_data(path)
 
 
-def test_loader_rejects_an_asymmetric_correlation_matrix() -> None:
-    text = DEFAULT_CONFIG_PATH.read_text(encoding="utf-8").replace(
-        "[ 1.000000,  0.800000,  0.800000]", "[ 1.000000,  0.900000,  0.800000]", 1
-    )
+def test_rejects_an_asymmetric_correlation_matrix() -> None:
     path = Path(TMP) / "asym.toml"
-    path.write_text(text, encoding="utf-8")
+    path.write_text(
+        FIXTURE.read_text(encoding="utf-8").replace(
+            "[ 1.000000,  0.802740,  0.675494]",
+            "[ 1.000000,  0.900000,  0.675494]",
+            1,
+        ),
+        encoding="utf-8",
+    )
     with pytest.raises(ValueError, match="not symmetric"):
         load_market_data(path)
 
 
-def test_loader_reports_a_missing_file() -> None:
-    with pytest.raises(FileNotFoundError, match="refresh_market_data"):
+def test_reports_a_missing_file() -> None:
+    with pytest.raises(FileNotFoundError, match="update.py"):
         load_market_data(Path("does-not-exist.toml"))

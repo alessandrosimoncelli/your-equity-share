@@ -13,8 +13,51 @@ Samuelson, 1992), using the approximation of Choi, Liu and Liu (2025).
 w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 ```
 
-Full derivation, sourced coefficients and declared deviations:
-[docs/methodology.html](docs/methodology.html).
+- **What each input means:** [docs/inputs.md](docs/inputs.md)
+- **Full derivation and sources:** [docs/methodology.html](docs/methodology.html)
+
+## Before you use it, refresh the data
+
+```bash
+python update.py
+```
+
+That is the whole thing. It fetches the latest market data, saves it, and tells
+you what changed. Windows users can double-click `update.bat` instead.
+
+```
+Updating market data for the Merton Share tool
+==============================================================
+
+Fetching...
+  real risk-free rate (30y TIPS)     2.98%   was  2.50%   +0.48 points
+  stock volatility (SPY, 5y)        17.22%   was 18.50%   -1.28 points
+
+Not fetched, this one is your judgement:
+  expected stock real return         5.00%   set 93 days ago
+  edit it in market_data.toml if your view has changed
+
+Saved. Market data is now current to 2026-09-01.
+```
+
+Two of the three numbers the model uses are observable and both are refreshed:
+the **real risk-free rate** from FRED as the 30-year TIPS yield, already a real
+yield so no inflation adjustment is applied; and **stock market volatility**,
+estimated from five years of daily closes. The third, the **expected real
+return**, is a forecast rather than an observation. Nobody publishes it, so it
+stays as you set it and the script reports its age.
+
+Options:
+
+```bash
+python update.py --dry-run    # show what would change, save nothing
+python update.py --years 10   # estimate volatility over ten years
+python update.py --force      # save even if a price series fails its checks
+```
+
+If a provider is unreachable the script says so, leaves the file untouched, and
+exits non-zero. **The tool itself never touches the network**, so a slow or dead
+provider can never break a demonstration; it simply runs on the data it has.
 
 ## Why this approach
 
@@ -31,7 +74,8 @@ consumption that produces the same loss of expected utility:
 | Always 100% equities | 11.85% | 0.56% | 29.55% |
 
 Risk aversion decides the answer more than anything else, which is why the tool
-reports a range across plausible values rather than a single figure.
+elicits it with Choi's certainty-equivalent question rather than a questionnaire,
+and reports a range across plausible values.
 
 ## Status
 
@@ -41,10 +85,10 @@ asserted.
 | Stage | State |
 | --- | --- |
 | 1. Faithful port of the source spreadsheet, with regression baseline | **done** |
-| 2. Covariance matrix in place of the weighted average of variances | next |
-| 3. Log excess returns, gamma rescaled to 1 to 10, inflation as an input | planned |
-| 4. Human capital layer: discount rates, imputed earnings path | planned |
-| 5. Glide path output and sensitivity across gamma and mu | planned |
+| 2. Market data pipeline and risk-aversion elicitation | **done** |
+| 3. Choi's formula: human capital, discount rates, imputed earnings | next |
+| 4. Validate against Choi's own spreadsheet outputs | planned |
+| 5. Glide path and sensitivity across gamma and mu | planned |
 | 6. Streamlit front end | planned |
 
 ### Stage 1: the baseline
@@ -53,28 +97,24 @@ asserted.
 `QUANTO DEVO INVESTIRE IN AZIONI.xlsx` exactly, **defects included**. It exists
 to be a fixed reference point, not to give advice.
 
-The expected values are not transcribed. `tools/extract_baseline.py` reads them
-straight out of the workbook into `tests/baseline_cells.json`, and the tests
-compare against that file. A passing run is therefore evidence that the port
-matches the spreadsheet, rather than evidence that the port and the test agree
-with the same typo. Comparison is exact equality, not a tolerance: the port
+Expected values are not transcribed. `tools/extract_baseline.py` reads them
+straight out of the workbook into `tests/baseline_cells.json`. A passing run is
+therefore evidence that the port matches the spreadsheet, rather than evidence
+that the port and the test share a typo. Comparison is exact equality: the port
 applies the same operations in the same order as each worksheet formula, so the
 results are bit-identical doubles.
 
 Cell `G4`, the Merton share, reproduces as `0.8156054116198155`.
 
 Four defects are reproduced deliberately and pinned by their own tests, so that
-fixing each one produces a visible, measured change:
+fixing each produces a visible, measured change:
 
 | Defect | Effect | Fixed in |
 | --- | --- | --- |
-| Denominator averages the sleeves' variances instead of using `w'Sigma w`, ignoring correlations | Overstates risk, so understates the allocation by about 9 points | Stage 2 |
-| Numerator uses the arithmetic excess return rather than a difference of drifts | Overstates the numerator by 3.6% on these inputs | Stage 3 |
-| Gamma is the mean of three scores on a 2 to 5 scale | The layer two discount-rate equations expect 1 to 10 | Stage 3 |
+| Denominator averages the sleeves' variances instead of using `w'Sigma w` | Overstates risk, understates allocation by 8.3 points on measured correlations | Stage 3 |
+| Numerator uses the arithmetic excess return, not a difference of drifts | Overstates the numerator by 3.6% on these inputs | Stage 3 |
+| Gamma is the mean of three scores on a 2 to 5 scale | Layer two expects 1 to 10 | Stage 3 |
 | Expected inflation hardcoded at 2.5% inside the real rate | Not a supplied assumption | Stage 3 |
-
-The worksheet's `(125 - age - 500 * r)/100` rule is ported too, so the baseline
-covers the sheet completely. It is not part of the recommendation.
 
 ## Use
 
@@ -85,50 +125,11 @@ python -m venv .venv
 ```
 
 ```python
-from merton_share import LegacyInputs, merton_share
+from merton_share import LegacyInputs, merton_share, gamma_from_certainty_equivalent
 
-merton_share(LegacyInputs())                      # 0.8156054116198155
-merton_share(LegacyInputs(risk_need=5.0))         # a more risk-averse household
+merton_share(LegacyInputs())                  # 0.8156054116198155
+gamma_from_certainty_equivalent(60_000)       # 4.26
 ```
-
-To regenerate the baseline after the source workbook changes:
-
-```bash
-python tools/extract_baseline.py "path/to/QUANTO DEVO INVESTIRE IN AZIONI.xlsx"
-```
-
-## Market data
-
-The model needs three numbers, the same three Choi's user guide asks for:
-expected real stock return, real risk-free rate, and stock market volatility.
-They live in the `[market]` section of `config/market_data.toml`. The model
-reads that file and never touches the network, so a demo cannot fail because a
-provider is slow or gone.
-
-```bash
-python tools/refresh_market_data.py            # dry run
-python tools/refresh_market_data.py --write    # apply
-```
-
-Only the real risk-free rate is observable: it comes from FRED as the 30-year
-TIPS yield, which is already a real yield and needs no inflation adjustment. The
-expected return and the volatility are judgements, not observations, so a
-refresh carries them over unchanged and reports their age.
-
-### The optional sleeve breakdown
-
-CGM and Choi model **one** well-diversified equity holding, so `stock_volatility`
-is all the model consumes. The `[[sleeve]]` and `[covariance]` sections are
-optional, and exist only for a household holding several funds that would rather
-derive that number than enter it. `derived_stock_volatility()` computes it;
-`stock_volatility` stays authoritative unless you copy the derived figure up
-into `[market]` yourself.
-
-When present, the refresh estimates their volatilities and correlations from
-daily closes. It aborts rather than writing a corrupted matrix: series are
-checked for length, non-positive prices, duplicate or unordered dates, and
-single-day moves beyond 25%, which almost always mean an unadjusted split or a
-currency change part-way through a series. A 12% fall passes untouched.
 
 ## Sources
 

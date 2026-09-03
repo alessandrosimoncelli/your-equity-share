@@ -18,7 +18,7 @@ would rather derive that one number from them than enter it directly. Nothing in
 the model requires them, and `stock_volatility` is authoritative either way.
 
 The model never reaches the network. Data is refreshed by
-`tools/refresh_market_data.py`, a separate program run deliberately, so a demo
+`update.py`, a separate program run deliberately, so a demo
 cannot fail because a provider is slow or gone.
 """
 
@@ -78,6 +78,7 @@ class MarketData:
     expected_stock_real_return: float
     real_risk_free_rate: float
     stock_volatility: float
+    market_ticker: str
     as_of: date
     source_path: Path
 
@@ -213,7 +214,7 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
     path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
     if not path.exists():
         raise FileNotFoundError(
-            f"no market data at {path}. Run tools/refresh_market_data.py to create it."
+            f"no market data at {path}. Run: python update.py"
         )
 
     with path.open("rb") as handle:
@@ -228,6 +229,7 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
         expected = float(market["expected_stock_real_return"])
         real_rf = float(market["real_risk_free"])
         volatility = float(market["stock_volatility"])
+        ticker = str(market.get("market_ticker", "SPY"))
     except KeyError as exc:
         raise ValueError(f"{path}: [market] is missing {exc.args[0]!r}") from exc
 
@@ -245,6 +247,7 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
         expected_stock_real_return=expected,
         real_risk_free_rate=real_rf,
         stock_volatility=volatility,
+        market_ticker=ticker,
         as_of=_as_date(market["as_of"], "market.as_of"),
         source_path=path,
         sleeves=sleeves,
