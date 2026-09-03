@@ -26,6 +26,11 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
+# Pyodide reports this platform. The browser build is the same file running
+# in WebAssembly, so the only thing that differs is what a visitor can be
+# told to do: they have no terminal and no copy of the repository.
+IN_BROWSER = sys.platform == "emscripten"
+
 from merton_share.allocation import Household, recommend  # noqa: E402
 from merton_share.expected_return import (  # noqa: E402
     CHOI_FITTED_LOG_PREMIUM_RANGE,
@@ -180,7 +185,11 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     answer = st.slider(
-        "Guaranteed amount", 54_000, 70_000, 58_566, 100,
+        # The ends are the guide's own answers for risk aversion 10 and 1,
+        # so the whole stated scale is reachable. Step 1 keeps 58,566, the
+        # anchor for 5, on the grid; at step 100 it was not, and the first
+        # drag snapped the answer off it.
+        "Guaranteed amount", 53_991, 70_711, 58_566, 1,
         format="$%d", label_visibility="collapsed",
     )
     gamma = gamma_from_certainty_equivalent(float(answer))
@@ -325,7 +334,7 @@ dot = alt.Chart(
 st.altair_chart(
     (area + line + here + dot).properties(height=300, padding={"left": 4, "right": 12, "top": 8, "bottom": 4})
     .configure_view(strokeWidth=0).configure_axis(**AXIS),
-    use_container_width=True,
+    width="stretch",
 )
 st.markdown(
     f'<div class="sub">The marker is where you are now: {expected:.2%} '
@@ -359,7 +368,7 @@ you = alt.Chart(pd.DataFrame({"age": [int(age)]})).mark_rule(
 st.altair_chart(
     (g_area + g_area.mark_line(color=BLUE, strokeWidth=2.5) + you)
     .properties(height=280, padding={"left": 4, "right": 12, "top": 8, "bottom": 4}).configure_view(strokeWidth=0).configure_axis(**AXIS),
-    use_container_width=True,
+    width="stretch",
 )
 st.markdown(
     '<div class="sub">Wealth and salary are held fixed here, which no real '
@@ -428,8 +437,9 @@ st.markdown(
 age_days = (datetime.now(timezone.utc).date() - market.as_of).days
 st.markdown(
     f'<div class="sub">Data as of <b>{market.as_of}</b>, '
-    f"{age_days} day{'' if age_days == 1 else 's'} old. Refresh it by running "
-    "<code>python update.py</code>.</div>",
+    f"{age_days} day{'' if age_days == 1 else 's'} old."
+    + ("" if IN_BROWSER else " Refresh it by running <code>python update.py</code>.")
+    + "</div>",
     unsafe_allow_html=True,
 )
 
@@ -437,7 +447,9 @@ st.markdown(
     '<div class="note">Educational and illustrative only. Not investment, '
     "financial, tax or legal advice, and no advisory relationship is created "
     "by its use. Every output depends on the assumptions documented in "
-    "docs/methodology.html, several of which are estimates that competent "
-    "practitioners would set differently.</div>",
+    + ('<a href="./methodology.html" target="_blank">the methodology</a>'
+       if IN_BROWSER else "docs/methodology.html")
+    + ", several of which are estimates that competent practitioners would "
+    "set differently.</div>",
     unsafe_allow_html=True,
 )
