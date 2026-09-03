@@ -17,14 +17,19 @@ import io
 import json
 import re
 import zipfile
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
 __all__ = [
     "DataUnavailable",
     "PriceSeries",
+    "ShillerHistory",
+    "parse_damodaran_components",
     "parse_damodaran_erp",
     "parse_fred_csv",
+    "parse_multpl_current",
     "parse_price_json",
+    "parse_shiller_csv",
 ]
 
 # Excel stores dates as a day count from an epoch. Which epoch depends on a flag
@@ -231,3 +236,134 @@ def parse_damodaran_erp(data: bytes) -> tuple[date, float]:
     from datetime import timedelta
 
     return epoch + timedelta(days=serial), premium
+
+
+@dataclass(frozen=True)
+class ShillerHistory:
+    """Robert Shiller's monthly S&P 500 series, cleaned.
+
+    Only months carrying a real price, a real dividend and a CAPE are kept, so
+    the three lists are aligned and every entry is usable. Recent months often
+    lack fundamentals even when a price exists, and those are dropped rather
+    than carried as zeros.
+    """
+
+    dates: tuple[str, ...]
+    real_prices: tuple[float, ...]
+    real_dividends: tuple[float, ...]
+    real_earnings: tuple[float, ...]
+    cape: tuple[float, ...]
+
+    def __len__(self) -> int:
+        return len(self.dates)
+
+    def real_earnings_growth(self, years: int) -> float:
+        """Annualised real growth in earnings per share over the last `years`."""
+        months = years * 12
+        series = [e for e in self.real_earnings if e > 0]
+        if len(series) <= months:
+            raise DataUnavailable(
+                f"only {len(series) // 12} years of earnings, need {years}"
+            )
+        window = series[-months:]
+        return (window[-1] / window[0]) ** (12.0 / (len(window) - 1)) - 1.0
+
+
+def parse_shiller_csv(text: str) -> ShillerHistory:
+    """Parse the Shiller dataset as published in CSV form."""
+    reader = csv.DictReader(io.StringIO(text))
+    required = {"Date", "Real Price", "Real Dividend", "Real Earnings", "PE10"}
+    if reader.fieldnames is None or not required.issubset(reader.fieldnames):
+        raise DataUnavailable(
+            f"Shiller data is missing columns; got {reader.fieldnames}"
+        )
+
+    dates, prices, dividends, earnings, cape = [], [], [], [], []
+    for row in reader:
+        try:
+            price = float(row["Real Price"])
+            dividend = float(row["Real Dividend"])
+            earning = float(row["Real Earnings"])
+            ratio = float(row["PE10"])
+        except (TypeError, ValueError):
+            continue
+        if price <= 0 or dividend <= 0 or ratio <= 0:
+            continue
+        dates.append(row["Date"])
+        prices.append(price)
+        dividends.append(dividend)
+        earnings.append(earning)
+        cape.append(ratio)
+
+    if len(dates) < 600:
+        raise DataUnavailable(
+            f"only {len(dates)} usable months of Shiller data, expected decades"
+        )
+    return ShillerHistory(
+        tuple(dates), tuple(prices), tuple(dividends), tuple(earnings), tuple(cape)
+    )
+
+
+def parse_multpl_current(html: str, label: str) -> float:
+    """The current value from a multpl.com page.
+
+    The page states its figure in a block marked "current". Scraping is
+    fragile by nature, so the result is range-checked by the caller and the
+    whole fetch is optional: the tool falls back to the last CAPE in Shiller's
+    own history if this fails.
+    """
+    match = re.search(r'id="current"[^>]*>(.*?)</div>', html, re.S)
+    if match is None:
+        raise DataUnavailable(f"{label}: no current value found on the page")
+    text = re.sub(r"<[^>]+>", " ", match.group(1))
+    number = re.search(r"([0-9]+(?:\.[0-9]+)?)", text)
+    if number is None:
+        raise DataUnavailable(f"{label}: could not read a number from the page")
+    return float(number.group(1))
+
+
+def parse_damodaran_components(data: bytes) -> tuple[date, float, float]:
+    """Index level, trailing payout yield and cyclically adjusted payout yield.
+
+    From the historical sheet of the same workbook the premium comes from.
+    Column B is the index, F the trailing twelve month cash returned to
+    shareholders, which is dividends *and* buybacks, and E a ten-year average
+    of the same. Returns (month, F/B, E/B).
+    """
+    try:
+        archive = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile:
+        raise DataUnavailable("the workbook download is not readable") from None
+
+    with archive as zf:
+        workbook = zf.read("xl/workbook.xml").decode("utf-8", "replace")
+        epoch = _EPOCH_1904 if 'date1904="1"' in workbook else _EPOCH_1900
+        sheet = zf.read(_sheet_path(zf, "Historical ERP")).decode("utf-8", "replace")
+
+    best: tuple[int, float, float] | None = None
+    for row in re.finditer(r"<row\b[^>]*>(.*?)</row>", sheet, re.S):
+        cells: dict[str, float] = {}
+        for cell in re.finditer(r"<c\b([^>]*?)/?>(?:(.*?)</c>)?", row.group(1), re.S):
+            ref = re.search(r'r="([A-Z]+)\d+"', cell.group(1))
+            value = re.search(r"<v>(.*?)</v>", cell.group(2) or "", re.S)
+            if ref and value and 't="s"' not in cell.group(1):
+                try:
+                    cells[ref.group(1)] = float(value.group(1))
+                except ValueError:
+                    pass
+        if {"A", "B", "E", "F"} <= cells.keys() and cells["B"] > 0:
+            serial = int(cells["A"])
+            if best is None or serial > best[0]:
+                best = (serial, cells["F"] / cells["B"], cells["E"] / cells["B"])
+
+    if best is None:
+        raise DataUnavailable("no payout rows found in the workbook")
+    serial, trailing, smoothed = best
+    if not 0.0 < trailing < 0.20 or not 0.0 < smoothed < 0.20:
+        raise DataUnavailable(
+            f"payout yields of {trailing:.1%} and {smoothed:.1%} are implausible; "
+            f"the workbook layout has probably changed"
+        )
+    from datetime import timedelta
+
+    return epoch + timedelta(days=serial), trailing, smoothed

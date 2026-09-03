@@ -124,13 +124,16 @@ def print_report(result, market, household) -> None:
     print(THIN)
     print(f"  Market data, as of {market.as_of}")
     print()
-    if market.expected_return_is_market_implied:
-        erp = market.provenance.get("implied_erp")
-        note = f"implied premium {erp:.2%} + real rate" if erp else "market implied"
-    else:
-        note = "set by hand"
+    method = market.provenance.get("expected_return_method", "set by hand")
+    note = {"consensus": "median of three estimators",
+            "implied": "market implied premium",
+            "fixed": "set by hand"}.get(method, method)
     print(f"  expected stock real return       "
           f"{market.expected_stock_real_return:>13.2%}   {note}")
+    if market.expected_return_spread > 0:
+        print(f"      estimators: {market.expected_return_estimates}")
+        print(f"      they span {market.expected_return_spread:.2%}, which is the")
+        print(f"      least certain input here. See docs/inputs.md.")
     print(f"  real risk-free rate              "
           f"{market.real_risk_free_rate:>13.2%}   30-year TIPS")
     window = market.provenance.get("volatility_window_years")

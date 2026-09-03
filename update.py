@@ -33,11 +33,24 @@ from merton_share.market_data import (  # noqa: E402
     DEFAULT_CONFIG_PATH,
     load_market_data,
 )
+from merton_share.expected_return import (  # noqa: E402
+    building_block_estimate,
+    consensus,
+    implied_premium_estimate,
+    log_premium,
+    real_total_return_index,
+    spread,
+    valuation_regression_estimate,
+    within_fitted_range,
+)
 from merton_share.providers import (  # noqa: E402
     DataUnavailable,
+    parse_damodaran_components,
     parse_damodaran_erp,
     parse_fred_csv,
+    parse_multpl_current,
     parse_price_json,
+    parse_shiller_csv,
 )
 from merton_share.statistics import (  # noqa: E402
     TRADING_DAYS_PER_YEAR,
@@ -52,6 +65,21 @@ PRICE_URL = (
 )
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 ERP_URL = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx"
+SHILLER_URL = (
+    "https://raw.githubusercontent.com/datasets/s-and-p-500/main/data/data.csv"
+)
+CAPE_URL = "https://www.multpl.com/shiller-pe"
+
+# Horizon for the valuation regression. The model's own horizon is a lifetime,
+# and the slope of the relation falls sharply as the horizon lengthens, so a
+# ten-year fit would understate the expected return for this purpose.
+REGRESSION_HORIZON_YEARS = 30
+
+# Window for the long-run real earnings growth term. A century spans several
+# regimes, which is the point. Shorter windows are dominated by the buyback era:
+# the last thirty years show 5% real growth per share, which no one should
+# extrapolate for a lifetime.
+GROWTH_WINDOW_YEARS = 100
 
 # 30-year Treasury Inflation-Protected Securities, constant maturity. A real
 # yield already, which is what the model needs and what Choi's guide asks for.
@@ -186,13 +214,76 @@ def render_config(**f) -> str:
         f"volatility_window_years = {f['window_years']}",
         f"volatility_observations = {f['observations']}",
         f"volatility_dividend_adjusted = {'true' if f['adjusted'] else 'false'}",
+        *(
+            [
+                f"expected_return_spread = {f['spread']:.6f}",
+                f'expected_return_estimates = "{f["estimate_summary"]}"',
+            ]
+            if f.get("estimates")
+            else []
+        ),
         f'volatility_source = "Yahoo daily closes"',
         f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
-        'expected_return_source = "Damodaran implied ERP + real risk-free rate"'
-        if f["method"] == "implied"
+        'expected_return_source = "median of three estimators, see docs/inputs.md"'
+        if f["method"] == "consensus"
         else 'expected_return_source = "set by hand"',
     ]
     return nl.join(out).rstrip() + nl
+
+
+def estimate_expected_return(real_risk_free: float) -> list:
+    """Build the expected real return three independent ways.
+
+    Each uses free public data and none of them needs a key. They disagree by
+    several percentage points, which is the honest state of knowledge about
+    this input, so all three are returned rather than one.
+    """
+    workbook = _get(ERP_URL)
+    erp_as_of, erp = parse_damodaran_erp(workbook)
+    payout_as_of, payout_yield, _smoothed = parse_damodaran_components(workbook)
+
+    shiller = parse_shiller_csv(_get(SHILLER_URL).decode("utf-8", "replace"))
+    real_growth = shiller.real_earnings_growth(GROWTH_WINDOW_YEARS)
+
+    # A current cyclically adjusted ratio, falling back to Shiller's own last
+    # observation when the scrape fails. The fallback is months stale but the
+    # ratio moves slowly, and a stale ratio beats no estimate.
+    try:
+        cape = parse_multpl_current(
+            _get(CAPE_URL).decode("utf-8", "replace"), "Shiller PE"
+        )
+        if not 5.0 < cape < 80.0:
+            raise DataUnavailable(f"CAPE of {cape} is implausible")
+        cape_note = "current"
+    except DataUnavailable:
+        cape = shiller.cape[-1]
+        cape_note = f"as of {shiller.dates[-1]}, current value unavailable"
+
+    index = real_total_return_index(
+        list(shiller.real_prices), list(shiller.real_dividends)
+    )
+
+    estimates = [
+        implied_premium_estimate(erp, real_risk_free, erp_as_of),
+        building_block_estimate(
+            payout_yield,
+            real_growth,
+            as_of=payout_as_of,
+            growth_basis=f"{GROWTH_WINDOW_YEARS} years, per share",
+        ),
+        valuation_regression_estimate(
+            list(shiller.cape),
+            index,
+            cape,
+            horizon_years=REGRESSION_HORIZON_YEARS,
+            as_of=None,
+        ),
+    ]
+    if cape_note != "current":
+        estimates[2] = type(estimates[2])(
+            **{**estimates[2].__dict__, "detail": estimates[2].detail + f", {cape_note}"}
+        )
+    return estimates
 
 
 def _change(new: float, old: float) -> str:
@@ -264,18 +355,47 @@ def main(argv: list[str]) -> int:
         if args.fixed_return is not None:
             method = "fixed"
             expected = args.fixed_return
+            estimates = []
             print(f"  expected stock real return       {expected:>8.2%}"
                   f"   set by hand")
         else:
-            method = "implied"
-            erp_as_of, erp = parse_damodaran_erp(_get(ERP_URL))
-            expected = erp + real_rf
-            print(f"  implied equity risk premium      {erp:>8.2%}"
-                  f"   Damodaran, {erp_as_of}")
-            print(f"  expected stock real return       {expected:>8.2%}"
-                  f"   was {existing.expected_stock_real_return:>6.2%}"
-                  f"   {_change(expected, existing.expected_stock_real_return)}")
-            print(f"    = implied premium {erp:.2%} + real rate {real_rf:.2%}")
+            method = "consensus"
+            estimates = estimate_expected_return(real_rf)
+            expected = consensus(estimates)
+            erp_as_of = estimates[0].as_of
+            erp = estimates[0].value - real_rf
+
+            print()
+            print("  Expected real return on equities, three ways:")
+            for estimate in estimates:
+                error = (
+                    f" +/- {estimate.standard_error:.2%}"
+                    if estimate.standard_error is not None
+                    else ""
+                )
+                print(f"    {estimate.method:<28s} {estimate.value:>7.2%}{error}")
+                print(f"      {estimate.detail}")
+            print(f"    {'median, which is used':<28s} {expected:>7.2%}")
+            print(f"    {'spread between them':<28s} "
+                  f"{spread(estimates):>7.2%}   <- how little is known here")
+            print(f"  was {existing.expected_stock_real_return:.2%}, "
+                  f"{_change(expected, existing.expected_stock_real_return)}")
+
+        pi = log_premium(expected, real_rf)
+        low, high = 0.02, 0.04
+        print()
+        print(f"  log excess drift (Choi's pi)     {pi:>8.2%}")
+        if within_fitted_range(expected, real_rf):
+            print(f"    inside the {low:.0%} to {high:.0%} range the approximation "
+                  f"was fitted over")
+        else:
+            print(f"    OUTSIDE the {low:.0%} to {high:.0%} range the approximation")
+            print(f"    was fitted over. Choi solved the model only for log excess")
+            print(f"    drifts in that band, so the discount-rate coefficients are")
+            print(f"    an extrapolation here. At a real rate of {real_rf:.2%} you")
+            print(f"    would need an expected return near "
+                  f"{(2.718281828 ** (0.02 + 0.5 * 0.185 ** 2 + __import__('math').log(1 + real_rf)) - 1):.2%}")
+            print(f"    to reach the bottom of it. Treat the answer as indicative.")
 
         if expected <= real_rf:
             raise DataUnavailable(
@@ -303,6 +423,11 @@ def main(argv: list[str]) -> int:
         adjusted=adjusted,
         erp=erp,
         erp_as_of=erp_as_of.isoformat() if erp_as_of else None,
+        spread=spread(estimates) if estimates else 0.0,
+        estimate_summary="; ".join(
+            f'{e.method} {e.value:.4f}' for e in estimates
+        ) if estimates else "",
+        estimates=bool(estimates),
     )
 
     if args.dry_run:

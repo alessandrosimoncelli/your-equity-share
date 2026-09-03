@@ -77,45 +77,64 @@ the spousal benefit instead, **50% of the higher earner's**.
 
 ## Expected stock market real return
 
-Your estimate of the average real return of the stock market over your lifetime.
+The input the recommendation is most sensitive to, and the one nobody can
+observe. It is **built from public data three independent ways** and the median
+is used.
 
-**This is now fetched rather than guessed.** `python update.py` takes Damodaran's
-implied equity risk premium, published monthly and derived by discounting
-expected index cash flows back to the current index level, and adds the real
-risk-free rate:
+| Method | What it is | Latest |
+| --- | --- | --- |
+| Implied premium | Damodaran's implied equity risk premium, a discounted cash flow on the index, plus the real risk-free rate | 7.07% |
+| Building blocks | Payout yield (dividends and buybacks) plus 100-year real earnings growth per share, no repricing | 5.13% |
+| Valuation regression | Realised 30-year real returns regressed on the cyclically adjusted earnings yield across Shiller's history since 1881, read off today's valuation | 5.17% |
+| **Median, used** | | **5.17%** |
 
-    expected real return = implied equity risk premium + real risk-free rate
+They span nearly two percentage points. That spread is the honest measure of how
+little is known here, and the tool reports it rather than hiding it.
 
-That is a forward-looking number that moves with the market, which is what the
-model wants, rather than a historical average that ignores today's price.
+Two of the three land at about 5.15%, which independently reproduces the 5%
+default in Choi's guide and its stated reasoning. The implied premium is the
+outlier: it embeds near-term analyst growth forecasts, which run high.
 
-**One caveat, and it is worth knowing.** Damodaran quotes his premium against
-the 10-year **nominal** Treasury. Adding it to a 30-year **real** yield treats
-the premium as neutral to both maturity and inflation, which it is not exactly.
-Pairing it instead with his own 10-year nominal and a 10-year breakeven gives a
-real expected return roughly half a percentage point lower. The 30-year real
-yield is used because the model's horizon is a whole lifetime, not ten years.
+### Why the horizon of the regression matters
 
-To override with your own view:
+The relation between valuation and subsequent return weakens sharply as the
+horizon lengthens. Fitted on the same data, the slope falls from 0.91 at ten
+years to 0.26 at thirty, and today's stretched valuation therefore predicts:
+
+| Horizon | Predicted real return |
+| --- | --- |
+| 10 years | 2.37% |
+| 20 years | 3.54% |
+| 30 years | 5.17% |
+
+A lifetime model must use a long horizon. Using the ten-year figure would put
+the recommendation at zero equities, which is an artefact of the horizon
+mismatch, not a finding.
+
+### The statistical caveat that matters
+
+The regression uses overlapping windows, so its 1,350 observations contain only
+about **four independent** thirty-year periods. The reported error divides the
+residual spread by the square root of that number, not of 1,350. It is roughly
+0.7 percentage points, and that is generous.
+
+### To override
 
 ```bash
 python update.py --fixed-return 0.05
 ```
 
-Choi's guide defaults to 5%, on the reasoning that this is what valuation ratios
-imply if they hold and earnings growth matches its long-run average. A more
-precise way to reach your own figure is to build it from parts:
+### One more warning the tool gives you
 
-    expected real return
-      = dividend yield
-      + net buyback yield
-      + real earnings growth
-      + repricing
+Choi fitted his approximation over **log** excess drifts of 2%, 3% and 4%, where
 
-The first three are close to observable. Only repricing, the change in the
-multiple the market pays, is a forecast of sentiment. Setting it to zero is an
-assumption, not a neutral choice: a market priced above its own history has a
-negative expected repricing term that this sum ignores.
+    pi = ln(1 + mu) - sigma^2 / 2 - ln(1 + r)
+
+An arithmetic premium is not that quantity: at 18.5% volatility the two differ
+by 1.71 points. At today's real rate of about 3%, an expected return below
+roughly 6.9% puts the log drift **below** the range the coefficients were fitted
+over, and the tool says so. Choi's own guide defaults, 5% and 2.5%, sit outside
+it too. The answer is then an extrapolation and should be read as indicative.
 
 ## Real risk-free interest rate
 

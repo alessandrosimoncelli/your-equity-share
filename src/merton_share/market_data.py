@@ -93,8 +93,24 @@ class MarketData:
 
     @property
     def expected_return_is_market_implied(self) -> bool:
-        """True when the expected return was derived from a live premium."""
-        return self.provenance.get("expected_return_method") == "implied"
+        """True when the expected return was derived from market data."""
+        return self.provenance.get("expected_return_method") in {
+            "implied",
+            "consensus",
+        }
+
+    @property
+    def expected_return_estimates(self) -> str:
+        """The individual estimators behind a consensus figure, if recorded."""
+        return str(self.provenance.get("expected_return_estimates", ""))
+
+    @property
+    def expected_return_spread(self) -> float:
+        """Highest minus lowest across the estimators. Zero when set by hand."""
+        try:
+            return float(self.provenance.get("expected_return_spread", 0.0))
+        except (TypeError, ValueError):
+            return 0.0
 
     @property
     def expected_return_source(self) -> str:
