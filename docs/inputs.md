@@ -80,11 +80,22 @@ the spousal benefit instead, **50% of the higher earner's**.
 Your estimate of the average return of the stock market over your lifetime,
 above inflation. The guide's default is **5%**.
 
-Its justification for that figure is what current valuation ratios imply, on the
-assumption that those ratios stay constant and earnings growth matches its
-long-run history. Setting this input from a forward earnings yield is therefore
-consistent with the guide, provided the same two conditions are stated. It is
-not a forecast that valuations will hold.
+A more precise way to set it than a single guess is to build it from parts:
+
+    expected real return
+      = dividend yield
+      + net buyback yield
+      + real earnings growth
+      + repricing
+
+The first three are close to observable. Only repricing, the change in the
+multiple the market pays, is a forecast of sentiment. Setting it to zero and
+adding the rest is exactly how the guide's 5% arises: a dividend yield around
+1.3%, a net buyback yield around 0.5% and real earnings growth around 3.2%.
+
+Setting repricing to zero is an assumption, not a neutral choice. A market
+priced above its own history has a negative expected repricing term that this
+sum ignores, so 5% would then be too high.
 
 ## Real risk-free interest rate
 
