@@ -186,6 +186,16 @@ def main() -> int:
             path.unlink()
             print(f"  removed stale {path.relative_to(OUT)}")
 
+    # Then any directory the pruning emptied, deepest first. Best effort: a
+    # locked directory is untidy, not wrong, and must not fail the build.
+    for path in sorted(OUT.rglob("*"), key=lambda q: len(q.parts), reverse=True):
+        if path.is_dir() and not any(path.iterdir()):
+            try:
+                path.rmdir()
+                print(f"  removed empty {path.relative_to(OUT)}")
+            except OSError:
+                pass
+
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
     print(f"built {OUT}")
     for rel in ["index.html"] + copied + extra:
