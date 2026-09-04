@@ -225,6 +225,14 @@ def render_config(**f) -> str:
             if f.get("estimates")
             else []
         ),
+        # The vintage of the long history behind two of the three estimators.
+        # Prices arrive promptly; the earnings a cyclically adjusted ratio needs
+        # do not, and the feed has stopped updating its derived columns before
+        # while still appending price rows. Without this the file's as_of date,
+        # which belongs to the TIPS yield and the volatility, would imply the
+        # whole estimate was as fresh as those two.
+        f'history_as_of = "{f["history_as_of"]}"' if f.get("history_as_of")
+        else "# history_as_of = none",
         f'volatility_source = "Yahoo daily closes"',
         f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
         'expected_return_source = "median of three estimators, see docs/inputs.md"'
@@ -234,7 +242,7 @@ def render_config(**f) -> str:
     return nl.join(out).rstrip() + nl
 
 
-def estimate_expected_return(real_risk_free: float) -> list:
+def estimate_expected_return(real_risk_free: float) -> tuple[list, str]:
     """Build the expected real return three independent ways.
 
     Each uses free public data and none of them needs a key. They disagree by
@@ -282,11 +290,12 @@ def estimate_expected_return(real_risk_free: float) -> list:
             as_of=None,
         ),
     ]
+    history_as_of = shiller.last_date
     if cape_note != "current":
         estimates[2] = type(estimates[2])(
             **{**estimates[2].__dict__, "detail": estimates[2].detail + f", {cape_note}"}
         )
-    return estimates
+    return estimates, history_as_of
 
 
 def _change(new: float, old: float) -> str:
@@ -359,11 +368,12 @@ def main(argv: list[str]) -> int:
             method = "fixed"
             expected = args.fixed_return
             estimates = []
+            history_as_of = None
             print(f"  expected stock real return       {expected:>8.2%}"
                   f"   set by hand")
         else:
             method = "consensus"
-            estimates = estimate_expected_return(real_rf)
+            estimates, history_as_of = estimate_expected_return(real_rf)
             erp_as_of = estimates[0].as_of
             erp = estimates[0].value - real_rf
 
@@ -380,6 +390,19 @@ def main(argv: list[str]) -> int:
                 )
                 print(f"    {estimate.method:<28s} {estimate.value:>7.2%}{error}")
                 print(f"      {estimate.detail}")
+            if history_as_of:
+                from datetime import date as _date
+                y, m, _d = (int(x) for x in history_as_of.split("-"))
+                today = datetime.now(timezone.utc).date()
+                months = (today.year - y) * 12 + today.month - m
+                warn = "  <- STALE" if months > 6 else ""
+                print(f"    long history runs to        {history_as_of}"
+                      f"   {months} months behind{warn}")
+                if months > 6:
+                    print("      Prices arrive promptly; the earnings a cyclically")
+                    print("      adjusted ratio needs do not. Two of the three")
+                    print("      estimators rest on this, so the expected return is")
+                    print("      not as fresh as the rate and the volatility above.")
 
             compound = consensus(estimates)
             expected = arithmetic_from_compound(compound, vol)
@@ -444,6 +467,7 @@ def main(argv: list[str]) -> int:
             f'{e.method} {e.value:.4f}' for e in estimates
         ) if estimates else "",
         estimates=bool(estimates),
+        history_as_of=history_as_of,
     )
 
     if args.dry_run:

@@ -377,8 +377,8 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
       indifferent?</b></p>
     <label class="visually-hidden" for="ce">Guaranteed amount</label>
     <div class="slider-value" id="ce-value">$58,566</div>
-    <input type="range" id="ce" min="54000" max="70000" step="1" value="58566">
-    <div class="slider-ends"><span>$54,000</span><span>$70,000</span></div>
+    <input type="range" id="ce" min="53991" max="70711" step="1" value="58566">
+    <div class="slider-ends"><span>$53,991</span><span>$70,711</span></div>
     <div class="readout" id="ce-readout"></div>
 
     </div>
@@ -778,10 +778,26 @@ async function boot() {
 
   const days = ageOfData(market.as_of);
   const fresh = days <= 90;
+  // Two different vintages, and saying only the first would overstate the
+  // freshness of the answer. The rate and the volatility are days old; the
+  // long history behind two of the three expected-return estimators runs
+  // months behind, because prices arrive promptly and the earnings a
+  // cyclically adjusted ratio needs do not.
+  const hist = (market.provenance || {}).history_as_of;
+  let histNote = "";
+  if (hist) {
+    const [hy, hm] = hist.split("-").map(Number);
+    const now = new Date();
+    const months = (now.getFullYear() - hy) * 12 + (now.getMonth() + 1 - hm);
+    histNote =
+      ` The long history behind the expected return runs only to <b>${hist}</b>, ` +
+      `<span class="${months > 6 ? "stale" : "ok"}">${months} months behind</span>. ` +
+      `The rate and the volatility above are current; that estimate is not.`;
+  }
   $("foot").innerHTML =
-    `Market data as of <b>${market.as_of}</b>, ` +
+    `Rate and volatility as of <b>${market.as_of}</b>, ` +
     `<span class="${fresh ? "ok" : "stale"}">${days} day${days === 1 ? "" : "s"} old</span>` +
-    `${fresh ? "" : ", past the 90 day limit"}. ` +
+    `${fresh ? "" : ", past the 90 day limit"}.` + histNote + " " +
     `Everything on this page is computed in your browser; nothing you enter is sent anywhere. ` +
     `<a href="./methodology.html">Read the methodology</a>. ` +
     `Not investment advice.`;

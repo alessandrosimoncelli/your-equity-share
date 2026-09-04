@@ -257,15 +257,42 @@ class ShillerHistory:
     def __len__(self) -> int:
         return len(self.dates)
 
+    @property
+    def last_date(self) -> str:
+        """The most recent month carrying usable fundamentals.
+
+        Worth surfacing. The published series runs months behind the market:
+        prices arrive promptly, the earnings needed for a cyclically adjusted
+        ratio do not, and the feed has at times stopped updating the derived
+        columns altogether while still appending price rows.
+        """
+        return self.dates[-1]
+
     def real_earnings_growth(self, years: int) -> float:
-        """Annualised real growth in earnings per share over the last `years`."""
+        """Annualised real growth in earnings per share over the last `years`.
+
+        The window is taken from the end of the series and must be contiguous.
+        An earlier version filtered non-positive earnings out first and then
+        sliced by count, which would have silently reached further back than
+        the window it claimed while still dividing by the claimed number of
+        months, overstating the growth rate. Nothing is filtered now: a
+        non-positive month inside the window is an error, not something to
+        step over.
+        """
         months = years * 12
-        series = [e for e in self.real_earnings if e > 0]
-        if len(series) <= months:
+        if len(self.real_earnings) <= months:
             raise DataUnavailable(
-                f"only {len(series) // 12} years of earnings, need {years}"
+                f"only {len(self.real_earnings) // 12} years of earnings, "
+                f"need {years}"
             )
-        window = series[-months:]
+        window = self.real_earnings[-months:]
+        bad = [d for d, e in zip(self.dates[-months:], window) if e <= 0]
+        if bad:
+            raise DataUnavailable(
+                f"{len(bad)} month(s) of non-positive real earnings inside the "
+                f"{years} year window, first at {bad[0]}; the growth rate would "
+                f"not describe the period it claims"
+            )
         return (window[-1] / window[0]) ** (12.0 / (len(window) - 1)) - 1.0
 
 

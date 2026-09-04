@@ -1,13 +1,16 @@
-"""Return statistics for the equity sleeves.
+"""Return statistics over a price series.
 
-Pure functions over price series. No network, no file access, no dependencies,
-so the refresh tool and the model both use the same estimator and the tests run
-offline.
+Pure functions. No network, no file access, no dependencies, so the refresh
+tool and the model both use the same estimator and the tests run offline.
 
-Volatility and correlation are estimated from price returns rather than total
-returns. That is deliberate: the model takes its expected return from the
-forward earnings yield, not from history, so dividends are never estimated from
-the series. Their effect on daily volatility and on correlations is negligible.
+Volatility is estimated from **dividend-adjusted** closes, so successive ratios
+are total returns. `parse_price_json` prefers Yahoo's `adjclose` for exactly
+that reason: a split-only series leaves a small downward step on every
+ex-dividend day, which on five years of SPY overstates annual volatility by
+about four basis points.
+
+The expected return is not estimated here and never from this series. It is
+built three independent ways in `expected_return`, and the median is taken.
 """
 
 from __future__ import annotations
