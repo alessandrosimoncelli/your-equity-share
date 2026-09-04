@@ -10,3 +10,6 @@ dist/
 # "web/" this also matched src/web/, so the page source was silently untracked.
 /web/
 /your-equity-share-site.zip
+
+# Single-file builds for hosts that serve one file
+/dist/
