@@ -61,7 +61,7 @@ body {
 }
 
 .wrap {
-  max-width: 82rem;
+  max-width: 94rem;
   margin: 0 auto;
   padding: clamp(1.75rem, 4vw, 3.25rem) clamp(1.1rem, 4vw, 3rem) 4rem;
 }
@@ -107,25 +107,39 @@ p { margin: 0.85rem 0 0; }
   margin-bottom: 1.9rem;
 }
 
+/*
+  Four columns, not auto-fit. Auto-fit chose its own count from the available
+  width, which left the second row two cells short on a wide screen and the
+  page looking half empty. Fixed columns let each row be filled deliberately:
+  four inputs, then the risk question across two with the market assumptions
+  and the two options beside it.
+*/
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
-  gap: 1.1rem 1.9rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.4rem 2rem;
   align-items: start;
 }
 
 .span-2 { grid-column: span 2; }
 .span-all { grid-column: 1 / -1; }
 
+@media (max-width: 68rem) {
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 40rem) {
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
   .span-2 { grid-column: span 1; }
 }
+
+/* The two options sit together in one cell rather than taking a row each. */
+.options { display: grid; gap: 0.75rem; }
 
 .paths {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 1rem 1.9rem;
-  margin-top: 0.8rem;
+  gap: 1rem 2rem;
 }
 
 .result-row {
@@ -424,7 +438,7 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
         <div class="readout" id="ce-readout"></div>
       </div>
 
-      <div class="field span-2">
+      <div class="field">
         <label class="lbl">Market assumptions</label>
         <label class="check"><input type="checkbox" id="override">
           <span>Set the expected return myself</span></label>
@@ -437,38 +451,39 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
         </div>
       </div>
 
-      <div class="field span-all">
-        <label class="check"><input type="checkbox" id="partnered">
-          <span>Second adult in the household</span></label>
-        <div id="partner-fields" class="paths" hidden>
-          <div class="field">
-            <label class="lbl" for="partner-age">Their age</label>
-            <input type="number" id="partner-age" min="20" max="99" step="1" value="42">
-          </div>
-          <div class="field">
-            <label class="lbl" for="partner-wage">Their after-tax wage</label>
-            <input type="number" id="partner-wage" min="0" step="5000" value="80000">
-          </div>
+      <div class="field">
+        <label class="lbl">Options</label>
+        <div class="options">
+          <label class="check"><input type="checkbox" id="partnered">
+            <span>Second adult in the household</span></label>
+          <label class="check"><input type="checkbox" id="custom-path">
+            <span>Enter earnings year by year</span></label>
+        </div>
+        <span class="hint">Year by year takes one line per year:
+        <code>age, wage, benefit</code>. Omitted years keep the projection.</span>
+      </div>
+
+      <div id="partner-fields" class="paths span-all" hidden>
+        <div class="field">
+          <label class="lbl" for="partner-age">Their age</label>
+          <input type="number" id="partner-age" min="20" max="99" step="1" value="42">
+        </div>
+        <div class="field">
+          <label class="lbl" for="partner-wage">Their after-tax wage</label>
+          <input type="number" id="partner-wage" min="0" step="5000" value="80000">
         </div>
       </div>
 
-      <div class="field span-all">
-        <label class="check"><input type="checkbox" id="custom-path">
-          <span>Enter earnings year by year</span></label>
-        <span class="hint">One line per year: <code>age, wage, benefit</code>.
-        Omitted years keep the projection; a benefit of <code>0</code> means
-        none that year.</span>
-        <div id="path-fields" class="paths" hidden>
-          <div class="field">
-            <label class="lbl" for="path-1">You</label>
-            <textarea id="path-1" class="path" rows="7" spellcheck="false"></textarea>
-            <div class="readout" id="path-1-note"></div>
-          </div>
-          <div class="field" id="path-2-field" hidden>
-            <label class="lbl" for="path-2">Second adult</label>
-            <textarea id="path-2" class="path" rows="7" spellcheck="false"></textarea>
-            <div class="readout" id="path-2-note"></div>
-          </div>
+      <div id="path-fields" class="paths span-all" hidden>
+        <div class="field">
+          <label class="lbl" for="path-1">You</label>
+          <textarea id="path-1" class="path" rows="7" spellcheck="false"></textarea>
+          <div class="readout" id="path-1-note"></div>
+        </div>
+        <div class="field" id="path-2-field" hidden>
+          <label class="lbl" for="path-2">Second adult</label>
+          <textarea id="path-2" class="path" rows="7" spellcheck="false"></textarea>
+          <div class="readout" id="path-2-note"></div>
         </div>
       </div>
 
