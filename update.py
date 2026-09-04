@@ -235,8 +235,9 @@ def render_config(**f) -> str:
         else "# history_as_of = none",
         f'volatility_source = "Yahoo daily closes"',
         f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
-        'expected_return_source = "median of three estimators, see docs/inputs.md"'
-        if f["method"] == "consensus"
+        'expected_return_source = "payout yield plus long-run real earnings '
+        'growth, no repricing; see docs/methodology.html section 3"'
+        if f["method"] == "building blocks"
         else 'expected_return_source = "set by hand"',
     ]
     return nl.join(out).rstrip() + nl
@@ -254,7 +255,9 @@ def estimate_expected_return(real_risk_free: float) -> tuple[list, str]:
     payout_as_of, payout_yield, _smoothed = parse_damodaran_components(workbook)
 
     shiller = parse_shiller_csv(_get(SHILLER_URL).decode("utf-8", "replace"))
-    real_growth = shiller.real_earnings_growth(GROWTH_WINDOW_YEARS)
+    # The trend through the window, not the two months at its ends. See
+    # ShillerHistory.real_earnings_trend_growth for the measured difference.
+    real_growth = shiller.real_earnings_trend_growth(GROWTH_WINDOW_YEARS)
 
     # A current cyclically adjusted ratio, falling back to Shiller's own last
     # observation when the scrape fails. The fallback is months stale but the
@@ -274,14 +277,15 @@ def estimate_expected_return(real_risk_free: float) -> tuple[list, str]:
         list(shiller.real_prices), list(shiller.real_dividends)
     )
 
+    # Order matters: the first is the estimate, the rest are cross-checks.
     estimates = [
-        implied_premium_estimate(erp, real_risk_free, erp_as_of),
         building_block_estimate(
             payout_yield,
             real_growth,
             as_of=payout_as_of,
-            growth_basis=f"{GROWTH_WINDOW_YEARS} years, per share",
+            growth_basis=f"{GROWTH_WINDOW_YEARS} year trend, per share",
         ),
+        implied_premium_estimate(erp, real_risk_free, erp_as_of),
         valuation_regression_estimate(
             list(shiller.cape),
             index,
@@ -372,17 +376,33 @@ def main(argv: list[str]) -> int:
             print(f"  expected stock real return       {expected:>8.2%}"
                   f"   set by hand")
         else:
-            method = "consensus"
+            method = "building blocks"
             estimates, history_as_of = estimate_expected_return(real_rf)
-            erp_as_of = estimates[0].as_of
-            erp = estimates[0].value - real_rf
+            chosen, *cross_checks = estimates
+            erp_as_of = next(
+                (e.as_of for e in estimates if e.method == "implied premium"), None
+            )
+            erp = next(
+                (e.value - real_rf for e in estimates
+                 if e.method == "implied premium"), None
+            )
 
             print()
-            print("  Expected real return on equities, three ways.")
-            print("  Each of these is a COMPOUND return, which is what a")
-            print("  discounted cash flow, a Gordon discount rate and a")
-            print("  regression on annualised returns all produce.")
-            for estimate in estimates:
+            print("  Expected real return on equities.")
+            print("  A COMPOUND return, which is what a Gordon discount rate,")
+            print("  a discounted cash flow and a regression on annualised")
+            print("  returns all produce.")
+            print(f"    {chosen.method:<28s} {chosen.value:>7.2%}   <- used")
+            print(f"      {chosen.detail}")
+            print("      Choi's own stated rationale for his 5% default: what")
+            print("      current valuation ratios imply if those ratios hold")
+            print("      and growth matches its long-run average. It is also")
+            print("      the method behind AQR's 1.9%, the figure he anchors")
+            print("      his own 2% log premium to.")
+            print()
+            print("  Cross-checks, not used. See section 3 of the methodology")
+            print("  for why each is worse for a lifetime horizon.")
+            for estimate in cross_checks:
                 error = (
                     f" +/- {estimate.standard_error:.2%}"
                     if estimate.standard_error is not None
@@ -399,19 +419,19 @@ def main(argv: list[str]) -> int:
                 print(f"    long history runs to        {history_as_of}"
                       f"   {months} months behind{warn}")
                 if months > 6:
-                    print("      Prices arrive promptly; the earnings a cyclically")
-                    print("      adjusted ratio needs do not. Two of the three")
-                    print("      estimators rest on this, so the expected return is")
-                    print("      not as fresh as the rate and the volatility above.")
+                    print("      Only the growth term uses it, and growth is taken")
+                    print("      as the trend through a century, where three years")
+                    print("      of lag moves the estimate by about a basis point.")
+                    print("      The payout yield is current.")
 
-            compound = consensus(estimates)
+            print()
+            compound = chosen.value
             expected = arithmetic_from_compound(compound, vol)
-            print(f"    {'median of the three':<28s} {compound:>7.2%}   compound")
             print(f"    {'as an arithmetic mean':<28s} {expected:>7.2%}   "
                   f"+{(expected - compound) * 100:.2f} from the volatility drag")
-            print(f"      Choi's input is an arithmetic mean, which is visible in")
-            print(f"      his own regressor subtracting sigma squared over two.")
-            print(f"    {'spread across the three':<28s} "
+            print(f"      The paper states the conversion itself: the level")
+            print(f"      premium is exp(r + pi + sigma^2/2) - exp(r).")
+            print(f"    {'spread of the cross-checks':<28s} "
                   f"{spread(estimates):>7.2%}   <- how little is known here")
             print(f"  was {existing.expected_stock_real_return:.2%}, "
                   f"{_change(expected, existing.expected_stock_real_return)}")
@@ -464,7 +484,8 @@ def main(argv: list[str]) -> int:
         erp_as_of=erp_as_of.isoformat() if erp_as_of else None,
         spread=spread(estimates) if estimates else 0.0,
         estimate_summary="; ".join(
-            f'{e.method} {e.value:.4f}' for e in estimates
+            f'{e.method} {e.value:.4f}{" (used)" if i == 0 else ""}'
+            for i, e in enumerate(estimates)
         ) if estimates else "",
         estimates=bool(estimates),
         history_as_of=history_as_of,

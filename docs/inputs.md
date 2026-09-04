@@ -78,22 +78,29 @@ the spousal benefit instead, **50% of the higher earner's**.
 ## Expected stock market real return
 
 The input the recommendation is most sensitive to, and the one nobody can
-observe. It is **built from public data three independent ways** and the median
-is used.
+observe. Choi makes it a user input and offers a default of 5%, justified as
+"what is implied by current stock market valuation ratios if those ratios stay
+constant and future dividend or earnings growth equals its long-run historical
+average". He specifies no estimator.
 
-| Method | What it is | Latest |
+**One estimator is used**, and it is that sentence written as arithmetic:
+
+| Term | Source | Latest |
 | --- | --- | --- |
-| Implied premium | Damodaran's implied equity risk premium, a discounted cash flow on the index, plus the real risk-free rate | 7.07% |
-| Building blocks | Payout yield (dividends and buybacks) plus 100-year real earnings growth per share, no repricing | 5.13% |
-| Valuation regression | Realised 30-year real returns regressed on the cyclically adjusted earnings yield across Shiller's history since 1881, read off today's valuation | 5.17% |
-| **Median, used** | | **5.17%** |
+| Payout yield | Dividends and net buybacks, from Damodaran's monthly workbook | 2.63% |
+| Real earnings growth | 100-year trend through log real earnings per share, Shiller | 2.17% |
+| Repricing | Set to zero, which is what "ratios stay constant" means | 0.00% |
+| **Expected real return** | | **4.79% compound** |
+| | converted once, at the point the model reads it | **6.35% arithmetic** |
 
-They span nearly two percentage points. That spread is the honest measure of how
-little is known here, and the tool reports it rather than hiding it.
+Two others are computed as cross-checks and are **not used**: Damodaran's
+implied premium (7.07%, the outlier, embedding near-term analyst growth
+forecasts and quoted against the wrong maturity) and a regression of realised
+30-year returns on valuation (5.17%, R2 of 0.21 on about four independent
+periods). Section 3.1 of the methodology gives the full reasoning.
 
-Two of the three land at about 5.15%, which independently reproduces the 5%
-default in Choi's guide and its stated reasoning. The implied premium is the
-outlier: it embeds near-term analyst growth forecasts, which run high.
+The choice matters more than any other in the tool: across those estimates the
+recommendation for the default household runs from 17% to 100%.
 
 ### Why the horizon of the regression matters
 

@@ -275,10 +275,16 @@ def part_three() -> None:
     found = [float(x) for x in re.findall(r"(\d\.\d{4})", text)]
     check("three estimators are recorded", len(found) == 3, str(found))
     if len(found) == 3:
-        median = sorted(found)[1]
-        check("the median of the three is what was taken",
-              close(median, compound_from_arithmetic(mu, sig), 1e-3),
-              f"median {median:.4%} compound -> {mu:.4%} arithmetic")
+        # One estimator decides; the others are recorded as cross-checks.
+        used = re.search(r"(\d\.\d{4}) \(used\)", text)
+        check("exactly one estimator is marked as used", used is not None, text)
+        chosen = float(used.group(1)) if used else sorted(found)[1]
+        check("the estimator marked used is what was taken",
+              close(chosen, compound_from_arithmetic(mu, sig), 1e-3),
+              f"{chosen:.4%} compound -> {mu:.4%} arithmetic")
+        check("the one used is the building-blocks estimate",
+              prov.get("expected_return_method") == "building blocks",
+              str(prov.get("expected_return_method")))
         # The estimators are recorded in prose rounded to four decimals, so a
         # spread rebuilt from them carries up to 1e-4 of rounding. Anything
         # larger would mean the recorded spread describes different numbers.
@@ -289,12 +295,12 @@ def part_three() -> None:
               f"recorded {recorded:.4%}, rebuilt from the rounded prose "
               f"{rebuilt:.4%}, differing by {abs(rebuilt - recorded):.6f}")
         check("converting compound to arithmetic adds about half the variance",
-              close(arithmetic_from_compound(median, sig),
-                    math.exp(math.log(1 + median) + 0.5 * sig ** 2) - 1),
-              f"+{arithmetic_from_compound(median, sig) - median:.2%} at {sig:.2%} vol")
+              close(arithmetic_from_compound(chosen, sig),
+                    math.exp(math.log(1 + chosen) + 0.5 * sig ** 2) - 1),
+              f"+{arithmetic_from_compound(chosen, sig) - chosen:.2%} at {sig:.2%} vol")
         check("the conversion round-trips",
-              close(compound_from_arithmetic(arithmetic_from_compound(median, sig),
-                                             sig), median))
+              close(compound_from_arithmetic(arithmetic_from_compound(chosen, sig),
+                                             sig), chosen))
     check("the recorded basis is arithmetic",
           "arithmetic" in str(prov.get("expected_return_basis", "")).lower(),
           str(prov.get("expected_return_basis")))

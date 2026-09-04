@@ -97,6 +97,7 @@ class MarketData:
         return self.provenance.get("expected_return_method") in {
             "implied",
             "consensus",
+            "building blocks",
         }
 
     @property

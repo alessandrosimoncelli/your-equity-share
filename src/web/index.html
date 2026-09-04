@@ -733,7 +733,10 @@ function render() {
   const [lo, hi] = CHOI_FITTED_LOG_PREMIUM_RANGE;
   const inside = pi >= lo && pi <= hi;
   const prov = market.provenance || {};
-  const label = { consensus: "median of three estimators", implied: "market implied", fixed: "set by hand" }[prov.expected_return_method] || "set by hand";
+  const label = { "building blocks": "payout yield plus long-run growth",
+                  consensus: "median of three estimators",
+                  implied: "market implied",
+                  fixed: "set by hand" }[prov.expected_return_method] || "set by hand";
 
   $("inputs-rows").innerHTML =
     row([["Expected real return on equities", "k"], [pct2.format(expected), "n"],

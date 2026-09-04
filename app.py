@@ -387,7 +387,8 @@ pi = log_premium(expected, market.real_risk_free_rate)
 low, high = CHOI_FITTED_LOG_PREMIUM_RANGE
 inside = low <= pi <= high
 method = market.provenance.get("expected_return_method", "set by hand")
-label = {"consensus": "median of three estimators", "implied": "market implied",
+label = {"building blocks": "payout yield plus long-run growth",
+         "consensus": "median of three estimators", "implied": "market implied",
          "fixed": "set by hand"}.get(method, method)
 window = market.provenance.get("volatility_window_years", "?")
 
@@ -414,7 +415,9 @@ st.markdown(
 
 if market.expected_return_estimates:
     st.markdown(
-        f'<div class="sub">The three estimators: '
+        f'<div class="sub">One estimator decides this: payout yield plus '
+        f"long-run real earnings growth, which is Choi's own stated rationale "
+        f"for his 5% default. The others are cross-checks, not used. "
         f"{market.expected_return_estimates}. They span "
         f"<b>{market.expected_return_spread:.2%}</b>, which is the honest "
         "measure of how little is known about this input.</div>",

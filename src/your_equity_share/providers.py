@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import csv
 import io
+import math
 import json
 import re
 import zipfile
@@ -267,6 +268,44 @@ class ShillerHistory:
         columns altogether while still appending price rows.
         """
         return self.dates[-1]
+
+    def real_earnings_trend_growth(self, years: int) -> float:
+        """Real growth in earnings per share, as the trend through the window.
+
+        Preferred over the point-to-point rate. Both describe the same century,
+        but a point-to-point rate is decided by two months and inherits
+        whatever the cycle was doing in each of them. Measured on this data:
+
+            varying the window 90 to 110 years   point to point 1.27%, trend 0.25%
+            moving the end date back 0 to 36mo   point to point 0.82%, trend 0.015%
+
+        The second line is the one that matters here. The published series runs
+        months behind, and with a trend estimate three years of lag costs about
+        a basis point, so the staleness stops being a problem worth solving.
+
+        Ordinary least squares on log earnings against time, annualised.
+        """
+        months = years * 12
+        if len(self.real_earnings) <= months:
+            raise DataUnavailable(
+                f"only {len(self.real_earnings) // 12} years of earnings, "
+                f"need {years}"
+            )
+        window = self.real_earnings[-months:]
+        bad = [d for d, e in zip(self.dates[-months:], window) if e <= 0]
+        if bad:
+            raise DataUnavailable(
+                f"{len(bad)} month(s) of non-positive real earnings inside the "
+                f"{years} year window, first at {bad[0]}"
+            )
+        n = len(window)
+        xs = range(n)
+        ys = [math.log(v) for v in window]
+        mean_x = (n - 1) / 2.0
+        mean_y = sum(ys) / n
+        sxx = sum((x - mean_x) ** 2 for x in xs)
+        sxy = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+        return math.exp((sxy / sxx) * 12.0) - 1.0
 
     def real_earnings_growth(self, years: int) -> float:
         """Annualised real growth in earnings per share over the last `years`.
