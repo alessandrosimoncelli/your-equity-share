@@ -377,13 +377,15 @@ h4 {
 <caption>Table 3. What the choice of estimator is worth. Same household, same date.</caption>
 <thead><tr><th>Estimate of the expected real return</th><th class="num">Compound</th><th class="num">Equity share</th></tr></thead>
 <tbody>
-<tr><td>Damodaran implied premium plus the real safe rate</td><td class="num">7.07%</td><td class="num">100%</td></tr>
+<tr><td>Damodaran implied premium, added to the real safe rate<sup>a</sup></td><td class="num">7.07%</td><td class="num">100%</td></tr>
 <tr><td>Regression of realised 30-year returns on valuation</td><td class="num">5.17%</td><td class="num">75%</td></tr>
 <tr><td><strong>Payout yield plus long-run growth, used here</strong></td><td class="num"><strong>4.79%</strong></td><td class="num"><strong>67%</strong></td></tr>
 <tr><td>Cyclically adjusted earnings yield, 1/CAPE</td><td class="num">2.36%</td><td class="num">17%</td></tr>
 </tbody>
 </table>
 </div>
+
+<p class=footnote><sup>a</sup> The model consumes an expected real <em>return</em>, not a premium, so a premium has to have a rate added to it. Damodaran's premium is quoted against the 10-year nominal Treasury, and adding it to a <em>real</em> rate is nonetheless right: the expected nominal equity return and the nominal bond yield both carry the same expected inflation, so it cancels in the difference and the premium is already real. What does not cancel is maturity. He quotes against a 10-year bond while this model's safe asset is a 30-year one, and the real curve currently rises between them: the 30-year TIPS yield is 2.98% against 2.45% at 10 years, a difference of 0.53 points. This row is overstated by roughly that much.</p>
 
 <p>Nothing else in the model spans anything like that range. The volatility estimate would have to be wrong by a third, or the risk aversion answer wrong by four points on a ten point scale, to move the recommendation as far as switching between the first and last rows above. Any presentation of this tool that does not say so is misleading.</p>
 
@@ -437,21 +439,64 @@ h4 {
 
 <h4>How growth is estimated, and why as a trend</h4>
 
-<p>Growth is the ordinary least squares trend through log real earnings per share over the last hundred years, not the ratio of the last observation to the first. Both describe the same century. A point-to-point rate is decided by two individual months and inherits whatever the earnings cycle happened to be doing in each of them.</p>
+<p>The series is monthly real earnings per share on the S&amp;P 500, running back to 1871. A hundred years of it is 1,200 monthly observations. The question is how to turn those into one annual growth rate, and there are two obvious ways.</p>
+
+<p><strong>Point to point.</strong> Take the first observation and the last, and ask what constant annual rate connects them:</p>
+
+<div class="eqn">
+  <div class="body">g = ( E<sub>last</sub> / E<sub>first</sub> )<sup>12 / (n &minus; 1)</sup> &minus; 1</div>
+  <div class="no">(6)</div>
+</div>
+
+<p>On the current data that is real earnings of $15.29 in July 1923 and $181.77 in June 2023, which gives <strong>2.51% a year</strong>. Note what has happened: <strong>1,198 of the 1,200 observations were ignored.</strong> The answer is decided entirely by two months, and it inherits whatever the earnings cycle happened to be doing in each of them. July 1923 was six years before a crash; June 2023 sat near a post-pandemic earnings peak. Neither month was chosen for any reason except that it is where the window happens to end.</p>
+
+<p><strong>The trend.</strong> Take the logarithm of every observation, fit a straight line through all 1,200 of them by ordinary least squares, and read the slope:</p>
+
+<div class="eqn">
+  <div class="body">ln E<sub>t</sub> = a + b&sdot;t + &epsilon;<sub>t</sub>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g = e<sup>12b</sup> &minus; 1</div>
+  <div class="no">(7)</div>
+</div>
+
+<div class="where">
+  <p>where</p>
+  <dl>
+    <dt>E<sub>t</sub></dt><dd>real earnings per share in month t</dd>
+    <dt>b</dt><dd>the fitted slope, the average monthly growth in log earnings</dd>
+    <dt>e<sup>12b</sup> &minus; 1</dt><dd>that monthly slope expressed as an annual rate</dd>
+  </dl>
+</div>
+
+<p>Logarithms are taken first because growth is multiplicative: a constant percentage growth rate is a straight line in logs, and a curve in levels. Fitting a line to the levels would let the large recent numbers dominate the small early ones and would not answer the question asked. On the current data the trend gives <strong>2.17% a year</strong>.</p>
+
+<p>Both describe the same century. They differ by 0.34 percentage points because one is an average over 1,200 months and the other is a measurement of two.</p>
+
+<h4>How much that choice matters</h4>
+
+<p>An estimator that is sensitive to arbitrary decisions is one you cannot rely on. Two such decisions can be varied and the movement measured. Both were run on the identical series.</p>
 
 <div class="tablewrap">
 <table>
-<caption>Table 4. Growth estimators on the same series. Lower is more stable.</caption>
-<thead><tr><th>Estimator</th><th class="num">Range across 90 to 110 year windows</th><th class="num">Range across vintages 0 to 36 months old</th></tr></thead>
+<caption>Table 4. How far each estimator moves when something arbitrary is changed. Smaller is better.</caption>
+<thead>
+  <tr><th>Estimator</th><th class="num">Changing the window from 90 to 110 years</th><th class="num">Ending the data 0, 1, 2 or 3 years earlier</th></tr>
+</thead>
 <tbody>
-<tr><td>Point to point</td><td class="num">1.27%</td><td class="num">0.82%</td></tr>
-<tr><td>Ten-year average at each end</td><td class="num">0.59%</td><td class="num">0.11%</td></tr>
-<tr><td><strong>Log trend, used here</strong></td><td class="num"><strong>0.25%</strong></td><td class="num"><strong>0.015%</strong></td></tr>
+  <tr><td>Point to point</td><td class="num">1.27%</td><td class="num">0.82%</td></tr>
+  <tr><td>Ten-year average at each end</td><td class="num">0.59%</td><td class="num">0.11%</td></tr>
+  <tr><td><strong>Log trend, used here</strong></td><td class="num"><strong>0.25%</strong></td><td class="num"><strong>0.015%</strong></td></tr>
 </tbody>
 </table>
 </div>
 
-<p>The second column settles a practical question. The published Shiller series runs months and sometimes years behind the market, because prices arrive promptly and the earnings a cyclically adjusted ratio needs do not. With a point-to-point rate that lag is worth up to 0.82 percentage points, which would be a real problem. With a trend it is worth about a basis point, so the staleness stops mattering. The other half of the estimate, the payout yield, comes from a monthly source and is current.</p>
+<p>Each cell is the spread between the highest and lowest estimate produced as that one thing is varied and everything else is held fixed.</p>
+
+<p><strong>The first column asks how arbitrary the answer is.</strong> Nothing makes a hundred years the right window rather than ninety or a hundred and ten. If the estimate swings by 1.27 points as that choice changes, then more than a percentage point of the published number is an artefact of a decision nobody can justify. A quarter of a point is tolerable.</p>
+
+<p><strong>The second column asks what stale data costs</strong>, and it settles a practical problem. The published series runs months and sometimes years behind the market, because prices arrive promptly and the earnings needed for a cyclically adjusted ratio do not; the version used here ends in June 2023. Rolling the end of the window back by up to three years simulates exactly that lag. A point-to-point rate moves 0.82 points, which would be serious, because the whole equity risk premium is only about 3.4 points. A trend moves 0.015 points, about one and a half basis points.</p>
+
+<p>So the staleness is not a problem to be solved by finding a fresher source. It is a problem that disappears once the estimator stops depending on which particular month sits at the edge of the data. The other half of the estimate, the payout yield, comes from a monthly source and is current.</p>
+
+<p>The ten-year average at each end is shown because it is the obvious middle option: it replaces each endpoint with an average of the 120 months around it. It is much better than point to point and still worse than the trend, for the same reason, that it uses 240 of the 1,200 observations rather than all of them.</p>
 
 <h4>Compound is not arithmetic</h4>
 
@@ -459,7 +504,7 @@ h4 {
 
 <div class="eqn">
   <div class="body">&mu;<sub>arithmetic</sub> = exp( ln(1 + &mu;<sub>compound</sub>) + &sigma;<sup>2</sup>/2 ) &minus; 1</div>
-  <div class="no">(6)</div>
+  <div class="no">(8)</div>
 </div>
 
 <p>At 17.2% volatility that is worth 1.56 percentage points: 4.79% compound becomes 6.35% arithmetic. Feeding the compound figure straight in would understate the input by more than the entire equity risk premium is currently worth.</p>
@@ -480,7 +525,7 @@ h4 {
 
 <div class="eqn">
   <div class="body">&sigma;<sup>2</sup> = w&prime;&Sigma;w = &Sigma;<sub>i</sub> &Sigma;<sub>j</sub> w<sub>i</sub> w<sub>j</sub> &sigma;<sub>i</sub> &sigma;<sub>j</sub> &rho;<sub>ij</sub></div>
-  <div class="no">(7)</div>
+  <div class="no">(9)</div>
 </div>
 
 <div class="where">
@@ -527,13 +572,46 @@ h4 {
 
 <p>This replaces the willingness, ability and need scoring an earlier draft of this document used. That scoring is advisory practice; the question above is the definition of the parameter the model contains. The scale is 1 to 10 because the layer two discount rate equations take <code>&gamma;/10</code> as an input and were fitted on it. Section 6 shows this is the input that matters most.</p>
 
+<h3>3.5 Which equity market, and why not a global one</h3>
+
+<p>Everything above estimates the expected return of the <strong>United States</strong> stock market, and the volatility in section 3.2 is measured on an S&amp;P 500 tracker. A reasonable question is whether the tool should offer developed-market or global alternatives instead. The honest answer is that the equity side could be done and the rest of the model could not, and offering the choice would advertise a generality the model does not have.</p>
+
+<h4>What would be straightforward</h4>
+
+<p><strong>Volatility.</strong> This is already a parameter. The refresh reads <code>market_ticker</code> from the configuration and estimates volatility from five years of that instrument's dividend-adjusted closes. Pointing it at a developed-market or all-country tracker instead of an S&amp;P 500 one is a one-line change to the configuration file and needs no new code.</p>
+
+<h4>What would not</h4>
+
+<p><strong>The expected return.</strong> The estimator is a payout yield plus a hundred-year real earnings growth rate. The first has regional equivalents. The second does not, at least not freely: Shiller's series is United States only, and there is no comparable free century-long earnings-per-share history for developed or global markets. The recognised source for long international records is Dimson, Marsh and Staunton, and it is not public.</p>
+
+<p>The tempting shortcut is to pair a regional payout yield with the United States growth rate, on the argument that long-run real earnings growth reflects global productivity and should not differ much by region. That argument is weaker than it sounds. Real earnings per share have grown at visibly different rates in the United States, Europe and Japan over the periods for which records exist, and a difference of half a point in growth is worth more to the answer than most of the other inputs combined. It would be a guess wearing the clothes of a measurement.</p>
+
+<h4>The constraint that actually decides it</h4>
+
+<p><strong>The model is calibrated to the United States on the side that has nothing to do with equities.</strong> Four things are fixed inside the fitted coefficients and cannot be changed from any interface:</p>
+
+<ul>
+  <li>the earnings profile and the variances of permanent and temporary income shocks, estimated by Cocco, Gomes and Maenhout on United States household panel data for college graduates;</li>
+  <li>the survival probabilities, from United States mortality statistics;</li>
+  <li>the 40% retirement benefit replacement rate, which describes Social Security;</li>
+  <li>the correlation between labour income and the stock market, estimated against the United States market.</li>
+</ul>
+
+<p>Offering a global equity option while those four stay fixed would produce a household with Japanese or European equity exposure, American wages, American mortality and an American state pension. That is not a more general tool; it is an inconsistent one, and the inconsistency would sit on the side the user cannot see.</p>
+
+<p>A non-United States user's first problem is not the equity index. It is that the human capital half of the model, which contributes most of the recommendation for anyone still working, describes somebody else's country.</p>
+
+<h4>What is offered instead</h4>
+
+<p>The expected return can be set directly, in both front ends and from the command line. Anyone holding a developed or global portfolio, or working from a house forecast, can enter it. That is the same latitude Choi gives, since the input is a user's best guess in his spreadsheet too, and it does not pretend to a regional estimate the free data cannot support.</p>
+
 <h2>4. Layer two: the human capital multiplier</h2>
 
 <p>Equation (4) gives the equity share of <strong>total</strong> wealth, which has two components:</p>
 
 <div class="eqn">
   <div class="body">Total wealth = W + HC</div>
-  <div class="no">(8)</div>
+  <div class="no">(10)</div>
 </div>
 
 <div class="where">
@@ -548,7 +626,7 @@ h4 {
 
 <div class="eqn">
   <div class="body">w<sub>fin</sub> = w* &times; (W + HC) / W = w* &times; (1 + HC/W)</div>
-  <div class="no">(9)</div>
+  <div class="no">(11)</div>
 </div>
 
 <div class="where">
@@ -616,12 +694,12 @@ h4 {
 
 <div class="eqn">
   <div class="body">r<sub>wage</sub> = &minus;0.020 + 0.087(&gamma;/10) &minus; 0.267&pi; + 1.132 ln(1+r) + 4.332&sigma;<sup>2</sup><sub>perm</sub> + 0.028&sigma;<sup>2</sup><sub>tran</sub> + 0.010&beta;<sub>LS</sub> &minus; 0.149x + 0.142x<sup>2</sup></div>
-  <div class="no">(10)</div>
+  <div class="no">(12)</div>
 </div>
 
 <div class="eqn">
   <div class="body">r<sub>SS</sub> = &minus;0.166 + 0.0003(&gamma;/10) &minus; 0.217&pi; + 0.893 ln(1+r) + 0.476x &minus; 0.295x<sup>2</sup></div>
-  <div class="no">(11)</div>
+  <div class="no">(13)</div>
 </div>
 
 <div class="where">
@@ -706,7 +784,7 @@ h4 {
 
 <div class="eqn">
   <div class="body">wage(a) = W<sub>0</sub> &sdot; exp[ 0.5((a&minus;a<sub>0</sub>)&sigma;<sup>2</sup><sub>perm</sub> + &sigma;<sup>2</sup><sub>tran</sub>) + 0.3194(a&minus;a<sub>0</sub>) &minus; 0.00577(a<sup>2</sup>&minus;a<sub>0</sub><sup>2</sup>) + 0.000033(a<sup>3</sup>&minus;a<sub>0</sub><sup>3</sup>) ]</div>
-  <div class="no">(12)</div>
+  <div class="no">(14)</div>
 </div>
 
 <div class="where">
@@ -772,7 +850,7 @@ h4 {
 
 <div class="eqn">
   <div class="body">CE(w*) &minus; CE(w) = (&gamma;&sigma;<sup>2</sup>/2) &sdot; (w &minus; w*)<sup>2</sup></div>
-  <div class="no">(13)</div>
+  <div class="no">(15)</div>
 </div>
 
 <div class="where">
