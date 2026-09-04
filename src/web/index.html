@@ -37,7 +37,6 @@
   --t-body:   1rem;
   --t-head:   1.125rem;
   --t-title:  1.5rem;
-  --t-answer: 2.5rem;
 }
 
 * { box-sizing: border-box; }
@@ -45,8 +44,9 @@ html { -webkit-text-size-adjust: 100%; }
 
 /*
   An author `display` rule outranks the user agent's [hidden] { display: none },
-  so .layout and .meter-key stayed visible while marked hidden. This restores
-  the meaning of the attribute for every element on the page.
+  so .layout stayed visible while marked hidden, and the app container was
+  never actually hidden during load. This restores the meaning of the
+  attribute for every element on the page.
 */
 [hidden] { display: none !important; }
 
@@ -212,41 +212,40 @@ input:focus-visible, a:focus-visible {
 
 /* --- the answer ---------------------------------------------------------- */
 
-.answer { max-width: 40rem; }
-.answer .table-below { margin-top: 2rem; }
+/*
+  The answer is a sentence, not a tile. A 40px figure standing on its own is
+  the stat-tile pattern; stated in a line of prose with the figure emphasised,
+  it reads as the opening of a report and loses nothing.
+*/
+.summary {
+  font-size: var(--t-head);
+  line-height: 1.45;
+  max-width: 34rem;
+  margin: 0 0 0.5rem;
+}
+.summary b { color: var(--green); }
 
-.headline {
-  font-size: var(--t-answer);
+/* Exhibits are numbered and named, which is what a report does with its
+   tables and figures and what an application never does. */
+.exhibit {
+  font-size: var(--t-small);
   font-weight: 700;
   color: var(--green);
-  line-height: 1.05;
-  font-variant-numeric: tabular-nums;
+  margin: 2.6rem 0 0.6rem;
 }
 
-.headline-sub { margin: 0.35rem 0 0; max-width: 22rem; }
+/* Notes under a table, replacing a column of prose beside every row. */
+/* Notation, not a level of hierarchy: one absolute size, so a superscript in
+   a 16px table and one in 14px prose do not become two more sizes. */
+sup { font-size: 12px; }
 
-/*
-  One number, so a meter rather than a chart. A label goes inside its segment
-  only when it measurably fits; where it will not, the key underneath carries
-  the identification.
-*/
-.meter { display: flex; height: 1.9rem; margin-top: 1.2rem; background: var(--tint); max-width: 30rem; }
-.meter div {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+ol.notes {
+  margin: 0.6rem 0 0;
+  padding-left: 1.35rem;
   font-size: var(--t-small);
-  white-space: nowrap;
-  overflow: hidden;
+  max-width: 40rem;
 }
-.meter .eq { background: var(--green); color: var(--paper); }
-.meter .sf { background: var(--tint); color: var(--ink); }
-
-.meter-key { display: flex; gap: 1.2rem; margin-top: 0.45rem; font-size: var(--t-small); max-width: 30rem; }
-.meter-key span { display: inline-flex; align-items: center; gap: 0.4rem; }
-.swatch { width: 0.7rem; height: 0.7rem; display: inline-block; }
-.swatch.eq { background: var(--green); }
-.swatch.sf { background: var(--tint-2); }
+ol.notes li { margin-bottom: 0.25rem; }
 
 /* A note, not a callout. Bold lead-in, no box, no coloured bar. */
 .note { font-size: var(--t-small); margin-top: 1rem; max-width: 40rem; }
@@ -441,67 +440,58 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
 
   <main>
     <p class="eyebrow">What it answers</p>
-    <div class="answer">
-        <div class="headline" id="headline">&nbsp;</div>
-        <p class="headline-sub" id="headline-sub"></p>
-        <div class="meter" id="meter" role="img" aria-label="" ></div>
-        <div class="meter-key" id="meter-key" hidden>
-          <span><i class="swatch eq"></i>Equities</span>
-          <span><i class="swatch sf"></i>Safe asset</span>
-        </div>
-        <div id="cap-flag"></div>
-    </div>
 
-    <div class="table-below">
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th>Where your wealth is</th><th class="n">Amount</th><th class="n">Share</th></tr></thead>
-            <tbody id="wealth-rows"></tbody>
-          </table>
-        </div>
-        <p class="sub">Most of what you own is not in the account. That is the
-          whole reason the answer is not simply the Merton share.</p>
-    </div>
+    <p class="summary" id="summary"></p>
+    <p class="note" id="cap-flag"></p>
 
-    <h2>How this was reached</h2>
+    <p class="exhibit">Exhibit 1. Your wealth, and how much of it can be traded</p>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Step</th><th class="n">Result</th><th>Why</th></tr></thead>
+        <thead><tr><th>Component</th><th class="n">Amount</th><th class="n">Share of total</th></tr></thead>
+        <tbody id="wealth-rows"></tbody>
+      </table>
+    </div>
+    <p class="sub">Most of what you own is not in the account. That
+      is the whole reason the answer is not simply the Merton share.</p>
+
+    <p class="exhibit">Exhibit 2. How the recommendation is reached</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Step</th><th class="n">Equity share</th></tr></thead>
         <tbody id="steps-rows"></tbody>
       </table>
     </div>
+    <ol class="notes" type="a" id="steps-notes"></ol>
 
-    <h2>What the answer depends on</h2>
-    <p class="sub">The expected return is the least certain input and the one
-      the answer moves most with. Drag the slider and watch this line.</p>
+    <p class="exhibit">Exhibit 3. Sensitivity to the expected return</p>
     <div class="figure">
       <svg class="chart" id="sensitivity" role="img"
            aria-label="Recommended equity share against the expected real return on equities"></svg>
       <div class="tip" id="sensitivity-tip"></div>
     </div>
     <p class="sub" id="sensitivity-note"></p>
+    <p class="sub">This is the least certain input in the model and the one the
+      answer moves most with. Drag the slider in the form and watch the marker.</p>
 
-    <h2>As your savings grow</h2>
-    <p class="sub">Age is not an input to this model. What drives the answer is
-      how large your future earnings are <em>relative to</em> what you have
-      already saved, and the surest way that ratio falls is that your savings
-      rise. Two households of different ages with the same ratio get the same
-      answer, to the last decimal.</p>
+    <p class="exhibit">Exhibit 4. The recommendation at every level of savings</p>
     <div class="figure">
       <svg class="chart" id="glide" role="img"
            aria-label="Recommended equity share against investable net worth, age and salary held fixed"></svg>
       <div class="tip" id="glide-tip"></div>
     </div>
     <p class="sub" id="glide-note"></p>
+    <p class="sub">Age is not an input. It enters only by changing what future
+      earnings are worth, so two households of different ages holding the same
+      ratio of earnings to savings receive the same answer exactly.</p>
 
-    <h2>The numbers behind it</h2>
+    <p class="exhibit">Exhibit 5. Inputs, and where each comes from</p>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Input</th><th class="n">Value</th><th>Where it comes from</th></tr></thead>
+        <thead><tr><th>Input</th><th class="n">Value</th><th>Source</th></tr></thead>
         <tbody id="inputs-rows"></tbody>
       </table>
     </div>
-    <div id="range-note"></div>
+    <p class="note" id="range-note"></p>
 
     <p class="foot" id="foot"></p>
   </main>
@@ -520,27 +510,6 @@ import {
 } from "./model.js";
 
 const $ = (id) => document.getElementById(id);
-
-// Text measurement without touching layout. Used to decide whether a meter
-// label fits in its segment; measuring the DOM instead would mean writing,
-// reading back and writing again on every keystroke.
-const measureCanvas = document.createElement("canvas").getContext("2d");
-function textWidth(text, font) {
-  measureCanvas.font = font;
-  return measureCanvas.measureText(text).width;
-}
-let cachedMeterFont = null;
-function meterFont(meter) {
-  if (cachedMeterFont === null) {
-    const probe = document.createElement("div");
-    probe.className = "eq";
-    meter.appendChild(probe);
-    const cs = getComputedStyle(probe);
-    cachedMeterFont = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-    probe.remove();
-  }
-  return cachedMeterFont;
-}
 
 const pct0 = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 0 });
 const pct1 = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -753,36 +722,13 @@ function render() {
   $("mu-readout").innerHTML =
     `The fetched figure is ${pct2.format(market.expected_stock_real_return)}.`;
 
-  $("headline").textContent = pct0.format(r.equityShare);
-  $("headline-sub").innerHTML =
-    `of your portfolio in equities, which is <b>${usd.format(r.equityDollars)}</b> of ${usd.format(r.financialWealth)}.`;
-
-  const eq = r.equityShare, sf = r.bondShare;
-  const meter = $("meter");
-  meter.setAttribute("aria-label",
-    `${pct0.format(eq)} equities, ${pct0.format(sf)} safe asset`);
-  // A label goes inside its segment only if it measurably fits. A percentage
-  // threshold cannot work here: the meter's width changes with the viewport,
-  // so the same share is roomy on a laptop and clipped on a phone. Where a
-  // label will not fit it is dropped, and the key underneath carries the
-  // identification instead, which is why that key exists.
-  const room = meter.clientWidth || 320;
-  const fits = (text, share) => textWidth(text, meterFont(meter)) + 16 <= room * share;
-  const eqLabel = `Equities ${pct0.format(eq)}`;
-  const sfLabel = `Safe asset ${pct0.format(sf)}`;
-  const showEq = fits(eqLabel, eq);
-  const showSf = sf > 0.001 && fits(sfLabel, sf);
-  const seg = [`<div class="eq" style="flex:${Math.max(eq, 0.0001)}">${showEq ? eqLabel : ""}</div>`];
-  if (sf > 0.001) seg.push(`<div class="sf" style="flex:${sf}">${showSf ? sfLabel : ""}</div>`);
-  meter.innerHTML = seg.join("");
-  // The key exists to cover for a label that would not fit. When every segment
-  // carries its own label the key only repeats them, so it stays hidden.
-  $("meter-key").hidden = showEq && (sf <= 0.001 || showSf);
+  // The answer as a sentence. Both sides of the split are named here, which
+  // is what the meter used to do.
+  $("summary").innerHTML =
+    `The model puts <b>${pct0.format(r.equityShare)}</b> of your ${usd.format(r.financialWealth)} portfolio in equities and <b>${pct0.format(r.bondShare)}</b> in the safe asset: ${usd.format(r.equityDollars)} against ${usd.format(r.financialWealth - r.equityDollars)}.`;
 
   $("cap-flag").innerHTML = r.isCapped
-    ? `<p class="note"><b>The model asks for ${pct0.format(r.uncappedShare)}</b>,
-       meaning it would borrow to invest. The cap at 100% is imposed from
-       outside; the model did not produce it.</p>`
+    ? `<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The cap at 100% is imposed from outside; the model did not produce it.`
     : "";
 
   const total = r.financialWealth + r.humanCapital;
@@ -791,16 +737,25 @@ function render() {
     row([["Future earnings", "k"], [usd.format(r.humanCapital), "n"], [pct0.format(r.humanCapital / total), "n"]]) +
     row([["<b>Total wealth</b>", "k"], [`<b>${usd.format(total)}</b>`, "n"], ["", "n"]]);
 
-  let steps =
-    row([["Equity share of <b>total</b> wealth", "k"], [pct1.format(r.mertonShare), "n"],
-         ["Merton (1969): the reward for risk, divided by risk and by your dislike of it", "why"]]) +
-    row([[`Times 1 + ${num2.format(r.humanCapitalRatio)}`, "k"], [pct1.format(r.uncappedShare), "n"],
-         ["future earnings cannot be traded, so the tradeable part has to carry the whole equity position", "why"]]);
+  // Terse rows, with the reasoning as numbered notes beneath. A sentence of
+  // justification beside every row reads as an explainer rather than a table.
+  const steps = [
+    ["Equity share of <b>total</b> wealth<sup>a</sup>", pct1.format(r.mertonShare)],
+    [`Times 1 + ${num2.format(r.humanCapitalRatio)}<sup>b</sup>`, pct1.format(r.uncappedShare)],
+  ];
+  const notes = [
+    "Merton (1969). The reward for risk, divided by risk and by how much you dislike it.",
+    "Future earnings cannot be sold or borrowed against, so the tradeable part of your wealth has to carry the whole equity position.",
+  ];
   if (r.isCapped) {
-    steps += row([["Capped at 100%", "k"], [pct1.format(r.equityShare), "n"],
-                  ["no leverage, a constraint imposed from outside the model", "why"]]);
+    steps.push(["Capped at 100%<sup>c</sup>", pct1.format(r.equityShare)]);
+    notes.push("No leverage. A constraint imposed from outside the model, not a result of it.");
   }
-  $("steps-rows").innerHTML = steps;
+  $("steps-rows").innerHTML =
+    steps.map(([k, v]) => row([[k, "k"], [v, "n"]])).join("");
+  $("steps-notes").innerHTML =
+    notes.map((n, i) => `<li value="${i + 1}">${n}</li>`).join("");
+
 
   // Sensitivity to the expected return.
   const sens = [];
