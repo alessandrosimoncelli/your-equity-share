@@ -82,9 +82,9 @@ INDEX = """<!doctype html>
     <p class="boot-title">Your Equity Share</p>
     <hr class="boot-rule">
     <p class="boot-text">
-      Starting the calculator. The first visit downloads a Python runtime,
-      which takes a few moments. It is cached afterwards, so later visits
-      start straight away.
+      Starting the calculator. Everything runs inside your browser, including
+      the Python that does the arithmetic, so nothing you enter is sent
+      anywhere. That takes about twenty seconds to begin.
     </p>
     <div class="boot-track"><div class="boot-bar"></div></div>
   </div>
