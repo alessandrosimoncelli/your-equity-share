@@ -74,7 +74,41 @@ h1 {
   line-height: 1.25;
 }
 
-.lede { margin: 0 0 2.25rem; max-width: 40rem; }
+.lede { margin: 0; max-width: 40rem; }
+
+/*
+  The answer sits beside the title, where the eye lands first and where the
+  window was otherwise empty. It reads as dashes until there is something to
+  report, so the page never shows a number it has not computed.
+*/
+.masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem 3rem;
+  align-items: start;
+  margin-bottom: 2.4rem;
+}
+.masthead-answer { text-align: right; }
+.masthead-label {
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--green);
+  margin: 0;
+}
+.masthead-figure {
+  font-size: var(--t-figure);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1.05;
+  margin: 0.1rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.masthead-sub { font-size: var(--t-small); margin: 0.15rem 0 0; }
+
+@media (max-width: 46rem) {
+  .masthead { grid-template-columns: minmax(0, 1fr); }
+  .masthead-answer { text-align: left; }
+}
 
 h2 {
   font-size: var(--t-head);
@@ -132,6 +166,39 @@ p { margin: 0.85rem 0 0; }
   .form-grid { grid-template-columns: minmax(0, 1fr); }
   .span-2 { grid-column: span 1; }
 }
+
+.path-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.btn {
+  font-family: var(--body);
+  font-size: var(--t-small);
+  color: var(--green);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+}
+.btn:hover { background: var(--tint); }
+
+/* Column names above the box, so the order is visible without reading help. */
+.path-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--green);
+  padding: 0 0.5rem 0.2rem;
+}
+
+/* What was typed, drawn. Typing a career is easier to get right when you can
+   see its shape change as you type. */
+.path-chart { width: 100%; display: block; margin-top: 0.4rem; }
 
 /* The two options sit together in one cell rather than taking a row each. */
 .options { display: grid; gap: 0.75rem; }
@@ -194,7 +261,8 @@ input[type="number"] {
 
 textarea.path {
   width: 100%;
-  font-family: Consolas, "Courier New", monospace;
+  font-family: var(--body);
+  font-variant-numeric: tabular-nums;
   font-size: var(--t-small);
   line-height: 1.45;
   padding: 0.4rem 0.5rem;
@@ -259,22 +327,8 @@ input:focus-visible, a:focus-visible {
   instead: large enough to find immediately, but never standing without the
   sentence that says what it is a percentage of.
 */
-.verdict {
-  display: flex;
-  align-items: baseline;
-  gap: 0.85rem;
-  flex-wrap: wrap;
-  max-width: 36rem;
-  margin: 0 0 0.5rem;
-}
-.verdict-figure {
-  font-size: var(--t-figure);
-  font-weight: 700;
-  color: var(--green);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.verdict-text { flex: 1 1 14rem; line-height: 1.45; }
+.verdict { max-width: 36rem; margin: 0 0 0.5rem; }
+.verdict-text { font-size: var(--t-head); line-height: 1.45; }
 .verdict-text b { color: var(--green); }
 
 .split { max-width: 26rem; }
@@ -377,7 +431,14 @@ td.why { min-width: 15rem; }
 
 /* --- misc ---------------------------------------------------------------- */
 
-.foot { margin-top: 3rem; font-size: var(--t-small); max-width: 40rem; }
+.foot {
+  margin-top: 3rem;
+  font-size: var(--t-small);
+  text-align: center;
+  max-width: 52rem;
+  margin-left: auto;
+  margin-right: auto;
+}
 .foot a { color: var(--green); }
 .boot { padding: 2.5rem 0; }
 
@@ -390,9 +451,18 @@ td.why { min-width: 15rem; }
 <body>
 <div class="wrap">
 
-<h1>Your Equity Share</h1>
-<p class="lede">How much of your portfolio belongs in equities. Merton (1969),
-with the human capital adjustment of Choi, Liu and Liu (2025).</p>
+<div class="masthead">
+  <div>
+    <h1>Your Equity Share</h1>
+    <p class="lede">How much of your portfolio belongs in equities. Merton (1969),
+    with the human capital adjustment of Choi, Liu and Liu (2025).</p>
+  </div>
+  <div class="masthead-answer">
+    <p class="masthead-label">Recommended equity share</p>
+    <p class="masthead-figure" id="masthead-figure">&mdash;&mdash;</p>
+    <p class="masthead-sub" id="masthead-sub">enter your details below</p>
+  </div>
+</div>
 
 <div id="boot" class="boot">Loading the market data.</div>
 
@@ -442,6 +512,9 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
         <label class="lbl">Market assumptions</label>
         <label class="check"><input type="checkbox" id="override">
           <span>Set the expected return myself</span></label>
+        <span class="hint">The expected <b>real</b> return on <b>United States</b>
+        equities: the average yearly return above inflation, over a lifetime.
+        The figure below is a payout yield plus long-run earnings growth.</span>
         <div id="override-field" hidden>
           <label class="visually-hidden" for="mu">Expected real return on equities</label>
           <div class="slider-value" id="mu-value"></div>
@@ -459,8 +532,8 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
           <label class="check"><input type="checkbox" id="custom-path">
             <span>Enter earnings year by year</span></label>
         </div>
-        <span class="hint">Year by year takes one line per year:
-        <code>age, wage, benefit</code>. Omitted years keep the projection.</span>
+        <span class="hint">Year by year lets you type each year's earnings
+        instead of projecting them from your salary.</span>
       </div>
 
       <div id="partner-fields" class="paths span-all" hidden>
@@ -474,16 +547,39 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
         </div>
       </div>
 
-      <div id="path-fields" class="paths span-all" hidden>
-        <div class="field">
-          <label class="lbl" for="path-1">You</label>
-          <textarea id="path-1" class="path" rows="7" spellcheck="false"></textarea>
-          <div class="readout" id="path-1-note"></div>
-        </div>
-        <div class="field" id="path-2-field" hidden>
-          <label class="lbl" for="path-2">Second adult</label>
-          <textarea id="path-2" class="path" rows="7" spellcheck="false"></textarea>
-          <div class="readout" id="path-2-note"></div>
+      <div id="path-fields" class="span-all" hidden>
+        <p class="sub" style="margin-top:0">Each line is one year, three numbers
+          separated by commas: the age, the wage that year, and any pension or
+          benefit received that year. Start from the projected career and change
+          the years that differ. A year you delete keeps its projected value; a
+          benefit of 0 means none that year.</p>
+        <div class="paths">
+          <div class="field">
+            <div class="path-head">
+              <label class="lbl" for="path-1">You</label>
+              <button type="button" class="btn" data-reset="1">Reset to projection</button>
+            </div>
+            <div class="path-cols"><span>age</span><span>wage</span><span>benefit</span></div>
+            <textarea id="path-1" class="path" rows="9" spellcheck="false"
+                      aria-describedby="path-1-note"></textarea>
+            <svg class="path-chart" id="path-1-chart" role="img"
+                 aria-label="The earnings path you have typed"></svg>
+            <div class="readout" id="path-1-note"></div>
+          </div>
+          <div class="field" id="path-2-field" hidden>
+            <div class="path-head">
+              <label class="lbl" for="path-2">Second adult</label>
+              <button type="button" class="btn" data-reset="2">Reset to projection</button>
+            </div>
+            <div class="path-cols"><span>age</span><span>wage</span><span>benefit</span></div>
+            <textarea id="path-2" class="path" rows="9" spellcheck="false"
+                      aria-describedby="path-2-note"></textarea>
+            <svg class="path-chart" id="path-2-chart" role="img"
+                 aria-label="The second adult's earnings path"></svg>
+            <div class="readout" id="path-2-note"></div>
+          </div>
+          <p class="sub" id="path-2-hint">Tick <b>Second adult in the household</b>
+            above to enter a second earnings path.</p>
         </div>
       </div>
 
@@ -494,10 +590,7 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
     <p class="eyebrow">What it answers</p>
     <div class="result-row">
       <div>
-        <p class="verdict">
-          <span class="verdict-figure" id="verdict-figure">&nbsp;</span>
-          <span class="verdict-text" id="verdict-text"></span>
-        </p>
+        <p class="verdict"><span class="verdict-text" id="verdict-text"></span></p>
         <p class="note" id="cap-flag"></p>
       </div>
       <div class="split">
@@ -720,6 +813,49 @@ function drawSplit(svg, key, r) {
     `<i style="background:var(--tint-2)"></i><span>Safe asset</span><span class="v">${pct0.format(1 - eq)} &middot; ${usd.format(r.financialWealth - r.equityDollars)}</span>`;
 }
 
+/**
+ * The earnings path as typed, drawn beneath the box.
+ *
+ * Typing fifty-five lines of a career is hard to get right blind. Seeing the
+ * shape redraw as you type turns it into editing something rather than
+ * composing it: a career that stops early has a visible cliff, a benefit that
+ * never starts leaves a visible hole.
+ *
+ * Wages and benefit are stacked, because in the years they overlap the model
+ * adds them, and the height is then the income that year.
+ */
+function drawPath(svg, years) {
+  const W = svg.clientWidth || 320;
+  const H = 86;
+  const pad = { top: 6, right: 2, bottom: 16, left: 2 };
+  const iw = Math.max(10, W - pad.left - pad.right);
+  const ih = Math.max(10, H - pad.top - pad.bottom);
+  if (!years.length) { svg.innerHTML = ""; return; }
+
+  const peak = Math.max(1, ...years.map((y) => y.wage + y.benefit));
+  const a0 = years[0].age, a1 = years[years.length - 1].age;
+  const sx = (a) => pad.left + ((a - a0) / Math.max(1, a1 - a0)) * iw;
+  const sy = (v) => pad.top + ih - (v / peak) * ih;
+
+  const band = (top, bottom) => {
+    const up = years.map((y, i) => `${i ? "L" : "M"}${sx(y.age).toFixed(1)},${sy(top(y)).toFixed(1)}`).join("");
+    const down = years.slice().reverse()
+      .map((y) => `L${sx(y.age).toFixed(1)},${sy(bottom(y)).toFixed(1)}`).join("");
+    return up + down + "Z";
+  };
+
+  const ticks = [a0, Math.round((a0 + a1) / 2), a1]
+    .map((a) => `<text class="tick" x="${sx(a)}" y="${H - 3}" text-anchor="${a === a0 ? "start" : a === a1 ? "end" : "middle"}">${a}</text>`)
+    .join("");
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("height", H);
+  svg.innerHTML =
+    `<path d="${band((y) => y.wage + y.benefit, (y) => y.wage)}" fill="var(--tint)"/>` +
+    `<path d="${band((y) => y.wage, () => 0)}" fill="var(--green)" opacity="0.85"/>` +
+    `<line class="axis" x1="${pad.left}" y1="${pad.top + ih}" x2="${pad.left + iw}" y2="${pad.top + ih}"/>` + ticks;
+}
+
 // --- reading the controls ---------------------------------------------------
 
 /**
@@ -790,6 +926,10 @@ function readInputs() {
                            p2 && p2.used ? p2.wages : null,
                            p2 && Object.keys(p2.benefits).length ? p2.benefits : null));
   }
+  if (custom) {
+    drawPath($("path-1-chart"), projectEarnings(adults[0]));
+    if (adults[1]) drawPath($("path-2-chart"), projectEarnings(adults[1]));
+  }
   for (const [parsed, id] of [[p1, "path-1-note"], [p2, "path-2-note"]]) {
     if (!parsed) continue;
     $(id).innerHTML = parsed.bad.length
@@ -826,9 +966,11 @@ function render() {
 
   // The answer as a sentence. Both sides of the split are named here, which
   // is what the meter used to do.
-  $("verdict-figure").textContent = pct0.format(r.equityShare);
+  $("masthead-figure").textContent = pct0.format(r.equityShare);
+  $("masthead-sub").textContent =
+    `of ${usd.format(r.financialWealth)}, or ${usd.format(r.equityDollars)}`;
   $("verdict-text").innerHTML =
-    `of your ${usd.format(r.financialWealth)} portfolio belongs in equities, or <b>${usd.format(r.equityDollars)}</b>.`;
+    `<b>${pct0.format(r.equityShare)}</b> of your ${usd.format(r.financialWealth)} portfolio belongs in equities, or <b>${usd.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`;
 
   drawSplit($("split-chart"), $("split-key"), r);
 
@@ -998,6 +1140,7 @@ async function boot() {
   $("partnered").addEventListener("change", () => {
     $("partner-fields").hidden = !$("partnered").checked;
     $("path-2-field").hidden = !($("partnered").checked && $("custom-path").checked);
+    $("path-2-hint").hidden = $("partnered").checked;
     if (!$("path-2-field").hidden && !$("path-2").value.trim()) prefillPath(2);
     render();
   });
@@ -1020,6 +1163,7 @@ async function boot() {
     const on = $("custom-path").checked;
     $("path-fields").hidden = !on;
     $("path-2-field").hidden = !(on && $("partnered").checked);
+    $("path-2-hint").hidden = $("partnered").checked;
     if (on) {
       if (!$("path-1").value.trim()) prefillPath(1);
       if ($("partnered").checked && !$("path-2").value.trim()) prefillPath(2);
@@ -1028,6 +1172,17 @@ async function boot() {
   });
 
   for (const id of ["path-1", "path-2"]) $(id).addEventListener("input", render);
+
+  // Reset puts the projection back, which is the way out of an edit that went
+  // wrong without unticking the box and losing the panel.
+  for (const button of document.querySelectorAll("[data-reset]")) {
+    button.addEventListener("click", () => {
+      const which = Number(button.dataset.reset);
+      $(`path-${which}`).value = "";
+      prefillPath(which);
+      render();
+    });
+  }
   $("override").addEventListener("change", () => {
     $("override-field").hidden = !$("override").checked;
     render();
