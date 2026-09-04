@@ -134,3 +134,38 @@ def test_works_for_a_gamble_of_a_different_size() -> None:
         4.0, high=2 * GUIDE_GAMBLE_HIGH, low=2 * GUIDE_GAMBLE_LOW
     )
     assert scaled == pytest.approx(2 * certainty_equivalent(4.0))
+
+
+# --- the underflow that used to crash the terminal front end ----------------
+
+
+def test_certainty_equivalent_survives_extreme_risk_aversion() -> None:
+    """Written directly, high**(1-gamma) underflows to zero once gamma passes
+    about a hundred, and the outer power then raised ZeroDivisionError. Any
+    answer at or below about $50,500 reached that, and recommend.py catches
+    only ValueError, so it died with a traceback."""
+    for gamma in (50.0, 100.0, 500.0, 1_000.0, 1e6):
+        value = certainty_equivalent(gamma)
+        assert GUIDE_GAMBLE_LOW < value < GUIDE_GAMBLE_HIGH
+
+
+def test_certainty_equivalent_tends_to_the_worst_outcome() -> None:
+    """The limit as risk aversion grows without bound: someone infinitely
+    averse to risk values the gamble at exactly its worst case."""
+    assert certainty_equivalent(1e6) == pytest.approx(GUIDE_GAMBLE_LOW, abs=1.0)
+    assert certainty_equivalent(1e9) == pytest.approx(GUIDE_GAMBLE_LOW, abs=1e-3)
+
+
+def test_certainty_equivalent_stays_monotonic_through_the_extreme_range() -> None:
+    previous = certainty_equivalent(1.0)
+    for gamma in (2.0, 5.0, 10.0, 25.0, 60.0, 120.0, 400.0, 5_000.0):
+        current = certainty_equivalent(gamma)
+        assert current < previous
+        previous = current
+
+
+def test_answers_just_above_the_worst_outcome_invert_cleanly() -> None:
+    for amount in (50_100.0, 50_500.0, 51_000.0, 54_000.0):
+        gamma = gamma_from_certainty_equivalent(amount)
+        assert gamma > 0
+        assert certainty_equivalent(gamma) == pytest.approx(amount, abs=1.0)

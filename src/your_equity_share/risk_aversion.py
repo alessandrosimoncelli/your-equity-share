@@ -50,6 +50,12 @@ def certainty_equivalent(
 
     At gamma = 1 utility is logarithmic and that expression is undefined; the
     limit is the geometric mean, which is what this returns.
+
+    Evaluated in logs rather than directly. Written literally, `high**power`
+    underflows to zero once gamma passes about 100, and the outer power then
+    raises ZeroDivisionError instead of returning an answer. Factoring out the
+    larger term keeps every intermediate inside the range of a float, and the
+    result tends to the worse outcome as gamma grows, which is the right limit.
     """
     if high <= 0 or low <= 0:
         raise ValueError("both outcomes must be positive")
@@ -60,7 +66,11 @@ def certainty_equivalent(
         return math.sqrt(high * low)
 
     power = 1.0 - gamma
-    return (0.5 * high**power + 0.5 * low**power) ** (1.0 / power)
+    a = power * math.log(high)
+    b = power * math.log(low)
+    bigger = a if a > b else b
+    scaled = 0.5 * math.exp(a - bigger) + 0.5 * math.exp(b - bigger)
+    return math.exp((bigger + math.log(scaled)) / power)
 
 
 def gamma_from_certainty_equivalent(
