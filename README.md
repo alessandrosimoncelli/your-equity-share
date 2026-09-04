@@ -96,7 +96,26 @@ asserted.
 | 3. Choi's formula: human capital, discount rates, imputed earnings | **done** |
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |
 | 5. Streamlit front end | **done** |
-| 6. Portfolio analytics and factor exposure | planned |
+| 6. Published as a static site, model ported to JavaScript | **done** |
+| 7. Portfolio analytics and factor exposure | planned |
+
+### The published site
+
+`python tools/build_web.py` writes `web/`, four files and about 100 KB, which
+any static host serves. It opens in well under a second and needs no server,
+so nothing a visitor enters is transmitted anywhere.
+
+The page runs `src/js/model.js`, a port of the model. **Python remains the
+reference implementation.** The two are held together by `tests/golden.json`,
+written by `tools/make_golden.py` and replayed through the port by
+`tools/check_golden.mjs`, which `pytest` also runs. Only the model crossed
+over: fetching, parsing, volatility, the expected-return estimators and the
+frozen spreadsheet baseline all stay in Python, because they run here and not
+in a reader's browser.
+
+An earlier version shipped Streamlit compiled to WebAssembly. It was faithful,
+and it took about thirty seconds to start, because the cost is the Python
+interpreter booting rather than downloading.
 
 ### Stage 1: the baseline
 
