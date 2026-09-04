@@ -21,10 +21,12 @@ Then drag the `web` folder onto app.netlify.com/drop.
 from __future__ import annotations
 
 import shutil
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "web"
+ZIP = ROOT / "your-equity-share-site.zip"
 STLITE = "1.8.1"
 
 # Fetched by the browser at these paths. The layout mirrors the repository
@@ -196,13 +198,21 @@ def main() -> int:
             except OSError:
                 pass
 
+    # Also as an archive. Dragging one file is more reliable than dragging
+    # a folder, and Netlify unpacks it and serves the root, so the paths
+    # inside are relative to web/ and index.html sits at the top.
+    with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(q for q in OUT.rglob("*") if q.is_file()):
+            archive.write(path, path.relative_to(OUT).as_posix())
+
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
     print(f"built {OUT}")
     for rel in ["index.html"] + copied + extra:
         print(f"  {(OUT / rel).stat().st_size:>7,}  {rel}")
     print(f"  {total:>7,}  total ({total / 1024:.0f} KB)")
+    print(f"  {ZIP.stat().st_size:>7,}  {ZIP.name}  (upload this)")
     print("\nServe locally:  python -m http.server 8600 --directory web")
-    print("Publish:        drag the web folder onto app.netlify.com/drop")
+    print("Publish:        drop the zip on app.netlify.com/drop")
     return 0
 
 
