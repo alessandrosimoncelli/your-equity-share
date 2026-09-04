@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Equity Share</title>
+<meta name="description" content="How much of your portfolio belongs in equities. Merton (1969) with the human capital adjustment of Choi, Liu and Liu (2025). Runs entirely in your browser.">
+<style>
+/*
+  Two colours and one typeface.
+
+  Black for text, #06402B for structure and for data. No greys: hierarchy is
+  carried by size and weight, which is what a typeset document does, rather
+  than by fading text out.
+
+  Five type sizes and no more. A page with eleven sizes reads as generated
+  because nothing in it was decided; a page with five reads as set.
+
+  No rules between sections and no panels behind the controls. Space separates
+  things. The only rules on the page are the two that structure a table, above
+  and below its body, which is how tables have been set for a century.
+*/
+:root {
+  --paper:  #FFFFFF;
+  --ink:    #000000;
+  --green:  #06402B;
+  /* Tints of the one green, so the palette stays at two colours. */
+  --rule:   rgba(6, 64, 43, 0.30);
+  --grid:   rgba(6, 64, 43, 0.11);
+  --tint:   rgba(6, 64, 43, 0.10);
+  --tint-2: rgba(6, 64, 43, 0.16);
+
+  --body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+
+  /* The whole scale. */
+  --t-small:  0.875rem;
+  --t-body:   1rem;
+  --t-head:   1.125rem;
+  --t-title:  1.5rem;
+  --t-answer: 2.5rem;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+/*
+  An author `display` rule outranks the user agent's [hidden] { display: none },
+  so .layout and .meter-key stayed visible while marked hidden. This restores
+  the meaning of the attribute for every element on the page.
+*/
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  line-height: 1.5;
+}
+
+.wrap {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: clamp(1.75rem, 4vw, 3.25rem) clamp(1.1rem, 4vw, 3rem) 4rem;
+}
+
+h1 {
+  font-size: var(--t-title);
+  font-weight: 700;
+  color: var(--green);
+  margin: 0 0 0.4rem;
+  line-height: 1.25;
+}
+
+.lede { margin: 0 0 2.25rem; max-width: 40rem; }
+
+h2 {
+  font-size: var(--t-head);
+  font-weight: 700;
+  color: var(--green);
+  margin: 2.75rem 0 0.85rem;
+}
+
+h3 {
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--green);
+  margin: 0 0 0.9rem;
+}
+
+p { margin: 0.85rem 0 0; }
+.sub { font-size: var(--t-small); margin: 0.7rem 0 0; max-width: 40rem; }
+
+/* --- layout -------------------------------------------------------------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 16.5rem minmax(0, 1fr);
+  gap: clamp(1.75rem, 4vw, 3.25rem);
+  align-items: start;
+}
+
+@media (max-width: 58rem) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/*
+  The two halves have to read as two halves. A rule down the side of the form
+  does that without a panel behind it: a column separator, not a card.
+*/
+@media (min-width: 58.001rem) {
+  .controls {
+    position: sticky;
+    top: 1.75rem;
+    border-right: 1px solid var(--rule);
+    padding-right: clamp(1.5rem, 3vw, 2.5rem);
+  }
+}
+
+@media (max-width: 58rem) {
+  .controls { border-bottom: 1px solid var(--rule); padding-bottom: 1.75rem; }
+}
+
+.eyebrow {
+  font-size: var(--t-small);
+  font-weight: 700;
+  color: var(--green);
+  margin: 0 0 1.1rem;
+}
+
+.slider-value {
+  font-size: var(--t-head);
+  font-weight: 700;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.5rem;
+}
+
+.slider-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.1rem;
+}
+
+.field { margin-bottom: 1.05rem; }
+
+label.lbl {
+  display: block;
+  font-size: var(--t-small);
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.hint {
+  display: block;
+  font-weight: 400;
+  font-size: var(--t-small);
+  line-height: 1.4;
+  margin-top: 0.2rem;
+}
+
+input[type="number"] {
+  width: 100%;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  padding: 0.4rem 0.5rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--green);
+  margin: 0.4rem 0 0;
+}
+
+input:focus-visible, a:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: var(--t-small);
+  font-weight: 700;
+}
+.check input { accent-color: var(--green); margin-top: 0.2rem; }
+
+.group { margin-top: 1.9rem; }
+.readout { font-size: var(--t-small); margin-top: 0.5rem; }
+.readout b { color: var(--green); }
+
+/* --- the answer ---------------------------------------------------------- */
+
+.answer { max-width: 40rem; }
+.answer .table-below { margin-top: 2rem; }
+
+.headline {
+  font-size: var(--t-answer);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.headline-sub { margin: 0.35rem 0 0; max-width: 22rem; }
+
+/*
+  One number, so a meter rather than a chart. A label goes inside its segment
+  only when it measurably fits; where it will not, the key underneath carries
+  the identification.
+*/
+.meter { display: flex; height: 1.9rem; margin-top: 1.2rem; background: var(--tint); max-width: 30rem; }
+.meter div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--t-small);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.meter .eq { background: var(--green); color: var(--paper); }
+.meter .sf { background: var(--tint); color: var(--ink); }
+
+.meter-key { display: flex; gap: 1.2rem; margin-top: 0.45rem; font-size: var(--t-small); max-width: 30rem; }
+.meter-key span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.swatch { width: 0.7rem; height: 0.7rem; display: inline-block; }
+.swatch.eq { background: var(--green); }
+.swatch.sf { background: var(--tint-2); }
+
+/* A note, not a callout. Bold lead-in, no box, no coloured bar. */
+.note { font-size: var(--t-small); margin-top: 1rem; max-width: 40rem; }
+.note b { color: var(--green); }
+
+/* --- tables -------------------------------------------------------------- */
+/* Rules above and below the body only. No line between every row. */
+
+.tablewrap { overflow-x: auto; margin-top: 0.2rem; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--t-body);
+}
+
+thead th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--green);
+  border-bottom: 1.5px solid var(--green);
+  padding: 0 1.1rem 0.4rem 0;
+  white-space: nowrap;
+}
+
+tbody td { padding: 0.42rem 1.1rem 0.42rem 0; vertical-align: baseline; }
+tbody tr:last-child td { padding-bottom: 0; }
+tbody { border-bottom: 1px solid var(--rule); }
+tbody tr:last-child td { padding-bottom: 0.55rem; }
+
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+thead th:last-child, tbody td:last-child { padding-right: 0; }
+td.k { white-space: nowrap; }
+td.why { min-width: 15rem; }
+
+/* --- charts -------------------------------------------------------------- */
+
+.chart { width: 100%; display: block; touch-action: pan-y; margin-top: 0.9rem; }
+.chart .grid { stroke: var(--grid); stroke-width: 1; }
+.chart .axis { stroke: var(--rule); stroke-width: 1; }
+.chart .tick, .chart .axis-title { fill: var(--ink); font-size: 14px; font-family: var(--body); }
+.chart .fill { fill: var(--tint); }
+.chart .line { fill: none; stroke: var(--green); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .here { stroke: var(--green); stroke-width: 1; stroke-dasharray: 4 3; }
+.chart .dot { fill: var(--green); stroke: var(--paper); stroke-width: 2; }
+.chart .hit { fill: transparent; }
+.chart .cursor { stroke: var(--green); stroke-width: 1; opacity: 0; }
+.chart .cursor-dot { fill: var(--green); stroke: var(--paper); stroke-width: 2; opacity: 0; }
+
+.figure { position: relative; }
+.tip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--paper);
+  border: 1px solid var(--green);
+  padding: 0.25rem 0.45rem;
+  font-size: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0;
+  z-index: 2;
+}
+
+/* --- misc ---------------------------------------------------------------- */
+
+.foot { margin-top: 3rem; font-size: var(--t-small); max-width: 40rem; }
+.foot a { color: var(--green); }
+.boot { padding: 2.5rem 0; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Your Equity Share</h1>
+<p class="lede">How much of your portfolio belongs in equities. Merton (1969),
+with the human capital adjustment of Choi, Liu and Liu (2025).</p>
+
+<div id="boot" class="boot">Loading the market data.</div>
+
+<div class="layout" id="app" hidden>
+
+  <aside class="controls">
+    <p class="eyebrow">What you tell it</p>
+    <h3>Your household</h3>
+
+    <div class="field">
+      <label class="lbl" for="age">Age</label>
+      <input type="number" id="age" min="20" max="99" step="1" value="45">
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="wage">After-tax annual wage
+        <span class="hint">After tax and in today's money. Include an employer
+        pension match, reduced by about 20% if it goes in before tax.</span>
+      </label>
+      <input type="number" id="wage" min="0" step="5000" value="100000">
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="wealth">Investable net worth
+        <span class="hint">Non-housing assets less non-mortgage debt, reduced
+        for tax owed on withdrawal. Housing is excluded entirely.</span>
+      </label>
+      <input type="number" id="wealth" min="1000" step="10000" value="500000">
+    </div>
+
+    <div class="field">
+      <label class="lbl" for="benefit">Pension already received
+        <span class="hint">Leave at zero if you are still working.</span>
+      </label>
+      <input type="number" id="benefit" min="0" step="1000" value="0">
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" id="partnered">
+        <span>Second adult in the household</span></label>
+    </div>
+
+    <div id="partner-fields" hidden>
+      <div class="field">
+        <label class="lbl" for="partner-age">Their age</label>
+        <input type="number" id="partner-age" min="20" max="99" step="1" value="42">
+      </div>
+      <div class="field">
+        <label class="lbl" for="partner-wage">Their after-tax wage</label>
+        <input type="number" id="partner-wage" min="0" step="5000" value="80000">
+      </div>
+    </div>
+
+    <div class="group">
+    <h3>How much you dislike risk</h3>
+    <p class="sub" style="margin-top:0">A coin is flipped. Heads, you live on
+      $100,000 for the next year. Tails, $50,000. You must spend it all and
+      cannot borrow.</p>
+    <p class="sub"><b>What guaranteed amount would leave you exactly
+      indifferent?</b></p>
+    <label class="visually-hidden" for="ce">Guaranteed amount</label>
+    <div class="slider-value" id="ce-value">$58,566</div>
+    <input type="range" id="ce" min="54000" max="70000" step="1" value="58566">
+    <div class="slider-ends"><span>$54,000</span><span>$70,000</span></div>
+    <div class="readout" id="ce-readout"></div>
+
+    </div>
+
+    <div class="group">
+    <h3>Market assumptions</h3>
+    <div class="field">
+      <label class="check"><input type="checkbox" id="override">
+        <span>Set the expected return myself</span></label>
+    </div>
+    <div id="override-field" hidden>
+      <label class="visually-hidden" for="mu">Expected real return on equities</label>
+      <div class="slider-value" id="mu-value"></div>
+      <input type="range" id="mu" min="0.02" max="0.10" step="0.0005">
+      <div class="slider-ends"><span>2%</span><span>10%</span></div>
+      <div class="readout" id="mu-readout"></div>
+    </div>
+    </div>
+  </aside>
+
+  <main>
+    <p class="eyebrow">What it answers</p>
+    <div class="answer">
+        <div class="headline" id="headline">&nbsp;</div>
+        <p class="headline-sub" id="headline-sub"></p>
+        <div class="meter" id="meter" role="img" aria-label="" ></div>
+        <div class="meter-key" id="meter-key" hidden>
+          <span><i class="swatch eq"></i>Equities</span>
+          <span><i class="swatch sf"></i>Safe asset</span>
+        </div>
+        <div id="cap-flag"></div>
+    </div>
+
+    <div class="table-below">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Where your wealth is</th><th class="n">Amount</th><th class="n">Share</th></tr></thead>
+            <tbody id="wealth-rows"></tbody>
+          </table>
+        </div>
+        <p class="sub">Most of what you own is not in the account. That is the
+          whole reason the answer is not simply the Merton share.</p>
+    </div>
+
+    <h2>How this was reached</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Step</th><th class="n">Result</th><th>Why</th></tr></thead>
+        <tbody id="steps-rows"></tbody>
+      </table>
+    </div>
+
+    <h2>What the answer depends on</h2>
+    <p class="sub">The expected return is the least certain input and the one
+      the answer moves most with. Drag the slider and watch this line.</p>
+    <div class="figure">
+      <svg class="chart" id="sensitivity" role="img"
+           aria-label="Recommended equity share against the expected real return on equities"></svg>
+      <div class="tip" id="sensitivity-tip"></div>
+    </div>
+    <p class="sub" id="sensitivity-note"></p>
+
+    <h2>Across a lifetime</h2>
+    <div class="figure">
+      <svg class="chart" id="glide" role="img"
+           aria-label="Recommended equity share by age, holding wealth and salary fixed"></svg>
+      <div class="tip" id="glide-tip"></div>
+    </div>
+    <p class="sub">Wealth and salary are held fixed here, which no real saver
+      does, so read this as the effect of age alone. What moves the share is
+      future earnings shrinking against savings, not the horizon shortening.</p>
+
+    <h2>The numbers behind it</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Input</th><th class="n">Value</th><th>Where it comes from</th></tr></thead>
+        <tbody id="inputs-rows"></tbody>
+      </table>
+    </div>
+    <div id="range-note"></div>
+
+    <p class="foot" id="foot"></p>
+  </main>
+</div>
+</div>
+
+<script type="module">
+import {
+  gammaFromCertaintyEquivalent,
+  logPremium,
+  makeHousehold,
+  makePerson,
+  recommend,
+  CHOI_FITTED_LOG_PREMIUM_RANGE,
+} from "./model.js";
+
+const $ = (id) => document.getElementById(id);
+
+// Text measurement without touching layout. Used to decide whether a meter
+// label fits in its segment; measuring the DOM instead would mean writing,
+// reading back and writing again on every keystroke.
+const measureCanvas = document.createElement("canvas").getContext("2d");
+function textWidth(text, font) {
+  measureCanvas.font = font;
+  return measureCanvas.measureText(text).width;
+}
+let cachedMeterFont = null;
+function meterFont(meter) {
+  if (cachedMeterFont === null) {
+    const probe = document.createElement("div");
+    probe.className = "eq";
+    meter.appendChild(probe);
+    const cs = getComputedStyle(probe);
+    cachedMeterFont = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    probe.remove();
+  }
+  return cachedMeterFont;
+}
+
+const pct0 = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 0 });
+const pct1 = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const pct2 = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const num1 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const num2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+let market = null;
+
+// --- charts -----------------------------------------------------------------
+// Drawn by hand as SVG. The shapes here are a line, an area and a marker, which
+// is not worth a library and would not survive one gracefully anyway.
+
+function drawChart(svg, tip, opts) {
+  const { points, xDomain, yDomain, xFormat, yFormat, xTitle, markerX, markerY, tipLabel } = opts;
+  const W = svg.clientWidth || 640;
+  const H = opts.height || 300;
+  const m = { top: 10, right: 14, bottom: 34, left: 46 };
+  const iw = Math.max(10, W - m.left - m.right);
+  const ih = Math.max(10, H - m.top - m.bottom);
+
+  const sx = (v) => m.left + ((v - xDomain[0]) / (xDomain[1] - xDomain[0])) * iw;
+  const sy = (v) => m.top + ih - ((v - yDomain[0]) / (yDomain[1] - yDomain[0])) * ih;
+
+  const ticksY = 5, ticksX = 7;
+  const parts = [];
+
+  for (let i = 0; i <= ticksY; i += 1) {
+    const v = yDomain[0] + ((yDomain[1] - yDomain[0]) * i) / ticksY;
+    const y = sy(v);
+    parts.push(`<line class="grid" x1="${m.left}" y1="${y}" x2="${m.left + iw}" y2="${y}"/>`);
+    parts.push(`<text class="tick" x="${m.left - 8}" y="${y + 4}" text-anchor="end">${yFormat(v)}</text>`);
+  }
+  for (let i = 0; i <= ticksX; i += 1) {
+    const v = xDomain[0] + ((xDomain[1] - xDomain[0]) * i) / ticksX;
+    parts.push(`<text class="tick" x="${sx(v)}" y="${m.top + ih + 17}" text-anchor="middle">${xFormat(v)}</text>`);
+  }
+  parts.push(`<line class="axis" x1="${m.left}" y1="${m.top + ih}" x2="${m.left + iw}" y2="${m.top + ih}"/>`);
+  if (xTitle) {
+    parts.push(`<text class="axis-title" x="${m.left + iw / 2}" y="${H - 3}" text-anchor="middle">${xTitle}</text>`);
+  }
+
+  const d = points.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(2)},${sy(p.y).toFixed(2)}`).join("");
+  const base = sy(yDomain[0]).toFixed(2);
+  parts.push(`<path class="fill" d="${d}L${sx(points.at(-1).x).toFixed(2)},${base}L${sx(points[0].x).toFixed(2)},${base}Z"/>`);
+  parts.push(`<path class="line" d="${d}"/>`);
+
+  if (markerX != null) {
+    parts.push(`<line class="here" x1="${sx(markerX)}" y1="${m.top}" x2="${sx(markerX)}" y2="${m.top + ih}"/>`);
+    if (markerY != null) {
+      parts.push(`<circle class="dot" cx="${sx(markerX)}" cy="${sy(markerY)}" r="5.5"/>`);
+    }
+  }
+
+  parts.push(`<line class="cursor" x1="0" y1="${m.top}" x2="0" y2="${m.top + ih}"/>`);
+  parts.push(`<circle class="cursor-dot" cx="0" cy="0" r="4.5"/>`);
+  parts.push(`<rect class="hit" x="${m.left}" y="${m.top}" width="${iw}" height="${ih}"/>`);
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("height", H);
+  svg.innerHTML = parts.join("");
+
+  // Hover: a crosshair and a tooltip, which is what makes the curve worth
+  // looking at rather than merely present.
+  const cursor = svg.querySelector(".cursor");
+  const cursorDot = svg.querySelector(".cursor-dot");
+  const hit = svg.querySelector(".hit");
+  const show = (on) => {
+    cursor.style.opacity = on ? "0.6" : "0";
+    cursorDot.style.opacity = on ? "1" : "0";
+    tip.style.opacity = on ? "1" : "0";
+  };
+  const move = (event) => {
+    const box = svg.getBoundingClientRect();
+    const px = ((event.clientX - box.left) / box.width) * W;
+    const value = xDomain[0] + ((px - m.left) / iw) * (xDomain[1] - xDomain[0]);
+    let best = points[0];
+    for (const p of points) {
+      if (Math.abs(p.x - value) < Math.abs(best.x - value)) best = p;
+    }
+    const cx = sx(best.x), cy = sy(best.y);
+    cursor.setAttribute("x1", cx); cursor.setAttribute("x2", cx);
+    cursorDot.setAttribute("cx", cx); cursorDot.setAttribute("cy", cy);
+    tip.textContent = tipLabel(best);
+    const left = (cx / W) * box.width;
+    tip.style.left = `${Math.min(Math.max(left - tip.offsetWidth / 2, 0), box.width - tip.offsetWidth)}px`;
+    tip.style.top = `${(cy / H) * box.height - tip.offsetHeight - 10}px`;
+    show(true);
+  };
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerenter", move);
+  hit.addEventListener("pointerleave", () => show(false));
+}
+
+// --- reading the controls ---------------------------------------------------
+
+function readInputs() {
+  const clampInt = (el, lo, hi, fallback) => {
+    const v = Math.round(Number(el.value));
+    return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
+  };
+  const nonNegative = (el, fallback) => {
+    const v = Number(el.value);
+    return Number.isFinite(v) && v >= 0 ? v : fallback;
+  };
+
+  const gamma = Math.min(10, Math.max(1, gammaFromCertaintyEquivalent(Number($("ce").value))));
+  const adults = [makePerson(clampInt($("age"), 20, 99, 45), nonNegative($("wage"), 0), nonNegative($("benefit"), 0))];
+  if ($("partnered").checked) {
+    adults.push(makePerson(clampInt($("partner-age"), 20, 99, 42), nonNegative($("partner-wage"), 0)));
+  }
+  const wealth = Math.max(1000, nonNegative($("wealth"), 1000));
+  const expected = $("override").checked
+    ? Number($("mu").value)
+    : market.expected_stock_real_return;
+
+  return { household: makeHousehold(wealth, adults, gamma), gamma, expected, wealth };
+}
+
+function row(cells) {
+  return "<tr>" + cells.map(([v, c]) => `<td class="${c || ""}">${v}</td>`).join("") + "</tr>";
+}
+
+// --- render -----------------------------------------------------------------
+
+function render() {
+  const { household, gamma, expected } = readInputs();
+  const rf = market.real_risk_free;
+  const sigma = market.stock_volatility;
+  const r = recommend(household, expected, rf, sigma);
+
+  $("ce-value").textContent = usd.format(Number($("ce").value));
+  $("ce-readout").innerHTML =
+    `That answer implies a risk aversion of <b>${num1.format(gamma)}</b> out of 10. ` +
+    `A lower amount means you dislike risk more.`;
+  $("mu-value").textContent = pct2.format(Number($("mu").value));
+  $("mu-readout").innerHTML =
+    `The fetched figure is ${pct2.format(market.expected_stock_real_return)}.`;
+
+  $("headline").textContent = pct0.format(r.equityShare);
+  $("headline-sub").innerHTML =
+    `of your portfolio in equities, which is <b>${usd.format(r.equityDollars)}</b> of ${usd.format(r.financialWealth)}.`;
+
+  const eq = r.equityShare, sf = r.bondShare;
+  const meter = $("meter");
+  meter.setAttribute("aria-label",
+    `${pct0.format(eq)} equities, ${pct0.format(sf)} safe asset`);
+  // A label goes inside its segment only if it measurably fits. A percentage
+  // threshold cannot work here: the meter's width changes with the viewport,
+  // so the same share is roomy on a laptop and clipped on a phone. Where a
+  // label will not fit it is dropped, and the key underneath carries the
+  // identification instead, which is why that key exists.
+  const room = meter.clientWidth || 320;
+  const fits = (text, share) => textWidth(text, meterFont(meter)) + 16 <= room * share;
+  const eqLabel = `Equities ${pct0.format(eq)}`;
+  const sfLabel = `Safe asset ${pct0.format(sf)}`;
+  const showEq = fits(eqLabel, eq);
+  const showSf = sf > 0.001 && fits(sfLabel, sf);
+  const seg = [`<div class="eq" style="flex:${Math.max(eq, 0.0001)}">${showEq ? eqLabel : ""}</div>`];
+  if (sf > 0.001) seg.push(`<div class="sf" style="flex:${sf}">${showSf ? sfLabel : ""}</div>`);
+  meter.innerHTML = seg.join("");
+  // The key exists to cover for a label that would not fit. When every segment
+  // carries its own label the key only repeats them, so it stays hidden.
+  $("meter-key").hidden = showEq && (sf <= 0.001 || showSf);
+
+  $("cap-flag").innerHTML = r.isCapped
+    ? `<p class="note"><b>The model asks for ${pct0.format(r.uncappedShare)}</b>,
+       meaning it would borrow to invest. The cap at 100% is imposed from
+       outside; the model did not produce it.</p>`
+    : "";
+
+  const total = r.financialWealth + r.humanCapital;
+  $("wealth-rows").innerHTML =
+    row([["Investable today", "k"], [usd.format(r.financialWealth), "n"], [pct0.format(r.financialWealth / total), "n"]]) +
+    row([["Future earnings", "k"], [usd.format(r.humanCapital), "n"], [pct0.format(r.humanCapital / total), "n"]]) +
+    row([["<b>Total wealth</b>", "k"], [`<b>${usd.format(total)}</b>`, "n"], ["", "n"]]);
+
+  let steps =
+    row([["Equity share of <b>total</b> wealth", "k"], [pct1.format(r.mertonShare), "n"],
+         ["Merton (1969): the reward for risk, divided by risk and by your dislike of it", "why"]]) +
+    row([[`Times 1 + ${num2.format(r.humanCapitalRatio)}`, "k"], [pct1.format(r.uncappedShare), "n"],
+         ["future earnings cannot be traded, so the tradeable part has to carry the whole equity position", "why"]]);
+  if (r.isCapped) {
+    steps += row([["Capped at 100%", "k"], [pct1.format(r.equityShare), "n"],
+                  ["no leverage, a constraint imposed from outside the model", "why"]]);
+  }
+  $("steps-rows").innerHTML = steps;
+
+  // Sensitivity to the expected return.
+  const sens = [];
+  for (let mu = 0.02; mu <= 0.1001; mu += 0.001) {
+    if (mu <= rf) continue;
+    sens.push({ x: mu, y: recommend(household, mu, rf, sigma).equityShare });
+  }
+  drawChart($("sensitivity"), $("sensitivity-tip"), {
+    points: sens,
+    xDomain: [sens[0].x, sens.at(-1).x],
+    yDomain: [0, 1],
+    xFormat: (v) => pct0.format(v),
+    yFormat: (v) => pct0.format(v),
+    xTitle: "Expected real return on equities",
+    markerX: expected,
+    markerY: r.equityShare,
+    tipLabel: (p) => `${pct2.format(p.x)} expected  ->  ${pct0.format(p.y)} in equities`,
+    height: 300,
+  });
+  $("sensitivity-note").textContent =
+    `The marker is where you are now: ${pct2.format(expected)} expected return gives ${pct0.format(r.equityShare)} in equities.`;
+
+  // Glide path by age, everything else held fixed.
+  const base = household.adults[0];
+  const glide = [];
+  for (let a = 25; a <= 95; a += 1) {
+    const trial = makeHousehold(r.financialWealth,
+      [makePerson(a, base.currentWage, base.currentBenefit)], gamma);
+    glide.push({ x: a, y: recommend(trial, expected, rf, sigma).equityShare });
+  }
+  drawChart($("glide"), $("glide-tip"), {
+    points: glide,
+    xDomain: [25, 95],
+    yDomain: [0, 1],
+    xFormat: (v) => String(Math.round(v)),
+    yFormat: (v) => pct0.format(v),
+    xTitle: "Age",
+    markerX: Math.min(95, Math.max(25, base.currentAge)),
+    markerY: null,
+    tipLabel: (p) => `age ${Math.round(p.x)}  ->  ${pct0.format(p.y)} in equities`,
+    height: 280,
+  });
+
+  // The inputs, with where each came from.
+  const pi = logPremium(expected, rf);
+  const [lo, hi] = CHOI_FITTED_LOG_PREMIUM_RANGE;
+  const inside = pi >= lo && pi <= hi;
+  const prov = market.provenance || {};
+  const label = { consensus: "median of three estimators", implied: "market implied", fixed: "set by hand" }[prov.expected_return_method] || "set by hand";
+
+  $("inputs-rows").innerHTML =
+    row([["Expected real return on equities", "k"], [pct2.format(expected), "n"],
+         [$("override").checked ? "you set this" : label, "why"]]) +
+    row([["Real risk-free rate", "k"], [pct2.format(rf), "n"], ["30-year TIPS yield, from FRED", "why"]]) +
+    row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
+         [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +
+    row([["Your risk aversion", "k"], [num1.format(gamma), "n"], ["your answer to the coin question", "why"]]) +
+    row([["Log excess drift", "k"], [pct2.format(pi), "n"],
+         [inside
+            ? `inside the ${pct0.format(lo)} to ${pct0.format(hi)} band Choi fitted`
+            : `${pct2.format(pi < lo ? lo - pi : pi - hi)} outside that band`, "why"]]);
+
+  $("range-note").innerHTML = inside ? "" :
+    `<p class="note"><b>The log excess drift sits outside the ${pct0.format(lo)} to
+     ${pct0.format(hi)} range Choi's coefficients were fitted over.</b> The
+     answer is an extrapolation and should be read as indicative.
+     ${prov.expected_return_estimates ? "Estimators: " + prov.expected_return_estimates + "." : ""}</p>`;
+}
+
+// --- boot -------------------------------------------------------------------
+
+function ageOfData(asOf) {
+  const days = Math.floor((Date.now() - Date.parse(asOf + "T00:00:00Z")) / 86400000);
+  return days;
+}
+
+async function boot() {
+  try {
+    const response = await fetch("./market.json", { cache: "no-cache" });
+    if (!response.ok) throw new Error(`market.json returned ${response.status}`);
+    market = await response.json();
+  } catch (error) {
+    $("boot").innerHTML =
+      `<b>Could not load the market data.</b> ${String(error.message || error)}`;
+    return;
+  }
+
+  $("mu").value = market.expected_stock_real_return;
+  $("boot").hidden = true;
+  $("app").hidden = false;
+
+  const days = ageOfData(market.as_of);
+  const fresh = days <= 90;
+  $("foot").innerHTML =
+    `Market data as of <b>${market.as_of}</b>, ` +
+    `<span class="${fresh ? "ok" : "stale"}">${days} day${days === 1 ? "" : "s"} old</span>` +
+    `${fresh ? "" : ", past the 90 day limit"}. ` +
+    `Everything on this page is computed in your browser; nothing you enter is sent anywhere. ` +
+    `<a href="./methodology.html">Read the methodology</a>. ` +
+    `Not investment advice.`;
+
+  for (const id of ["age", "wage", "wealth", "benefit", "partner-age", "partner-wage", "ce", "mu"]) {
+    $(id).addEventListener("input", render);
+  }
+  $("partnered").addEventListener("change", () => {
+    $("partner-fields").hidden = !$("partnered").checked;
+    render();
+  });
+  $("override").addEventListener("change", () => {
+    $("override-field").hidden = !$("override").checked;
+    render();
+  });
+
+  let frame = null;
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(render);
+  });
+
+  render();
+}
+
+boot();
+</script>
+</body>
+</html>
