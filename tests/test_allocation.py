@@ -352,3 +352,67 @@ def test_rejects_an_empty_household() -> None:
 def test_rejects_negative_wages() -> None:
     with pytest.raises(ValueError, match="cannot be negative"):
         Person(40, -1.0)
+
+
+# --- what actually drives the answer ----------------------------------------
+
+
+def test_the_answer_depends_on_the_ratio_and_not_on_age() -> None:
+    """Age is not an input. It enters only by changing what future earnings are
+    worth, so two households of different ages holding the same ratio of human
+    capital to savings get the same recommendation exactly.
+
+    This is the claim the savings chart on the page rests on, so it is asserted
+    rather than assumed.
+    """
+    gamma, mu, rf, sigma = 5.0, 0.0635, 0.0298, 0.1718
+    target = 2.0
+    shares = []
+    for age, wage in ((28, 60_000.0), (40, 90_000.0), (52, 130_000.0), (61, 150_000.0)):
+        capital = human_capital(Person(age, wage), gamma, mu, rf)
+        household = Household(capital / target, [Person(age, wage)], gamma)
+        result = recommend(household, mu, rf, sigma)
+        assert result.human_capital_ratio == pytest.approx(target, rel=1e-12)
+        shares.append(result.equity_share)
+    assert max(shares) - min(shares) == 0.0
+
+
+def test_savings_move_the_answer_at_a_fixed_age() -> None:
+    """The converse, and the reason the chart puts savings on the axis."""
+    gamma, mu, rf, sigma = 5.0, 0.0635, 0.0298, 0.1718
+    shares = [
+        recommend(Household(w, [Person(45, 100_000.0)], gamma), mu, rf, sigma).equity_share
+        for w in (200_000.0, 600_000.0, 1_800_000.0)
+    ]
+    assert all(b < a for a, b in zip(shares, shares[1:]))
+    assert shares[0] - shares[-1] > 0.5
+
+
+# --- supplied earnings paths ------------------------------------------------
+
+
+def test_a_typed_zero_benefit_suppresses_the_imputed_one() -> None:
+    """The distinction the page's year-by-year box depends on.
+
+    Leaving a year out means "use the projection", and the projection starts a
+    benefit worth 40% of the last wage in the first year without wages. Typing
+    a zero means "no benefit that year". A reader who stops working at 55 and
+    claims nothing until 67 needs the second, and would otherwise be credited
+    with twelve years of income they never receive.
+    """
+    wages = {**{a: 100_000.0 for a in range(46, 56)},
+             **{a: 0.0 for a in range(56, 67)}}
+    late = {a: 20_000.0 for a in range(67, 101)}
+
+    omitted = Person(45, 100_000.0, 0.0, wages=wages, benefits=late)
+    typed = Person(45, 100_000.0, 0.0, wages=wages,
+                   benefits={**{a: 0.0 for a in range(56, 67)}, **late})
+
+    gap = {y.age: y.benefit for y in project_earnings(omitted)}
+    assert gap[56] == pytest.approx(40_000.0)
+
+    gap = {y.age: y.benefit for y in project_earnings(typed)}
+    assert gap[56] == 0.0
+
+    assert (human_capital(typed, 5.0, 0.0635, 0.0298)
+            < human_capital(omitted, 5.0, 0.0635, 0.0298))

@@ -173,6 +173,19 @@ input[type="number"] {
   border-radius: 0;
 }
 
+textarea.path {
+  width: 100%;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: var(--t-small);
+  line-height: 1.45;
+  padding: 0.4rem 0.5rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  resize: vertical;
+}
+
 input[type="range"] {
   width: 100%;
   accent-color: var(--green);
@@ -369,6 +382,33 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
     </div>
 
     <div class="group">
+    <h3>Your own earnings path</h3>
+    <div class="field">
+      <label class="check"><input type="checkbox" id="custom-path">
+        <span>Enter earnings year by year</span></label>
+      <span class="hint">By default a career is projected from your current
+      salary. Tick this to type the years yourself, for a sabbatical, a business
+      sale, a step change, or a pension you already know. One line per year:
+      <code>age, wage, benefit</code>. A year you leave out keeps its projected
+      value; a year you give a benefit of <code>0</code> has no benefit. That
+      matters if you stop working before you claim, since the projection
+      otherwise starts a benefit in your first year without wages.</span>
+    </div>
+    <div id="path-fields" hidden>
+      <div class="field">
+        <label class="lbl" for="path-1">You</label>
+        <textarea id="path-1" class="path" rows="8" spellcheck="false"></textarea>
+        <div class="readout" id="path-1-note"></div>
+      </div>
+      <div class="field" id="path-2-field" hidden>
+        <label class="lbl" for="path-2">Second adult</label>
+        <textarea id="path-2" class="path" rows="8" spellcheck="false"></textarea>
+        <div class="readout" id="path-2-note"></div>
+      </div>
+    </div>
+    </div>
+
+    <div class="group">
     <h3>How much you dislike risk</h3>
     <p class="sub" style="margin-top:0">A coin is flipped. Heads, you live on
       $100,000 for the next year. Tails, $50,000. You must spend it all and
@@ -441,15 +481,18 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
     </div>
     <p class="sub" id="sensitivity-note"></p>
 
-    <h2>Across a lifetime</h2>
+    <h2>As your savings grow</h2>
+    <p class="sub">Age is not an input to this model. What drives the answer is
+      how large your future earnings are <em>relative to</em> what you have
+      already saved, and the surest way that ratio falls is that your savings
+      rise. Two households of different ages with the same ratio get the same
+      answer, to the last decimal.</p>
     <div class="figure">
       <svg class="chart" id="glide" role="img"
-           aria-label="Recommended equity share by age, holding wealth and salary fixed"></svg>
+           aria-label="Recommended equity share against investable net worth, age and salary held fixed"></svg>
       <div class="tip" id="glide-tip"></div>
     </div>
-    <p class="sub">Wealth and salary are held fixed here, which no real saver
-      does, so read this as the effect of age alone. What moves the share is
-      future earnings shrinking against savings, not the horizon shortening.</p>
+    <p class="sub" id="glide-note"></p>
 
     <h2>The numbers behind it</h2>
     <div class="tablewrap">
@@ -468,6 +511,7 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
 <script type="module">
 import {
   gammaFromCertaintyEquivalent,
+  projectEarnings,
   logPremium,
   makeHousehold,
   makePerson,
@@ -502,6 +546,8 @@ const pct0 = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionD
 const pct1 = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const pct2 = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+// Compact form for axis ticks that span three orders of magnitude.
+const usd0 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 0 });
 const num1 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const num2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -519,10 +565,20 @@ function drawChart(svg, tip, opts) {
   const iw = Math.max(10, W - m.left - m.right);
   const ih = Math.max(10, H - m.top - m.bottom);
 
-  const sx = (v) => m.left + ((v - xDomain[0]) / (xDomain[1] - xDomain[0])) * iw;
+  // A log x-scale where asked. Net worth spans three orders of magnitude, and
+  // on a linear axis the whole interesting part would sit against the origin.
+  const logX = opts.xScale === "log";
+  const fwd = (v) => (logX ? Math.log(v) : v);
+  const d0 = fwd(xDomain[0]), d1 = fwd(xDomain[1]);
+  const sx = (v) => m.left + ((fwd(v) - d0) / (d1 - d0)) * iw;
+  const inv = (px) => {
+    const u = d0 + ((px - m.left) / iw) * (d1 - d0);
+    return logX ? Math.exp(u) : u;
+  };
   const sy = (v) => m.top + ih - ((v - yDomain[0]) / (yDomain[1] - yDomain[0])) * ih;
 
-  const ticksY = 5, ticksX = 7;
+  const ticksY = 5;
+  const ticksX = opts.xTicks ? opts.xTicks.length - 1 : 7;
   const parts = [];
 
   for (let i = 0; i <= ticksY; i += 1) {
@@ -532,7 +588,8 @@ function drawChart(svg, tip, opts) {
     parts.push(`<text class="tick" x="${m.left - 8}" y="${y + 4}" text-anchor="end">${yFormat(v)}</text>`);
   }
   for (let i = 0; i <= ticksX; i += 1) {
-    const v = xDomain[0] + ((xDomain[1] - xDomain[0]) * i) / ticksX;
+    const v = opts.xTicks ? opts.xTicks[i] : inv(m.left + (iw * i) / ticksX);
+    if (v === undefined) continue;
     parts.push(`<text class="tick" x="${sx(v)}" y="${m.top + ih + 17}" text-anchor="middle">${xFormat(v)}</text>`);
   }
   parts.push(`<line class="axis" x1="${m.left}" y1="${m.top + ih}" x2="${m.left + iw}" y2="${m.top + ih}"/>`);
@@ -573,10 +630,10 @@ function drawChart(svg, tip, opts) {
   const move = (event) => {
     const box = svg.getBoundingClientRect();
     const px = ((event.clientX - box.left) / box.width) * W;
-    const value = xDomain[0] + ((px - m.left) / iw) * (xDomain[1] - xDomain[0]);
+    const value = inv(px);
     let best = points[0];
     for (const p of points) {
-      if (Math.abs(p.x - value) < Math.abs(best.x - value)) best = p;
+      if (Math.abs(fwd(p.x) - fwd(value)) < Math.abs(fwd(best.x) - fwd(value))) best = p;
     }
     const cx = sx(best.x), cy = sy(best.y);
     cursor.setAttribute("x1", cx); cursor.setAttribute("x2", cx);
@@ -594,6 +651,48 @@ function drawChart(svg, tip, opts) {
 
 // --- reading the controls ---------------------------------------------------
 
+/**
+ * Parse a typed earnings path: one line per year, "age, wage, benefit".
+ *
+ * Deliberately lenient. Blank lines, stray currency symbols and thousands
+ * separators are ignored, the benefit column is optional, and a year the user
+ * leaves out simply keeps its projected value, because projectEarnings uses a
+ * supplied year where it has one and imputes the rest. Bad lines are counted
+ * and reported rather than silently dropped.
+ */
+function parsePath(text, currentAge) {
+  const wages = {};
+  const benefits = {};
+  let used = 0;
+  const bad = [];
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const line = raw.replace(/[$,\s]*$|[$,]/g, "").trim();
+    if (!line || line.startsWith("#")) return;
+    const bits = line.split(/[\s,;]+/).filter(Boolean).map(Number);
+    if (bits.length < 2 || bits.some((v) => !Number.isFinite(v))) {
+      bad.push(i + 1);
+      return;
+    }
+    const [age, wage, benefit] = bits;
+    if (!Number.isInteger(age) || age <= currentAge || age > 100 || wage < 0
+        || (benefit !== undefined && benefit < 0)) {
+      bad.push(i + 1);
+      return;
+    }
+    wages[age] = wage;
+    if (benefit !== undefined) benefits[age] = benefit;
+    used += 1;
+  });
+  return { wages, benefits, used, bad };
+}
+
+/** The projected path, as the text the user starts editing from. */
+function pathText(person) {
+  return projectEarnings(person)
+    .map((y) => `${y.age}, ${Math.round(y.wage)}, ${Math.round(y.benefit)}`)
+    .join("\n");
+}
+
 function readInputs() {
   const clampInt = (el, lo, hi, fallback) => {
     const v = Math.round(Number(el.value));
@@ -605,9 +704,26 @@ function readInputs() {
   };
 
   const gamma = Math.min(10, Math.max(1, gammaFromCertaintyEquivalent(Number($("ce").value))));
-  const adults = [makePerson(clampInt($("age"), 20, 99, 45), nonNegative($("wage"), 0), nonNegative($("benefit"), 0))];
+  const custom = $("custom-path").checked;
+
+  const age1 = clampInt($("age"), 20, 99, 45);
+  const p1 = custom ? parsePath($("path-1").value, age1) : null;
+  const adults = [makePerson(age1, nonNegative($("wage"), 0), nonNegative($("benefit"), 0),
+                             p1 && p1.used ? p1.wages : null,
+                             p1 && Object.keys(p1.benefits).length ? p1.benefits : null)];
+  let p2 = null;
   if ($("partnered").checked) {
-    adults.push(makePerson(clampInt($("partner-age"), 20, 99, 42), nonNegative($("partner-wage"), 0)));
+    const age2 = clampInt($("partner-age"), 20, 99, 42);
+    p2 = custom ? parsePath($("path-2").value, age2) : null;
+    adults.push(makePerson(age2, nonNegative($("partner-wage"), 0), 0,
+                           p2 && p2.used ? p2.wages : null,
+                           p2 && Object.keys(p2.benefits).length ? p2.benefits : null));
+  }
+  for (const [parsed, id] of [[p1, "path-1-note"], [p2, "path-2-note"]]) {
+    if (!parsed) continue;
+    $(id).innerHTML = parsed.bad.length
+      ? `<b>${parsed.used}</b> years read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`
+      : `<b>${parsed.used}</b> years read from what you typed.`;
   }
   const wealth = Math.max(1000, nonNegative($("wealth"), 1000));
   const expected = $("override").checked
@@ -707,26 +823,37 @@ function render() {
   $("sensitivity-note").textContent =
     `The marker is where you are now: ${pct2.format(expected)} expected return gives ${pct0.format(r.equityShare)} in equities.`;
 
-  // Glide path by age, everything else held fixed.
-  const base = household.adults[0];
-  const glide = [];
-  for (let a = 25; a <= 95; a += 1) {
-    const trial = makeHousehold(r.financialWealth,
-      [makePerson(a, base.currentWage, base.currentBenefit)], gamma);
-    glide.push({ x: a, y: recommend(trial, expected, rf, sigma).equityShare });
+  // Against savings, with the household itself unchanged. Age used to be on
+  // this axis, which needed a caption apologising for holding wealth fixed for
+  // seventy years, and put age on view when age is not what the model reads.
+  const LO = 10_000, HI = 10_000_000;
+  const savings = [];
+  for (let i = 0; i <= 120; i += 1) {
+    const w = LO * Math.pow(HI / LO, i / 120);
+    const trial = makeHousehold(w, household.adults, gamma);
+    savings.push({ x: w, y: recommend(trial, expected, rf, sigma).equityShare });
   }
+  const here = Math.min(HI, Math.max(LO, r.financialWealth));
   drawChart($("glide"), $("glide-tip"), {
-    points: glide,
-    xDomain: [25, 95],
+    points: savings,
+    xDomain: [LO, HI],
+    xScale: "log",
+    xTicks: [10_000, 100_000, 1_000_000, 10_000_000],
     yDomain: [0, 1],
-    xFormat: (v) => String(Math.round(v)),
+    xFormat: (v) => usd0.format(v),
     yFormat: (v) => pct0.format(v),
-    xTitle: "Age",
-    markerX: Math.min(95, Math.max(25, base.currentAge)),
-    markerY: null,
-    tipLabel: (p) => `age ${Math.round(p.x)}  ->  ${pct0.format(p.y)} in equities`,
+    xTitle: "Investable net worth",
+    markerX: here,
+    markerY: recommend(makeHousehold(here, household.adults, gamma), expected, rf, sigma).equityShare,
+    tipLabel: (p) => `${usd.format(p.x)} saved  ->  ${pct0.format(p.y)} in equities`,
     height: 280,
   });
+  $("glide-note").innerHTML =
+    `Your household, its ages and salaries unchanged, at every level of savings. `
+    + `At ${usd.format(r.financialWealth)} the answer is ${pct0.format(r.equityShare)}; `
+    + `the same household with ten times that would be told `
+    + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma).equityShare)}. `
+    + `Nothing about the people changed.`;
 
   // The inputs, with where each came from.
   const pi = logPremium(expected, rf);
@@ -810,8 +937,37 @@ async function boot() {
   }
   $("partnered").addEventListener("change", () => {
     $("partner-fields").hidden = !$("partnered").checked;
+    $("path-2-field").hidden = !($("partnered").checked && $("custom-path").checked);
+    if (!$("path-2-field").hidden && !$("path-2").value.trim()) prefillPath(2);
     render();
   });
+
+  // Prefill from the projected path so the reader edits a career rather than
+  // inventing one in an empty box. Only ever fills a box that is empty, so
+  // changing your age later never discards what you typed.
+  function prefillPath(which) {
+    const age = which === 1
+      ? Math.min(99, Math.max(20, Math.round(Number($("age").value)) || 45))
+      : Math.min(99, Math.max(20, Math.round(Number($("partner-age").value)) || 42));
+    const wage = which === 1
+      ? Math.max(0, Number($("wage").value) || 0)
+      : Math.max(0, Number($("partner-wage").value) || 0);
+    const benefit = which === 1 ? Math.max(0, Number($("benefit").value) || 0) : 0;
+    $(`path-${which}`).value = pathText(makePerson(age, wage, benefit));
+  }
+
+  $("custom-path").addEventListener("change", () => {
+    const on = $("custom-path").checked;
+    $("path-fields").hidden = !on;
+    $("path-2-field").hidden = !(on && $("partnered").checked);
+    if (on) {
+      if (!$("path-1").value.trim()) prefillPath(1);
+      if ($("partnered").checked && !$("path-2").value.trim()) prefillPath(2);
+    }
+    render();
+  });
+
+  for (const id of ["path-1", "path-2"]) $(id).addEventListener("input", render);
   $("override").addEventListener("change", () => {
     $("override-field").hidden = !$("override").checked;
     render();
