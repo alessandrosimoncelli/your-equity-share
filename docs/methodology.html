@@ -4,33 +4,23 @@
 :root {
   --bg:      #FFFFFF;
   --text:    #000000;
-  --navy:    #1F3864;
-  --green:   #375623;
-  --rule:    #A6A6A6;
-  --rule-lt: #DCDCDC;
-  --body: Aptos, Calibri, "Segoe UI", Arial, Helvetica, sans-serif;
+  /* Two colours. The former navy and green both become this one green, so
+     headings, links and source notes stop competing with each other. */
+  --navy:    #06402B;
+  --green:   #06402B;
+  --rule:    rgba(6, 64, 43, 0.30);
+  --rule-lt: rgba(6, 64, 43, 0.11);
+  --body: Arial, "Helvetica Neue", Helvetica, sans-serif;
   --mono: Consolas, "Courier New", monospace;
+
+  /* The whole scale, matching the tool. */
+  --t-small:  0.875rem;
+  --t-body:   1rem;
+  --t-head:   1.125rem;
+  --t-title:  1.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:      #15181B;
-    --text:    #E8E8E8;
-    --navy:    #A2BAE0;
-    --green:   #9FC77E;
-    --rule:    #4C5157;
-    --rule-lt: #2C3237;
-  }
-}
 
-:root[data-theme="dark"] {
-  --bg:      #15181B;
-  --text:    #E8E8E8;
-  --navy:    #A2BAE0;
-  --green:   #9FC77E;
-  --rule:    #4C5157;
-  --rule-lt: #2C3237;
-}
 
 * { box-sizing: border-box; }
 
@@ -38,7 +28,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--body);
-  font-size: 16px;
+  font-size: var(--t-body);
   line-height: 1.58;
 }
 
@@ -49,7 +39,7 @@ body {
 }
 
 h1 {
-  font-size: 1.6rem;
+  font-size: var(--t-title);
   font-weight: 700;
   color: var(--navy);
   margin: 0 0 0.5rem;
@@ -57,12 +47,12 @@ h1 {
 }
 
 .subtitle { margin: 0 0 0.2rem; }
-.docmeta { margin: 0 0 1.4rem; font-size: 0.92rem; }
+.docmeta { margin: 0 0 1.4rem; font-size: var(--t-small); }
 
-.titlerule { border: 0; border-top: 1.5px solid var(--navy); margin: 0 0 2.2rem; }
+.titlerule { display: none; }
 
 h2 {
-  font-size: 1.1rem;
+  font-size: var(--t-head);
   font-weight: 700;
   color: var(--navy);
   margin: 2.6rem 0 0.75rem;
@@ -70,7 +60,7 @@ h2 {
 }
 
 h3 {
-  font-size: 0.98rem;
+  font-size: var(--t-body);
   font-weight: 700;
   margin: 1.7rem 0 0.55rem;
 }
@@ -80,13 +70,19 @@ ul, ol { margin: 0 0 0.95rem; padding-left: 1.5rem; }
 li { margin-bottom: 0.4rem; }
 strong { font-weight: 700; }
 
-code { font-family: var(--mono); font-size: 0.9em; }
+code { font-family: var(--mono); font-size: inherit; }
+
+/* Subscripts and superscripts are notation, not a level of hierarchy, so they
+   get one absolute size rather than a relative one. Left relative they
+   compounded differently in body text, tables and equations and produced four
+   distinct sizes on their own. */
+sub, sup { font-size: 12px; }
 
 a { color: var(--navy); }
 a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 
 .contents { margin: 0 0 1rem; padding-left: 0; list-style: none; }
-.contents li { margin-bottom: 0.25rem; font-size: 0.95rem; }
+.contents li { margin-bottom: 0.25rem; font-size: var(--t-small); }
 
 .eqn {
   display: flex;
@@ -99,17 +95,17 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 .eqn .body {
   flex: 1;
   font-family: var(--mono);
-  font-size: 0.93rem;
+  font-size: var(--t-small);
   line-height: 1.9;
   overflow-x: auto;
 }
 
-.eqn .no { font-family: var(--mono); font-size: 0.9rem; flex: none; }
+.eqn .no { font-family: var(--mono); font-size: var(--t-small); flex: none; }
 
 .where {
   margin: 0 0 1.2rem;
   padding-left: 2rem;
-  font-size: 0.94rem;
+  font-size: var(--t-small);
 }
 
 .where > p { margin: 0 0 0.35rem; }
@@ -125,18 +121,18 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 .where dt { font-family: var(--mono); white-space: nowrap; }
 .where dd { margin: 0; }
 
-.src { padding-left: 2rem; font-size: 0.9rem; margin: 0.7rem 0 1.4rem; color: var(--green); }
+.src { padding-left: 2rem; font-size: var(--t-small); margin: 0.7rem 0 1.4rem; color: var(--green); }
 
 .tablewrap { overflow-x: auto; margin: 1.2rem 0 1.7rem; }
 
-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+table { border-collapse: collapse; width: 100%; font-size: var(--t-body); }
 
 caption {
   caption-side: top;
   text-align: left;
   font-weight: 700;
   padding-bottom: 0.5rem;
-  font-size: 0.9rem;
+  font-size: var(--t-small);
 }
 
 th {
@@ -149,35 +145,32 @@ th {
 }
 
 td {
-  padding: 0.48rem 0.9rem 0.48rem 0;
-  border-bottom: 1px solid var(--rule-lt);
+  padding: 0.42rem 0.9rem 0.42rem 0;
   vertical-align: top;
 }
 
-tr:last-child td { border-bottom: 1px solid var(--rule); }
+tbody { border-bottom: 1px solid var(--rule); }
+tbody tr:last-child td { padding-bottom: 0.55rem; }
 
-td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+thead th:last-child, tbody td:last-child { padding-right: 0; }
 td.sym { font-family: var(--mono); white-space: nowrap; }
 
-.refs { padding-left: 1.5rem; font-size: 0.93rem; }
+.refs { padding-left: 1.5rem; font-size: var(--t-small); }
 .refs li { margin-bottom: 0.55rem; }
 
 .footnote {
-  margin-top: 2.8rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--rule);
-  font-size: 0.88rem;
+  margin-top: 3rem;
+  font-size: var(--t-small);
 }
 
 .note-bias {
-  border-left: 3px solid var(--green);
-  padding: 0.1rem 0 0.1rem 1rem;
   margin: 1.3rem 0;
 }
 .note-bias p { margin: 0.6rem 0; }
 
 h4 {
-  font-size: 0.94rem;
+  font-size: var(--t-small);
   font-weight: 700;
   color: var(--green);
   margin: 1.5rem 0 0.5rem;
