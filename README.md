@@ -95,7 +95,7 @@ asserted.
 | 2. Market data pipeline and risk-aversion elicitation | **done** |
 | 3. Choi's formula: human capital, discount rates, imputed earnings | **done** |
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |
-| 5. Streamlit front end | **done** |
+| 5. Browser front end | **done** |
 | 6. Published as a static site, model ported to JavaScript | **done** |
 | 7. Portfolio analytics and factor exposure | planned |
 
@@ -113,9 +113,12 @@ over: fetching, parsing, volatility, the expected-return estimators and the
 frozen spreadsheet baseline all stay in Python, because they run here and not
 in a reader's browser.
 
-An earlier version shipped Streamlit compiled to WebAssembly. It was faithful,
-and it took about thirty seconds to start, because the cost is the Python
-interpreter booting rather than downloading.
+Two earlier versions are gone. The first shipped Streamlit compiled to
+WebAssembly: faithful, and about thirty seconds to start, because the cost is
+the Python interpreter booting rather than downloading. The second was a
+Streamlit app run locally, retired once the browser build replaced everything
+it did. Keeping two front ends meant keeping two of them current, and the
+second had already drifted.
 
 ### Stage 1: the baseline
 
@@ -150,20 +153,24 @@ python -m venv .venv
 .venv/Scripts/python -m pytest
 ```
 
-Then ask it the question. There are two front ends.
+Then ask it the question. There are two ways in.
 
-**In the browser:**
+**In a browser**, which is the tool proper:
 
 ```bash
-pip install -e ".[app]"
-streamlit run app.py
+python tools/build_web.py
+python -m http.server 8600 --directory web
 ```
 
-Sliders for risk aversion and the expected return, so you can see by dragging
-how much the answer depends on each. The recommendation, its working, a
-sensitivity curve and a glide path across ages.
+Then open http://localhost:8600. Sliders for risk aversion and the expected
+return, so you can see by dragging how much the answer depends on each. The
+recommendation with its working, a sensitivity curve, the answer at every level
+of savings, and a box for typing your earnings year by year.
 
-**In the terminal:**
+The same folder is what gets published: drop `your-equity-share-site.zip` on a
+static host and that is the whole deployment.
+
+**In the terminal**, for a quick answer or for scripting:
 
 ```bash
 python recommend.py                                          # asks you the inputs

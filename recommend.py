@@ -125,15 +125,17 @@ def print_report(result, market, household) -> None:
     print(f"  Market data, as of {market.as_of}")
     print()
     method = market.provenance.get("expected_return_method", "set by hand")
-    note = {"consensus": "median of three estimators",
+    note = {"building blocks": "payout yield plus long-run growth",
+            "consensus": "median of three estimators",
             "implied": "market implied premium",
             "fixed": "set by hand"}.get(method, method)
     print(f"  expected stock real return       "
           f"{market.expected_stock_real_return:>13.2%}   {note}")
     if market.expected_return_spread > 0:
         print(f"      estimators: {market.expected_return_estimates}")
-        print(f"      they span {market.expected_return_spread:.2%}, which is the")
-        print(f"      least certain input here. See docs/inputs.md.")
+        print(f"      the first is used; the others are cross-checks spanning")
+        print(f"      {market.expected_return_spread:.2%}. This is the least certain")
+        print(f"      input in the model. See docs/inputs.md.")
     print(f"  real risk-free rate              "
           f"{market.real_risk_free_rate:>13.2%}   30-year TIPS")
     window = market.provenance.get("volatility_window_years")

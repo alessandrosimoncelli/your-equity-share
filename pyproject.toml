@@ -10,9 +10,8 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-# The model and the refresh script have no runtime dependencies.
-# Streamlit is needed only for the browser front end.
-app = ["streamlit>=1.30", "pandas>=2.0", "altair>=5.0"]
+# Nothing here has runtime dependencies: not the model, not the refresh
+# script, not the browser build. The only extra is the test runner.
 dev = ["pytest>=8"]
 
 [tool.setuptools.packages.find]
