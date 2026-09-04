@@ -20,7 +20,7 @@ docs/methodology.html for the derivation.
 from your_equity_share.allocation import (
     Household,
     Recommendation,
-    your_equity_share,
+    merton_share,
     recommend,
 )
 from your_equity_share.human_capital import (
@@ -34,7 +34,7 @@ from your_equity_share.human_capital import (
     wage_discount_rate,
 )
 from your_equity_share.legacy import LegacyInputs, LegacySleeve, bull_formula_share
-from your_equity_share.legacy import your_equity_share as legacy_your_equity_share
+from your_equity_share.legacy import merton_share as legacy_merton_share
 from your_equity_share.risk_aversion import (
     certainty_equivalent,
     gamma_from_certainty_equivalent,
@@ -56,8 +56,8 @@ __all__ = [
     "guide_table",
     "human_capital",
     "imputed_wage",
-    "legacy_your_equity_share",
-    "your_equity_share",
+    "legacy_merton_share",
+    "merton_share",
     "project_earnings",
     "recommend",
     "wage_discount_rate",

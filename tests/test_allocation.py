@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from your_equity_share.allocation import Household, Recommendation, your_equity_share, recommend
+from your_equity_share.allocation import Household, Recommendation, merton_share, recommend
 from your_equity_share.human_capital import (
     CGM_CALIBRATION,
     RETIREMENT_AGE,
@@ -47,7 +47,7 @@ def test_wage_imputed_tab_reproduces() -> None:
     result = recommend(household, MU, REAL_RF, CHOI_SIGMA)
 
     assert result.human_capital == pytest.approx(2_133_150.455, abs=0.01)
-    assert result.your_equity_share == pytest.approx(0.1693939335, abs=1e-10)
+    assert result.merton_share == pytest.approx(0.1693939335, abs=1e-10)
     assert result.equity_share == pytest.approx(0.8920794261, abs=1e-9)
 
 
@@ -190,32 +190,32 @@ def test_explicit_schedules_override_the_projection() -> None:
 # --- the Merton share -------------------------------------------------------
 
 
-def test_your_equity_share_uses_a_difference_of_drifts() -> None:
+def test_merton_share_uses_a_difference_of_drifts() -> None:
     import math
 
-    got = your_equity_share(0.05, 0.02, 5.0, 0.185)
+    got = merton_share(0.05, 0.02, 5.0, 0.185)
     expected = (math.log(1.05) - math.log(1.02)) / (5.0 * 0.185**2)
     assert got == pytest.approx(expected)
 
 
 def test_doubling_volatility_quarters_the_share() -> None:
     """Variance sits in the denominator, so the effect is quadratic."""
-    base = your_equity_share(0.05, 0.02, 5.0, 0.16)
-    doubled = your_equity_share(0.05, 0.02, 5.0, 0.32)
+    base = merton_share(0.05, 0.02, 5.0, 0.16)
+    doubled = merton_share(0.05, 0.02, 5.0, 0.32)
     assert doubled == pytest.approx(base / 4.0)
 
 
 def test_doubling_risk_aversion_halves_the_share() -> None:
-    base = your_equity_share(0.05, 0.02, 3.0, 0.16)
-    doubled = your_equity_share(0.05, 0.02, 6.0, 0.16)
+    base = merton_share(0.05, 0.02, 3.0, 0.16)
+    doubled = merton_share(0.05, 0.02, 6.0, 0.16)
     assert doubled == pytest.approx(base / 2.0)
 
 
-def test_your_equity_share_has_no_horizon_term() -> None:
+def test_merton_share_has_no_horizon_term() -> None:
     """Section 2.3. Nothing about age or holding period enters."""
     import inspect
 
-    signature = inspect.signature(your_equity_share)
+    signature = inspect.signature(merton_share)
     assert set(signature.parameters) == {
         "expected_stock_real_return",
         "real_risk_free",
@@ -224,11 +224,11 @@ def test_your_equity_share_has_no_horizon_term() -> None:
     }
 
 
-def test_your_equity_share_rejects_nonsense() -> None:
+def test_merton_share_rejects_nonsense() -> None:
     with pytest.raises(ValueError, match="volatility must be positive"):
-        your_equity_share(0.05, 0.02, 5.0, 0.0)
+        merton_share(0.05, 0.02, 5.0, 0.0)
     with pytest.raises(ValueError, match="risk aversion must be positive"):
-        your_equity_share(0.05, 0.02, 0.0, 0.16)
+        merton_share(0.05, 0.02, 0.0, 0.16)
 
 
 # --- the recommendation -----------------------------------------------------
@@ -267,13 +267,13 @@ def test_the_cap_is_reported_separately_from_the_answer() -> None:
     assert young.is_capped
 
 
-def test_a_household_with_no_earnings_gets_the_your_equity_share_alone() -> None:
+def test_a_household_with_no_earnings_gets_the_merton_share_alone() -> None:
     """No human capital means no multiplier. Layer two does nothing."""
     result = recommend(
         _household(adults=[Person(80, 0.0)]), MU, REAL_RF, 0.17
     )
     assert result.human_capital == pytest.approx(0.0)
-    assert result.equity_share == pytest.approx(result.your_equity_share)
+    assert result.equity_share == pytest.approx(result.merton_share)
 
 
 def test_two_adults_accumulate_human_capital() -> None:

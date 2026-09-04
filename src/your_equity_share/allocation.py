@@ -28,12 +28,12 @@ from your_equity_share.human_capital import (
 __all__ = [
     "Household",
     "Recommendation",
-    "your_equity_share",
+    "merton_share",
     "recommend",
 ]
 
 
-def your_equity_share(
+def merton_share(
     expected_stock_real_return: float,
     real_risk_free: float,
     risk_aversion: float,
@@ -102,7 +102,7 @@ class Recommendation:
     """What the model says, and enough working to see why."""
 
     equity_share: float
-    your_equity_share: float
+    merton_share: float
     human_capital: float
     financial_wealth: float
     uncapped_share: float
@@ -141,7 +141,7 @@ def recommend(
     place. Section 7.1 of the methodology explains why the two are not forced
     to agree.
     """
-    beta = your_equity_share(
+    beta = merton_share(
         expected_stock_real_return,
         real_risk_free,
         household.risk_aversion,
@@ -164,7 +164,7 @@ def recommend(
 
     return Recommendation(
         equity_share=max(0.0, min(1.0, uncapped)),
-        your_equity_share=beta,
+        merton_share=beta,
         human_capital=total_hc,
         financial_wealth=household.investable_net_worth,
         uncapped_share=uncapped,

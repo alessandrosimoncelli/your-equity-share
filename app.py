@@ -281,7 +281,7 @@ with right:
 st.markdown("## How this was reached")
 
 steps = [
-    ("Equity share of <b>total</b> wealth", f"{result.your_equity_share:.1%}",
+    ("Equity share of <b>total</b> wealth", f"{result.merton_share:.1%}",
      "Merton (1969): the reward for risk, divided by risk and by your dislike "
      "of it"),
     (f"Times 1 + {result.human_capital_ratio:.2f}", f"{result.uncapped_share:.1%}",

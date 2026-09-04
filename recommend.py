@@ -107,7 +107,7 @@ def print_report(result, market, household) -> None:
         for i, value in enumerate(result.per_adult_human_capital, start=1):
             print(f"      adult {i}                     {money(value):>14}")
     print()
-    print(f"  Equity share of TOTAL wealth     {result.your_equity_share:>13.1%}"
+    print(f"  Equity share of TOTAL wealth     {result.merton_share:>13.1%}"
           f"   Merton (1969)")
     print(f"  Times (1 + {result.human_capital_ratio:.2f}) for the part you can trade"
           f"  {result.uncapped_share:>8.1%}")
