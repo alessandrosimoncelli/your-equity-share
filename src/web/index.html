@@ -37,6 +37,7 @@
   --t-body:   1rem;
   --t-head:   1.125rem;
   --t-title:  1.5rem;
+  --t-figure: 2.75rem;
 }
 
 * { box-sizing: border-box; }
@@ -213,17 +214,28 @@ input:focus-visible, a:focus-visible {
 /* --- the answer ---------------------------------------------------------- */
 
 /*
-  The answer is a sentence, not a tile. A 40px figure standing on its own is
-  the stat-tile pattern; stated in a line of prose with the figure emphasised,
-  it reads as the opening of a report and loses nothing.
+  The answer has to be readable at a glance, and a figure alone on a card is
+  the stat-tile pattern. The figure and its meaning sit on one baseline
+  instead: large enough to find immediately, but never standing without the
+  sentence that says what it is a percentage of.
 */
-.summary {
-  font-size: var(--t-head);
-  line-height: 1.45;
-  max-width: 34rem;
+.verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  max-width: 36rem;
   margin: 0 0 0.5rem;
 }
-.summary b { color: var(--green); }
+.verdict-figure {
+  font-size: var(--t-figure);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.verdict-text { flex: 1 1 14rem; line-height: 1.45; }
+.verdict-text b { color: var(--green); }
 
 /* Exhibits are numbered and named, which is what a report does with its
    tables and figures and what an application never does. */
@@ -343,23 +355,23 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
 
     <div class="field">
       <label class="lbl" for="wage">After-tax annual wage
-        <span class="hint">After tax and in today's money. Include an employer
-        pension match, reduced by about 20% if it goes in before tax.</span>
+        <span class="hint">After tax, in today's money. Include an employer match,
+        reduced by 20% if it goes in before tax.</span>
       </label>
       <input type="number" id="wage" min="0" step="5000" value="100000">
     </div>
 
     <div class="field">
       <label class="lbl" for="wealth">Investable net worth
-        <span class="hint">Non-housing assets less non-mortgage debt, reduced
-        for tax owed on withdrawal. Housing is excluded entirely.</span>
+        <span class="hint">Non-housing assets less non-mortgage debt, after tax
+        owed on withdrawal.</span>
       </label>
       <input type="number" id="wealth" min="1000" step="10000" value="500000">
     </div>
 
     <div class="field">
       <label class="lbl" for="benefit">Pension already received
-        <span class="hint">Leave at zero if you are still working.</span>
+        <span class="hint">Zero if you are still working.</span>
       </label>
       <input type="number" id="benefit" min="0" step="1000" value="0">
     </div>
@@ -385,13 +397,10 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
     <div class="field">
       <label class="check"><input type="checkbox" id="custom-path">
         <span>Enter earnings year by year</span></label>
-      <span class="hint">By default a career is projected from your current
-      salary. Tick this to type the years yourself, for a sabbatical, a business
-      sale, a step change, or a pension you already know. One line per year:
-      <code>age, wage, benefit</code>. A year you leave out keeps its projected
-      value; a year you give a benefit of <code>0</code> has no benefit. That
-      matters if you stop working before you claim, since the projection
-      otherwise starts a benefit in your first year without wages.</span>
+      <span class="hint">A career is projected from your salary unless you type
+      it. One line per year: <code>age, wage, benefit</code>. A year left out
+      keeps its projected value; a benefit of <code>0</code> means none that
+      year, which matters if you stop working before you claim.</span>
     </div>
     <div id="path-fields" hidden>
       <div class="field">
@@ -409,10 +418,9 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
 
     <div class="group">
     <h3>How much you dislike risk</h3>
-    <p class="sub" style="margin-top:0">A coin is flipped. Heads, you live on
-      $100,000 for the next year. Tails, $50,000. You must spend it all and
-      cannot borrow.</p>
-    <p class="sub"><b>What guaranteed amount would leave you exactly
+    <p class="sub" style="margin-top:0">A coin decides whether you live on
+      $100,000 or $50,000 next year. You must spend it all.</p>
+    <p class="sub"><b>What guaranteed amount would leave you
       indifferent?</b></p>
     <label class="visually-hidden" for="ce">Guaranteed amount</label>
     <div class="slider-value" id="ce-value">$58,566</div>
@@ -441,7 +449,10 @@ with the human capital adjustment of Choi, Liu and Liu (2025).</p>
   <main>
     <p class="eyebrow">What it answers</p>
 
-    <p class="summary" id="summary"></p>
+    <p class="verdict">
+      <span class="verdict-figure" id="verdict-figure">&nbsp;</span>
+      <span class="verdict-text" id="verdict-text"></span>
+    </p>
     <p class="note" id="cap-flag"></p>
 
     <p class="exhibit">Exhibit 1. Your wealth, and how much of it can be traded</p>
@@ -724,8 +735,9 @@ function render() {
 
   // The answer as a sentence. Both sides of the split are named here, which
   // is what the meter used to do.
-  $("summary").innerHTML =
-    `The model puts <b>${pct0.format(r.equityShare)}</b> of your ${usd.format(r.financialWealth)} portfolio in equities and <b>${pct0.format(r.bondShare)}</b> in the safe asset: ${usd.format(r.equityDollars)} against ${usd.format(r.financialWealth - r.equityDollars)}.`;
+  $("verdict-figure").textContent = pct0.format(r.equityShare);
+  $("verdict-text").innerHTML =
+    `of your ${usd.format(r.financialWealth)} portfolio in equities, or <b>${usd.format(r.equityDollars)}</b>. The other ${pct0.format(r.bondShare)} goes to the safe asset.`;
 
   $("cap-flag").innerHTML = r.isCapped
     ? `<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The cap at 100% is imposed from outside; the model did not produce it.`
