@@ -16,9 +16,11 @@
   Five type sizes and no more. A page with eleven sizes reads as generated
   because nothing in it was decided; a page with five reads as set.
 
-  No rules between sections and no panels behind the controls. Space separates
-  things. The only rules on the page are the two that structure a table, above
-  and below its body, which is how tables have been set for a century.
+  The page is three stacked sections: the title, the form, the answer, and
+  then the working. The form carries a border because it is the part you touch
+  and needs to be told apart from the report it produces. It is a border and
+  nothing else: no fill, no shadow, no rounding, which is what separates a
+  ruled box from a card.
 */
 :root {
   --paper:  #FFFFFF;
@@ -74,41 +76,25 @@ h1 {
   line-height: 1.25;
 }
 
-.lede { margin: 0; max-width: 40rem; }
+.lede { margin: 0; max-width: 44rem; }
 
 /*
-  The answer sits beside the title, where the eye lands first and where the
-  window was otherwise empty. It reads as dashes until there is something to
-  report, so the page never shows a number it has not computed.
+  Three sections, one under the next, each doing one job: the title, the form
+  you fill, the answer it gives, and then the working. The form is boxed so it
+  is plainly the part you touch; the rest is the report it produces.
 */
-.masthead {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem 3rem;
-  align-items: start;
-  margin-bottom: 2.4rem;
-}
-.masthead-answer { text-align: right; }
-.masthead-label {
-  font-size: var(--t-small);
-  font-weight: 700;
-  color: var(--green);
-  margin: 0;
-}
-.masthead-figure {
-  font-size: var(--t-figure);
-  font-weight: 700;
-  color: var(--green);
-  line-height: 1.05;
-  margin: 0.1rem 0 0;
-  font-variant-numeric: tabular-nums;
-}
-.masthead-sub { font-size: var(--t-small); margin: 0.15rem 0 0; }
+.masthead { text-align: center; margin-bottom: 3rem; }
+.masthead .lede { margin: 0 auto; max-width: 44rem; }
 
-@media (max-width: 46rem) {
-  .masthead { grid-template-columns: minmax(0, 1fr); }
-  .masthead-answer { text-align: left; }
+.section-form {
+  border: 1px solid var(--rule);
+  padding: 1.6rem clamp(1.1rem, 2.5vw, 2rem) 1.8rem;
+  margin-bottom: 3.4rem;
 }
+
+.section-result { margin-bottom: 3.6rem; }
+
+.section-exhibits { padding-top: 0.4rem; }
 
 h2 {
   font-size: var(--t-head);
@@ -134,12 +120,6 @@ p { margin: 0.85rem 0 0; }
   band at the top, the answer sits under it, and the exhibits fall into two
   columns, which is how a wide page is set.
 */
-
-.band {
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: 1.7rem;
-  margin-bottom: 1.9rem;
-}
 
 /*
   Four columns, not auto-fit. Auto-fit chose its own count from the available
@@ -327,8 +307,22 @@ input:focus-visible, a:focus-visible {
   instead: large enough to find immediately, but never standing without the
   sentence that says what it is a percentage of.
 */
-.verdict { max-width: 36rem; margin: 0 0 0.5rem; }
-.verdict-text { font-size: var(--t-head); line-height: 1.45; }
+.verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  max-width: 38rem;
+  margin: 0 0 0.5rem;
+}
+.verdict-figure {
+  font-size: var(--t-figure);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.verdict-text { flex: 1 1 15rem; line-height: 1.45; }
 .verdict-text b { color: var(--green); }
 
 .split { max-width: 26rem; }
@@ -451,24 +445,17 @@ td.why { min-width: 15rem; }
 <body>
 <div class="wrap">
 
-<div class="masthead">
-  <div>
-    <h1>Your Equity Share</h1>
-    <p class="lede">How much of your portfolio belongs in equities. Merton (1969),
-    with the human capital adjustment of Choi, Liu and Liu (2025).</p>
-  </div>
-  <div class="masthead-answer">
-    <p class="masthead-label">Recommended equity share</p>
-    <p class="masthead-figure" id="masthead-figure">&mdash;&mdash;</p>
-    <p class="masthead-sub" id="masthead-sub">enter your details below</p>
-  </div>
-</div>
+<header class="masthead">
+  <h1>Your Equity Share</h1>
+  <p class="lede">How much of your portfolio belongs in equities. Merton (1969),
+  with the human capital adjustment of Choi, Liu and Liu (2025).</p>
+</header>
 
 <div id="boot" class="boot">Loading the market data.</div>
 
 <div id="app" hidden>
 
-  <section class="band">
+  <section class="section-form">
     <p class="eyebrow">What you tell it</p>
     <div class="form-grid">
 
@@ -586,11 +573,14 @@ td.why { min-width: 15rem; }
     </div>
   </section>
 
-  <section class="band">
+  <section class="section-result">
     <p class="eyebrow">What it answers</p>
     <div class="result-row">
       <div>
-        <p class="verdict"><span class="verdict-text" id="verdict-text"></span></p>
+        <p class="verdict">
+          <span class="verdict-figure" id="verdict-figure">&mdash;&mdash;</span>
+          <span class="verdict-text" id="verdict-text"></span>
+        </p>
         <p class="note" id="cap-flag"></p>
       </div>
       <div class="split">
@@ -600,7 +590,9 @@ td.why { min-width: 15rem; }
     </div>
   </section>
 
-  <div class="exhibit-grid">
+  <section class="section-exhibits">
+    <p class="eyebrow">How it got there</p>
+    <div class="exhibit-grid">
 
     <section>
       <p class="exhibit">Exhibit 1. Your wealth, and how much of it can be traded</p>
@@ -662,7 +654,8 @@ td.why { min-width: 15rem; }
       <p class="foot" id="foot"></p>
     </section>
 
-  </div>
+    </div>
+  </section>
 </div>
 </div>
 
@@ -966,11 +959,9 @@ function render() {
 
   // The answer as a sentence. Both sides of the split are named here, which
   // is what the meter used to do.
-  $("masthead-figure").textContent = pct0.format(r.equityShare);
-  $("masthead-sub").textContent =
-    `of ${usd.format(r.financialWealth)}, or ${usd.format(r.equityDollars)}`;
+  $("verdict-figure").textContent = pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
-    `<b>${pct0.format(r.equityShare)}</b> of your ${usd.format(r.financialWealth)} portfolio belongs in equities, or <b>${usd.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`;
+    `of your ${usd.format(r.financialWealth)} portfolio belongs in equities, or <b>${usd.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`;
 
   drawSplit($("split-chart"), $("split-key"), r);
 
