@@ -367,6 +367,25 @@ ol.notes li { margin-bottom: 0.25rem; }
 .note { font-size: var(--t-small); margin-top: 1rem; max-width: 40rem; }
 .note b { color: var(--green); }
 
+/*
+  The one caveat that changes how much weight the answer deserves, so it is
+  the one thing on the page allowed a border. It sits directly under the
+  result rather than beneath the last table, because a reader who stops at the
+  percentage should still have seen it.
+*/
+.warning {
+  font-size: var(--t-body);
+  border: 1px solid var(--green);
+  border-left-width: 4px;
+  padding: 0.8rem 1rem;
+  margin-top: 1.6rem;
+}
+.warning b { color: var(--green); }
+.warning:empty { display: none; }
+
+/* Exhibit 5 runs the width of the page, so its prose should too. */
+.span-all .sub, .span-all .note { max-width: none; }
+
 /* --- tables -------------------------------------------------------------- */
 /* Rules above and below the body only. No line between every row. */
 
@@ -431,7 +450,7 @@ td.why { min-width: 15rem; }
   margin-top: 3rem;
   font-size: var(--t-small);
   text-align: center;
-  max-width: 52rem;
+  max-width: 66rem;
   margin-left: auto;
   margin-right: auto;
 }
@@ -590,6 +609,7 @@ td.why { min-width: 15rem; }
         <div class="split-key" id="split-key"></div>
       </div>
     </div>
+    <p class="warning" id="range-note"></p>
   </section>
 
   <section class="section-exhibits">
@@ -652,7 +672,6 @@ td.why { min-width: 15rem; }
           <tbody id="inputs-rows"></tbody>
         </table>
       </div>
-      <p class="note" id="range-note"></p>
       <p class="foot" id="foot"></p>
     </section>
 
