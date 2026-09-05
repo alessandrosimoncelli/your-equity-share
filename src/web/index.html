@@ -65,7 +65,7 @@ body {
 .wrap {
   max-width: 94rem;
   margin: 0 auto;
-  padding: clamp(1.75rem, 4vw, 3.25rem) clamp(1.1rem, 4vw, 3rem) 4rem;
+  padding: clamp(1.25rem, 2vw, 2rem) clamp(1.1rem, 4vw, 3rem) 4rem;
 }
 
 h1 {
@@ -83,16 +83,18 @@ h1 {
   you fill, the answer it gives, and then the working. The form is boxed so it
   is plainly the part you touch; the rest is the report it produces.
 */
-.masthead { text-align: center; margin-bottom: 3rem; }
-.masthead .lede { margin: 0 auto; max-width: 44rem; }
+.masthead { text-align: center; margin-bottom: 2.1rem; }
+/* Wide enough to hold the sentence on one line on a desktop, and still
+   wrapping where the window is narrower. */
+.masthead .lede { margin: 0 auto; max-width: 68rem; }
 
 .section-form {
   border: 1px solid var(--rule);
   padding: 1.6rem clamp(1.1rem, 2.5vw, 2rem) 1.8rem;
-  margin-bottom: 3.4rem;
+  margin-bottom: 2.4rem;
 }
 
-.section-result { margin-bottom: 3.6rem; }
+.section-result { margin-bottom: 2.8rem; }
 
 .section-exhibits { padding-top: 0.4rem; }
 
@@ -203,7 +205,7 @@ p { margin: 0.85rem 0 0; }
 .exhibit-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 clamp(1.75rem, 4vw, 3.5rem);
+  gap: 2.8rem clamp(1.75rem, 4vw, 3.5rem);
   align-items: start;
 }
 
@@ -345,7 +347,7 @@ input:focus-visible, a:focus-visible {
   font-size: var(--t-small);
   font-weight: 700;
   color: var(--green);
-  margin: 2.6rem 0 0.6rem;
+  margin: 0 0 0.6rem;
 }
 
 /* Notes under a table, replacing a column of prose beside every row. */
@@ -456,7 +458,7 @@ td.why { min-width: 15rem; }
 <div id="app" hidden>
 
   <section class="section-form">
-    <p class="eyebrow">What you tell it</p>
+    <p class="eyebrow">Inputs</p>
     <div class="form-grid">
 
       <div class="field">
@@ -574,7 +576,7 @@ td.why { min-width: 15rem; }
   </section>
 
   <section class="section-result">
-    <p class="eyebrow">What it answers</p>
+    <p class="eyebrow">Results</p>
     <div class="result-row">
       <div>
         <p class="verdict">
@@ -591,7 +593,7 @@ td.why { min-width: 15rem; }
   </section>
 
   <section class="section-exhibits">
-    <p class="eyebrow">How it got there</p>
+    <p class="eyebrow">Exhibits</p>
     <div class="exhibit-grid">
 
     <section>
@@ -1039,7 +1041,7 @@ function render() {
     markerX: here,
     markerY: recommend(makeHousehold(here, household.adults, gamma), expected, rf, sigma).equityShare,
     tipLabel: (p) => `${usd.format(p.x)} saved  ->  ${pct0.format(p.y)} in equities`,
-    height: 280,
+    height: 300,
   });
   $("glide-note").innerHTML =
     `Your household, its ages and salaries unchanged, at every level of savings. `
