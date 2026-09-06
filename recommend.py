@@ -88,7 +88,7 @@ def print_report(result, market, household) -> None:
     print(RULE)
     print()
     print(f"  Hold {share:.0%} of your portfolio in equities,")
-    print(f"  which is {money(result.equity_dollars())} of "
+    print(f"  which is {money(result.equity_dollars)} of "
           f"{money(result.financial_wealth)}.")
     if result.bond_share > 0.005:
         print(f"  The remaining {result.bond_share:.0%} goes in the safe asset.")

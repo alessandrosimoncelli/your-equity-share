@@ -1194,10 +1194,21 @@ h4 {
     <tr><td>JavaScript against Python</td><td>2,196 cases, 12,977 values, worst deviation 3.5e-16. Changing one digit of one coefficient fails 2,151 of them</td></tr>
     <tr><td>Reading Shiller's workbook</td><td>the binary format is parsed by this project rather than by a library, and is tested against workbooks built byte by byte in the test suite</td></tr>
     <tr><td>Estimator stability</td><td>moving the growth window 90 to 110 years shifts the trend 0.25 points; moving its end date back three years shifts it 0.015</td></tr>
-    <tr><td>Out-of-sample prediction</td><td>section 3.1, Tables 6 and 7. The estimator is unbiased at ten years from expensive starting points and one to one and a half points pessimistic unconditionally</td></tr>
+    <tr><td>Properties of every answer</td><td>24,000 households swept across every age, wage, saving level, risk aversion and pension the page can produce, against the directions the theory requires. Now 262 tests in <code>tests/test_properties.py</code>. It found two defects; both are described below.</td></tr>
+<tr><td>Out-of-sample prediction</td><td>section 3.1, Tables 6 and 7. The estimator is unbiased at ten years from expensive starting points and one to one and a half points pessimistic unconditionally</td></tr>
   </tbody>
 </table>
 </div>
+
+<h4>What the sweep found</h4>
+
+<p>Conformance testing compares this project against Choi. It cannot find a household his workbook never contains, and both of these were that kind of household.</p>
+
+<p><strong>A pension before retirement was discounted at a negative rate.</strong> Equation (13) is fitted on retirement years alone: 63 parameter sets by 34 years, and 34 years is age 67 to 100. Evaluated at 30 it returns <strong>minus 2.7%</strong>, which values a future payment above its face amount, and it stays below the safe rate until age 55. The page reaches this, because it offers a pension field to everybody and a thirty-year-old on a disability pension is not exotic. The rate is now floored at the safe rate, on the ground that a government inflation-linked annuity cannot be worth more than a risk-free bond paying the same schedule. Across ages 67 to 100 the floor binds in 5 of 4,250 parameter combinations, all of them where the raw rate is itself below zero, so nothing Choi's own fitting supports is touched: the 58 checks against his workbook pass unchanged. For a 30-year-old on a $30,000 pension it cuts human capital from $1,290,049 to $808,713.</p>
+
+<p><strong>One accessor was a method where its siblings were properties.</strong> <code>equity_dollars</code> returned a bound method rather than a number, so it was truthy in a condition and failed only where something tried to format it, and the Python interface differed from the JavaScript port for no reason. Now a property.</p>
+
+<p>Neither is a modelling error in Choi's sense and neither affects the default household. Both are the kind of thing that survives a test suite built around a reference implementation, which is the argument for testing properties as well as values.</p>
 
 <h3>8.2 The glide path, against what the industry builds</h3>
 
@@ -1316,7 +1327,7 @@ h4 {
 
 <p><strong>The permanent wage shock volatility.</strong> Section 5.2 measures it at 22 points of the answer across its plausible range, second only to the expected return, and it is a constant the user cannot see or change. Validating it would mean re-estimating earnings risk on current data rather than inheriting a 2005 calibration, and ideally letting a household say whether its own earnings are more secure than average.</p>
 
-<p><strong>Anything outside the United States.</strong> Every input, and the earnings risk calibration behind the discount rates, is United States data. Section 3.5 explains why a global version is not offered rather than offered badly.</p>
+<p><strong>Anything outside the United States.</strong> Every input, and the earnings risk calibration behind the discount rates, is United States data. Section 3.5 explains why a global version is not offered rather than offered badly, and the tool now asks a reader to confirm it applies to them.</p>
 
 <p><strong>The buyback adjustment, which was measured and rejected.</strong> AQR corrects its historical growth rate by the change in buyback intensity: the 10-year net buyback yield minus the 25-year one, on the reasoning that a company retiring shares faster than it used to will grow earnings per share faster than its own history suggests. Doing the same here needs a net buyback yield reaching back as far as the growth window. Building it from Damodaran's payout yield less the dividend yield gives 173 months, from January 2012, which is already inside the buyback era; over that window the 10-year average is 2.37% against a full-sample 2.54%, so the adjustment comes out at <strong>minus 0.18 points</strong>. That is the opposite sign to the effect it exists to capture, and it is an artefact of a window too short to contain the change it is trying to measure. AQR's own term also travels with a cross-sectional shrink and a growth adjustment that partly offset it, so taking one piece of their construction without the others would not be doing what they do. The gap this leaves is half a point, named in section 8.3, and a documented gap is better than a correction with the wrong sign.</p>
 

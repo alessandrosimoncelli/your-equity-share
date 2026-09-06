@@ -123,7 +123,15 @@ class Recommendation:
     def bond_share(self) -> float:
         return 1.0 - self.equity_share
 
+    @property
     def equity_dollars(self) -> float:
+        """A property, like its three siblings above.
+
+        It was the one plain method among the four, so `r.equity_dollars`
+        returned a bound method: truthy in a condition, and an error only at
+        the point somebody tried to format it. The JavaScript port has always
+        exposed it as a value.
+        """
         return self.equity_share * self.financial_wealth
 
 

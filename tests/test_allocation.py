@@ -290,7 +290,7 @@ def test_two_adults_accumulate_human_capital() -> None:
 def test_shares_and_dollars_agree() -> None:
     result = recommend(_household(), MU, REAL_RF, 0.17)
     assert result.equity_share + result.bond_share == pytest.approx(1.0)
-    assert result.equity_dollars() == pytest.approx(
+    assert result.equity_dollars == pytest.approx(
         result.equity_share * 500_000.0
     )
 

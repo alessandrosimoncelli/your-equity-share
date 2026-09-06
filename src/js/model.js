@@ -152,14 +152,19 @@ export function benefitDiscountRate(
 ) {
   const x = (age - 1) / 100.0;
   const pi = logExcessDrift(expectedStockRealReturn, realRiskFree, calibration);
-  return (
+  const rate =
     -0.166 +
     0.0003 * (riskAversion / 10.0) -
     0.217 * pi +
     0.893 * Math.log(1.0 + realRiskFree) +
     0.476 * x -
-    0.295 * x ** 2
-  );
+    0.295 * x ** 2;
+  // Floored at the safe rate. Choi fits this on retirement years only, ages 67
+  // to 100, and at 30 it returns -2.7%, which values a future payment above
+  // its face amount. A government indexed annuity cannot be worth more than a
+  // risk-free bond paying the same schedule. See benefit_discount_rate in
+  // human_capital.py for the measurement.
+  return Math.max(rate, realRiskFree);
 }
 
 /**

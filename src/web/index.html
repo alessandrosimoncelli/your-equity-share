@@ -1115,17 +1115,31 @@ function render() {
 
   // Terse rows, with the reasoning as numbered notes beneath. A sentence of
   // justification beside every row reads as an explainer rather than a table.
+  // 1 + HC/W is the algebra's way of writing it. A reader needs the multiplier
+  // itself, and needs it tied to the two figures in Exhibit 1 that produce it.
+  const multiple = 1 + r.humanCapitalRatio;
   const steps = [
     ["Equity share of <b>total</b> wealth<sup>a</sup>", pct1.format(r.mertonShare)],
-    [`Times 1 + ${num2.format(r.humanCapitalRatio)}<sup>b</sup>`, pct1.format(r.uncappedShare)],
+    [`Times <b>${num2.format(multiple)}</b>, wealth over its tradeable part<sup>b</sup>`,
+     pct1.format(r.uncappedShare)],
   ];
   const notes = [
-    "Merton (1969). The reward for risk, divided by risk and by how much you dislike it.",
-    "Future earnings cannot be sold or borrowed against, so the tradeable part of your wealth has to carry the whole equity position.",
+    "Merton (1969). The reward for risk, divided by risk and by how much you dislike it. " +
+      `It applies to everything you own, all ${usd.format(total)} of it.`,
+    r.humanCapital > 0
+      ? `Only ${usd.format(r.financialWealth)} of that ${usd.format(total)} can be ` +
+        `bought and sold. Future earnings cannot be sold or borrowed against, so ` +
+        `the tradeable part has to carry the whole equity position, and its share ` +
+        `rises by the ratio between the two figures, ${num2.format(multiple)}.`
+      : "You have no future earnings left to count, so everything you own is " +
+        "tradeable and the share is unchanged.",
   ];
   if (r.isCapped) {
     steps.push(["Capped at 100%<sup>c</sup>", pct1.format(r.equityShare)]);
-    notes.push("No leverage. A constraint imposed from outside the model, not a result of it.");
+    notes.push(
+      `The model asked for ${pct1.format(r.uncappedShare)}, which would mean ` +
+      `borrowing to buy equities. That is ruled out from outside the model ` +
+      `rather than by it, so the answer is held at 100%.`);
   }
   $("steps-rows").innerHTML =
     steps.map(([k, v]) => row([[k, "k"], [v, "n"]])).join("");

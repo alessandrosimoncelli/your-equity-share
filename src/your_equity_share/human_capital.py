@@ -127,7 +127,7 @@ def benefit_discount_rate(
     """
     x = (age - 1) / 100.0
     pi = _log_excess_drift(expected_stock_real_return, real_risk_free, calibration)
-    return (
+    rate = (
         -0.166
         + 0.0003 * (risk_aversion / 10.0)
         - 0.217 * pi
@@ -135,6 +135,19 @@ def benefit_discount_rate(
         + 0.476 * x
         - 0.295 * x**2
     )
+    # Floored at the safe rate, which binds only outside the ages Choi fitted.
+    #
+    # He fits this equation on retirement years alone: 63 parameter sets times
+    # 34 years, and 34 years is age 67 to 100. Evaluated at 30 it returns
+    # -2.7%, which values a future payment above its face amount. The page
+    # reaches that, because it offers a pension field to everybody and a
+    # thirty-year-old on a disability pension is not exotic.
+    #
+    # A government inflation-linked annuity cannot be worth more than a
+    # risk-free bond paying the same schedule, so the safe rate is the floor.
+    # Across ages 67 to 100 it binds in 5 of 4,250 parameter combinations, all
+    # of them where the raw rate is itself below zero.
+    return max(rate, real_risk_free)
 
 
 def imputed_wage(

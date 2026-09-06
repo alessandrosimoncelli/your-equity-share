@@ -203,7 +203,7 @@ def recommend_cases() -> list[dict]:
                                     "human_capital_ratio": r.human_capital_ratio,
                                     "is_capped": r.is_capped,
                                     "bond_share": r.bond_share,
-                                    "equity_dollars": r.equity_dollars(),
+                                    "equity_dollars": r.equity_dollars,
                                     "per_adult_human_capital": list(
                                         r.per_adult_human_capital
                                     ),
@@ -240,7 +240,7 @@ def recommend_cases() -> list[dict]:
                         "human_capital_ratio": r.human_capital_ratio,
                         "is_capped": r.is_capped,
                         "bond_share": r.bond_share,
-                        "equity_dollars": r.equity_dollars(),
+                        "equity_dollars": r.equity_dollars,
                         "per_adult_human_capital": list(r.per_adult_human_capital),
                     },
                 }
