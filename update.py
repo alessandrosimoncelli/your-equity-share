@@ -205,11 +205,29 @@ def render_config(**f) -> str:
             "# point lower. The 30-year real yield is used here because the",
             "# model's horizon is a whole lifetime.",
         ]
+    elif f["method"] == "building blocks":
+        out += [
+            "# What current valuation ratios imply if those ratios hold and",
+            "# growth matches its long-run average, which is Choi's own stated",
+            "# rationale for his 5% default. An ARITHMETIC mean, converted from",
+            "# the compound rate the building blocks produce.",
+            f"#   dividend yield         {f['dividend_yield']:.4f}",
+            f"#   real growth per share  {f['real_growth']:.4f}   "
+            f"{f['growth_window']} year trend",
+            f"#   repricing              0.0000   ratios held constant",
+            f"#   compound               {f['compound_return']:.4f}",
+            f"#   arithmetic             {f['expected_return']:.4f}   "
+            f"+ volatility drag",
+            "# NOT counted as income: buybacks return a further",
+            f"# {f['buyback_yield']:.4f}. Retiring shares is what makes earnings",
+            "# per share grow, so the growth term already carries them and",
+            "# adding them here would count them twice.",
+        ]
     else:
         out += [
-            "# Set by hand. Choi's guide defaults to 5%, roughly what current",
-            "# valuation ratios imply if they hold and earnings growth matches",
-            "# its long-run average.",
+            "# Set by hand with --fixed-return. Choi's guide defaults to 5%,",
+            "# roughly what current valuation ratios imply if they hold and",
+            "# earnings growth matches its long-run average.",
         ]
     out += [
         f"expected_stock_real_return = {f['expected_return']:.6f}",
@@ -257,8 +275,17 @@ def render_config(**f) -> str:
         else "# history_source = none",
         f'volatility_source = "Yahoo daily closes"',
         f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
-        'expected_return_source = "payout yield plus long-run real earnings '
-        'growth, no repricing; see docs/methodology.html section 3"'
+        # Not added to the estimate. Buybacks reach the holder as growth in
+        # earnings per share, which the growth term already carries, so adding
+        # them here as income would count them twice. Recorded because it is
+        # the size of what the dividend yield alone does not show.
+        *(
+            [f"buyback_yield_not_counted = {f['buyback_yield']:.6f}"]
+            if f.get("buyback_yield") is not None
+            else []
+        ),
+        'expected_return_source = "dividend yield plus long-run real growth in '
+        'earnings per share, no repricing; see docs/methodology.html section 3"'
         if f["method"] == "building blocks"
         else 'expected_return_source = "set by hand"',
     ]
@@ -317,12 +344,17 @@ def fetch_shiller_history() -> tuple[ShillerHistory, str]:
     )
 
 
-def estimate_expected_return(real_risk_free: float) -> tuple[list, str, str]:
+def estimate_expected_return(
+    real_risk_free: float,
+) -> tuple[list, str, str, float, float, float]:
     """Build the expected real return three independent ways.
 
     Each uses free public data and none of them needs a key. They disagree by
     several percentage points, which is the honest state of knowledge about
-    this input, so all three are returned rather than one.
+    this input, so all three are returned rather than one. The trailing values
+    are the pieces of the first estimate, for the record it writes: the
+    buyback yield, which is reported but deliberately not used, and the two
+    terms that are.
     """
     workbook = _get(ERP_URL)
     erp_as_of, erp = parse_damodaran_erp(workbook)
@@ -332,6 +364,14 @@ def estimate_expected_return(real_risk_free: float) -> tuple[list, str, str]:
     # The trend through the window, not the two months at its ends. See
     # ShillerHistory.real_earnings_trend_growth for the measured difference.
     real_growth = shiller.real_earnings_trend_growth(GROWTH_WINDOW_YEARS)
+
+    # Dividends only. Damodaran's payout yield adds buybacks, and a buyback is
+    # already inside `real_growth`, since retiring shares is what lifts earnings
+    # per share. See building_block_estimate for the arithmetic. The buyback
+    # yield is still worth carrying: it is the size of the term this estimate
+    # leaves out, and the reason the dividend yield reads so low.
+    dividend_yield = shiller.dividend_yield
+    buyback_yield = payout_yield - dividend_yield
 
     # A current cyclically adjusted ratio, falling back to Shiller's own last
     # observation when the scrape fails. The fallback is months stale but the
@@ -354,10 +394,10 @@ def estimate_expected_return(real_risk_free: float) -> tuple[list, str, str]:
     # Order matters: the first is the estimate, the rest are cross-checks.
     estimates = [
         building_block_estimate(
-            payout_yield,
+            dividend_yield,
             real_growth,
-            as_of=payout_as_of,
-            growth_basis=f"{GROWTH_WINDOW_YEARS} year trend, per share",
+            as_of=shiller.last_date_as_date(),
+            growth_basis=f"{GROWTH_WINDOW_YEARS} year trend",
         ),
         implied_premium_estimate(erp, real_risk_free, erp_as_of),
         valuation_regression_estimate(
@@ -373,7 +413,8 @@ def estimate_expected_return(real_risk_free: float) -> tuple[list, str, str]:
         estimates[2] = type(estimates[2])(
             **{**estimates[2].__dict__, "detail": estimates[2].detail + f", {cape_note}"}
         )
-    return estimates, history_as_of, shiller_source
+    return (estimates, history_as_of, shiller_source, buyback_yield,
+            dividend_yield, real_growth)
 
 
 def _change(new: float, old: float) -> str:
@@ -448,11 +489,13 @@ def main(argv: list[str]) -> int:
             estimates = []
             history_as_of = None
             history_source = None
+            buyback_yield = dividend_yield = real_growth = None
             print(f"  expected stock real return       {expected:>8.2%}"
                   f"   set by hand")
         else:
             method = "building blocks"
-            estimates, history_as_of, history_source = estimate_expected_return(real_rf)
+            (estimates, history_as_of, history_source, buyback_yield,
+             dividend_yield, real_growth) = estimate_expected_return(real_rf)
             chosen, *cross_checks = estimates
             erp_as_of = next(
                 (e.as_of for e in estimates if e.method == "implied premium"), None
@@ -474,6 +517,11 @@ def main(argv: list[str]) -> int:
             print("      and growth matches its long-run average. It is also")
             print("      the method behind AQR's 1.9%, the figure he anchors")
             print("      his own 2% log premium to.")
+            print(f"      Buybacks return a further {buyback_yield:.2%} that this")
+            print("      does not count as income, because per-share growth")
+            print("      already carries it. Counting it twice would add")
+            print(f"      {buyback_yield:.2%} to the estimate and roughly twenty")
+            print("      points to the recommended equity share.")
             print()
             print("  Cross-checks, not used. See section 3 of the methodology")
             print("  for why each is worse for a lifetime horizon.")
@@ -495,10 +543,11 @@ def main(argv: list[str]) -> int:
                       f"   {months} months behind{warn}")
                 print(f"      source: {history_source}")
                 if months > 6:
-                    print("      Only the growth term uses it, and growth is taken")
-                    print("      as the trend through a century, where three years")
-                    print("      of lag moves the estimate by about a basis point.")
-                    print("      The payout yield is current.")
+                    print("      Both terms come from this month of that file.")
+                    print("      Growth is the trend through a century, where")
+                    print("      three years of lag moves it about a basis")
+                    print("      point. The yield is a ratio of two figures in")
+                    print("      the same row, so the lag largely cancels.")
 
             print()
             compound = chosen.value
@@ -566,6 +615,11 @@ def main(argv: list[str]) -> int:
         estimates=bool(estimates),
         history_as_of=history_as_of,
         history_source=history_source,
+        buyback_yield=buyback_yield,
+        dividend_yield=dividend_yield,
+        real_growth=real_growth,
+        growth_window=GROWTH_WINDOW_YEARS,
+        compound_return=estimates[0].value if estimates else expected,
     )
 
     if args.dry_run:

@@ -8,16 +8,26 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-09-06T01:52:44+00:00"
+generated_at = "2026-09-06T02:52:20+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
 [market]
 
-# Set by hand. Choi's guide defaults to 5%, roughly what current
-# valuation ratios imply if they hold and earnings growth matches
-# its long-run average.
-expected_stock_real_return = 0.064717
+# What current valuation ratios imply if those ratios hold and
+# growth matches its long-run average, which is Choi's own stated
+# rationale for his 5% default. An ARITHMETIC mean, converted from
+# the compound rate the building blocks produce.
+#   dividend yield         0.0110
+#   real growth per share  0.0229   100 year trend
+#   repricing              0.0000   ratios held constant
+#   compound               0.0338
+#   arithmetic             0.0492   + volatility drag
+# NOT counted as income: buybacks return a further
+# 0.0153. Retiring shares is what makes earnings
+# per share grow, so the growth term already carries them and
+# adding them here would count them twice.
+expected_stock_real_return = 0.049198
 
 # FRED DFII30, the 30-year TIPS yield. A real yield
 # already, so no inflation adjustment is applied. Reduce it by your
@@ -26,7 +36,7 @@ real_risk_free = 0.029600
 
 # 5 years of daily adjusted closes of SPY,
 # 1254 returns, annualised.
-stock_volatility = 0.171808
+stock_volatility = 0.171809
 market_ticker = "SPY"
 
 as_of = 2026-09-03
@@ -39,11 +49,12 @@ erp_as_of = 2026-09-01
 volatility_window_years = 5
 volatility_observations = 1254
 volatility_dividend_adjusted = true
-expected_return_spread = 0.021381
+expected_return_spread = 0.036674
 expected_return_basis = "arithmetic mean, converted from compound"
-expected_return_estimates = "building blocks 0.0491 (used); implied premium 0.0705; valuation regression, 30y 0.0532"
+expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0705; valuation regression, 30y 0.0532"
 history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
 volatility_source = "Yahoo daily closes"
 real_risk_free_source = "FRED DFII30"
-expected_return_source = "payout yield plus long-run real earnings growth, no repricing; see docs/methodology.html section 3"
+buyback_yield_not_counted = 0.015292
+expected_return_source = "dividend yield plus long-run real growth in earnings per share, no repricing; see docs/methodology.html section 3"

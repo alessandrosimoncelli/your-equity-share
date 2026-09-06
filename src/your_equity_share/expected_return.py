@@ -10,8 +10,9 @@ spread rather than pretending to one answer.
     A  implied premium     Damodaran's implied equity risk premium plus the real
                            risk-free rate. Forward looking, market implied,
                            monthly. Embeds analyst growth forecasts.
-    B  building blocks     payout yield plus long-run real earnings growth, the
-                           Gordon identity with repricing set to zero.
+    B  building blocks     dividend yield plus long-run real growth in earnings
+                           per share, the Gordon identity with repricing at
+                           zero. This is Choi's own sentence read literally.
     C  valuation           regress realised subsequent real return on the
                            cyclically adjusted earnings yield across Shiller's
                            history, then read off today's valuation.
@@ -175,18 +176,35 @@ def implied_premium_estimate(
 
 
 def building_block_estimate(
-    payout_yield: float,
+    dividend_yield: float,
     real_growth: float,
     repricing: float = 0.0,
     as_of: date | None = None,
     growth_basis: str = "",
 ) -> Estimate:
-    """Payout yield plus real growth plus any repricing.
+    """Dividend yield plus real per-share growth plus any repricing.
 
-    `payout_yield` should be dividends *and* net buybacks, since a buyback is a
-    distribution. `real_growth` is then the real growth of earnings per share.
-    Adding a buyback yield *and* using per-share growth would count buybacks
-    twice, because retiring shares is what makes per-share earnings grow.
+    The two terms have to be measured on the same basis, and this is easy to get
+    wrong. Cash reaches a shareholder as dividends and as buybacks, so a *total*
+    payout yield looks like the more complete measure of income. It is, but it
+    cannot be paired with *per-share* growth, because retiring shares is exactly
+    what makes per-share earnings grow. Counting a buyback as income and again
+    as growth counts it twice.
+
+    Take a company of 100 shares at $15, earning $100, paying $30 of dividends
+    and buying back $20, with aggregate earnings flat in real terms. The buyback
+    retires 1.33 shares, so earnings per share rise 1.35%, and with the multiple
+    held constant so does the price. The holder earns 2.00% + 1.35% = 3.35%.
+
+        dividend yield + per-share growth   2.00% + 1.35% = 3.35%   correct
+        payout yield   + aggregate growth   3.33% + 0.00% = 3.33%   correct
+        payout yield   + per-share growth   3.33% + 1.35% = 4.69%   too high
+
+    The last overstates by the buyback yield. Aggregate growth is not in any
+    series this project reads, since the S&P earnings history is per share and
+    carries no share count, so the first pairing is the one used. Straehl and
+    Ibbotson (2017) make the same point at length, and Bernstein and Arnott
+    (2003) measure the historical gap between the two growth rates.
 
     Repricing defaults to zero, which is Choi's stated assumption. It is an
     assumption and not a neutral one: a market priced above its own history has
@@ -194,11 +212,12 @@ def building_block_estimate(
     """
     return Estimate(
         method="building blocks",
-        value=payout_yield + real_growth + repricing,
+        value=dividend_yield + real_growth + repricing,
         as_of=as_of,
         detail=(
-            f"{payout_yield:.2%} payout yield plus {real_growth:.2%} real "
-            f"earnings growth{f' ({growth_basis})' if growth_basis else ''}"
+            f"{dividend_yield:.2%} dividend yield plus {real_growth:.2%} real "
+            f"earnings growth per share"
+            f"{f' ({growth_basis})' if growth_basis else ''}"
             + (f" plus {repricing:.2%} repricing" if repricing else ", no repricing")
         ),
     )

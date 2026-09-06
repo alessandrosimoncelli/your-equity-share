@@ -522,7 +522,8 @@ td.why { min-width: 15rem; }
           <span>Set the expected return myself</span></label>
         <span class="hint">The expected <b>real</b> return on <b>United States</b>
         equities: the average yearly return above inflation, over a lifetime.
-        The figure below is a payout yield plus long-run earnings growth.</span>
+        The figure below is a dividend yield plus long-run growth in earnings
+        per share.</span>
         <div id="override-field" hidden>
           <label class="visually-hidden" for="mu">Expected real return on equities</label>
           <div class="slider-value" id="mu-value"></div>
@@ -1074,7 +1075,7 @@ function render() {
   const [lo, hi] = CHOI_FITTED_LOG_PREMIUM_RANGE;
   const inside = pi >= lo && pi <= hi;
   const prov = market.provenance || {};
-  const label = { "building blocks": "payout yield plus long-run growth",
+  const label = { "building blocks": "dividend yield plus long-run growth",
                   consensus: "median of three estimators",
                   implied: "market implied",
                   fixed: "set by hand" }[prov.expected_return_method] || "set by hand";

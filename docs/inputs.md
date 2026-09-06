@@ -87,32 +87,46 @@ average". He specifies no estimator.
 
 | Term | Source | Latest |
 | --- | --- | --- |
-| Payout yield | Dividends and net buybacks, from Damodaran's monthly workbook | 2.63% |
-| Real earnings growth | 100-year trend through log real earnings per share, Shiller | 2.17% |
+| Dividend yield | Dividends over price, same month of Shiller's workbook | 1.10% |
+| Real earnings growth | 100-year trend through log real earnings per share, Shiller | 2.29% |
 | Repricing | Set to zero, which is what "ratios stay constant" means | 0.00% |
-| **Expected real return** | | **4.79% compound** |
-| | converted once, at the point the model reads it | **6.35% arithmetic** |
+| **Expected real return** | | **3.38% compound** |
+| | converted once, at the point the model reads it | **4.92% arithmetic** |
+
+**Not the payout yield.** Buybacks return a further 1.53%, and it is tempting to
+add them, since a buyback is cash reaching a shareholder. It would be double
+counting. Retiring shares is exactly what makes earnings *per share* grow, so a
+buyback is already inside the growth term; adding it again as income counts it
+twice and overstates the expected return by the buyback yield. This tool made
+that mistake until September 2026, and correcting it moved the default
+household from 70% equities to 38%. Section 3.1 of the methodology works the
+arithmetic through on a single company, and reports a backtest against realised
+returns since 1910.
+
+The correct alternative pairing, a payout yield with *aggregate* earnings
+growth, is unavailable rather than rejected: aggregate growth needs a share
+count and the S&P earnings history is per share.
 
 Two others are computed as cross-checks and are **not used**: Damodaran's
-implied premium (7.07%, the outlier, embedding near-term analyst growth
+implied premium (7.05%, the outlier, embedding near-term analyst growth
 forecasts and quoted against the wrong maturity) and a regression of realised
-30-year returns on valuation (5.17%, R2 of 0.21 on about four independent
+30-year returns on valuation (5.32%, R2 of 0.19 on about four independent
 periods). Section 3.1 of the methodology gives the full reasoning.
 
 The choice matters more than any other in the tool: across those estimates the
-recommendation for the default household runs from 17% to 100%.
+recommendation for the default household runs from 19% to 100%.
 
 ### Why the horizon of the regression matters
 
 The relation between valuation and subsequent return weakens sharply as the
-horizon lengthens. Fitted on the same data, the slope falls from 0.91 at ten
-years to 0.26 at thirty, and today's stretched valuation therefore predicts:
+horizon lengthens. Fitted on the same data, the slope falls from 0.86 at ten
+years to 0.24 at thirty, and today's stretched valuation therefore predicts:
 
 | Horizon | Predicted real return |
 | --- | --- |
-| 10 years | 2.37% |
-| 20 years | 3.54% |
-| 30 years | 5.17% |
+| 10 years | 2.74% |
+| 20 years | 3.75% |
+| 30 years | 5.32% |
 
 A lifetime model must use a long horizon. Using the ten-year figure would put
 the recommendation at zero equities, which is an artefact of the horizon
@@ -120,7 +134,7 @@ mismatch, not a finding.
 
 ### The statistical caveat that matters
 
-The regression uses overlapping windows, so its 1,350 observations contain only
+The regression uses overlapping windows, so its 1,387 observations contain only
 about **four independent** thirty-year periods. The reported error divides the
 residual spread by the square root of that number, not of 1,350. It is roughly
 0.7 percentage points, and that is generous.
@@ -138,10 +152,10 @@ at the point it is handed to the model:
 
     arithmetic = exp( ln(1 + compound) + sigma^2 / 2 ) - 1
 
-At 17.2% volatility that is worth **1.56 percentage points**: our median of
-5.17% compound becomes 6.74% arithmetic. Feeding the compound figure straight in
-would understate the input by more than the entire equity risk premium is
-currently worth.
+At 17.2% volatility that is worth **1.54 percentage points**: 3.38% compound
+becomes 4.92% arithmetic. Feeding the compound figure straight in would
+understate the input by more than the entire equity risk premium is currently
+worth, since that premium over a 2.96% real safe rate is 1.96 points.
 
 The intuition: +50% then −50% averages to zero, but leaves you down 25%. The
 arithmetic mean always sits above what money actually grows at, by roughly half

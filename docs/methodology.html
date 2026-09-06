@@ -197,8 +197,9 @@ h4 {
   <li>5. Layer two: valuing human capital</li>
   <li>6. Accuracy, and what the alternative rules cost</li>
   <li>7. Declared deviations</li>
-  <li>8. Components included, postponed and excluded</li>
-  <li>9. References</li>
+  <li>8. What has been checked, and what has not</li>
+  <li>9. Components included, postponed and excluded</li>
+  <li>10. References</li>
 </ol>
 
 <h2>1. Approach and scope</h2>
@@ -362,7 +363,30 @@ h4 {
 
 <p>Fama and French (1988) and Poterba and Summers (1988) find a slowly mean-reverting component in long-horizon returns, and Siegel documents that thirty year annualised real returns in United States data have dispersed less than independence implies. Against this: two centuries of data contain only about seven non-overlapping thirty year periods, so the estimate is weak, and the rolling windows normally used overlap heavily. Dimson, Marsh and Staunton show the United States was among the strongest markets of the twentieth century, so a conclusion drawn from it alone selects on the outcome. Pástor and Stambaugh (2012) find that once parameter uncertainty is included, predictive variance per year <em>rises</em> with the horizon. Barberis (2000) contains both effects and finds the optimal equity share does rise with horizon, but by much less than mean reversion alone implies.</p>
 
-<p>Version 1 assumes independence, which sits between the two positions. Testing it properly means a variance ratio test with the standard errors of Lo and MacKinlay (1988) on the same return series the covariance matrix uses. That is recorded in Table 8 as planned work, not claimed as done.</p>
+<p>Version 1 assumes independence, which sits between the two positions. The ratios themselves are now measured, on Shiller's real total return series, against the volatility of one-year returns rather than against monthly returns scaled up. That distinction matters: his monthly price is an average of that month's daily closes, and averaging smooths, so scaling his monthly series by the square root of twelve reads 14.25% where one-year returns read 18.30%, understating by 22%.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 3. Volatility of real total returns by horizon. A ratio of 1 is the square root of time holding exactly.</caption>
+<thead><tr><th class="num">Horizon</th><th class="num">Annualised volatility</th><th class="num">Variance ratio</th><th class="num">Independent windows</th></tr></thead>
+<tbody>
+<tr><td class="num">1 year</td><td class="num">18.30%</td><td class="num">1.00</td><td class="num">144</td></tr>
+<tr><td class="num">2 years</td><td class="num">17.85%</td><td class="num">0.95</td><td class="num">71</td></tr>
+<tr><td class="num">5 years</td><td class="num">16.44%</td><td class="num">0.81</td><td class="num">28</td></tr>
+<tr><td class="num">10 years</td><td class="num">15.28%</td><td class="num">0.70</td><td class="num">13</td></tr>
+<tr><td class="num">20 years</td><td class="num">12.46%</td><td class="num">0.46</td><td class="num">6</td></tr>
+<tr><td class="num">30 years</td><td class="num">8.42%</td><td class="num">0.21</td><td class="num">3</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">1,746 monthly real total returns, January 1881 to June 2026. The standard errors of Lo and MacKinlay (1988) are not computed, and with three independent thirty-year windows they would be wide enough to make the point below on their own.</p>
+
+<p>Read naively this is alarming for the model. Merton's share is proportional to one over the variance, so if the volatility that matters over thirty years is 8.42% rather than the 17.18% the model is fed, the model is understating the equity share by a factor of four. That reading is wrong, for two reasons that are worth separating.</p>
+
+<p><strong>The first is that Merton's sigma is not a horizon.</strong> His model runs in continuous time with a constant investment opportunity set, and its sigma is the instantaneous volatility of the price process. Annualised daily returns estimate that. Substituting a thirty-year annualised figure would not be a better estimate of the same quantity; it would be a different model, the one Campbell and Viceira (2002) build, in which returns are predictable and the optimal share carries a hedging term Merton's does not have. This tool implements Merton as Choi implements him, and the ratios above are evidence that the constant-opportunity-set assumption is imperfect, not evidence that the input is wrong.</p>
+
+<p><strong>The second is that the sign is not settled.</strong> Pastor and Stambaugh (2012) make the argument directly against the reading above: once an investor admits they do not know the expected return, and the ratios above are computed as though it were known, uncertainty about the mean compounds with horizon and long-run variance comes out <em>higher</em> than the independent-returns scaling, not lower. Section 3.1 is a demonstration of exactly the uncertainty they mean, spanning 7.05% to 2.42% across defensible estimates of the same number. The honest position is that the horizon effect on variance has a disputed sign, and that assuming independence sits between the two camps rather than favouring either.</p>
 
 <p>Section 6 gives the practical size of this question: the age-based rule that the horizon argument produces costs 2.00% of lifetime consumption against 0.06% for the approach used here.</p>
 
@@ -374,13 +398,14 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 3. What the choice of estimator is worth. Same household, same date.</caption>
+<caption>Table 4. What the choice of estimator is worth. Same household, same date.</caption>
 <thead><tr><th>Estimate of the expected real return</th><th class="num">Compound</th><th class="num">Equity share</th></tr></thead>
 <tbody>
-<tr><td>Damodaran implied premium, added to the real safe rate<sup>a</sup></td><td class="num">7.07%</td><td class="num">100%</td></tr>
-<tr><td>Regression of realised 30-year returns on valuation</td><td class="num">5.17%</td><td class="num">75%</td></tr>
-<tr><td><strong>Payout yield plus long-run growth, used here</strong></td><td class="num"><strong>4.79%</strong></td><td class="num"><strong>67%</strong></td></tr>
-<tr><td>Cyclically adjusted earnings yield, 1/CAPE</td><td class="num">2.36%</td><td class="num">17%</td></tr>
+<tr><td>Damodaran implied premium, added to the real safe rate<sup>a</sup></td><td class="num">7.05%</td><td class="num">100%</td></tr>
+<tr><td>Regression of realised 30-year returns on valuation</td><td class="num">5.32%</td><td class="num">78%</td></tr>
+<tr><td>Trailing earnings yield, E/P</td><td class="num">3.96%</td><td class="num">50%</td></tr>
+<tr><td><strong>Dividend yield plus long-run growth, used here</strong></td><td class="num"><strong>3.38%</strong></td><td class="num"><strong>38%</strong></td></tr>
+<tr><td>Cyclically adjusted earnings yield, 1/CAPE</td><td class="num">2.42%</td><td class="num">19%</td></tr>
 </tbody>
 </table>
 </div>
@@ -398,24 +423,46 @@ h4 {
 <h4>The construction</h4>
 
 <div class="eqn">
-  <div class="body">E[R<sub>real</sub>] = payout yield + real earnings growth + repricing</div>
+  <div class="body">E[R<sub>real</sub>] = dividend yield + real growth in earnings per share + repricing</div>
   <div class="no">(5)</div>
 </div>
 
 <div class="where">
   <p>where</p>
   <dl>
-    <dt>payout yield</dt><dd>dividends <em>and</em> net buybacks, as a share of price. A buyback is a distribution, so counting only dividends understates what shareholders receive</dd>
-    <dt>real earnings growth</dt><dd>growth in earnings per share above inflation, over the long run</dd>
+    <dt>dividend yield</dt><dd>dividends over price, both taken from the same month of the same series</dd>
+    <dt>real growth in earnings per share</dt><dd>growth in earnings <em>per share</em> above inflation, over the long run</dd>
     <dt>repricing</dt><dd>the annualised change in the multiple the market pays. Set to zero, which is what "if those ratios stay constant" means</dd>
   </dl>
 </div>
 
-<p class="src">Source: the Gordon growth relationship in the building-block form of Grinold and Kroner (2002). Payout yield from Damodaran's monthly workbook, growth from Shiller's own workbook.</p>
+<p class="src">Source: the Gordon growth relationship in the building-block form of Grinold and Kroner (2002). Both terms from Shiller's own workbook.</p>
 
-<p>Today: a 2.63% payout yield plus 2.17% real earnings growth, no repricing, giving 4.79%.</p>
+<p>Today: a 1.10% dividend yield plus 2.29% real growth in earnings per share, no repricing, giving <strong>3.38%</strong> compound, which is 4.92% as an arithmetic mean.</p>
 
-<p>A payout yield must be paired with <em>per share</em> earnings growth. Adding a buyback yield and also using per-share growth would count buybacks twice, since retiring shares is precisely what makes per-share earnings grow faster than aggregate earnings.</p>
+<h4>Why the dividend yield and not the payout yield</h4>
+
+<p>This is the one place in the whole model where the obvious choice is wrong, and it was wrong here until it was measured. Cash reaches a shareholder two ways, as dividends and as buybacks, so a <em>total payout</em> yield looks like the more complete measure of income. It is. What it cannot be paired with is <em>per share</em> growth, because retiring shares is exactly what makes earnings per share grow. Counting a buyback as income and then again as growth counts it twice.</p>
+
+<p>A company makes this concrete. It has 100 shares at $15, earns $100, pays $30 of dividends and buys back $20. Aggregate real earnings are flat and the multiple is held constant. The buyback retires 1.33 shares, so earnings per share rise 1.35%, and so does the price. The holder receives $0.30 of dividends on a $15 share and ends holding $15.20 of stock.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 5. Three ways to add up the same 3.35%</caption>
+<thead><tr><th>Pairing</th><th class="num">Yield</th><th class="num">Growth</th><th class="num">Total</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Dividend yield with per-share growth</td><td class="num">2.00%</td><td class="num">1.35%</td><td class="num">3.35%</td><td>correct, and what is used here</td></tr>
+<tr><td>Payout yield with aggregate growth</td><td class="num">3.33%</td><td class="num">0.00%</td><td class="num">3.33%</td><td>correct, but aggregate growth is not measurable from this data</td></tr>
+<tr><td>Payout yield with per-share growth</td><td class="num">3.33%</td><td class="num">1.35%</td><td class="num">4.69%</td><td>too high by the buyback yield</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The third row is what this tool published until September 2026. On today's figures the error was worth 1.53 percentage points of expected return, which is 12 points of total wealth and, for the default household, 32 points of the equity share: 70% rather than 38%. It is recorded here rather than quietly repaired because the size of it is the argument for reading section 3.1 at all.</p>
+
+<p>The second row is the honest alternative and it is closed off by the data rather than by the theory. Aggregate earnings growth needs a share count, and the S&amp;P earnings history is per share and carries none. Straehl and Ibbotson (2017) set out the same requirement at length and construct the aggregate series that would satisfy it; Bernstein and Arnott (2003) measure the gap the two rows differ by, and find that per-share earnings grew about two points a year slower than aggregate earnings over the twentieth century, because net share issuance was positive for most of it.</p>
+
+<p><strong>That last point cuts against this estimate, and it should be stated plainly.</strong> The growth term is a trend through a century in which companies issued shares on net; the yield term is measured today, when they retire them. Both halves are therefore measured in the regime that suppresses them. If buybacks continue at today's rate, future growth in earnings per share will run above the historical trend, and 3.38% is too low. Adding the full 1.53% back is not the fix, since that is the arithmetic error again, but the direction of the remaining error is known and it is upward.</p>
 
 <h4>Why this estimator and not another</h4>
 
@@ -429,13 +476,61 @@ h4 {
 
 <p>The alternatives are each rejected for a stated reason.</p>
 
-<p><strong>The implied premium</strong> is forward looking and current, and it is the outlier at 7.07%, which alone would put the default household at 100% equities. It is a discounted cash flow on the index, so it inherits the growth forecasts fed into it, and those are analyst estimates over a few years rather than a sustainable long-run rate: Damodaran's own workbook carries an expected growth rate near 14% in the month used here. It is also quoted against the 10-year nominal Treasury while this model's safe asset is a 30-year real bond, a maturity mismatch worth roughly half a point at the current shape of the real curve. For a lifetime horizon these are the wrong properties.</p>
+<p><strong>The implied premium</strong> is forward looking and current, and it is the outlier at 7.05%, which alone would put the default household at 100% equities. It is a discounted cash flow on the index, so it inherits the growth forecasts fed into it, and those are analyst estimates over a few years rather than a sustainable long-run rate: Damodaran's own workbook carries an expected growth rate near 14% in the month used here. It is also quoted against the 10-year nominal Treasury while this model's safe asset is a 30-year real bond, a maturity mismatch worth roughly half a point at the current shape of the real curve. For a lifetime horizon these are the wrong properties.</p>
 
-<p><strong>The valuation regression</strong> fits realised subsequent 30-year real returns on the cyclically adjusted earnings yield across Shiller's history and reads off today's ratio. It is the Campbell and Shiller (1988, 1998) relation and a genuine empirical finding, but as an estimator it is weak: an R<sup>2</sup> of 0.21, and although it has 1,350 overlapping windows they contain only about four independent thirty-year periods, leaving a standard error near 0.73 percentage points. It is also the only component that needs a long series to be <em>current</em>, which is the dependency this tool is least able to guarantee.</p>
+<p><strong>The valuation regression</strong> fits realised subsequent 30-year real returns on the cyclically adjusted earnings yield across Shiller's history and reads off today's ratio. It is the Campbell and Shiller (1988, 1998) relation and a genuine empirical finding, but as an estimator it is weak: an R<sup>2</sup> of 0.19, and although it has 1,387 overlapping windows they contain only about four independent thirty-year periods, leaving a standard error near 0.74 percentage points. It is also the only component that needs a long series to be <em>current</em>, which is the dependency this tool is least able to guarantee.</p>
 
-<p><strong>The bare earnings yield</strong>, one divided by the cyclically adjusted ratio, is the simplest thing available and gives 2.36%, which would put the default household at 17% equities. It is equation (5) under the assumption that retained earnings earn exactly the cost of equity, so that retention neither creates nor destroys value; where that holds the two agree. It also ignores that a large part of distribution now happens through buybacks. It is better read as a lower bound than as an estimate.</p>
+<p><strong>The earnings yield</strong> is the closest competitor and the case for it is better than it looks. Earnings are earnings however they are distributed, so unlike equation (5) it is untouched by the shift from dividends to buybacks that makes both of that equation's terms hard to measure in the current regime. It is also equation (5) under the assumption that retained earnings earn exactly the cost of equity, so retention neither creates nor destroys value; where that holds the two agree. Trailing, it gives 3.96% and 50% equities. Cyclically adjusted, one divided by CAPE, it gives 2.42% and 19%. The two differ by a point and a half, which is the argument against it as a single number: the trailing version collapses in any recession, and the cyclically adjusted version rests on a ten-year average that is itself the thing in dispute. The table below shows it beating equation (5) at ten and twenty years and losing to it at thirty.</p>
 
 <p><strong>A historical average</strong>, near 7% real, is rejected because a century of annual data still leaves a standard error of 1.5 to 2 percentage points on the mean, and because it ignores the price being paid today.</p>
+
+<h4>Does it predict what actually arrived</h4>
+
+<p>The arguments above are arguments from authority and from arithmetic. Neither shows that the estimator works. This does: every candidate is computed from data available at the time, at every month from November 1910 onward, and compared with the real total return that followed. The growth term uses a trailing window of up to a hundred years and at least thirty, so no future data enters any estimate.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 6. Error against the return that actually arrived. Bias is the estimate minus the outcome, so a negative number means the estimator was too pessimistic. Percentage points a year.</caption>
+<thead><tr><th>Estimator</th><th class="num">10y bias</th><th class="num">10y RMSE</th><th class="num">20y bias</th><th class="num">20y RMSE</th><th class="num">30y bias</th><th class="num">30y RMSE</th></tr></thead>
+<tbody>
+<tr><td><strong>Dividend yield plus per-share growth</strong></td><td class="num">-1.63</td><td class="num">5.47</td><td class="num">-1.25</td><td class="num">3.12</td><td class="num"><strong>-1.06</strong></td><td class="num"><strong>2.25</strong></td></tr>
+<tr><td>Dividend yield plus dividend growth</td><td class="num">-2.05</td><td class="num">5.59</td><td class="num">-1.66</td><td class="num">3.20</td><td class="num">-1.46</td><td class="num">2.35</td></tr>
+<tr><td>Trailing earnings yield</td><td class="num">+0.38</td><td class="num">4.82</td><td class="num">+0.85</td><td class="num"><strong>2.89</strong></td><td class="num">+1.17</td><td class="num">3.31</td></tr>
+<tr><td>Cyclically adjusted earnings yield</td><td class="num">+0.19</td><td class="num"><strong>4.73</strong></td><td class="num">+0.70</td><td class="num">3.07</td><td class="num">+1.08</td><td class="num">3.18</td></tr>
+<tr><td>Dividend yield alone</td><td class="num">-2.96</td><td class="num">5.96</td><td class="num">-2.53</td><td class="num">3.70</td><td class="num">-2.32</td><td class="num">2.91</td></tr>
+<tr><td>A flat 5%, which is Choi's default</td><td class="num">-2.12</td><td class="num">5.93</td><td class="num">-1.90</td><td class="num">3.63</td><td class="num">-2.02</td><td class="num">2.52</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">1,268 monthly starts at ten years, 1,028 at thirty. They overlap heavily: eleven independent ten-year windows and three independent thirty-year ones. No column here carries enough independent observations to separate two estimators that are close, and it is offered as evidence rather than as proof.</p>
+
+<p>Three things follow. <strong>The estimator is too pessimistic on average</strong>, by one to one and a half points depending on horizon. <strong>The earnings yield beats it at ten and twenty years and loses to it at thirty</strong>, which is the horizon a lifetime allocation is actually run over, and it loses there by enough to matter: an RMSE of 3.31 against 2.25. <strong>Choi's flat 5% is worse than every conditional estimator at every horizon</strong>, which is the case for computing this number at all rather than accepting his default.</p>
+
+<h4>Where the pessimism comes from, and why today is different</h4>
+
+<p>The identity behind equation (5) is exact, so the error has to sit in one of its three terms, and each can be measured against what the window delivered.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 7. The ten-year error, split by term and by how expensive the market was at the start. Percentage points a year.</caption>
+<thead><tr><th>Starts</th><th class="num">Realised</th><th class="num">Estimate</th><th class="num">Bias</th><th class="num">Yield</th><th class="num">Growth</th><th class="num">Repricing</th></tr></thead>
+<tbody>
+<tr><td>All 1,268</td><td class="num">7.12</td><td class="num">5.48</td><td class="num">-1.63</td><td class="num">-0.10</td><td class="num">-0.73</td><td class="num">+0.99</td></tr>
+<tr><td>Cheapest fifth by CAPE</td><td class="num">11.20</td><td class="num">7.65</td><td class="num">-3.55</td><td class="num">+1.09</td><td class="num">+0.75</td><td class="num">+5.15</td></tr>
+<tr><td>Dearest fifth by CAPE</td><td class="num">3.61</td><td class="num">3.54</td><td class="num">-0.07</td><td class="num">-0.30</td><td class="num">-0.56</td><td class="num">-0.66</td></tr>
+<tr><td>CAPE of 25 and above</td><td class="num">3.26</td><td class="num">3.32</td><td class="num">+0.06</td><td class="num">-0.36</td><td class="num">-0.03</td><td class="num">-0.26</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">The yield and growth columns are the amount by which the estimate's version of that term overstated what the decade delivered; repricing is what the decade delivered, against the zero the estimate assumes. They do not sum exactly to the bias, because the identity is multiplicative rather than additive.</p>
+
+<p><strong>Almost all of the pessimism is repricing, and almost all of the repricing came from cheap starting points.</strong> From the cheapest fifth of months the market re-rated upward by 5.15 points a year and the estimator, which assumes no re-rating at all, missed by 3.55. From the dearest fifth it missed by 0.07. From every month with a CAPE of 25 or more it missed by six hundredths of a point, which is as close to unbiased as a sample this size can show.</p>
+
+<p>That is the relevant conditioning, because the CAPE today is 39.8. It has been above 25 in 159 of the 1,268 months tested and above 30 in 56 of them. The zero-repricing assumption is the one most likely to be wrong in this model, and the record says it fails in one direction: from cheap starts, where a century of upward re-rating was waiting. Today is the opposite starting point, and from that side of the distribution the assumption has held.</p>
+
+<p>The remaining caution belongs to the growth term. It understated realised growth in earnings per share by roughly three quarters of a point at every horizon tested, because a trailing hundred-year trend lags a series that accelerated. Today it reads 2.29% against readings averaging 1.33% across the test, so the current reading is already high by its own historical standard, and how much of that three quarters of a point is still owed cannot be settled from this data.</p>
 
 <h4>How growth is estimated, and why as a trend</h4>
 
@@ -466,7 +561,7 @@ h4 {
   </dl>
 </div>
 
-<p>Logarithms are taken first because growth is multiplicative: a constant percentage growth rate is a straight line in logs, and a curve in levels. Fitting a line to the levels would let the large recent numbers dominate the small early ones and would not answer the question asked. On the current data the trend gives <strong>2.17% a year</strong>.</p>
+<p>Logarithms are taken first because growth is multiplicative: a constant percentage growth rate is a straight line in logs, and a curve in levels. Fitting a line to the levels would let the large recent numbers dominate the small early ones and would not answer the question asked. On the current data the trend gives <strong>2.29% a year</strong>.</p>
 
 <p>Both describe the same century. They differ by 0.34 percentage points because one is an average over 1,200 months and the other is a measurement of two.</p>
 
@@ -476,7 +571,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 4. How far each estimator moves when something arbitrary is changed. Smaller is better.</caption>
+<caption>Table 8. How far each estimator moves when something arbitrary is changed. Smaller is better.</caption>
 <thead>
   <tr><th>Estimator</th><th class="num">Changing the window from 90 to 110 years</th><th class="num">Ending the data 0, 1, 2 or 3 years earlier</th></tr>
 </thead>
@@ -502,7 +597,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 5. The long history, in the order it is tried.</caption>
+<caption>Table 9. The long history, in the order it is tried.</caption>
 <thead><tr><th>Source</th><th>Why it is where it is</th></tr></thead>
 <tbody>
 <tr><td><strong>Shiller's own site</strong></td><td>The authoritative copy. The download link is read off the page rather than hardcoded, because the file sits behind a content delivery network and its address carries a version stamp that changes with every update.</td></tr>
@@ -527,7 +622,7 @@ h4 {
   <div class="no">(8)</div>
 </div>
 
-<p>At 17.2% volatility that is worth 1.56 percentage points: 4.79% compound becomes 6.35% arithmetic. Feeding the compound figure straight in would understate the input by more than the entire equity risk premium is currently worth.</p>
+<p>At 17.2% volatility that is worth 1.54 percentage points: 3.38% compound becomes 4.92% arithmetic. Feeding the compound figure straight in would understate the input by more than the entire equity risk premium is currently worth, since the premium over a 2.96% real safe rate is 1.96 points and the adjustment is 1.54.</p>
 
 <h4>What this leaves unresolved</h4>
 
@@ -565,7 +660,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 6. Effect of the covariance treatment, measured</caption>
+  <caption>Table 10. Effect of the covariance treatment, measured</caption>
   <thead>
     <tr><th>Denominator variance</th><th class="num">Value</th><th class="num">Implied &sigma;</th><th class="num">Merton share</th></tr>
   </thead>
@@ -602,9 +697,9 @@ h4 {
 
 <h4>What would not</h4>
 
-<p><strong>The expected return.</strong> The estimator is a payout yield plus a hundred-year real earnings growth rate. The first has regional equivalents. The second does not, at least not freely: Shiller's series is United States only, and there is no comparable free century-long earnings-per-share history for developed or global markets. The recognised source for long international records is Dimson, Marsh and Staunton, and it is not public.</p>
+<p><strong>The expected return.</strong> The estimator is a dividend yield plus a hundred-year growth rate for real earnings per share. The first has regional equivalents. The second does not, at least not freely: Shiller's series is United States only, and there is no comparable free century-long earnings-per-share history for developed or global markets. The recognised source for long international records is Dimson, Marsh and Staunton, and it is not public.</p>
 
-<p>The tempting shortcut is to pair a regional payout yield with the United States growth rate, on the argument that long-run real earnings growth reflects global productivity and should not differ much by region. That argument is weaker than it sounds. Real earnings per share have grown at visibly different rates in the United States, Europe and Japan over the periods for which records exist, and a difference of half a point in growth is worth more to the answer than most of the other inputs combined. It would be a guess wearing the clothes of a measurement.</p>
+<p>The tempting shortcut is to pair a regional dividend yield with the United States growth rate, on the argument that long-run real earnings growth reflects global productivity and should not differ much by region. That argument is weaker than it sounds. Real earnings per share have grown at visibly different rates in the United States, Europe and Japan over the periods for which records exist, and a difference of half a point in growth is worth more to the answer than most of the other inputs combined. It would be a guess wearing the clothes of a measurement.</p>
 
 <h4>The constraint that actually decides it</h4>
 
@@ -664,7 +759,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 7. Where this model and the age rule disagree</caption>
+  <caption>Table 11. Where this model and the age rule disagree</caption>
   <thead>
     <tr><th>Household</th><th>Age rule</th><th>This model</th></tr>
   </thead>
@@ -747,7 +842,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 8. Where the 9.7% wage discount rate comes from</caption>
+  <caption>Table 12. Where the 9.7% wage discount rate comes from</caption>
   <thead>
     <tr><th>Term</th><th class="num">Contribution, points</th><th>Set by</th></tr>
   </thead>
@@ -769,7 +864,7 @@ h4 {
 
 <p><strong>Of the inputs you control, risk aversion matters most.</strong> Moving <code>&gamma;</code> from 1 to 10 moves the rate by 7.8 points, which changes the value of human capital substantially and therefore the recommendation. Age moves it by about 1.5 points across a working life. Market conditions contribute roughly 1.9 points net at current rates.</p>
 
-<p><strong>This needs no extra inputs from you.</strong> Everything marked as calibration is fixed at the college graduate values in Table 9 and is never asked for. The equation consumes only what sections 3 and 4 already collect: risk aversion, age, the real safe rate and the equity assumptions. Your wage figures determine <em>what</em> is discounted, not the rate applied to it.</p>
+<p><strong>This needs no extra inputs from you.</strong> Everything marked as calibration is fixed at the college graduate values in Table 13 and is never asked for. The equation consumes only what sections 3 and 4 already collect: risk aversion, age, the real safe rate and the equity assumptions. Your wage figures determine <em>what</em> is discounted, not the rate applied to it.</p>
 
 <p>Compare the two equations at the <code>&gamma;</code> term: 0.087 for wages against 0.0003 for Social Security. A cautious household marks down a risky salary sharply and an inflation-indexed government annuity not at all. That is the whole difference between the two in one coefficient.</p>
 
@@ -783,7 +878,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 9. Values fixed inside the approximation</caption>
+  <caption>Table 13. Values fixed inside the approximation</caption>
   <thead>
     <tr><th>Parameter</th><th>Symbol</th><th class="num">Value</th><th>Role</th></tr>
   </thead>
@@ -797,6 +892,23 @@ h4 {
   </tbody>
 </table>
 </div>
+
+<p>Four of these are numbers the user never sees and cannot change, so how much each is worth is worth knowing. Holding the default household and today's market fixed, and moving each across the range the literature supports:</p>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 14. What each fixed constant is worth, measured. Equity share of the financial portfolio, default household.</caption>
+  <thead><tr><th>Constant</th><th class="num">Low</th><th class="num">Value used</th><th class="num">High</th><th class="num">Range</th></tr></thead>
+  <tbody>
+    <tr><td>Permanent wage shock volatility</td><td class="num">49.3% at 8%</td><td class="num">38.3% at 13%</td><td class="num">27.3% at 20%</td><td class="num">22.0 points</td></tr>
+    <tr><td>Social Security replacement rate</td><td class="num">37.1% at 20%</td><td class="num">38.3% at 40%</td><td class="num">39.4% at 60%</td><td class="num">2.3 points</td></tr>
+    <tr><td>Labour income to equity beta</td><td class="num">39.1% at 0.0</td><td class="num">38.3% at 0.4</td><td class="num">37.5% at 0.8</td><td class="num">1.6 points</td></tr>
+    <tr><td>Temporary wage shock volatility</td><td class="num">38.0% at 15%</td><td class="num">38.3% at 24.2%</td><td class="num">38.7% at 35%</td><td class="num">0.7 points</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>The permanent wage shock volatility is the second most influential number in the whole model</strong>, after the expected equity return and ahead of risk aversion. It is a single constant estimated by Cocco, Gomes and Maenhout from a panel of United States households, it is not surfaced anywhere in the tool, and it cannot be adjusted. A household whose earnings are genuinely more secure than the average, a tenured public employee for instance, has a lower value than 13% and is being told to hold roughly ten points less equity than it should. This is the strongest argument for treating the output as an anchor rather than an answer, and it is stronger than the usual one about risk aversion.</p>
 
 <h3>5.3 The imputed earnings path</h3>
 
@@ -814,7 +926,7 @@ h4 {
     <dt>W<sub>0</sub></dt><dd>is the salary entered today</dd>
     <dt>a<sub>0</sub></dt><dd>is current age</dd>
     <dt>a</dt><dd>is the projected age, running to retirement at 67</dd>
-    <dt>&sigma;<sub>perm</sub>, &sigma;<sub>tran</sub></dt><dd>are the wage shock volatilities from Table 9</dd>
+    <dt>&sigma;<sub>perm</sub>, &sigma;<sub>tran</sub></dt><dd>are the wage shock volatilities from Table 13</dd>
   </dl>
 </div>
 
@@ -832,17 +944,17 @@ h4 {
 
 <p><strong>Allocation accuracy: how close is the percentage?</strong> They solve the exact model at every point of a grid of 5,103 parameter sets, 78 ages and 201 wealth levels, then regress the true optimal equity share on the approximation. That gives an R<sup>2</sup> of 0.99, a slope of 0.95 and an intercept of 0.05, with a root mean square error of 3.66 percentage points. Two thirds of parameter sets come in under 4 points and 95% under 5.</p>
 
-<p><strong>Welfare: does the difference matter?</strong> Allocation error is the wrong final measure, because section 7 shows the objective is flat near its optimum, so a few points of error can cost almost nothing. So they also compute expected lifetime utility under the approximate policy and under the exact one, and express the gap as the reduction in constant lifetime consumption that would produce the same loss of utility. That is the figure in Table 10, measured from the standpoint of a 22 year old whose only wealth is the current year's income.</p>
+<p><strong>Welfare: does the difference matter?</strong> Allocation error is the wrong final measure, because section 7 shows the objective is flat near its optimum, so a few points of error can cost almost nothing. So they also compute expected lifetime utility under the approximate policy and under the exact one, and express the gap as the reduction in constant lifetime consumption that would produce the same loss of utility. That is the figure in Table 14, measured from the standpoint of a 22 year old whose only wealth is the current year's income.</p>
 
 <div class="note-bias"><p><strong>A known bias.</strong> The slope of 0.95 is not noise. The approximation is somewhat <em>too aggressive</em> where the true optimum is below 83% equities, and slightly too conservative above it. The authors note that multiplying the output by 0.946 would reduce the error further. This tool does not apply that correction, because it is a post-hoc fit to their own residuals rather than part of the model, but a user near the middle of the range should read the recommendation as very slightly high.</p></div>
 
-<p>What is not reported, and would be worth having, is the worst case rather than the average. The 0.06% is a mean across parameter sets; the per-<code>&gamma;</code> columns in Table 10 are the closest thing to a tail figure and they show the spread is modest for this rule and very large for the alternatives.</p>
+<p>What is not reported, and would be worth having, is the worst case rather than the average. The 0.06% is a mean across parameter sets; the per-<code>&gamma;</code> columns in Table 14 are the closest thing to a tail figure and they show the spread is modest for this rule and very large for the alternatives.</p>
 
 <p>On the alternatives, welfare loss is measured as the reduction in lifetime consumption that would produce the same drop in expected utility, from the perspective of a 22 year old.</p>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 10. Average welfare loss against the optimal policy, across 5,103 parameter sets</caption>
+  <caption>Table 15. Average welfare loss against the optimal policy, across 5,103 parameter sets</caption>
   <thead>
     <tr><th>Portfolio rule</th><th class="num">All parameter sets</th><th class="num">At &gamma; = 4</th><th class="num">At &gamma; = 10</th></tr>
   </thead>
@@ -856,7 +968,7 @@ h4 {
 </table>
 </div>
 
-<p class="src">Source: Choi, Liu and Liu (2025), Table 7.</p>
+<p class="src">Source: Choi, Liu and Liu (2025), Table 12.</p>
 
 <p>Three results follow directly from this table.</p>
 
@@ -893,11 +1005,11 @@ h4 {
 
 <p><strong>Why not make them agree.</strong> Both ways of doing so are worse. Feeding your figure into the discount rate equations would use a fitted approximation outside the range it was fitted over, which is not a small liberty, since those coefficients have no standing away from the grid they were estimated on. Feeding 18.5% into equation (4) would knowingly use the wrong volatility for the portfolio the recommendation is actually about.</p>
 
-<p><strong>What it costs.</strong> Little. Volatility reaches the discount rate only through the <code>&pi;</code> term, worth &minus;0.32 points of the 9.7% in Table 8, and human capital then enters the answer as a ratio to financial wealth, which dilutes a small valuation error further. The seam is declared because it exists, not because it is dangerous.</p>
+<p><strong>What it costs.</strong> Little. Volatility reaches the discount rate only through the <code>&pi;</code> term, worth &minus;0.32 points of the 9.7% in Table 13, and human capital then enters the answer as a ratio to financial wealth, which dilutes a small valuation error further. The seam is declared because it exists, not because it is dangerous.</p>
 
 <h3>7.2 United States calibration</h3>
 
-<p>The constants in Table 9 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
+<p>The constants in Table 14 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
 
 <h3>7.3 Labour income correlated with equities</h3>
 
@@ -905,7 +1017,7 @@ h4 {
 
 <p><strong>Why it matters for them.</strong> If your income already rises and falls with the market, part of your human capital is an implicit equity holding rather than an implicit bond. Counting it as a bond, which the baseline does, tells you to buy more equities on top of exposure you already have.</p>
 
-<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 13 as implementation work, not research.</p>
+<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 16 as implementation work, not research.</p>
 
 <p><strong>Until then.</strong> If your pay is market-linked, treat the recommendation as too high, by roughly the fraction of your human capital that behaves like equity.</p>
 
@@ -915,7 +1027,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 11. Defects in the source spreadsheet, and what each cost</caption>
+  <caption>Table 16. Defects in the source spreadsheet, and what each cost</caption>
   <thead>
     <tr><th>Defect</th><th>Effect on the answer</th></tr>
   </thead>
@@ -930,11 +1042,71 @@ h4 {
 
 <p>The first implementation stage reproduces the original outputs exactly as a regression baseline. Each correction then lands separately, so its effect is measured rather than asserted.</p>
 
-<h2>8. Components included, postponed and excluded</h2>
+<h2 id="validation">8. What has been checked, and what has not</h2>
+
+<p>A model that reproduces its source exactly can still be wrong, because the source can be wrong, and this one was: the estimator in section 3.1 double counted buybacks for as long as the tool has existed and nothing in the test suite noticed, because the suite checked that two numbers added up rather than that they were the right two. Everything below is stated as what was checked and what it showed, not as reassurance.</p>
+
+<h3>8.1 Checks that pass</h3>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 12. Included in version 1</caption>
+  <caption>Table 17. What is verified, and to what tolerance</caption>
+  <thead><tr><th>Check</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td>Against Choi's own spreadsheet, both tabs</td><td>115 projected years to the cent; human capital, Merton share and equity share to a relative 1e-10</td></tr>
+    <tr><td>Against the worked example in the paper, section 3.3</td><td>human capital $924,805 to the dollar, allocation 29.82% against a stated 30%</td></tr>
+    <tr><td>JavaScript against Python</td><td>2,196 cases, 12,977 values, worst deviation 3.5e-16. Changing one digit of one coefficient fails 2,151 of them</td></tr>
+    <tr><td>Reading Shiller's workbook</td><td>the binary format is parsed by this project rather than by a library, and is tested against workbooks built byte by byte in the test suite</td></tr>
+    <tr><td>Estimator stability</td><td>moving the growth window 90 to 110 years shifts the trend 0.25 points; moving its end date back three years shifts it 0.015</td></tr>
+    <tr><td>Out-of-sample prediction</td><td>section 3.1, Tables 6 and 7. The estimator is unbiased at ten years from expensive starting points and one to one and a half points pessimistic unconditionally</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>8.2 The glide path, against what the industry builds</h3>
+
+<p>The sharpest external check available is whether the shape the model produces resembles the shape target date funds are actually built to. One household is aged forward from 25 to 85 on a $100,000 wage, saving 15% a year, at a risk aversion of 5.</p>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 18. Equity share by age, against a representative target date glide path</caption>
+  <thead><tr><th class="num">Age</th><th class="num">Target date fund</th><th class="num">This model, today</th><th class="num">This model at 8% expected return</th></tr></thead>
+  <tbody>
+    <tr><td class="num">25</td><td class="num">90%</td><td class="num">100%</td><td class="num">100%</td></tr>
+    <tr><td class="num">35</td><td class="num">90%</td><td class="num">93%</td><td class="num">100%</td></tr>
+    <tr><td class="num">45</td><td class="num">83%</td><td class="num">42%</td><td class="num">100%</td></tr>
+    <tr><td class="num">55</td><td class="num">67%</td><td class="num">28%</td><td class="num">73%</td></tr>
+    <tr><td class="num">65</td><td class="num">50%</td><td class="num">20%</td><td class="num">53%</td></tr>
+    <tr><td class="num">75</td><td class="num">33%</td><td class="num">13%</td><td class="num">32%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>The shape agrees and the level does not, and the entire difference is the expected return.</strong> Fed an expected real return of 8% as an arithmetic mean, which is an equity premium of about five points over today's real safe rate and close to the historical average, this model reproduces a standard glide path from age 55 onward to within a few points. Fed the 4.92% that section 3.1 arrives at, it recommends roughly half as much equity.</p>
+
+<p>That is not a defect in either. A target date fund is built on an unconditional premium, close to the long-run average, because it has to be set once and left alone for decades. This tool prices equities off what they cost today, and today they are expensive: a CAPE of 39.8 against a historical mean near 16. The two disagree because one conditions on valuation and the other does not, and a user who believes the historical premium will simply return should say so by setting the expected return by hand, which the tool allows. The disagreement is the tool's central claim, so it is stated here rather than buried.</p>
+
+<h3>8.3 Whether the answer discriminates</h3>
+
+<p>A recommendation that comes out at 100% for everyone is not advice. Across a grid of 1,040 households spanning ages 25 to 85, wages of $40,000 to $250,000, wealth of $25,000 to $3,000,000 and risk aversion of 2 to 8, <strong>30.3% of answers are pinned at 100% and none at 0%</strong>, leaving about seven in ten interior. Before the buyback correction, 40.0% were pinned. The saturation is concentrated where it should be, among the young, whose human capital dwarfs their savings, and where the model's own honest answer is that the constraint against borrowing binds.</p>
+
+<h3>8.4 What has not been checked, in order of what it would cost</h3>
+
+<p><strong>Uncertainty in the expected return.</strong> The model treats a point estimate as known. Section 3.1 shows that estimate spanning 7.05% to 2.42% across methods that are all defensible, a range worth the entire allocation. Barberis (2000) shows that admitting the uncertainty lowers the equity share, and by more at longer horizons, which is the reverse of the usual intuition. This is the largest gap in the model and nothing here compensates for it.</p>
+
+<p><strong>The permanent wage shock volatility.</strong> Section 5.2 measures it at 22 points of the answer across its plausible range, second only to the expected return, and it is a constant the user cannot see or change. Validating it would mean re-estimating earnings risk on current data rather than inheriting a 2005 calibration, and ideally letting a household say whether its own earnings are more secure than average.</p>
+
+<p><strong>Anything outside the United States.</strong> Every input, and the earnings risk calibration behind the discount rates, is United States data. Section 3.5 explains why a global version is not offered rather than offered badly.</p>
+
+<p><strong>The estimator in a buyback regime.</strong> The backtest in section 3.1 runs from 1910, and buybacks only became a material share of payout after 1982. Both terms of equation (5) are measured on a century in which companies issued shares on net, and the test cannot say how the estimator behaves in the regime the tool is now being used in. This is a known limit with a known direction, upward, and no way to size it from this data.</p>
+
+<p><strong>Whether anyone acts on it.</strong> No claim is made that a household following this allocation is better off than one following a simpler rule, only that this allocation is the one the model implies. Section 6 reports what the alternative rules cost <em>inside the model</em>, which is a different and much weaker statement.</p>
+
+<h2>9. Components included, postponed and excluded</h2>
+
+<div class="tablewrap">
+<table>
+  <caption>Table 19. Included in version 1</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -944,21 +1116,21 @@ h4 {
     <tr><td>Risk-adjusted wage discounting</td><td>Choi, Liu and Liu (2025), fitted to Cocco, Gomes and Maenhout (2005)</td><td>Reduces welfare loss from 2.00% under the best rule of thumb to 0.06%, at the cost of two equations.</td></tr>
     <tr><td>Valuation-based expected return</td><td>Campbell and Shiller (1988, 1998)</td><td>Conditions on current prices rather than an unconditional average with a two point standard error.</td></tr>
     <tr><td>Full covariance matrix</td><td>Standard portfolio theory</td><td>Corrects a nine point error in the source spreadsheet.</td></tr>
-    <tr><td>Sensitivity across &gamma; and &mu;</td><td>Addition of this tool</td><td>Table 3 shows the answer spanning 17% to 100% across defensible estimates of the expected return, a wider range than risk aversion produces over its whole 1 to 10 scale, and neither quantity can be observed.</td></tr>
+    <tr><td>Sensitivity across &gamma; and &mu;</td><td>Addition of this tool</td><td>Table 10 shows the answer spanning 17% to 100% across defensible estimates of the expected return, a wider range than risk aversion produces over its whole 1 to 10 scale, and neither quantity can be observed.</td></tr>
   </tbody>
 </table>
 </div>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 13. Postponed</caption>
+  <caption>Table 20. Postponed</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
   <tbody>
     <tr><td>Equity-correlated labour income</td><td>Choi, Liu and Liu (2025), equation (19)</td><td>Already derived and tested by the authors, so this is implementation rather than research. Matters for equity-compensated households. See section 7.3.</td></tr>
-    <tr><td>Variance ratio test on the independence assumption</td><td>Lo and MacKinlay (1988)</td><td>Would replace the assumption in section 2.4 with a measurement, using return series the covariance matrix needs anyway.</td></tr>
-    <tr><td>Uncertainty in the expected return</td><td>Barberis (2000)</td><td>Version 1 treats a point estimate of the risk premium as certain. Allowing for the uncertainty lowers the equity share, more so at long horizons. Requires a Bayesian layer.</td></tr>
+    <tr><td>Standard errors on the variance ratios</td><td>Lo and MacKinlay (1988)</td><td>The ratios themselves are measured in section 2.4 and fall to 0.21 by thirty years. Without their standard errors, and on three independent windows, that number cannot carry weight. Nothing in the model consumes it either way; see the two rows below.</td></tr>
+    <tr><td>Uncertainty in the expected return</td><td>Barberis (2000), Pastor and Stambaugh (2012)</td><td>Version 1 treats a point estimate of the risk premium as certain, and section 3.1 shows that estimate spanning 7.05% to 2.42% across defensible methods. Allowing for the uncertainty lowers the equity share, more so at long horizons, and is the reason the variance ratios above cannot be read as licence to hold more. Requires a Bayesian layer. This is the largest single gap in the model.</td></tr>
     <tr><td>Return predictability</td><td>Campbell and Viceira (2002)</td><td>The only clean route to making horizon matter. Requires a vector autoregression plus a hedging demand term.</td></tr>
   </tbody>
 </table>
@@ -966,7 +1138,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 14. Excluded</caption>
+  <caption>Table 21. Excluded</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -978,11 +1150,12 @@ h4 {
 </table>
 </div>
 
-<h2>9. References</h2>
+<h2>10. References</h2>
 
 <ol class="refs">
   <li>Ayres, I. and Nalebuff, B. (2010). <em>Lifecycle Investing</em>. Basic Books.</li>
   <li>Barberis, N. (2000). Investing for the Long Run when Returns Are Predictable. <em>Journal of Finance</em>, 55(1), 225 to 264.</li>
+  <li>Bernstein, P. L. and Arnott, R. D. (2003). Earnings Growth: The Two Percent Dilution. <em>Financial Analysts Journal</em>, 59(5), 47 to 55. Measures the gap between aggregate and per-share earnings growth that section 3.1 turns on.</li>
   <li>Bodie, Z. (1995). On the Risk of Stocks in the Long Run. <em>Financial Analysts Journal</em>, 51(3), 18 to 22.</li>
   <li>Bodie, Z., Merton, R. C. and Samuelson, W. F. (1992). Labor Supply Flexibility and Portfolio Choice in a Life Cycle Model. <em>Journal of Economic Dynamics and Control</em>, 16(3 to 4), 427 to 449.</li>
   <li>Campbell, J. Y. and Shiller, R. J. (1988, 1998). Work on valuation ratios and long-horizon returns.</li>
@@ -999,6 +1172,7 @@ h4 {
   <li>Poterba, J. M. and Summers, L. H. (1988). Mean Reversion in Stock Prices: Evidence and Implications. <em>Journal of Financial Economics</em>, 22(1), 27 to 59.</li>
   <li>Samuelson, P. A. (1969). Lifetime Portfolio Selection by Dynamic Stochastic Programming. <em>Review of Economics and Statistics</em>, 51(3), 239 to 246.</li>
   <li>Siegel, J. J. <em>Stocks for the Long Run</em>. McGraw-Hill, multiple editions since 1994.</li>
+  <li>Straehl, P. U. and Ibbotson, R. G. (2017). The Long-Run Drivers of Stock Returns: Total Payouts and the Real Economy. <em>Financial Analysts Journal</em>, 73(3), 32 to 52. Sets out why a total payout yield has to be paired with aggregate rather than per-share growth.</li>
 </ol>
 
 <div class="footnote">

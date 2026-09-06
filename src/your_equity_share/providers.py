@@ -272,6 +272,22 @@ class ShillerHistory:
         """
         return self.dates[-1]
 
+    def last_date_as_date(self) -> date:
+        """`last_date` as a date, for stamping an estimate built from this row."""
+        return date.fromisoformat(self.last_date)
+
+    @property
+    def dividend_yield(self) -> float:
+        """Trailing dividends over price, at the last complete month.
+
+        Both terms come from the same row of the same file, so the ratio is
+        internally consistent: one index, one deflator, one date. Pairing a
+        dividend yield taken from one provider with a price taken from another
+        would introduce a difference in index construction that is larger than
+        the quantity being measured.
+        """
+        return self.real_dividends[-1] / self.real_prices[-1]
+
     def real_earnings_trend_growth(self, years: int) -> float:
         """Real growth in earnings per share, as the trend through the window.
 

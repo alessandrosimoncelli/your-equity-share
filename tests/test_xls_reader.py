@@ -220,6 +220,20 @@ def test_shiller_reader_deflates_and_finds_its_columns() -> None:
     assert history.real_earnings_trend_growth(100) == pytest.approx(0.02, abs=2e-4)
 
 
+def test_dividend_yield_is_the_ratio_in_the_last_row() -> None:
+    """Both terms out of one row, so the deflator cancels and lag largely does too."""
+    history = parse_shiller_xls(shiller_like(1500))
+    assert history.dividend_yield == pytest.approx(0.03, abs=1e-12)
+    assert history.dividend_yield == pytest.approx(
+        history.real_dividends[-1] / history.real_prices[-1]
+    )
+
+
+def test_last_date_survives_the_round_trip_to_a_date() -> None:
+    history = parse_shiller_xls(shiller_like(1500))
+    assert history.last_date_as_date().isoformat() == history.last_date
+
+
 def test_shiller_reader_needs_a_recognisable_header() -> None:
     cells = number(8, 0, 1871.01) + number(8, 1, 4.44)
     raw = ole_container(workbook_stream("Data", cells, []))

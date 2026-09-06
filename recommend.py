@@ -125,7 +125,7 @@ def print_report(result, market, household) -> None:
     print(f"  Market data, as of {market.as_of}")
     print()
     method = market.provenance.get("expected_return_method", "set by hand")
-    note = {"building blocks": "payout yield plus long-run growth",
+    note = {"building blocks": "dividend yield plus long-run growth",
             "consensus": "median of three estimators",
             "implied": "market implied premium",
             "fixed": "set by hand"}.get(method, method)

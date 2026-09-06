@@ -47,9 +47,66 @@ def test_implied_premium_adds_the_real_rate() -> None:
 
 
 def test_building_blocks_sum_their_parts() -> None:
-    e = building_block_estimate(0.0263, 0.0251)
-    assert e.value == pytest.approx(0.0514)
+    e = building_block_estimate(0.0110, 0.0229)
+    assert e.value == pytest.approx(0.0339)
     assert "no repricing" in e.detail
+    assert "dividend yield" in e.detail
+
+
+def _holder_return(shares, price, earnings, dividends, buyback):
+    """What one share actually earns over a year, by construction.
+
+    Aggregate earnings are held flat in real terms, the multiple is held
+    constant, and the buyback is executed at the going price. No formula is
+    used, so this is something the formulas can be checked against.
+    """
+    retired = buyback / price
+    after = shares - retired
+    eps_before, eps_after = earnings / shares, earnings / after
+    multiple = price / eps_before
+    price_after = multiple * eps_after
+    income = dividends / shares
+    return (price_after + income) / price - 1.0, eps_after / eps_before - 1.0
+
+
+def test_dividend_yield_pairs_with_per_share_growth() -> None:
+    """The pairing is the whole point, and the wrong one is plausible."""
+    shares, price, earnings, dividends, buyback = 100.0, 15.0, 100.0, 30.0, 20.0
+    truth, growth = _holder_return(shares, price, earnings, dividends, buyback)
+    cap = shares * price
+    dividend_yield = dividends / cap
+    payout_yield = (dividends + buyback) / cap
+
+    right = building_block_estimate(dividend_yield, growth)
+    assert right.value == pytest.approx(truth, abs=1e-12)
+
+    # Aggregate earnings are flat, so the other consistent pairing is the
+    # payout yield with no growth. Same answer up to the timing of the buyback.
+    assert payout_yield == pytest.approx(truth, abs=2e-4)
+
+    # And the pairing that was in use here until it was measured.
+    wrong = building_block_estimate(payout_yield, growth)
+    assert wrong.value - truth == pytest.approx(buyback / cap, abs=2e-4)
+    assert wrong.value > truth
+
+
+def test_double_count_moves_the_answer_by_double_digits() -> None:
+    """Not a rounding difference. Recorded so the size is not forgotten.
+
+    Twelve points of total wealth, and a household whose human capital is a
+    little over half its total wealth sees roughly twice that in its financial
+    portfolio, because the multiplier scales the Merton share up.
+    """
+    from your_equity_share.expected_return import arithmetic_from_compound
+    from your_equity_share.allocation import merton_share
+
+    vol, real_rf, gamma = 0.171808, 0.0296, 4.0
+    right = arithmetic_from_compound(0.0110 + 0.0229, vol)
+    wrong = arithmetic_from_compound(0.0110 + 0.0153 + 0.0229, vol)
+    gap = merton_share(wrong, real_rf, gamma, vol) - merton_share(
+        right, real_rf, gamma, vol
+    )
+    assert 0.10 < gap < 0.15
 
 
 def test_repricing_enters_with_its_sign() -> None:

@@ -30,28 +30,43 @@ Updating market data for Your Equity Share
 ==============================================================
 
 Fetching...
-  real risk-free rate (30y TIPS)     2.98%   was  2.50%   +0.48 points
-  stock volatility (SPY, 5y)        17.22%   was 18.50%   -1.28 points
+  real risk-free rate (30y TIPS)      2.96%   was  2.96%   unchanged
+  stock volatility (SPY, 5y)         17.18%   was 17.18%   unchanged
 
-Not fetched, this one is your judgement:
-  expected stock real return         5.00%   set 93 days ago
-  edit it in market_data.toml if your view has changed
+  Expected real return on equities.
+    building blocks                3.38%   <- used
+      1.10% dividend yield plus 2.29% real earnings growth
+      per share (100 year trend), no repricing
+      Buybacks return a further 1.53% that this does not
+      count as income, because per-share growth already
+      carries it.
 
-Saved. Market data is now current to 2026-09-01.
+  Cross-checks, not used.
+    implied premium                7.05%
+    valuation regression, 30y      5.32% +/- 0.74%
+    spread of the cross-checks     3.67%   <- how little is known here
+
+    as an arithmetic mean          4.92%   +1.54 from the volatility drag
+
+Saved. Market data is now current to 2026-09-03.
 ```
 
-**All three** numbers the model uses are fetched, from three free sources that
-need no key or account:
+**All three** numbers the model uses are fetched, from free sources that need no
+key or account:
 
 | Input | Source | Note |
 | --- | --- | --- |
 | real risk-free rate | FRED, 30-year TIPS yield | a real yield already, no inflation adjustment |
 | stock volatility | Yahoo, daily **adjusted** closes | dividend and split adjusted, so total returns |
-| expected stock return | Damodaran implied ERP + the real rate | forward looking, published monthly |
+| expected stock return | Shiller: dividend yield plus 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
 
-Override the expected return with `--fixed-return 0.05` if you prefer your own
-view. See [docs/inputs.md](docs/inputs.md) for the caveat on combining a
-10-year-based premium with a 30-year real yield.
+The expected return is the number the answer is most sensitive to and the one
+nobody can observe. Two further estimates are computed as cross-checks and
+reported alongside, precisely because they disagree by several points. Override
+it with `--fixed-return 0.05` if you prefer your own view. See
+[docs/inputs.md](docs/inputs.md) for why buybacks are deliberately not added to
+the yield, and for the caveat on combining a 10-year-based premium with a
+30-year real yield.
 
 Options:
 
