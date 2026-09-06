@@ -460,6 +460,8 @@ h4 {
 
 <p>The third row is what this tool published until September 2026. On today's figures the error was worth 1.53 percentage points of expected return, which is 12 points of total wealth and, for the default household, 32 points of the equity share: 70% rather than 38%. It is recorded here rather than quietly repaired because the size of it is the argument for reading section 3.1 at all.</p>
 
+<p>This is not a private reading. AQR's published capital market assumptions build the same estimate the same way, with the buyback term entering as an adjustment to <em>growth</em> rather than to the yield, and arrive within half a point of the figure here. Section 8.3 sets the two side by side.</p>
+
 <p>The second row is the honest alternative and it is closed off by the data rather than by the theory. Aggregate earnings growth needs a share count, and the S&amp;P earnings history is per share and carries none. Straehl and Ibbotson (2017) set out the same requirement at length and construct the aggregate series that would satisfy it; Bernstein and Arnott (2003) measure the gap the two rows differ by, and find that per-share earnings grew about two points a year slower than aggregate earnings over the twentieth century, because net share issuance was positive for most of it.</p>
 
 <p><strong>That last point cuts against this estimate, and it should be stated plainly.</strong> The growth term is a trend through a century in which companies issued shares on net; the yield term is measured today, when they retire them. Both halves are therefore measured in the regime that suppresses them. If buybacks continue at today's rate, future growth in earnings per share will run above the historical trend, and 3.38% is too low. Adding the full 1.53% back is not the fix, since that is the arithmetic error again, but the direction of the remaining error is known and it is upward.</p>
@@ -1086,11 +1088,70 @@ h4 {
 
 <p>That is not a defect in either. A target date fund is built on an unconditional premium, close to the long-run average, because it has to be set once and left alone for decades. This tool prices equities off what they cost today, and today they are expensive: a CAPE of 39.8 against a historical mean near 16. The two disagree because one conditions on valuation and the other does not, and a user who believes the historical premium will simply return should say so by setting the expected return by hand, which the tool allows. The disagreement is the tool's central claim, so it is stated here rather than buried.</p>
 
-<h3>8.3 Whether the answer discriminates</h3>
+<h3>8.3 The estimate against twelve published forecasts</h3>
+
+<p>The backtest in section 3.1 asks whether the estimator worked in the past. This asks whether anyone else, working today with the same market in front of them, arrives anywhere near the same number. Comparing capital market assumptions is easy to do badly, because published forecasts differ in four ways that each move the number by more than a point, so all four are stated for every row: whether the return is real or nominal, whether it is compound or arithmetic, which slice of the market it covers, and over what horizon. Nominal forecasts are deflated by the firm's own inflation assumption where it publishes one and by the 10-year breakeven of 2.35% where it does not.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 19. Published expected returns on US equities, all converted to a compound real basis</caption>
+<thead><tr><th>Firm</th><th class="num">Published</th><th class="num">Compound real</th><th>Segment</th><th class="num">Horizon</th><th>Repricing assumed</th></tr></thead>
+<tbody>
+<tr><td>Damodaran, implied</td><td class="num">7.05% real</td><td class="num">7.05%</td><td>S&amp;P 500</td><td class="num">perpetual</td><td>zero, implied</td></tr>
+<tr><td>Northern Trust</td><td class="num">6.8% nom.</td><td class="num">4.35%</td><td>US equities</td><td class="num">10y</td><td>contraction</td></tr>
+<tr><td>J.P. Morgan</td><td class="num">6.7% nom.</td><td class="num">4.10%</td><td>US large cap</td><td class="num">10-15y</td><td>some</td></tr>
+<tr><td><strong>AQR</strong></td><td class="num">3.9% real</td><td class="num"><strong>3.90%</strong></td><td>US large cap</td><td class="num">5-10y</td><td><strong>zero, stated</strong></td></tr>
+<tr><td>Schwab</td><td class="num">5.9% nom.</td><td class="num">3.42%</td><td>US large cap</td><td class="num">10y</td><td>not stated</td></tr>
+<tr><td><strong>This model</strong></td><td class="num"><strong>3.38% real</strong></td><td class="num"><strong>3.38%</strong></td><td><strong>US large cap</strong></td><td class="num"><strong>lifetime</strong></td><td><strong>zero, stated</strong></td></tr>
+<tr><td>Fidelity</td><td class="num">3.2% real</td><td class="num">3.20%</td><td>US equities</td><td class="num">20y</td><td>not stated</td></tr>
+<tr><td>Morningstar</td><td class="num">5.3% nom.</td><td class="num">2.88%</td><td>US equities</td><td class="num">10y</td><td>not stated</td></tr>
+<tr><td>BlackRock</td><td class="num">5.2% nom.</td><td class="num">2.78%</td><td>US equities</td><td class="num">10y</td><td>some</td></tr>
+<tr><td>Vanguard</td><td class="num">4.2-6.2% nom.</td><td class="num">2.78%</td><td>US equities</td><td class="num">10y</td><td>some</td></tr>
+<tr><td>Invesco</td><td class="num">4.9% nom.</td><td class="num">2.49%</td><td>US large cap</td><td class="num">10y</td><td>valuation change</td></tr>
+<tr><td>Research Affiliates</td><td class="num">3.1% nom.</td><td class="num">0.73%</td><td>US large cap</td><td class="num">10y</td><td>full reversion</td></tr>
+<tr><td>GMO</td><td class="num">-6.0% real</td><td class="num">-6.00%</td><td>US large cap</td><td class="num">7y</td><td>full reversion</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">Vintages run from September 2025 to June 2026. Vanguard's figure is the midpoint of its published range from the June 2026 model run. Damodaran's is this project's own calculation from his implied premium plus the real safe rate, and is reported as a cross-check by the tool itself.</p>
+
+<p>The median of the twelve is 3.04% and the average of the ten between the extremes is 3.06%. <strong>This model's 3.38% sits 0.32 points above that average and 0.34 above the median</strong>, roughly a tenth of the spread between the highest and lowest forecast. It is not an outlier in either direction.</p>
+
+<h4>Two corrections that pull in opposite directions</h4>
+
+<p><strong>The horizon is not matched, and matching it moves this model from slightly high to slightly low.</strong> Every peer forecast above runs seven to twenty years; this one runs a lifetime. That matters, because a valuation-conditioned forecast from an expensive market rises with the horizon as the effect of today's price is diluted. Vanguard is the only firm here publishing both horizons off one model run, and its 30-year US equity forecast sits 0.9 points above its 10-year. Adding that to the peer average gives 3.96% on a lifetime basis, against which this model's 3.38% is <strong>0.58 points low</strong>.</p>
+
+<p><strong>The repricing column explains most of the remaining spread</strong>, and it is why an average across all twelve is less informative than it looks. GMO's -6.0% and Research Affiliates' 0.73% both assume valuations revert to a fair value estimate over the forecast period; Damodaran's 7.05% is an internal rate of return that embeds analyst growth forecasts. Those three are answering a different question from the one asked here. Read only against the firms that hold ratios constant, as this model does, the agreement is much tighter.</p>
+
+<h4>AQR, which uses this exact construction</h4>
+
+<p>One firm publishes the method as well as the number, and it is the same method. AQR's 2026 assumptions state that expected real return is "approximately the sum of dividend yield (DY), expected growth (g) in real dividends or earnings per share (EPS), and expected change in valuation", and that "we assume no mean reversion in valuations, i.e., &Delta;v=0 even if a market looks cheap or expensive". That is equation (5) of this document, term for term, including the zero.</p>
+
+<p>AQR also settles the question section 3.1 turns on. Their buyback term is an adjustment to <em>growth</em>, not to the yield: it is "10-year net buyback yield minus 25-year net buyback yield", and it "accounts for how recent changes in buyback activity may impact future EPS growth". A firm that builds this estimate for a living puts buybacks where this document argues they belong, and nowhere near the income term.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 20. The same construction, side by side</caption>
+<thead><tr><th>Term</th><th class="num">AQR</th><th class="num">This model</th><th class="num">Difference</th></tr></thead>
+<tbody>
+<tr><td>Dividend yield</td><td class="num">1.3%</td><td class="num">1.10%</td><td class="num">0.20</td></tr>
+<tr><td>Real growth in earnings per share</td><td class="num">2.7%</td><td class="num">2.29%</td><td class="num">0.41</td></tr>
+<tr><td>Repricing</td><td class="num">0.0%</td><td class="num">0.0%</td><td class="num">0.00</td></tr>
+<tr><td><strong>Expected real return</strong></td><td class="num"><strong>3.9%</strong></td><td class="num"><strong>3.38%</strong></td><td class="num"><strong>0.52</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>The gap is half a point and most of it is growth, which is exactly where section 3.1 said the remaining error would be and in the direction it said. AQR adjusts its growth rate upward for the current rate of buybacks; this model does not, and takes a century-long trend from an era of net share issuance instead. Their 2.7% against this model's 2.29% is a reasonable measure of what that omission costs.</p>
+
+<p>Two things follow, and they are worth separating. This estimate is <strong>corroborated</strong>: an independent firm, using the same formula on the same market, lands within half a point. It is also <strong>conservative</strong>, by about half a point against that firm and about six tenths against the horizon-adjusted peer average. The tool's own answer would rise by roughly eight points of the equity share if the estimate were moved to AQR's 3.9%, which is well inside the band section 3.1 already reports as unresolved.</p>
+
+<h3>8.4 Whether the answer discriminates</h3>
 
 <p>A recommendation that comes out at 100% for everyone is not advice. Across a grid of 1,040 households spanning ages 25 to 85, wages of $40,000 to $250,000, wealth of $25,000 to $3,000,000 and risk aversion of 2 to 8, <strong>30.3% of answers are pinned at 100% and none at 0%</strong>, leaving about seven in ten interior. Before the buyback correction, 40.0% were pinned. The saturation is concentrated where it should be, among the young, whose human capital dwarfs their savings, and where the model's own honest answer is that the constraint against borrowing binds.</p>
 
-<h3>8.4 What has not been checked, in order of what it would cost</h3>
+<h3>8.5 What has not been checked, in order of what it would cost</h3>
 
 <p><strong>Uncertainty in the expected return.</strong> The model treats a point estimate as known. Section 3.1 shows that estimate spanning 7.05% to 2.42% across methods that are all defensible, a range worth the entire allocation. Barberis (2000) shows that admitting the uncertainty lowers the equity share, and by more at longer horizons, which is the reverse of the usual intuition. This is the largest gap in the model and nothing here compensates for it.</p>
 
@@ -1106,7 +1167,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 19. Included in version 1</caption>
+  <caption>Table 21. Included in version 1</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1123,7 +1184,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 20. Postponed</caption>
+  <caption>Table 22. Postponed</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1138,7 +1199,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 21. Excluded</caption>
+  <caption>Table 23. Excluded</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
