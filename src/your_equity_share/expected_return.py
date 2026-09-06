@@ -39,6 +39,9 @@ from datetime import date
 
 __all__ = [
     "CHOI_FITTED_LOG_PREMIUM_RANGE",
+    "CHOI_FITTED_LOG_RISK_FREE_RANGE",
+    "log_risk_free",
+    "within_fitted_risk_free",
     "Estimate",
     "arithmetic_from_compound",
     "compound_from_arithmetic",
@@ -54,7 +57,25 @@ __all__ = [
 
 # The log excess drifts Choi's approximation was fitted over. Outside this the
 # fitted coefficients are an extrapolation with no standing.
+#
+# These are not a recommended range. They are the three values the model was
+# actually solved at, 0.02, 0.03 and 0.04, crossed with everything else to make
+# the 5,103 parameter sets. The paper justifies the top and not the bottom:
+# "even a 2% log equity premium results in optimal equity allocations that are
+# frequently 100%. Therefore, any approximation that accurately fits the
+# solution for log equity premia of 4% or less should be accurate for log
+# equity premia above 4%." Below 2% he says nothing, because AQR's 1.9%
+# forecast was the low end of what looked plausible when he wrote.
 CHOI_FITTED_LOG_PREMIUM_RANGE = (0.02, 0.04)
+
+# The other half of the same grid, and the one that went unchecked here for
+# longer. Log real risk-free rates of 0, 0.01 and 0.02, calibrated in the paper
+# to "the five-year TIPS real yield in 2024". The guide then tells a reader to
+# enter the THIRTY-year yield, which in September 2026 is 2.96% and sits above
+# every value the coefficients were fitted on. The regressor carries +1.132
+# against -0.267 for the premium, so a point of extrapolation here costs four
+# times what a point of premium extrapolation costs.
+CHOI_FITTED_LOG_RISK_FREE_RANGE = (0.0, 0.02)
 
 # Volatility baked into the fitted coefficients. Used for the log conversion so
 # that the comparison against the fitted range is on Choi's own terms.
@@ -136,6 +157,22 @@ def log_premium(
         - 0.5 * volatility**2
         - math.log(1.0 + real_risk_free)
     )
+
+
+def log_risk_free(real_risk_free: float) -> float:
+    """The safe rate as Choi's regressions take it, which is in logs."""
+    return math.log(1.0 + real_risk_free)
+
+
+def within_fitted_risk_free(real_risk_free: float) -> bool:
+    """Whether the safe rate sits inside the grid the coefficients were fitted on.
+
+    Following Choi's own guide puts a reader outside Choi's own grid: it names
+    the 30-year TIPS yield, and the grid tops out at a log rate of 0.02, which
+    the 30-year yield has been above since well before this tool existed.
+    """
+    low, high = CHOI_FITTED_LOG_RISK_FREE_RANGE
+    return low <= log_risk_free(real_risk_free) <= high
 
 
 def within_fitted_range(

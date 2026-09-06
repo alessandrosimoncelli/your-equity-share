@@ -46,6 +46,11 @@ export const GUIDE_GAMBLE_LOW = 50000.0;
 // fitted coefficients are an extrapolation with no standing.
 export const CHOI_FITTED_LOG_PREMIUM_RANGE = Object.freeze([0.02, 0.04]);
 
+// The other half of the same grid: log real risk-free rates of 0, 0.01 and
+// 0.02. Choi's guide tells a reader to enter the 30-year TIPS yield, which is
+// above all three. The regressor carries +1.132 against -0.267 on the premium.
+export const CHOI_FITTED_LOG_RISK_FREE_RANGE = Object.freeze([0.0, 0.02]);
+
 /** Volatility baked into the fitted coefficients. */
 export const CALIBRATION_VOLATILITY = 0.185;
 
@@ -443,6 +448,18 @@ export function compoundFromArithmetic(arithmetic, volatility) {
 /** The quantity Choi's grid is expressed in, and his regressions consume. */
 export function logPremium(expectedRealReturn, realRiskFree, volatility = CALIBRATION_VOLATILITY) {
   return Math.log(1.0 + expectedRealReturn) - 0.5 * volatility ** 2 - Math.log(1.0 + realRiskFree);
+}
+
+/** The safe rate as Choi's regressions take it, which is in logs. */
+export function logRiskFree(realRiskFree) {
+  return Math.log(1.0 + realRiskFree);
+}
+
+/** Whether the safe rate sits inside the grid the coefficients were fitted on. */
+export function withinFittedRiskFree(realRiskFree) {
+  const [low, high] = CHOI_FITTED_LOG_RISK_FREE_RANGE;
+  const r = logRiskFree(realRiskFree);
+  return low <= r && r <= high;
 }
 
 export function withinFittedRange(expectedRealReturn, realRiskFree, volatility = CALIBRATION_VOLATILITY) {

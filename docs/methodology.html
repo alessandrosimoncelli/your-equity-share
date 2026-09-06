@@ -632,7 +632,7 @@ h4 {
 
 <p>Setting repricing to zero is an assumption, and not a neutral one. A market priced well above its own history has a negative expected repricing term that this construction ignores, so the estimate should be read as generous rather than conservative.</p>
 
-<p>At today's values the resulting log excess drift is about 1.5%, below the 2% to 4% band the approximation's coefficients were fitted over. The paper argues that a fit accurate at 4% or less will hold above 4%; it does not address below 2%. The tool says so on its face, and the answer there should be read as indicative.</p>
+<p>At today's values the resulting log excess drift is 0.17%, below the 2% to 4% grid the approximation's coefficients were fitted on, and the safe rate is above its own grid as well. Section 3.6 sets out what those grids are, why they are where they are, and what being outside them does and does not affect.</p>
 
 <p><strong>The user can override all of it.</strong> The estimate is a default rather than a claim to know the number, and both front ends expose it directly.</p>
 
@@ -688,7 +688,7 @@ h4 {
 <caption>Table 11. What the safe asset is worth. Default household, expected equity return held at 3.38% compound.</caption>
 <thead><tr><th>Safe asset</th><th class="num">Real rate</th><th class="num">Drift, as the coefficients get it</th><th class="num">Drift, compound reading</th><th class="num">Equity share</th></tr></thead>
 <tbody>
-<tr><td>Cash, 3-month bill deflated by the breakeven</td><td class="num">1.37%</td><td class="num">1.73%</td><td class="num">1.97%</td><td class="num">81.1%</td></tr>
+<tr><td>Cash, 3-month bill deflated by the breakeven<sup>b</sup></td><td class="num">1.37%</td><td class="num">1.73%</td><td class="num">1.97%</td><td class="num">81.1%</td></tr>
 <tr><td>5-year TIPS</td><td class="num">2.15%</td><td class="num">0.96%</td><td class="num">1.20%</td><td class="num">58.3%</td></tr>
 <tr><td>10-year TIPS</td><td class="num">2.42%</td><td class="num">0.70%</td><td class="num">0.94%</td><td class="num">51.3%</td></tr>
 <tr><td><strong>30-year TIPS, used here</strong></td><td class="num"><strong>2.96%</strong></td><td class="num"><strong>0.17%</strong></td><td class="num"><strong>0.41%</strong></td><td class="num"><strong>38.3%</strong></td></tr>
@@ -698,13 +698,15 @@ h4 {
 
 <p class="src">Rates as of 3 September 2026, from FRED. Nothing else changes down the table.</p>
 
+<p class="footnote"><sup>b</sup> The only row whose safe rate sits inside the grid Choi's coefficients were fitted on, which tops out at a log rate of 0.02. The 5-year yield is 0.13 log points above it, the 10-year 0.39, and the 30-year 0.92. See section 3.6.</p>
+
 <p>The two drift columns differ by 0.24 points at every row, and the reason is worth stating once because it recurs. Converting the compound estimate to an arithmetic mean adds half the variance at the <em>market's</em> volatility of 17.18%; the drift then subtracts half the variance at the <em>calibration's</em> 18.5%, because that is the value baked into the coefficients being fed. The first column is therefore the number Choi's fitted equations actually receive, and it is the one the tool reports and warns on. The second is the plain compound excess return, <code>ln(1+g) &minus; ln(1+r)</code>, which is what a reading with one volatility throughout would give, and it is the only basis on which two firms' drifts can be compared without knowing each other's volatility assumptions.</p>
 
 <p><strong>Forty-three points of the equity share sit between the top row and the bottom one.</strong> The reason is arithmetic: the Merton numerator is the gap between the equity drift and the safe drift, and moving the safe rate from 1.37% to 2.96% removes 1.56 points from a gap that is only about two points wide to begin with. When the premium is thin, the choice of safe asset stops being a detail.</p>
 
 <p><strong>The long bond is the right answer, and the argument is Campbell and Viceira's.</strong> For an investor with a short horizon, cash is riskless and a long bond is risky, because its price moves. For an investor with a thirty-year horizon this reverses: a long inflation-indexed bond delivers a known real amount at the date the money is needed, while cash has to be rolled at rates nobody knows, which is reinvestment risk. The riskless asset is defined by the horizon, and this model's horizon is a lifetime. Choosing cash here would also be choosing the higher answer, which is a reason to be careful rather than a reason to do it.</p>
 
-<p><strong>The one thing this weakens is the fitted band.</strong> Section 3.1 reports a log excess drift of 0.17%, well below the 2% to 4% range Choi's coefficients were fitted over. Some of that distance is the safe asset rather than the equity market: Choi anchors his central 2% example to AQR's 1.9% log excess return, and AQR quotes excess <em>of cash</em>. Measured the same way, on cash, this model's drift is 1.73%, which is a quarter point below the band rather than 1.8 points below it. That inference rests on AQR's convention rather than on a statement in Choi's paper, so the tool continues to report the drift against its own safe asset and to warn, but the warning should be read as partly a statement about the shape of the real curve and not only about how thin the equity premium is.</p>
+<p><strong>The one thing this weakens is the fitted grid, twice over.</strong> A higher safe rate lowers the drift <em>and</em> raises the safe rate itself above the grid the coefficients were fitted on, which section 3.6 sets out in full. Section 3.1 reports a log excess drift of 0.17%, well below the 2% to 4% values Choi solved at. Some of that distance is the safe asset rather than the equity market: Choi anchors his central 2% example to AQR's 1.9% log excess return, and AQR quotes excess <em>of cash</em>. Measured the same way, on cash, this model's drift is 1.73%, which is a quarter point below the band rather than 1.8 points below it. That inference rests on AQR's convention rather than on a statement in Choi's paper, so the tool continues to report the drift against its own safe asset and to warn, but the warning should be read as partly a statement about the shape of the real curve and not only about how thin the equity premium is.</p>
 
 <h3>3.4 Risk aversion</h3>
 
@@ -749,6 +751,81 @@ h4 {
 
 <p>The expected return can be set directly, in both front ends and from the command line. Anyone holding a developed or global portfolio, or working from a house forecast, can enter it. That is the same latitude Choi gives, since the input is a user's best guess in his spreadsheet too, and it does not pretend to a regional estimate the free data cannot support.</p>
 
+<h3>3.6 The grid the coefficients were fitted on</h3>
+
+<p>The tool warns that its inputs sit outside a fitted range. That warning is worth reading properly, because the range is not a recommendation, it is not a band of sensible values, and it is not one range but two.</p>
+
+<h4>What it actually is</h4>
+
+<p>Choi solves the underlying model numerically, at particular parameter values, and then fits regressions to the answers. Section 1.2 of the paper lists the values. Risk aversion takes 3 values, the permanent and temporary shock variances 3 each, the replacement rate 3, the earnings path 7, and the two that concern us here:</p>
+
+<div class="eqn">
+  <div class="body">log real risk-free rate&nbsp;&nbsp;&nbsp;&nbsp;0, 0.01, 0.02<br>log risk premium&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.02, 0.03, 0.04</div>
+  <div class="no">&nbsp;</div>
+</div>
+
+<p>Crossed, those give 7 &times; 3<sup>6</sup> = 5,103 parameter sets. So "the 2% to 4% band" is three numbers, not an interval: the model was solved at exactly 2%, 3% and 4% and nowhere else. Everything between them is already interpolation, and everything outside is extrapolation.</p>
+
+<h4>Why those values, in his words</h4>
+
+<p>He picked them deliberately low. The paper says they are "considerably lower than the 6.5% log equity premium realized from July 1926 to July 2024", and anchors the bottom of the range to a forward-looking estimate rather than to history: the 2% case is "similar to the 1.9% forecast for U.S. large-cap equities' log excess return over cash made by the hedge fund AQR at year-end 2023 using dividend and payout discount models".</p>
+
+<p><strong>The top of the range he justifies explicitly, and the bottom he does not.</strong> On the top: "even a 2% log equity premium results in optimal equity allocations that are frequently 100%. Therefore, any approximation that accurately fits the solution for log equity premia of 4% or less should be accurate for log equity premia above 4%." Once the answer saturates at 100%, accuracy above that point stops mattering. There is no equivalent argument going down, because a lower premium moves the answer into the interior where the approximation has to work, and he had no reason in 2025 to think a reader would face a premium below AQR's 1.9%.</p>
+
+<p>Note also that AQR's 1.9% was quoted <em>over cash</em>, which is what section 3.3 turns on.</p>
+
+<h4>Where the two regressors are used, and where they are not</h4>
+
+<p>Both appear in the discount rate regressions of section 5.1 and nowhere else:</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 12. Where the fitted grid matters, and what a point of extrapolation costs</caption>
+<thead><tr><th>Quantity</th><th class="num">Coefficient</th><th>Enters</th><th class="num">Distance outside</th><th class="num">Effect on the wage discount rate</th></tr></thead>
+<tbody>
+<tr><td>Log risk-free rate</td><td class="num">+1.132</td><td>equations (12) and (13)</td><td class="num">0.92 above</td><td class="num">+1.04 points</td></tr>
+<tr><td>Log equity premium</td><td class="num">-0.267</td><td>equations (12) and (13)</td><td class="num">1.83 below</td><td class="num">+0.49 points</td></tr>
+<tr><td>Merton share, equation (4)</td><td class="num">&mdash;</td><td>nothing fitted</td><td class="num">&mdash;</td><td class="num">none</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">Coefficients from Table 1 of the paper, working-life specification. The discount rate effects are the coefficient times the distance, at September 2026 values.</p>
+
+<p><strong>Being outside the grid does not touch the Merton share.</strong> Equation (4) is exact arithmetic, and the paper's own equation (8) writes it as <code>(&pi; + &sigma;<sup>2</sup>/2) / (&gamma;&sigma;<sup>2</sup>)</code>, which is algebraically the same expression this tool uses. What the extrapolation affects is the <em>value of human capital</em>, through the rate at which future wages are discounted. That is the second factor in equation (1), so it still moves the answer, but through one channel rather than both.</p>
+
+<p><strong>The unchecked axis was the larger one.</strong> Until September 2026 this tool tested the premium and not the safe rate. The safe rate carries a coefficient four times larger, and it is further outside in the direction that matters: 0.92 log points above the grid, worth 1.04 points on the wage discount rate against 0.49 for the premium. Both push the discount rate up and human capital down. Both are now reported.</p>
+
+<h4>The awkward part, which is Choi's and not this project's</h4>
+
+<p><strong>Following his guide puts a reader outside his grid.</strong> The paper calibrates its safe rate to "the five-year TIPS real yield in 2024", and tops the grid out at a log rate of 0.02. The guide then tells a reader to enter the <em>thirty</em>-year TIPS yield, and even names the figure: "about 2.5% in December 2025". In logs that is 0.0247, already above the grid, and in September 2026 the thirty-year yield is 2.96%, or 0.0292 in logs. The instruction and the fitting were not reconciled.</p>
+
+<p>This tool follows the guide, because the guide is what a user of the spreadsheet is told to do and because section 3.3 gives an independent reason for preferring a maturity-matched real bond. The cost of that choice is now stated rather than absorbed. A reader who would rather stay inside the grid should enter the five-year yield, which was 2.15% in September 2026 and moves the default household from 38% to 58%.</p>
+
+<h4>How far outside is far</h4>
+
+<p>The blunt way to see it is to evaluate the default household at every point of the grid the approximation was actually validated on.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 13. The default household at each corner of Choi's grid</caption>
+<thead><tr><th class="num">Log safe rate</th><th class="num">Log premium</th><th class="num">Implied compound real equity return</th><th class="num">Equity share</th></tr></thead>
+<tbody>
+<tr><td class="num">0%</td><td class="num">2%</td><td class="num">2.26%</td><td class="num">100%</td></tr>
+<tr><td class="num">0%</td><td class="num">4%</td><td class="num">4.33%</td><td class="num">100%</td></tr>
+<tr><td class="num">1%</td><td class="num">2%</td><td class="num">3.29%</td><td class="num">90.8%</td></tr>
+<tr><td class="num">1%</td><td class="num">4%</td><td class="num">5.37%</td><td class="num">100%</td></tr>
+<tr><td class="num">2%</td><td class="num">2%</td><td class="num">4.33%</td><td class="num">83.3%</td></tr>
+<tr><td class="num">2%</td><td class="num">4%</td><td class="num">6.43%</td><td class="num">100%</td></tr>
+<tr><td class="num"><strong>2.92%, today</strong></td><td class="num"><strong>0.17%, today</strong></td><td class="num"><strong>3.38%</strong></td><td class="num"><strong>38.3%</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Everywhere on the grid the answer is 83% or more. This tool says 38%.</strong> That is not evidence the 38% is wrong, and the reason it is so much lower is visible in the third column: at every grid point the safe rate is low enough that equities win comfortably, and today they do not. But it does mean the recommendation is being produced in a region of the parameter space where the approximation's accuracy has never been demonstrated, by an author who reported a 3.66 percentage point root mean square error <em>inside</em> the grid and made no claim outside it.</p>
+
+<p>This is the single largest reason to treat the output as an anchor rather than an answer, and it is a larger reason than any of the input uncertainties in section 3.</p>
+
 <h2>4. Layer two: the human capital multiplier</h2>
 
 <p>Equation (4) gives the equity share of <strong>total</strong> wealth, which has two components:</p>
@@ -788,7 +865,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 12. Where this model and the age rule disagree</caption>
+  <caption>Table 14. Where this model and the age rule disagree</caption>
   <thead>
     <tr><th>Household</th><th>Age rule</th><th>This model</th></tr>
   </thead>
@@ -871,7 +948,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 13. Where the 9.7% wage discount rate comes from</caption>
+  <caption>Table 15. Where the 9.7% wage discount rate comes from</caption>
   <thead>
     <tr><th>Term</th><th class="num">Contribution, points</th><th>Set by</th></tr>
   </thead>
@@ -893,7 +970,7 @@ h4 {
 
 <p><strong>Of the inputs you control, risk aversion matters most.</strong> Moving <code>&gamma;</code> from 1 to 10 moves the rate by 7.8 points, which changes the value of human capital substantially and therefore the recommendation. Age moves it by about 1.5 points across a working life. Market conditions contribute roughly 1.9 points net at current rates.</p>
 
-<p><strong>This needs no extra inputs from you.</strong> Everything marked as calibration is fixed at the college graduate values in Table 14 and is never asked for. The equation consumes only what sections 3 and 4 already collect: risk aversion, age, the real safe rate and the equity assumptions. Your wage figures determine <em>what</em> is discounted, not the rate applied to it.</p>
+<p><strong>This needs no extra inputs from you.</strong> Everything marked as calibration is fixed at the college graduate values in Table 16 and is never asked for. The equation consumes only what sections 3 and 4 already collect: risk aversion, age, the real safe rate and the equity assumptions. Your wage figures determine <em>what</em> is discounted, not the rate applied to it.</p>
 
 <p>Compare the two equations at the <code>&gamma;</code> term: 0.087 for wages against 0.0003 for Social Security. A cautious household marks down a risky salary sharply and an inflation-indexed government annuity not at all. That is the whole difference between the two in one coefficient.</p>
 
@@ -907,7 +984,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 14. Values fixed inside the approximation</caption>
+  <caption>Table 16. Values fixed inside the approximation</caption>
   <thead>
     <tr><th>Parameter</th><th>Symbol</th><th class="num">Value</th><th>Role</th></tr>
   </thead>
@@ -926,7 +1003,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 15. What each fixed constant is worth, measured. Equity share of the financial portfolio, default household.</caption>
+  <caption>Table 17. What each fixed constant is worth, measured. Equity share of the financial portfolio, default household.</caption>
   <thead><tr><th>Constant</th><th class="num">Low</th><th class="num">Value used</th><th class="num">High</th><th class="num">Range</th></tr></thead>
   <tbody>
     <tr><td>Permanent wage shock volatility</td><td class="num">49.3% at 8%</td><td class="num">38.3% at 13%</td><td class="num">27.3% at 20%</td><td class="num">22.0 points</td></tr>
@@ -955,7 +1032,7 @@ h4 {
     <dt>W<sub>0</sub></dt><dd>is the salary entered today</dd>
     <dt>a<sub>0</sub></dt><dd>is current age</dd>
     <dt>a</dt><dd>is the projected age, running to retirement at 67</dd>
-    <dt>&sigma;<sub>perm</sub>, &sigma;<sub>tran</sub></dt><dd>are the wage shock volatilities from Table 14</dd>
+    <dt>&sigma;<sub>perm</sub>, &sigma;<sub>tran</sub></dt><dd>are the wage shock volatilities from Table 16</dd>
   </dl>
 </div>
 
@@ -973,17 +1050,17 @@ h4 {
 
 <p><strong>Allocation accuracy: how close is the percentage?</strong> They solve the exact model at every point of a grid of 5,103 parameter sets, 78 ages and 201 wealth levels, then regress the true optimal equity share on the approximation. That gives an R<sup>2</sup> of 0.99, a slope of 0.95 and an intercept of 0.05, with a root mean square error of 3.66 percentage points. Two thirds of parameter sets come in under 4 points and 95% under 5.</p>
 
-<p><strong>Welfare: does the difference matter?</strong> Allocation error is the wrong final measure, because section 7 shows the objective is flat near its optimum, so a few points of error can cost almost nothing. So they also compute expected lifetime utility under the approximate policy and under the exact one, and express the gap as the reduction in constant lifetime consumption that would produce the same loss of utility. That is the figure in Table 15, measured from the standpoint of a 22 year old whose only wealth is the current year's income.</p>
+<p><strong>Welfare: does the difference matter?</strong> Allocation error is the wrong final measure, because section 7 shows the objective is flat near its optimum, so a few points of error can cost almost nothing. So they also compute expected lifetime utility under the approximate policy and under the exact one, and express the gap as the reduction in constant lifetime consumption that would produce the same loss of utility. That is the figure in Table 17, measured from the standpoint of a 22 year old whose only wealth is the current year's income.</p>
 
 <div class="note-bias"><p><strong>A known bias.</strong> The slope of 0.95 is not noise. The approximation is somewhat <em>too aggressive</em> where the true optimum is below 83% equities, and slightly too conservative above it. The authors note that multiplying the output by 0.946 would reduce the error further. This tool does not apply that correction, because it is a post-hoc fit to their own residuals rather than part of the model, but a user near the middle of the range should read the recommendation as very slightly high.</p></div>
 
-<p>What is not reported, and would be worth having, is the worst case rather than the average. The 0.06% is a mean across parameter sets; the per-<code>&gamma;</code> columns in Table 15 are the closest thing to a tail figure and they show the spread is modest for this rule and very large for the alternatives.</p>
+<p>What is not reported, and would be worth having, is the worst case rather than the average. The 0.06% is a mean across parameter sets; the per-<code>&gamma;</code> columns in Table 17 are the closest thing to a tail figure and they show the spread is modest for this rule and very large for the alternatives.</p>
 
 <p>On the alternatives, welfare loss is measured as the reduction in lifetime consumption that would produce the same drop in expected utility, from the perspective of a 22 year old.</p>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 16. Average welfare loss against the optimal policy, across 5,103 parameter sets</caption>
+  <caption>Table 18. Average welfare loss against the optimal policy, across 5,103 parameter sets</caption>
   <thead>
     <tr><th>Portfolio rule</th><th class="num">All parameter sets</th><th class="num">At &gamma; = 4</th><th class="num">At &gamma; = 10</th></tr>
   </thead>
@@ -997,7 +1074,7 @@ h4 {
 </table>
 </div>
 
-<p class="src">Source: Choi, Liu and Liu (2025), Table 13.</p>
+<p class="src">Source: Choi, Liu and Liu (2025), Table 15.</p>
 
 <p>Three results follow directly from this table.</p>
 
@@ -1034,11 +1111,11 @@ h4 {
 
 <p><strong>Why not make them agree.</strong> Both ways of doing so are worse. Feeding your figure into the discount rate equations would use a fitted approximation outside the range it was fitted over, which is not a small liberty, since those coefficients have no standing away from the grid they were estimated on. Feeding 18.5% into equation (4) would knowingly use the wrong volatility for the portfolio the recommendation is actually about.</p>
 
-<p><strong>What it costs.</strong> Little. Volatility reaches the discount rate only through the <code>&pi;</code> term, worth &minus;0.32 points of the 9.7% in Table 14, and human capital then enters the answer as a ratio to financial wealth, which dilutes a small valuation error further. The seam is declared because it exists, not because it is dangerous.</p>
+<p><strong>What it costs.</strong> Little. Volatility reaches the discount rate only through the <code>&pi;</code> term, worth &minus;0.32 points of the 9.7% in Table 16, and human capital then enters the answer as a ratio to financial wealth, which dilutes a small valuation error further. The seam is declared because it exists, not because it is dangerous.</p>
 
 <h3>7.2 United States calibration</h3>
 
-<p>The constants in Table 15 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
+<p>The constants in Table 17 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
 
 <h3>7.3 Labour income correlated with equities</h3>
 
@@ -1046,7 +1123,7 @@ h4 {
 
 <p><strong>Why it matters for them.</strong> If your income already rises and falls with the market, part of your human capital is an implicit equity holding rather than an implicit bond. Counting it as a bond, which the baseline does, tells you to buy more equities on top of exposure you already have.</p>
 
-<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 17 as implementation work, not research.</p>
+<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 19 as implementation work, not research.</p>
 
 <p><strong>Until then.</strong> If your pay is market-linked, treat the recommendation as too high, by roughly the fraction of your human capital that behaves like equity.</p>
 
@@ -1056,7 +1133,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 17. Defects in the source spreadsheet, and what each cost</caption>
+  <caption>Table 19. Defects in the source spreadsheet, and what each cost</caption>
   <thead>
     <tr><th>Defect</th><th>Effect on the answer</th></tr>
   </thead>
@@ -1079,7 +1156,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 18. What is verified, and to what tolerance</caption>
+  <caption>Table 20. What is verified, and to what tolerance</caption>
   <thead><tr><th>Check</th><th>Result</th></tr></thead>
   <tbody>
     <tr><td>Against Choi's own spreadsheet, both tabs</td><td>115 projected years to the cent; human capital, Merton share and equity share to a relative 1e-10</td></tr>
@@ -1098,7 +1175,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 19. Equity share by age, against a representative target date glide path</caption>
+  <caption>Table 21. Equity share by age, against a representative target date glide path</caption>
   <thead><tr><th class="num">Age</th><th class="num">Target date fund</th><th class="num">This model, today</th><th class="num">This model at 8% expected return</th></tr></thead>
   <tbody>
     <tr><td class="num">25</td><td class="num">90%</td><td class="num">100%</td><td class="num">100%</td></tr>
@@ -1121,7 +1198,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 20. Published expected returns on US equities, all converted to a compound real basis</caption>
+<caption>Table 22. Published expected returns on US equities, all converted to a compound real basis</caption>
 <thead><tr><th>Firm</th><th class="num">Published</th><th class="num">Compound real</th><th>Segment</th><th class="num">Horizon</th><th>Repricing assumed</th></tr></thead>
 <tbody>
 <tr><td>Damodaran, implied</td><td class="num">7.05% real</td><td class="num">7.05%</td><td>S&amp;P 500</td><td class="num">perpetual</td><td>zero, implied</td></tr>
@@ -1159,7 +1236,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 21. The same construction, side by side</caption>
+<caption>Table 23. The same construction, side by side</caption>
 <thead><tr><th>Term</th><th class="num">AQR</th><th class="num">This model</th><th class="num">Difference</th></tr></thead>
 <tbody>
 <tr><td>Dividend yield</td><td class="num">1.3%</td><td class="num">1.10%</td><td class="num">0.20</td></tr>
@@ -1178,7 +1255,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 22. The drift, decomposed, against the one firm that publishes every piece of it</caption>
+<caption>Table 24. The drift, decomposed, against the one firm that publishes every piece of it</caption>
 <thead><tr><th>Quantity</th><th class="num">AQR</th><th class="num">This model</th></tr></thead>
 <tbody>
 <tr><td>Expected real return, US large cap, compound</td><td class="num">3.90%</td><td class="num">3.38%</td></tr>
@@ -1221,7 +1298,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 23. Included in version 1</caption>
+  <caption>Table 25. Included in version 1</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1238,7 +1315,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 24. Postponed</caption>
+  <caption>Table 26. Postponed</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1253,7 +1330,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 25. Excluded</caption>
+  <caption>Table 27. Excluded</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>

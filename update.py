@@ -36,6 +36,9 @@ from your_equity_share.market_data import (  # noqa: E402
 )
 from your_equity_share.expected_return import (  # noqa: E402
     CHOI_FITTED_LOG_PREMIUM_RANGE,
+    CHOI_FITTED_LOG_RISK_FREE_RANGE,
+    log_risk_free,
+    within_fitted_risk_free,
     arithmetic_from_compound,
     building_block_estimate,
     consensus,
@@ -593,6 +596,19 @@ def main(argv: list[str]) -> int:
                   f"{spread(estimates):>7.2%}   <- how little is known here")
             print(f"  was {existing.expected_stock_real_return:.2%}, "
                   f"{_change(expected, existing.expected_stock_real_return)}")
+
+        rf_low, rf_high = CHOI_FITTED_LOG_RISK_FREE_RANGE
+        if not within_fitted_risk_free(real_rf):
+            print()
+            print(f"  log safe rate                    "
+                  f"{log_risk_free(real_rf):>8.2%}")
+            print(f"    {log_risk_free(real_rf) - rf_high:.2%} above the "
+                  f"{rf_low:.0%} to {rf_high:.0%} band the approximation was")
+            print(f"    fitted over. The paper calibrates its safe rate to the")
+            print(f"    FIVE year TIPS yield; the guide asks for the THIRTY")
+            print(f"    year yield, which has been above the band throughout.")
+            print(f"    The coefficient on this regressor is 1.132, against")
+            print(f"    0.267 on the drift, so this is the larger liberty.")
 
         pi = log_premium(expected, real_rf)
         low, high = CHOI_FITTED_LOG_PREMIUM_RANGE

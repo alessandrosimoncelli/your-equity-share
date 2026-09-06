@@ -683,6 +683,9 @@ td.why { min-width: 15rem; }
 
 <script type="module">
 import {
+  CHOI_FITTED_LOG_RISK_FREE_RANGE,
+  logRiskFree,
+  withinFittedRiskFree,
   arithmeticFromCompound,
   compoundFromArithmetic,
   gammaFromCertaintyEquivalent,
@@ -1110,6 +1113,10 @@ function render() {
   const pi = logPremium(expected, rf);
   const [lo, hi] = CHOI_FITTED_LOG_PREMIUM_RANGE;
   const inside = pi >= lo && pi <= hi;
+  // Choi's grid has two axes and the tool used to check one. The safe rate is
+  // the other, and it carries the larger coefficient of the two.
+  const [rfLo, rfHi] = CHOI_FITTED_LOG_RISK_FREE_RANGE;
+  const rfInside = withinFittedRiskFree(rf);
   const prov = market.provenance || {};
   const label = { "building blocks": "dividend yield plus long-run growth",
                   consensus: "median of three estimators",
@@ -1123,7 +1130,12 @@ function render() {
          [pct2.format(expected), "n"],
          [`what the model uses, +${((expected - shownCompound) * 100).toFixed(2)} ` +
           `points for the volatility drag`, "why"]]) +
-    row([["Real risk-free rate", "k"], [pct2.format(rf), "n"], ["30-year TIPS yield, from FRED", "why"]]) +
+    row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
+         [rfInside
+            ? "30-year TIPS yield, from FRED"
+            : `30-year TIPS yield, from FRED. ` +
+              `${pct2.format(logRiskFree(rf) - rfHi)} above the ` +
+              `${pct0.format(rfLo)} to ${pct0.format(rfHi)} band Choi fitted`, "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +
     row([["Your risk aversion", "k"], [num1.format(gamma), "n"], ["your answer to the coin question", "why"]]) +
@@ -1136,10 +1148,15 @@ function render() {
   // the drift is shown against cash as well. Choi anchors his central example
   // to AQR's log excess return, and AQR quotes excess of cash.
   const piCash = logPremium(expected, market.real_cash ?? rf);
-  $("range-note").innerHTML = inside ? "" :
-    `<p class="note"><b>The log excess drift sits outside the ${pct0.format(lo)} to
-     ${pct0.format(hi)} range Choi's coefficients were fitted over.</b> The
-     answer is an extrapolation and should be read as indicative.` +
+  $("range-note").innerHTML = inside && rfInside ? "" :
+    `<p class="note"><b>Two of the inputs sit outside the grid Choi's
+     coefficients were fitted on.</b> He solved his model at log excess drifts
+     of ${pct0.format(lo)}, 3% and ${pct0.format(hi)} and at log safe rates of
+     ${pct0.format(rfLo)}, 1% and ${pct0.format(rfHi)}. The drift here is
+     ${pct2.format(pi)} and the safe rate is ${pct2.format(logRiskFree(rf))} in
+     logs, so both are outside, and the answer is an extrapolation that should
+     be read as indicative. At every corner of his grid a household like the
+     default one is told to hold 83% or more in equities.` +
     (market.real_cash != null
       ? ` Some of that distance is the safe asset and not the stock market:
      measured against cash at ${pct2.format(market.real_cash)} rather than a
