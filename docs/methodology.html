@@ -191,6 +191,7 @@ h4 {
 <h2>Contents</h2>
 <ol class="contents">
   <li>1. Approach and scope</li>
+  <li>&nbsp;&nbsp;1.1 Who this is for</li>
   <li>2. Layer one: the Merton share</li>
   <li>3. Layer one: the four inputs</li>
   <li>4. Layer two: the human capital multiplier</li>
@@ -234,6 +235,16 @@ h4 {
 <p>The first factor is the Merton share. The second, <code>1 + HC/W</code>, is total wealth divided by financial wealth. The clip is a constraint imposed from outside, not a result of the model.</p>
 
 <p>The source spreadsheet this tool replaces computes only the first factor. Choi's spreadsheet computes the whole expression but with simpler inputs: one equity asset, a fixed 5% expected return, no valuation input. This tool takes the input estimation from the former and the human capital treatment from the latter. It is calibrated for a household in the United States, for the reason given in section 7.2.</p>
+
+<h3>1.1 Who this is for</h3>
+
+<p>The model answers one question and it is worth naming, because a reader who brings the wrong question to it will get a confident answer to something they did not ask.</p>
+
+<p><strong>It answers:</strong> of the money a United States household has invested and does not need on any particular date, what share belongs in equities rather than in a safe bond. It assumes wages or a pension are coming in, and that the money is meant to last the rest of a life.</p>
+
+<p><strong>It does not answer anything with a date on it.</strong> A house deposit in three years, school fees in eight, a known payment on a known day: none of that fits, and the reason is structural rather than a missing feature. Section 2.3 shows that horizon does not appear in the Merton share at all, which is a result and not an omission. A model in which horizon does not appear cannot distinguish money needed in three years from money needed in forty, so it cannot be asked to. Goal-based allocation is a different problem with a different solution, and this tool has nothing to say about it.</p>
+
+<p>It also does not say how much to save, which securities or funds to hold, or what to do about a house, a business, a mortgage or an annuity. Section 9 lists what is excluded and why.</p>
 
 <h2>2. Layer one: the Merton share</h2>
 
@@ -705,6 +716,16 @@ h4 {
 <p><strong>Forty-three points of the equity share sit between the top row and the bottom one.</strong> The reason is arithmetic: the Merton numerator is the gap between the equity drift and the safe drift, and moving the safe rate from 1.37% to 2.96% removes 1.56 points from a gap that is only about two points wide to begin with. When the premium is thin, the choice of safe asset stops being a detail.</p>
 
 <p><strong>The long bond is the right answer, and the argument is Campbell and Viceira's.</strong> For an investor with a short horizon, cash is riskless and a long bond is risky, because its price moves. For an investor with a thirty-year horizon this reverses: a long inflation-indexed bond delivers a known real amount at the date the money is needed, while cash has to be rolled at rates nobody knows, which is reinvestment risk. The riskless asset is defined by the horizon, and this model's horizon is a lifetime. Choosing cash here would also be choosing the higher answer, which is a reason to be careful rather than a reason to do it.</p>
+
+<h4>Why this is not offered as a choice</h4>
+
+<p>Having measured that the safe asset is worth 43 points, the obvious next move is to let a reader pick their own maturity. It would be a mistake, and the reason is visible in the table above: <strong>every step towards a shorter maturity raises the recommended equity share.</strong> That looks backwards, and the appearance is instructive.</p>
+
+<p>The model does not ask how risky the safe asset is. It asks what the safe asset pays, and then compares equities against it. A shorter real yield is a lower one, on 96% of the days since 2010 and by an average of 0.97 points between the five and thirty year points, so naming a shorter maturity names a worse alternative and equities win by more. A menu of maturities would therefore be a dial for manufacturing a higher equity share, presented as a technical detail. Nobody would pick the 30-year twice.</p>
+
+<p>The deeper objection is that the shorter options are not riskless for this household at all. The model has one safe rate, constant and certain. A thirty-year inflation-linked bond held to maturity delivers exactly that. Cash, or a five-year bond rolled, delivers an unknown sequence of rates, and feeding its <em>current</em> yield to a model that treats it as certain forever is assuming away the reinvestment risk that is the whole difference between them. The 81% on the cash row is not a more aggressive reading of the same facts; it is an answer to a question with a false premise in it.</p>
+
+<p>So the maturity stays fixed, and what the tool does instead is say on its face what the safe asset is and what it pays. A reader who sees "38% in equities" and nothing else reads it as pessimism about the stock market. A reader who sees that the alternative is 2.96% above inflation, guaranteed for thirty years, is looking at the actual trade-off.</p>
 
 <p><strong>The one thing this weakens is the fitted grid, twice over.</strong> A higher safe rate lowers the drift <em>and</em> raises the safe rate itself above the grid the coefficients were fitted on, which section 3.6 sets out in full. Section 3.1 reports a log excess drift of 0.17%, well below the 2% to 4% values Choi solved at. Some of that distance is the safe asset rather than the equity market: Choi anchors his central 2% example to AQR's 1.9% log excess return, and AQR quotes excess <em>of cash</em>. Measured the same way, on cash, this model's drift is 1.73%, which is a quarter point below the band rather than 1.8 points below it. That inference rests on AQR's convention rather than on a statement in Choi's paper, so the tool continues to report the drift against its own safe asset and to warn, but the warning should be read as partly a statement about the shape of the real curve and not only about how thin the equity premium is.</p>
 

@@ -88,6 +88,24 @@ h1 {
    wrapping where the window is narrower. */
 .masthead .lede { margin: 0 auto; max-width: 68rem; }
 
+/*
+  Scope, above the form. Two columns so it reads as a preamble rather than as
+  a warning, and so it costs about four lines of height instead of eight.
+*/
+.scope {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem clamp(1.75rem, 4vw, 3.5rem);
+  margin-bottom: 2.1rem;
+  font-size: var(--t-small);
+}
+.scope p { margin: 0; }
+.scope b { color: var(--green); }
+
+@media (max-width: 46rem) {
+  .scope { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
+}
+
 .section-form {
   border: 1px solid var(--rule);
   padding: 1.6rem clamp(1.1rem, 2.5vw, 2rem) 1.8rem;
@@ -472,6 +490,19 @@ td.why { min-width: 15rem; }
   with the human capital adjustment of Choi, Liu and Liu (2025).</p>
 </header>
 
+<div class="scope">
+  <p><b>What this answers.</b> Of the money you have invested and do not need on
+  any particular date, what share belongs in equities rather than in a safe
+  bond. It assumes you have a salary or a pension coming in, and that this money
+  is meant to last the rest of your life. United States only: the earnings,
+  mortality and Social Security assumptions behind it are American.</p>
+  <p><b>What it does not.</b> Money with a date on it. A house deposit in three
+  years, school fees in eight, anything you must pay on a given day: the model
+  has one horizon, the rest of your life, and no way to hold a payment aside.
+  It also does not tell you how much to save, which funds to buy, or what to do
+  about a house, a business or a mortgage.</p>
+</div>
+
 <div id="boot" class="boot">Loading the market data.</div>
 
 <div id="app" hidden>
@@ -603,6 +634,7 @@ td.why { min-width: 15rem; }
           <span class="verdict-figure" id="verdict-figure">&mdash;&mdash;</span>
           <span class="verdict-text" id="verdict-text"></span>
         </p>
+        <p class="note" id="safe-flag"></p>
         <p class="note" id="cap-flag"></p>
       </div>
       <div class="split">
@@ -1006,11 +1038,19 @@ function render() {
 
   // The answer as a sentence. Both sides of the split are named here, which
   // is what the meter used to do.
+  // The answer is a comparison, and the thing it is compared against is
+  // currently paying an unusually good real rate. A reader who does not know
+  // that reads a low equity share as pessimism about stocks.
   $("verdict-figure").textContent = pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
     `of your ${usd.format(r.financialWealth)} portfolio belongs in equities, or <b>${usd.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`;
 
   drawSplit($("split-chart"), $("split-key"), r);
+
+  $("safe-flag").innerHTML =
+    `The safe asset here is a 30-year inflation-linked Treasury, paying ` +
+    `<b>${pct2.format(rf)} above inflation, guaranteed</b>. The answer is a ` +
+    `comparison against that, not a view about whether equities will do well.`;
 
   $("cap-flag").innerHTML = r.isCapped
     ? `<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The cap at 100% is imposed from outside; the model did not produce it.`
