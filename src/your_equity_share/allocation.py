@@ -91,9 +91,10 @@ class Household:
             )
         if not 1.0 <= self.risk_aversion <= 10.0:
             raise ValueError(
-                f"risk aversion {self.risk_aversion} is outside the 1 to 10 range "
-                f"the approximation was fitted over. See docs/inputs.md for how "
-                f"to determine yours."
+                f"risk aversion {self.risk_aversion} is outside the 1 to 10 scale "
+                f"Choi's guide uses. His model was solved over 4 to 10; below 4 "
+                f"is accepted here because it is the side where the answer "
+                f"saturates at 100%. See docs/inputs.md for how to determine yours."
             )
 
 

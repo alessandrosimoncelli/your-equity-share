@@ -132,6 +132,13 @@ A lifetime model must use a long horizon. Using the ten-year figure would put
 the recommendation at zero equities, which is an artefact of the horizon
 mismatch, not a finding.
 
+### Risk aversion: the guide's scale is not the paper's grid
+
+The guide publishes a table from 1 to 10 and the tool accepts that range. The
+paper solves the model at **4, 5, 6, 7, 8, 9 and 10** only. An answer implying
+less than 4 is extrapolation, though on the side where the answer saturates at
+100% and therefore matters least. Section 3.6 of the methodology has the detail.
+
 ### The statistical caveat that matters
 
 The regression uses overlapping windows, so its 1,387 observations contain only

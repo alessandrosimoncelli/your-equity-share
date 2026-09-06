@@ -320,10 +320,12 @@ def test_glide_path_declines_with_age() -> None:
 # --- input validation -------------------------------------------------------
 
 
-def test_rejects_risk_aversion_outside_the_fitted_range() -> None:
-    with pytest.raises(ValueError, match="1 to 10 range"):
+def test_rejects_risk_aversion_outside_the_guide_scale() -> None:
+    """The 1 to 10 scale is the guide's. The paper solves over 4 to 10, and the
+    message must not conflate the two, which it did until it was checked."""
+    with pytest.raises(ValueError, match="1 to 10 scale"):
         _household(risk_aversion=0.5)
-    with pytest.raises(ValueError, match="1 to 10 range"):
+    with pytest.raises(ValueError, match="1 to 10 scale"):
         _household(risk_aversion=12.0)
 
 

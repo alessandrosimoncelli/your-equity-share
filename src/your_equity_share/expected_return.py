@@ -40,6 +40,7 @@ from datetime import date
 __all__ = [
     "CHOI_FITTED_LOG_PREMIUM_RANGE",
     "CHOI_FITTED_LOG_RISK_FREE_RANGE",
+    "CHOI_FITTED_RISK_AVERSION_RANGE",
     "log_risk_free",
     "within_fitted_risk_free",
     "Estimate",
@@ -76,6 +77,13 @@ CHOI_FITTED_LOG_PREMIUM_RANGE = (0.02, 0.04)
 # against -0.267 for the premium, so a point of extrapolation here costs four
 # times what a point of premium extrapolation costs.
 CHOI_FITTED_LOG_RISK_FREE_RANGE = (0.0, 0.02)
+
+# And the third axis of the same grid. The paper solves at 4, 5, 6, 7, 8, 9 and
+# 10, which is the seven in 7 x 3^6 = 5,103; the guide publishes a table from 1
+# to 10. Below 4 is extrapolation, and by Choi's own argument it is the benign
+# side: "at a risk aversion of 4, the optimal equity allocation is very
+# frequently at the 100% upper boundary."
+CHOI_FITTED_RISK_AVERSION_RANGE = (4.0, 10.0)
 
 # Volatility baked into the fitted coefficients. Used for the log conversion so
 # that the comparison against the fitted range is on Choi's own terms.

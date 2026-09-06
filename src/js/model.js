@@ -51,6 +51,10 @@ export const CHOI_FITTED_LOG_PREMIUM_RANGE = Object.freeze([0.02, 0.04]);
 // above all three. The regressor carries +1.132 against -0.267 on the premium.
 export const CHOI_FITTED_LOG_RISK_FREE_RANGE = Object.freeze([0.0, 0.02]);
 
+// And the third axis. The paper solves at 4, 5, 6, 7, 8, 9 and 10; the guide
+// offers a table from 1 to 10. Below 4 is extrapolation, on the benign side.
+export const CHOI_FITTED_RISK_AVERSION_RANGE = Object.freeze([4, 10]);
+
 /** Volatility baked into the fitted coefficients. */
 export const CALIBRATION_VOLATILITY = 0.185;
 
@@ -365,8 +369,9 @@ export function makeHousehold(investableNetWorth, adults, riskAversion = 5.0) {
   }
   if (!(riskAversion >= 1.0 && riskAversion <= 10.0)) {
     throw new RangeError(
-      `risk aversion ${riskAversion} is outside the 1 to 10 range the approximation ` +
-        `was fitted over. See docs/inputs.md for how to determine yours.`,
+      `risk aversion ${riskAversion} is outside the 1 to 10 scale Choi's guide ` +
+        `uses. His model was solved over 4 to 10; below 4 is accepted here ` +
+        `because it is the side where the answer saturates at 100%.`,
     );
   }
   return { investableNetWorth, adults, riskAversion };
