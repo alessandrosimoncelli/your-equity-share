@@ -21,6 +21,7 @@ slow or unreachable provider can never break a demonstration.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -53,6 +54,8 @@ from your_equity_share.providers import (  # noqa: E402
     parse_multpl_current,
     parse_price_json,
     parse_shiller_csv,
+    parse_shiller_xls,
+    ShillerHistory,
 )
 from your_equity_share.statistics import (  # noqa: E402
     TRADING_DAYS_PER_YEAR,
@@ -67,7 +70,24 @@ PRICE_URL = (
 )
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 ERP_URL = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx"
-SHILLER_URL = (
+# The long history, in the order it is tried. Shiller is the source; the rest
+# are what to do when a URL moves, which it already has once.
+#
+#   1  his own site, whose download link is discovered rather than hardcoded,
+#      because the file sits behind a content delivery network and the address
+#      carries a version stamp that changes with every update
+#   2  the same file at Yale, which is where it lived until October 2023 and
+#      is still served, only frozen
+#   3  a community CSV mirror, which is what this project used to use and
+#      which stopped carrying CPI in September 2023, taking every deflated
+#      column with it
+#
+# A tool meant to answer the same question in twenty years cannot rest on one
+# address. Each source is validated the same way, and the run says which one
+# answered and how old its data is.
+SHILLER_PAGE = "https://shillerdata.com/"
+SHILLER_YALE_URL = "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
+SHILLER_MIRROR_URL = (
     "https://raw.githubusercontent.com/datasets/s-and-p-500/main/data/data.csv"
 )
 CAPE_URL = "https://www.multpl.com/shiller-pe"
@@ -233,6 +253,8 @@ def render_config(**f) -> str:
         # whole estimate was as fresh as those two.
         f'history_as_of = "{f["history_as_of"]}"' if f.get("history_as_of")
         else "# history_as_of = none",
+        f'history_source = "{f["history_source"]}"' if f.get("history_source")
+        else "# history_source = none",
         f'volatility_source = "Yahoo daily closes"',
         f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
         'expected_return_source = "payout yield plus long-run real earnings '
@@ -243,7 +265,59 @@ def render_config(**f) -> str:
     return nl.join(out).rstrip() + nl
 
 
-def estimate_expected_return(real_risk_free: float) -> tuple[list, str]:
+def discover_shiller_url() -> str:
+    """Find the current download link on Shiller's own page.
+
+    The file moved from Yale to a content delivery network in 2023 and the new
+    address carries an opaque identifier and a version stamp. Reading the link
+    off the page survives the next move; hardcoding it would not.
+    """
+    page = _get(SHILLER_PAGE).decode("utf-8", "replace")
+    links = re.findall(r'href="([^"]*ie_data\.xls[^"]*)"', page, re.I)
+    if not links:
+        raise DataUnavailable("no ie_data.xls link found on Shiller's page")
+    url = links[0]
+    if url.startswith("//"):
+        url = "https:" + url
+    elif url.startswith("/"):
+        url = SHILLER_PAGE.rstrip("/") + url
+    return url
+
+
+def fetch_shiller_history() -> tuple[ShillerHistory, str]:
+    """The long history, from whichever source answers first.
+
+    Returns the history and a description of where it came from, so the run
+    and the saved configuration can both say which one was used.
+    """
+    problems: list[str] = []
+
+    try:
+        url = discover_shiller_url()
+        history = parse_shiller_xls(_get(url))
+        return history, "Shiller's own site"
+    except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
+        problems.append(f"Shiller's own site: {exc}")
+
+    try:
+        history = parse_shiller_xls(_get(SHILLER_YALE_URL))
+        return history, "Yale, no longer updated"
+    except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
+        problems.append(f"Yale: {exc}")
+
+    try:
+        history = parse_shiller_csv(_get(SHILLER_MIRROR_URL).decode("utf-8", "replace"))
+        return history, "community CSV mirror"
+    except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
+        problems.append(f"mirror: {exc}")
+
+    raise DataUnavailable(
+        "no source for the long history answered. Tried:\n    "
+        + "\n    ".join(problems)
+    )
+
+
+def estimate_expected_return(real_risk_free: float) -> tuple[list, str, str]:
     """Build the expected real return three independent ways.
 
     Each uses free public data and none of them needs a key. They disagree by
@@ -254,7 +328,7 @@ def estimate_expected_return(real_risk_free: float) -> tuple[list, str]:
     erp_as_of, erp = parse_damodaran_erp(workbook)
     payout_as_of, payout_yield, _smoothed = parse_damodaran_components(workbook)
 
-    shiller = parse_shiller_csv(_get(SHILLER_URL).decode("utf-8", "replace"))
+    shiller, shiller_source = fetch_shiller_history()
     # The trend through the window, not the two months at its ends. See
     # ShillerHistory.real_earnings_trend_growth for the measured difference.
     real_growth = shiller.real_earnings_trend_growth(GROWTH_WINDOW_YEARS)
@@ -299,7 +373,7 @@ def estimate_expected_return(real_risk_free: float) -> tuple[list, str]:
         estimates[2] = type(estimates[2])(
             **{**estimates[2].__dict__, "detail": estimates[2].detail + f", {cape_note}"}
         )
-    return estimates, history_as_of
+    return estimates, history_as_of, shiller_source
 
 
 def _change(new: float, old: float) -> str:
@@ -373,11 +447,12 @@ def main(argv: list[str]) -> int:
             expected = args.fixed_return
             estimates = []
             history_as_of = None
+            history_source = None
             print(f"  expected stock real return       {expected:>8.2%}"
                   f"   set by hand")
         else:
             method = "building blocks"
-            estimates, history_as_of = estimate_expected_return(real_rf)
+            estimates, history_as_of, history_source = estimate_expected_return(real_rf)
             chosen, *cross_checks = estimates
             erp_as_of = next(
                 (e.as_of for e in estimates if e.method == "implied premium"), None
@@ -418,6 +493,7 @@ def main(argv: list[str]) -> int:
                 warn = "  <- STALE" if months > 6 else ""
                 print(f"    long history runs to        {history_as_of}"
                       f"   {months} months behind{warn}")
+                print(f"      source: {history_source}")
                 if months > 6:
                     print("      Only the growth term uses it, and growth is taken")
                     print("      as the trend through a century, where three years")
@@ -489,6 +565,7 @@ def main(argv: list[str]) -> int:
         ) if estimates else "",
         estimates=bool(estimates),
         history_as_of=history_as_of,
+        history_source=history_source,
     )
 
     if args.dry_run:

@@ -8,7 +8,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-09-04T13:31:12+00:00"
+generated_at = "2026-09-06T01:52:44+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
@@ -17,19 +17,19 @@ generated_by = "update.py"
 # Set by hand. Choi's guide defaults to 5%, roughly what current
 # valuation ratios imply if they hold and earnings growth matches
 # its long-run average.
-expected_stock_real_return = 0.063496
+expected_stock_real_return = 0.064717
 
 # FRED DFII30, the 30-year TIPS yield. A real yield
 # already, so no inflation adjustment is applied. Reduce it by your
 # marginal income tax rate if your bonds sit in a taxable account.
-real_risk_free = 0.029800
+real_risk_free = 0.029600
 
 # 5 years of daily adjusted closes of SPY,
 # 1254 returns, annualised.
-stock_volatility = 0.171799
+stock_volatility = 0.171808
 market_ticker = "SPY"
 
-as_of = 2026-09-02
+as_of = 2026-09-03
 
 # Where each number came from. The model does not read this section.
 [provenance]
@@ -39,10 +39,11 @@ erp_as_of = 2026-09-01
 volatility_window_years = 5
 volatility_observations = 1254
 volatility_dividend_adjusted = true
-expected_return_spread = 0.022783
+expected_return_spread = 0.021381
 expected_return_basis = "arithmetic mean, converted from compound"
-expected_return_estimates = "building blocks 0.0479 (used); implied premium 0.0707; valuation regression, 30y 0.0517"
-history_as_of = "2023-06-01"
+expected_return_estimates = "building blocks 0.0491 (used); implied premium 0.0705; valuation regression, 30y 0.0532"
+history_as_of = "2026-06-01"
+history_source = "Shiller's own site"
 volatility_source = "Yahoo daily closes"
 real_risk_free_source = "FRED DFII30"
 expected_return_source = "payout yield plus long-run real earnings growth, no repricing; see docs/methodology.html section 3"

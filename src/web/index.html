@@ -1133,10 +1133,14 @@ async function boot() {
     const [hy, hm] = hist.split("-").map(Number);
     const now = new Date();
     const months = (now.getFullYear() - hy) * 12 + (now.getMonth() + 1 - hm);
+    const src = (market.provenance || {}).history_source;
     histNote =
-      ` The long history behind the expected return runs only to <b>${hist}</b>, ` +
-      `<span class="${months > 6 ? "stale" : "ok"}">${months} months behind</span>. ` +
-      `The rate and the volatility above are current; that estimate is not.`;
+      ` The long history behind the expected return runs to <b>${hist}</b>, ` +
+      `<span class="${months > 12 ? "stale" : "ok"}">${months} months behind</span>` +
+      (src ? `, from ${src}` : "") + ". " +
+      (months > 12
+        ? "Earnings arrive after the prices they belong to, but this is further behind than that explains."
+        : "Earnings always arrive after the prices they belong to, so a few months is normal.");
   }
   $("foot").innerHTML =
     `Rate and volatility as of <b>${market.as_of}</b>, ` +

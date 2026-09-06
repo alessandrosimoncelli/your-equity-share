@@ -411,7 +411,7 @@ h4 {
   </dl>
 </div>
 
-<p class="src">Source: the Gordon growth relationship in the building-block form of Grinold and Kroner (2002). Payout yield from Damodaran's monthly workbook, growth from the Shiller series.</p>
+<p class="src">Source: the Gordon growth relationship in the building-block form of Grinold and Kroner (2002). Payout yield from Damodaran's monthly workbook, growth from Shiller's own workbook.</p>
 
 <p>Today: a 2.63% payout yield plus 2.17% real earnings growth, no repricing, giving 4.79%.</p>
 
@@ -492,9 +492,29 @@ h4 {
 
 <p><strong>The first column asks how arbitrary the answer is.</strong> Nothing makes a hundred years the right window rather than ninety or a hundred and ten. If the estimate swings by 1.27 points as that choice changes, then more than a percentage point of the published number is an artefact of a decision nobody can justify. A quarter of a point is tolerable.</p>
 
-<p><strong>The second column asks what stale data costs</strong>, and it settles a practical problem. The published series runs months and sometimes years behind the market, because prices arrive promptly and the earnings needed for a cyclically adjusted ratio do not; the version used here ends in June 2023. Rolling the end of the window back by up to three years simulates exactly that lag. A point-to-point rate moves 0.82 points, which would be serious, because the whole equity risk premium is only about 3.4 points. A trend moves 0.015 points, about one and a half basis points.</p>
+<p><strong>The second column asks what stale data costs.</strong> Earnings arrive months after the prices they belong to, so the series always ends behind the market. Rolling the end of the window back by up to three years simulates that lag. A point-to-point rate moves 0.82 points, which would be serious, because the whole equity risk premium is about 3.4 points. A trend moves 0.015 points, roughly a basis point and a half.</p>
 
-<p>So the staleness is not a problem to be solved by finding a fresher source. It is a problem that disappears once the estimator stops depending on which particular month sits at the edge of the data. The other half of the estimate, the payout yield, comes from a monthly source and is current.</p>
+<p>That column bought this estimate its margin of safety, and it was needed. For a time the tool read the series from a community mirror that stopped carrying the consumer price index in September 2023. Every deflated column is computed from that index, so all of them went to zero at once while nominal prices kept arriving, and the growth estimate silently rested on data three years old. Because the estimator is a trend rather than two endpoints, the cost of that was about a basis point rather than most of a percentage point.</p>
+
+<h4>Where the history comes from</h4>
+
+<p>It is now read from Shiller's own workbook, and three sources are tried in order:</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 5. The long history, in the order it is tried.</caption>
+<thead><tr><th>Source</th><th>Why it is where it is</th></tr></thead>
+<tbody>
+<tr><td><strong>Shiller's own site</strong></td><td>The authoritative copy. The download link is read off the page rather than hardcoded, because the file sits behind a content delivery network and its address carries a version stamp that changes with every update.</td></tr>
+<tr><td>The same file at Yale</td><td>Where it lived until October 2023 and is still served, only frozen. A working answer when the first address moves again.</td></tr>
+<tr><td>A community CSV mirror</td><td>What this project used to read, and the one that broke.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Only five raw columns are read: the date, the index level, dividends, earnings and the consumer price index. Everything real is deflated here rather than taken from his sheet. That matters for durability twice over. A deflated column in his workbook is a spreadsheet formula, and reading one means trusting whatever value Excel last cached in it; and a column he renames or moves would break a reader that went looking for it by position. The five that are read are typed in, are located by the header rather than by column number, and are the five least likely to change.</p>
+
+<p>The result is checked before it is used: the months must be contiguous, the series must run to at least six hundred of them, and no month inside the window may carry non-positive earnings. A source that fails any of those is passed over for the next one, and if none answers the refresh stops rather than writing something it cannot stand behind.</p>
 
 <p>The ten-year average at each end is shown because it is the obvious middle option: it replaces each endpoint with an average of the 120 months around it. It is much better than point to point and still worse than the trend, for the same reason, that it uses 240 of the 1,200 observations rather than all of them.</p>
 
@@ -545,7 +565,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 5. Effect of the covariance treatment, measured</caption>
+  <caption>Table 6. Effect of the covariance treatment, measured</caption>
   <thead>
     <tr><th>Denominator variance</th><th class="num">Value</th><th class="num">Implied &sigma;</th><th class="num">Merton share</th></tr>
   </thead>
@@ -644,7 +664,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 6. Where this model and the age rule disagree</caption>
+  <caption>Table 7. Where this model and the age rule disagree</caption>
   <thead>
     <tr><th>Household</th><th>Age rule</th><th>This model</th></tr>
   </thead>
@@ -727,7 +747,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 7. Where the 9.7% wage discount rate comes from</caption>
+  <caption>Table 8. Where the 9.7% wage discount rate comes from</caption>
   <thead>
     <tr><th>Term</th><th class="num">Contribution, points</th><th>Set by</th></tr>
   </thead>
@@ -749,7 +769,7 @@ h4 {
 
 <p><strong>Of the inputs you control, risk aversion matters most.</strong> Moving <code>&gamma;</code> from 1 to 10 moves the rate by 7.8 points, which changes the value of human capital substantially and therefore the recommendation. Age moves it by about 1.5 points across a working life. Market conditions contribute roughly 1.9 points net at current rates.</p>
 
-<p><strong>This needs no extra inputs from you.</strong> Everything marked as calibration is fixed at the college graduate values in Table 8 and is never asked for. The equation consumes only what sections 3 and 4 already collect: risk aversion, age, the real safe rate and the equity assumptions. Your wage figures determine <em>what</em> is discounted, not the rate applied to it.</p>
+<p><strong>This needs no extra inputs from you.</strong> Everything marked as calibration is fixed at the college graduate values in Table 9 and is never asked for. The equation consumes only what sections 3 and 4 already collect: risk aversion, age, the real safe rate and the equity assumptions. Your wage figures determine <em>what</em> is discounted, not the rate applied to it.</p>
 
 <p>Compare the two equations at the <code>&gamma;</code> term: 0.087 for wages against 0.0003 for Social Security. A cautious household marks down a risky salary sharply and an inflation-indexed government annuity not at all. That is the whole difference between the two in one coefficient.</p>
 
@@ -763,7 +783,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 8. Values fixed inside the approximation</caption>
+  <caption>Table 9. Values fixed inside the approximation</caption>
   <thead>
     <tr><th>Parameter</th><th>Symbol</th><th class="num">Value</th><th>Role</th></tr>
   </thead>
@@ -794,7 +814,7 @@ h4 {
     <dt>W<sub>0</sub></dt><dd>is the salary entered today</dd>
     <dt>a<sub>0</sub></dt><dd>is current age</dd>
     <dt>a</dt><dd>is the projected age, running to retirement at 67</dd>
-    <dt>&sigma;<sub>perm</sub>, &sigma;<sub>tran</sub></dt><dd>are the wage shock volatilities from Table 8</dd>
+    <dt>&sigma;<sub>perm</sub>, &sigma;<sub>tran</sub></dt><dd>are the wage shock volatilities from Table 9</dd>
   </dl>
 </div>
 
@@ -812,17 +832,17 @@ h4 {
 
 <p><strong>Allocation accuracy: how close is the percentage?</strong> They solve the exact model at every point of a grid of 5,103 parameter sets, 78 ages and 201 wealth levels, then regress the true optimal equity share on the approximation. That gives an R<sup>2</sup> of 0.99, a slope of 0.95 and an intercept of 0.05, with a root mean square error of 3.66 percentage points. Two thirds of parameter sets come in under 4 points and 95% under 5.</p>
 
-<p><strong>Welfare: does the difference matter?</strong> Allocation error is the wrong final measure, because section 7 shows the objective is flat near its optimum, so a few points of error can cost almost nothing. So they also compute expected lifetime utility under the approximate policy and under the exact one, and express the gap as the reduction in constant lifetime consumption that would produce the same loss of utility. That is the figure in Table 9, measured from the standpoint of a 22 year old whose only wealth is the current year's income.</p>
+<p><strong>Welfare: does the difference matter?</strong> Allocation error is the wrong final measure, because section 7 shows the objective is flat near its optimum, so a few points of error can cost almost nothing. So they also compute expected lifetime utility under the approximate policy and under the exact one, and express the gap as the reduction in constant lifetime consumption that would produce the same loss of utility. That is the figure in Table 10, measured from the standpoint of a 22 year old whose only wealth is the current year's income.</p>
 
 <div class="note-bias"><p><strong>A known bias.</strong> The slope of 0.95 is not noise. The approximation is somewhat <em>too aggressive</em> where the true optimum is below 83% equities, and slightly too conservative above it. The authors note that multiplying the output by 0.946 would reduce the error further. This tool does not apply that correction, because it is a post-hoc fit to their own residuals rather than part of the model, but a user near the middle of the range should read the recommendation as very slightly high.</p></div>
 
-<p>What is not reported, and would be worth having, is the worst case rather than the average. The 0.06% is a mean across parameter sets; the per-<code>&gamma;</code> columns in Table 9 are the closest thing to a tail figure and they show the spread is modest for this rule and very large for the alternatives.</p>
+<p>What is not reported, and would be worth having, is the worst case rather than the average. The 0.06% is a mean across parameter sets; the per-<code>&gamma;</code> columns in Table 10 are the closest thing to a tail figure and they show the spread is modest for this rule and very large for the alternatives.</p>
 
 <p>On the alternatives, welfare loss is measured as the reduction in lifetime consumption that would produce the same drop in expected utility, from the perspective of a 22 year old.</p>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 9. Average welfare loss against the optimal policy, across 5,103 parameter sets</caption>
+  <caption>Table 10. Average welfare loss against the optimal policy, across 5,103 parameter sets</caption>
   <thead>
     <tr><th>Portfolio rule</th><th class="num">All parameter sets</th><th class="num">At &gamma; = 4</th><th class="num">At &gamma; = 10</th></tr>
   </thead>
@@ -836,7 +856,7 @@ h4 {
 </table>
 </div>
 
-<p class="src">Source: Choi, Liu and Liu (2025), Table 6.</p>
+<p class="src">Source: Choi, Liu and Liu (2025), Table 7.</p>
 
 <p>Three results follow directly from this table.</p>
 
@@ -873,11 +893,11 @@ h4 {
 
 <p><strong>Why not make them agree.</strong> Both ways of doing so are worse. Feeding your figure into the discount rate equations would use a fitted approximation outside the range it was fitted over, which is not a small liberty, since those coefficients have no standing away from the grid they were estimated on. Feeding 18.5% into equation (4) would knowingly use the wrong volatility for the portfolio the recommendation is actually about.</p>
 
-<p><strong>What it costs.</strong> Little. Volatility reaches the discount rate only through the <code>&pi;</code> term, worth &minus;0.32 points of the 9.7% in Table 7, and human capital then enters the answer as a ratio to financial wealth, which dilutes a small valuation error further. The seam is declared because it exists, not because it is dangerous.</p>
+<p><strong>What it costs.</strong> Little. Volatility reaches the discount rate only through the <code>&pi;</code> term, worth &minus;0.32 points of the 9.7% in Table 8, and human capital then enters the answer as a ratio to financial wealth, which dilutes a small valuation error further. The seam is declared because it exists, not because it is dangerous.</p>
 
 <h3>7.2 United States calibration</h3>
 
-<p>The constants in Table 8 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
+<p>The constants in Table 9 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
 
 <h3>7.3 Labour income correlated with equities</h3>
 
@@ -885,7 +905,7 @@ h4 {
 
 <p><strong>Why it matters for them.</strong> If your income already rises and falls with the market, part of your human capital is an implicit equity holding rather than an implicit bond. Counting it as a bond, which the baseline does, tells you to buy more equities on top of exposure you already have.</p>
 
-<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 12 as implementation work, not research.</p>
+<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 13 as implementation work, not research.</p>
 
 <p><strong>Until then.</strong> If your pay is market-linked, treat the recommendation as too high, by roughly the fraction of your human capital that behaves like equity.</p>
 
@@ -895,7 +915,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 10. Defects in the source spreadsheet, and what each cost</caption>
+  <caption>Table 11. Defects in the source spreadsheet, and what each cost</caption>
   <thead>
     <tr><th>Defect</th><th>Effect on the answer</th></tr>
   </thead>
@@ -914,7 +934,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 11. Included in version 1</caption>
+  <caption>Table 12. Included in version 1</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -931,7 +951,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 12. Postponed</caption>
+  <caption>Table 13. Postponed</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -946,7 +966,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 13. Excluded</caption>
+  <caption>Table 14. Excluded</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
