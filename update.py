@@ -107,6 +107,14 @@ GROWTH_WINDOW_YEARS = 100
 # yield already, which is what the model needs and what Choi's guide asks for.
 FRED_REAL_RISK_FREE = "DFII30"
 
+# For reporting only. A 3-month bill and a 10-year breakeven do not describe
+# the same horizon, so their difference is a rough real cash rate rather than a
+# precise one, which is all it needs to be: it exists to show that part of the
+# distance from Choi's fitted band is the choice of safe asset. Measured this
+# way in September 2026 it came to 1.37% against AQR's own 1.30% estimate.
+FRED_SHORT_NOMINAL = "DTB3"
+FRED_BREAKEVEN = "T10YIE"
+
 # The price endpoint rejects the default urllib agent string.
 USER_AGENT = "Mozilla/5.0 (compatible; your-equity-share/0.1; research tool)"
 TIMEOUT_SECONDS = 40
@@ -258,6 +266,9 @@ def render_config(**f) -> str:
             [
                 f"expected_return_spread = {f['spread']:.6f}",
                 'expected_return_basis = "arithmetic mean, converted from compound"',
+                # The page shows this beside the arithmetic figure, because it
+                # is the basis every published forecast is quoted on.
+                f"expected_return_compound = {f['compound_return']:.6f}",
                 f'expected_return_estimates = "{f["estimate_summary"]}"',
             ]
             if f.get("estimates")
@@ -275,6 +286,12 @@ def render_config(**f) -> str:
         else "# history_source = none",
         f'volatility_source = "Yahoo daily closes"',
         f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
+        # Not an input. See the constant for what it is for.
+        *(
+            [f"real_cash = {f['real_cash']:.6f}"]
+            if f.get("real_cash") is not None
+            else []
+        ),
         # Not added to the estimate. Buybacks reach the holder as growth in
         # earnings per share, which the growth term already carries, so adding
         # them here as income would count them twice. Recorded because it is
@@ -462,6 +479,22 @@ def main(argv: list[str]) -> int:
     try:
         print("\nFetching...")
 
+        try:
+            _, short_nominal = parse_fred_csv(
+                _get(FRED_URL.format(series=FRED_SHORT_NOMINAL)).decode(
+                    "utf-8", "replace"
+                ),
+                FRED_SHORT_NOMINAL,
+            )
+            _, breakeven = parse_fred_csv(
+                _get(FRED_URL.format(series=FRED_BREAKEVEN)).decode("utf-8", "replace"),
+                FRED_BREAKEVEN,
+            )
+            real_cash = (1.0 + short_nominal) / (1.0 + breakeven) - 1.0
+        except (DataUnavailable, urllib.error.URLError, OSError, ValueError):
+            # Reporting only, so a failure here must not stop a refresh.
+            real_cash = None
+
         rf_date, real_rf = parse_fred_csv(
             _get(FRED_URL.format(series=FRED_REAL_RISK_FREE)).decode(
                 "utf-8", "replace"
@@ -615,6 +648,7 @@ def main(argv: list[str]) -> int:
         estimates=bool(estimates),
         history_as_of=history_as_of,
         history_source=history_source,
+        real_cash=real_cash,
         buyback_yield=buyback_yield,
         dividend_yield=dividend_yield,
         real_growth=real_growth,

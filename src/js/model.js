@@ -422,6 +422,24 @@ export function recommend(
 
 // --- reporting helpers the page needs ---------------------------------------
 
+/**
+ * Convert a compound (geometric) return into an arithmetic mean.
+ *
+ * Ported from arithmetic_from_compound in expected_return.py. Every
+ * forward-looking estimate of equity returns is naturally compound: a
+ * discounted cash flow gives an internal rate of return, Gordon's formula
+ * gives a discount rate. Choi's input slot is arithmetic, which is visible in
+ * his own regressor subtracting sigma^2/2.
+ */
+export function arithmeticFromCompound(compound, volatility) {
+  return Math.exp(Math.log(1.0 + compound) + 0.5 * volatility ** 2) - 1.0;
+}
+
+/** The inverse. What the page shows a reader, since it is what others quote. */
+export function compoundFromArithmetic(arithmetic, volatility) {
+  return Math.exp(Math.log(1.0 + arithmetic) - 0.5 * volatility ** 2) - 1.0;
+}
+
 /** The quantity Choi's grid is expressed in, and his regressions consume. */
 export function logPremium(expectedRealReturn, realRiskFree, volatility = CALIBRATION_VOLATILITY) {
   return Math.log(1.0 + expectedRealReturn) - 0.5 * volatility ** 2 - Math.log(1.0 + realRiskFree);

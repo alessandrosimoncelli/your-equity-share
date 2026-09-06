@@ -75,11 +75,30 @@ def build_market_json() -> str:
         if required not in market:
             raise SystemExit(f"{CONFIG}: [market] is missing {required!r}")
 
+    # The model consumes the arithmetic mean. The page shows the compound
+    # figure beside it, because that is the basis every published capital
+    # market assumption is quoted on and the only one a reader can compare.
+    provenance = raw.get("provenance", {})
+    compound = provenance.get("expected_return_compound")
+    if compound is None and "expected_return_estimates" in provenance:
+        import re as _re
+
+        found = _re.search(r"building blocks ([0-9.]+)",
+                           str(provenance["expected_return_estimates"]))
+        compound = float(found.group(1)) if found else None
+
     payload = {
         "expected_stock_real_return": float(market["expected_stock_real_return"]),
+        "expected_stock_real_return_compound": (
+            float(compound) if compound is not None else None
+        ),
         "real_risk_free": float(market["real_risk_free"]),
         "stock_volatility": float(market["stock_volatility"]),
         "market_ticker": str(market.get("market_ticker", "SPY")),
+        # Reporting only. The model's safe asset is the 30-year real yield.
+        "real_cash": (
+            float(provenance["real_cash"]) if "real_cash" in provenance else None
+        ),
         # tomllib returns a date object; the page wants an ISO string.
         "as_of": str(market["as_of"]),
         "provenance": {k: str(v) if not isinstance(v, (int, float, bool)) else v

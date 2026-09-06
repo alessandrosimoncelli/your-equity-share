@@ -8,7 +8,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-09-06T02:52:20+00:00"
+generated_at = "2026-09-06T04:23:05+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
@@ -36,7 +36,7 @@ real_risk_free = 0.029600
 
 # 5 years of daily adjusted closes of SPY,
 # 1254 returns, annualised.
-stock_volatility = 0.171809
+stock_volatility = 0.171808
 market_ticker = "SPY"
 
 as_of = 2026-09-03
@@ -51,10 +51,12 @@ volatility_observations = 1254
 volatility_dividend_adjusted = true
 expected_return_spread = 0.036674
 expected_return_basis = "arithmetic mean, converted from compound"
+expected_return_compound = 0.033826
 expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0705; valuation regression, 30y 0.0532"
 history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
 volatility_source = "Yahoo daily closes"
 real_risk_free_source = "FRED DFII30"
+real_cash = 0.013679
 buyback_yield_not_counted = 0.015292
 expected_return_source = "dividend yield plus long-run real growth in earnings per share, no repricing; see docs/methodology.html section 3"

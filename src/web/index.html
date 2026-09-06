@@ -521,14 +521,14 @@ td.why { min-width: 15rem; }
         <label class="check"><input type="checkbox" id="override">
           <span>Set the expected return myself</span></label>
         <span class="hint">The expected <b>real</b> return on <b>United States</b>
-        equities: the average yearly return above inflation, over a lifetime.
-        The figure below is a dividend yield plus long-run growth in earnings
-        per share.</span>
+        equities, above inflation, over a lifetime. Enter it the way forecasts
+        are published: as a <b>compound</b> rate. The figure below is a dividend
+        yield plus long-run growth in earnings per share.</span>
         <div id="override-field" hidden>
-          <label class="visually-hidden" for="mu">Expected real return on equities</label>
+          <label class="visually-hidden" for="mu">Expected real return on equities, compound</label>
           <div class="slider-value" id="mu-value"></div>
-          <input type="range" id="mu" min="0.02" max="0.10" step="0.0005">
-          <div class="slider-ends"><span>2%</span><span>10%</span></div>
+          <input type="range" id="mu" min="0.00" max="0.09" step="0.0005">
+          <div class="slider-ends"><span>0%</span><span>9%</span></div>
           <div class="readout" id="mu-readout"></div>
         </div>
       </div>
@@ -683,6 +683,8 @@ td.why { min-width: 15rem; }
 
 <script type="module">
 import {
+  arithmeticFromCompound,
+  compoundFromArithmetic,
   gammaFromCertaintyEquivalent,
   projectEarnings,
   logPremium,
@@ -952,11 +954,29 @@ function readInputs() {
       : `<b>${parsed.used}</b> years read from what you typed.`;
   }
   const wealth = Math.max(1000, nonNegative($("wealth"), 1000));
+  // The slider is a COMPOUND return, because that is how every published
+  // forecast is quoted and so what a reader will type. The model takes an
+  // arithmetic mean, so convert here rather than letting someone hand over a
+  // number 1.5 points lower than the one they meant.
   const expected = $("override").checked
-    ? Number($("mu").value)
+    ? arithmeticFromCompound(Number($("mu").value), market.stock_volatility)
     : market.expected_stock_real_return;
 
   return { household: makeHousehold(wealth, adults, gamma), gamma, expected, wealth };
+}
+
+/**
+ * The fetched estimate as a compound return.
+ *
+ * update.py records it directly. Older market.json files predate that field,
+ * so fall back to inverting the conversion, which recovers it exactly.
+ */
+function compoundShown() {
+  const stated = market.expected_stock_real_return_compound;
+  return stated != null
+    ? stated
+    : compoundFromArithmetic(market.expected_stock_real_return,
+                             market.stock_volatility);
 }
 
 function row(cells) {
@@ -975,9 +995,11 @@ function render() {
   $("ce-readout").innerHTML =
     `That answer implies a risk aversion of <b>${num1.format(gamma)}</b> out of 10. ` +
     `A lower amount means you dislike risk more.`;
-  $("mu-value").textContent = pct2.format(Number($("mu").value));
+  $("mu-value").textContent = pct2.format(Number($("mu").value)) + " compound";
   $("mu-readout").innerHTML =
-    `The fetched figure is ${pct2.format(market.expected_stock_real_return)}.`;
+    `That is <b>${pct2.format(expected)}</b> as an arithmetic mean, which is what ` +
+    `the model uses; the difference is the volatility drag. ` +
+    `The fetched figure is ${pct2.format(compoundShown())} compound.`;
 
   // The answer as a sentence. Both sides of the split are named here, which
   // is what the meter used to do.
@@ -1017,26 +1039,40 @@ function render() {
     notes.map((n, i) => `<li value="${i + 1}">${n}</li>`).join("");
 
 
-  // Sensitivity to the expected return.
+  const shownCompound = $("override").checked
+    ? Number($("mu").value)
+    : compoundShown();
+
+  // Sensitivity to the expected return. The axis is a COMPOUND return, so
+  // that a reader holding somebody else's forecast can find it on this chart
+  // without converting anything; the model is still handed the arithmetic
+  // mean, one conversion later.
   const sens = [];
-  for (let mu = 0.02; mu <= 0.1001; mu += 0.001) {
+  for (let g = 0.0; g <= 0.0801; g += 0.001) {
+    const mu = arithmeticFromCompound(g, sigma);
     if (mu <= rf) continue;
-    sens.push({ x: mu, y: recommend(household, mu, rf, sigma).equityShare });
+    sens.push({ x: g, y: recommend(household, mu, rf, sigma).equityShare });
   }
   drawChart($("sensitivity"), $("sensitivity-tip"), {
     points: sens,
     xDomain: [sens[0].x, sens.at(-1).x],
     yDomain: [0, 1],
+    // Named ticks, because the curve starts wherever equities first beat the
+    // safe rate and two auto ticks near that edge both round to the same
+    // percent.
+    xTicks: [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08],
     xFormat: (v) => pct0.format(v),
     yFormat: (v) => pct0.format(v),
-    xTitle: "Expected real return on equities",
-    markerX: expected,
+    xTitle: "Expected real return on equities, compound",
+    markerX: shownCompound,
     markerY: r.equityShare,
-    tipLabel: (p) => `${pct2.format(p.x)} expected  ->  ${pct0.format(p.y)} in equities`,
+    tipLabel: (p) => `${pct2.format(p.x)} compound  ->  ${pct0.format(p.y)} in equities`,
     height: 300,
   });
   $("sensitivity-note").textContent =
-    `The marker is where you are now: ${pct2.format(expected)} expected return gives ${pct0.format(r.equityShare)} in equities.`;
+    `The marker is where you are now: ${pct2.format(shownCompound)} compound, ` +
+    `which is ${pct2.format(expected)} as an arithmetic mean, giving ` +
+    `${pct0.format(r.equityShare)} in equities.`;
 
   // Against savings, with the household itself unchanged. Age used to be on
   // this axis, which needed a caption apologising for holding wealth fixed for
@@ -1081,8 +1117,12 @@ function render() {
                   fixed: "set by hand" }[prov.expected_return_method] || "set by hand";
 
   $("inputs-rows").innerHTML =
-    row([["Expected real return on equities", "k"], [pct2.format(expected), "n"],
+    row([["Expected real return, compound", "k"], [pct2.format(shownCompound), "n"],
          [$("override").checked ? "you set this" : label, "why"]]) +
+    row([["&nbsp;&nbsp;the same, as an arithmetic mean", "k"],
+         [pct2.format(expected), "n"],
+         [`what the model uses, +${((expected - shownCompound) * 100).toFixed(2)} ` +
+          `points for the volatility drag`, "why"]]) +
     row([["Real risk-free rate", "k"], [pct2.format(rf), "n"], ["30-year TIPS yield, from FRED", "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +
@@ -1092,11 +1132,21 @@ function render() {
             ? `inside the ${pct0.format(lo)} to ${pct0.format(hi)} band Choi fitted`
             : `${pct2.format(pi < lo ? lo - pi : pi - hi)} outside that band`, "why"]]);
 
+  // Part of the distance is the safe asset rather than the equity market, so
+  // the drift is shown against cash as well. Choi anchors his central example
+  // to AQR's log excess return, and AQR quotes excess of cash.
+  const piCash = logPremium(expected, market.real_cash ?? rf);
   $("range-note").innerHTML = inside ? "" :
     `<p class="note"><b>The log excess drift sits outside the ${pct0.format(lo)} to
      ${pct0.format(hi)} range Choi's coefficients were fitted over.</b> The
-     answer is an extrapolation and should be read as indicative.
-     ${prov.expected_return_estimates ? "Estimators: " + prov.expected_return_estimates + "." : ""}</p>`;
+     answer is an extrapolation and should be read as indicative.` +
+    (market.real_cash != null
+      ? ` Some of that distance is the safe asset and not the stock market:
+     measured against cash at ${pct2.format(market.real_cash)} rather than a
+     30-year inflation-linked bond, the drift is ${pct2.format(piCash)}, and
+     the band was set on the cash convention.`
+      : "") +
+    `${prov.expected_return_estimates ? " Estimators: " + prov.expected_return_estimates + "." : ""}</p>`;
 }
 
 // --- boot -------------------------------------------------------------------
@@ -1117,7 +1167,7 @@ async function boot() {
     return;
   }
 
-  $("mu").value = market.expected_stock_real_return;
+  $("mu").value = compoundShown();
   $("boot").hidden = true;
   $("app").hidden = false;
 
