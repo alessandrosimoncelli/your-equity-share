@@ -26,7 +26,7 @@ GAMMA = 5.0
 MU = 0.05
 REAL_RF = 0.02
 # The Merton term in Choi's sheet uses the calibration volatility. This project
-# uses the user's measured figure instead (methodology section 7.1), so the
+# uses the user's measured figure instead (methodology section 7.2), so the
 # calibration value is passed explicitly wherever his output is the target.
 CHOI_SIGMA = 0.185
 

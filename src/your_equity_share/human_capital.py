@@ -74,7 +74,7 @@ def _log_excess_drift(
 
     Note this uses the calibration's 18.5% volatility, not the user's. The
     coefficients were fitted with that value in place and have no standing
-    away from it. See section 7.1 of the methodology.
+    away from it. See section 7.2 of the methodology.
     """
     return (
         math.log(1.0 + expected_stock_real_return)

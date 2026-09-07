@@ -147,7 +147,7 @@ def recommend(
     `stock_volatility` is the volatility of the portfolio actually held, used in
     the Merton term. The discount rates inside layer two keep the calibration's
     18.5% regardless, because their coefficients were fitted with that value in
-    place. Section 7.1 of the methodology explains why the two are not forced
+    place. Section 7.2 of the methodology explains why the two are not forced
     to agree.
     """
     beta = merton_share(

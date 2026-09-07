@@ -448,6 +448,30 @@ ANCHORS = [
 ]
 
 
+# The same idea as ANCHORS, for section numbers rather than table numbers.
+SECTION_ANCHORS = [
+    (r"for the reason given in section (\d+\.\d+)", "United States calibration"),
+    (r"equity-compensated households\. See section (\d+\.\d+)",
+     "Labour income correlated with equities"),
+    (r"[Ss]ection (\d+\.\d+) shows that horizon does not appear", "horizon"),
+]
+
+
+# Section references that live in source rather than in the document. These are
+# the three that renumbering broke, and a number alone does not catch it: the
+# stale 7.1 still resolved, to a subsection about something else.
+SOURCE_ANCHORS = [
+    ("src/your_equity_share/allocation.py",
+     r"Section (\d+\.\d+) of the methodology explains why the two are not",
+     "volatility"),
+    ("src/your_equity_share/human_capital.py",
+     r"away from it\. See section (\d+\.\d+) of the methodology",
+     "volatility"),
+    ("tests/test_allocation.py",
+     r"methodology section (\d+\.\d+)", "volatility"),
+]
+
+
 def part_five() -> None:
     head(5, "The methodology document")
 
@@ -539,8 +563,51 @@ def part_five() -> None:
     check("every equity share quoted in section 7 is still what the model says",
           not stale, "; ".join(stale) or "5 figures recomputed")
 
-    check("no em dash in the prose", "\u2014" not in t,
-          "table cells use the &mdash; entity for not applicable")
+    check("no em dash anywhere, entity or character",
+          not any(d in t for d in ("\u2014", "&mdash;", "&#8212;", "&#x2014;")),
+          "table cells say none or n/a instead")
+
+    # Section references, in the document and in the source that cites it.
+    # Renumbering section 7 broke five of these at once, four of them in files
+    # no check had ever read.
+    headings = {num.rstrip("."): text for num, text in
+                re.findall(r"<h[23][^>]*>([\d.]+)[ .]\s*([^<]*)", t)}
+    cited: dict[str, list[str]] = {}
+    for path in [DOC] + sorted((ROOT / "src").rglob("*.py")) + \
+            sorted((ROOT / "tests").rglob("*.py")) + [ROOT / "src" / "js" / "model.js"]:
+        body = path.read_text(encoding="utf-8")
+        for num in re.findall(r"[Ss]ection (\d+\.\d+)(?! of the paper)",
+                                body):
+            cited.setdefault(num, []).append(path.name)
+    missing = sorted(n for n in cited if n not in headings)
+    check("every section cross-reference resolves to a heading", not missing,
+          f"{len(cited)} cited across the document and its source"
+          if not missing else
+          f"{missing} cited by {sorted({f for n in missing for f in cited[n]})}")
+
+    misdirected = []
+    for pattern, wanted in SECTION_ANCHORS:
+        m = re.search(pattern, plain)
+        if not m:
+            misdirected.append(f"{pattern[:34]}: prose gone")
+        elif wanted.lower() not in headings.get(m.group(1), "").lower():
+            misdirected.append(f"{m.group(1)} is {headings.get(m.group(1), '?')[:28]!r}")
+    check(f"each of {len(SECTION_ANCHORS)} pinned section references points at "
+          f"its topic", not misdirected,
+          "; ".join(misdirected[:2]) or "by heading, not by number")
+
+    astray = []
+    for name, pattern, wanted in SOURCE_ANCHORS:
+        body = (ROOT / name).read_text(encoding="utf-8")
+        m = re.search(pattern, body)
+        if not m:
+            astray.append(f"{name}: the comment is gone")
+        elif wanted.lower() not in headings.get(m.group(1), "").lower():
+            astray.append(f"{name} cites {m.group(1)}, "
+                          f"{headings.get(m.group(1), '?')[:34]!r}")
+    check(f"each of {len(SOURCE_ANCHORS)} section references in source still "
+          f"points at its topic", not astray, "; ".join(astray[:2])
+          or "checked against the headings, not the numbers")
 
 
 if __name__ == "__main__":
