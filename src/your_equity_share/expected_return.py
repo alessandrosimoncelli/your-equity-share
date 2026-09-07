@@ -48,6 +48,7 @@ __all__ = [
     "compound_from_arithmetic",
     "building_block_estimate",
     "consensus",
+    "earnings_anchor_estimate",
     "implied_premium_estimate",
     "log_premium",
     "real_total_return_index",
@@ -309,6 +310,58 @@ def _ols(x: list[float], y: list[float]) -> tuple[float, float, float, float]:
     ss_tot = sum((b - my) ** 2 for b in y)
     r2 = 1.0 - ss_res / ss_tot if ss_tot else 0.0
     return intercept, slope, r2, math.sqrt(ss_res / (n - 2))
+
+
+# AQR's equilibrium real growth in earnings per share, developed large cap.
+# 2.2% for small caps and emerging markets, which this tool does not cover.
+AQR_EQUILIBRIUM_GROWTH = 0.018
+
+# "roughly the U.S. long-run dividend payout ratio", in their words.
+AQR_PAYOUT_RATIO = 0.5
+
+
+def earnings_anchor_estimate(
+    cape: float,
+    equilibrium_growth: float = AQR_EQUILIBRIUM_GROWTH,
+    payout_ratio: float = AQR_PAYOUT_RATIO,
+    as_of: date | None = None,
+) -> Estimate:
+    """AQR's earnings-based anchor, computed exactly as they publish it.
+
+        E(r) = CAEP x (1 + g_eq x 5) x payout + g_eq
+
+    where CAEP is one over the cyclically adjusted price to earnings ratio.
+
+    Worth having because of what it is rather than what it says. It has no
+    fitted coefficients, no window to choose and no free parameters beyond two
+    constants AQR states in the text, so two people computing it from the same
+    CAPE get the same number. That is not true of the valuation regression
+    beside it, which is this project's own fit with an R-squared of 0.19.
+
+    The 1 + g x 5 term ages the ten-year average earnings in the CAPE forward
+    to the middle of the coming decade; the payout ratio converts an earnings
+    yield into the cash a holder receives; and the equilibrium growth is added
+    back because the price grows with earnings.
+
+    It is the lower of the two anchors around the building block estimate. AQR
+    average it with a payout-based estimate to reach the 3.9% that section 8.3
+    compares against, and the payout half needs a global cross-section and
+    survey GDP forecasts this project has no source for.
+    """
+    if cape <= 0:
+        raise ValueError("a cyclically adjusted ratio must be positive")
+    caep = 1.0 / cape
+    income = caep * (1.0 + equilibrium_growth * 5.0) * payout_ratio
+    return Estimate(
+        method="earnings anchor",
+        value=income + equilibrium_growth,
+        as_of=as_of,
+        detail=(
+            f"{income:.2%} from a CAPE of {cape:.1f} at a {payout_ratio:.0%} "
+            f"payout, plus {equilibrium_growth:.1%} equilibrium growth "
+            f"(AQR's construction)"
+        ),
+    )
 
 
 def valuation_regression_estimate(

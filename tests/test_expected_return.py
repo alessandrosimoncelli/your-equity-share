@@ -250,3 +250,29 @@ def test_the_conversion_decides_whether_we_are_in_choi_range() -> None:
     assert log_premium(arithmetic, rf) == pytest.approx(0.0187, abs=5e-4)
     # the correction is worth more than a percentage point of log premium
     assert log_premium(arithmetic, rf) - log_premium(compound, rf) > 0.013
+
+
+def test_earnings_anchor_reproduces_aqr() -> None:
+    """AQR publish 3.9% combined from two approaches, one of which is stated in
+    full and computable. At the CAPE of "nearly 40" they quote for the start of
+    2026 it comes to 3.16%, which pins the other half at 4.64% by subtraction
+    and is how section 8.3 decomposes their number."""
+    from your_equity_share.expected_return import earnings_anchor_estimate
+
+    anchor = earnings_anchor_estimate(40.0)
+    assert anchor.value == pytest.approx(0.0316, abs=2e-4)
+    assert "equilibrium growth" in anchor.detail
+
+
+def test_the_anchor_falls_as_the_market_gets_dearer() -> None:
+    from your_equity_share.expected_return import earnings_anchor_estimate
+
+    values = [earnings_anchor_estimate(c).value for c in (10, 20, 30, 40, 50)]
+    assert all(b < a for a, b in zip(values, values[1:]))
+
+
+def test_the_anchor_refuses_an_impossible_ratio() -> None:
+    from your_equity_share.expected_return import earnings_anchor_estimate
+
+    with pytest.raises(ValueError, match="positive"):
+        earnings_anchor_estimate(0.0)

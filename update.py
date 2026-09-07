@@ -41,6 +41,7 @@ from your_equity_share.expected_return import (  # noqa: E402
     within_fitted_risk_free,
     arithmetic_from_compound,
     building_block_estimate,
+    earnings_anchor_estimate,
     consensus,
     implied_premium_estimate,
     log_premium,
@@ -420,6 +421,10 @@ def estimate_expected_return(
             growth_basis=f"{GROWTH_WINDOW_YEARS} year trend",
         ),
         implied_premium_estimate(erp, real_risk_free, erp_as_of),
+        # AQR's own construction, computed exactly as they publish it. It is
+        # the lower anchor around the estimate as the implied premium is the
+        # upper one, and unlike the regression below it has nothing fitted.
+        earnings_anchor_estimate(cape),
         valuation_regression_estimate(
             list(shiller.cape),
             index,

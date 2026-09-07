@@ -8,7 +8,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-09-07T13:56:36+00:00"
+generated_at = "2026-09-07T22:19:07+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
@@ -49,10 +49,10 @@ erp_as_of = 2026-09-01
 volatility_window_years = 5
 volatility_observations = 1254
 volatility_dividend_adjusted = true
-expected_return_spread = 0.036674
+expected_return_spread = 0.039339
 expected_return_basis = "arithmetic mean, converted from compound"
 expected_return_compound = 0.033826
-expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0705; valuation regression, 30y 0.0532"
+expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0705; earnings anchor 0.0312; valuation regression, 30y 0.0532"
 history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
 volatility_source = "Yahoo daily closes"

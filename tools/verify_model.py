@@ -268,13 +268,15 @@ def part_three() -> None:
     check("equity risk premium is expected return less the real safe rate",
           close(m.equity_risk_premium, erp), f"{erp:.4%} arithmetic")
 
-    # The three estimators are recorded as compound returns; the slot the model
-    # reads is arithmetic. Rebuild the conversion and check it lands where the
-    # refresh script left it.
+    # The estimators are recorded as compound returns; the slot the model reads
+    # is arithmetic. Rebuild the conversion and check it lands where the refresh
+    # script left it. The count is deliberately not asserted: it was fixed at
+    # three until an earnings anchor was added, and the invariant that matters
+    # is that exactly one of them is marked used, whatever the number.
     text = str(prov.get("expected_return_estimates", ""))
     found = [float(x) for x in re.findall(r"(\d\.\d{4})", text)]
-    check("three estimators are recorded", len(found) == 3, str(found))
-    if len(found) == 3:
+    check("several estimators are recorded", len(found) >= 3, str(found))
+    if len(found) >= 3:
         # One estimator decides; the others are recorded as cross-checks.
         used = re.search(r"(\d\.\d{4}) \(used\)", text)
         check("exactly one estimator is marked as used", used is not None, text)
