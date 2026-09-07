@@ -91,21 +91,15 @@ h1 {
 .masthead .lede { margin: 0 auto; max-width: 68rem; }
 
 /*
-  Scope, above the form. Two columns so it reads as a preamble rather than as
-  a warning, and so it costs about four lines of height instead of eight.
+  Scope, one line under the lede. It was two paragraphs above the form, which
+  read as a gate to pass through before a reader had seen anything. What
+  survives is the part that decides whether the tool applies to you at all;
+  section 1.1 of the methodology carries the rest.
 */
 .scope {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem clamp(1.75rem, 4vw, 3.5rem);
-  margin-bottom: 2.1rem;
   font-size: var(--t-small);
-}
-.scope p { margin: 0; }
-.scope b { color: var(--green); }
-
-@media (max-width: 46rem) {
-  .scope { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
+  margin: 0.45rem auto 0;
+  max-width: 68rem;
 }
 
 .section-form {
@@ -497,14 +491,9 @@ td.why { min-width: 15rem; }
   <h1>Your Equity Share</h1>
   <p class="lede">How much of your portfolio belongs in equities. Merton (1969),
   with the human capital adjustment of Choi, Liu and Liu (2025).</p>
+  <p class="scope">Invested money with no planned use or withdrawal date.
+  United States only.</p>
 </header>
-
-<div class="scope">
-  <p><b>For</b> money you have invested and do not need on any particular date,
-  meant to last the rest of your life. United States only, and the earnings
-  assumptions describe a college graduate's career.</p>
-  <p><b>Not for</b> money with a date on it, a house, or a business.</p>
-</div>
 
 <div id="boot" class="boot">Loading the market data.</div>
 
@@ -715,7 +704,6 @@ td.why { min-width: 15rem; }
 
 <script type="module">
 import {
-  withinFittedRiskFree,
   arithmeticFromCompound,
   certaintyEquivalent,
   compoundFromArithmetic,
@@ -724,7 +712,6 @@ import {
   makeHousehold,
   makePerson,
   recommend,
-  CHOI_FITTED_LOG_PREMIUM_RANGE,
 } from "./model.js";
 
 const $ = (id) => document.getElementById(id);
@@ -1185,11 +1172,6 @@ function render() {
 
   // The inputs, with where each came from.
   const pi = logPremium(expected, rf);
-  const [lo, hi] = CHOI_FITTED_LOG_PREMIUM_RANGE;
-  const inside = pi >= lo && pi <= hi;
-  // Choi's grid has two axes and the tool used to check one. The safe rate is
-  // the other, and it carries the larger coefficient of the two.
-  const rfInside = withinFittedRiskFree(rf);
   const prov = market.provenance || {};
   const label = { "building blocks": "dividend yield plus long-run growth",
                   consensus: "median of three estimators",
@@ -1212,12 +1194,10 @@ function render() {
          ["the return and the safe rate above, in logs, less half the " +
           "variance of Choi's 18.5% calibration", "why"]]);
 
-  // One line. Which inputs are outside, by how much, and why it matters is
-  // section 3.6 of the methodology, and repeating it here buried the answer.
-  $("range-note").innerHTML = inside && rfInside ? "" :
-    `<p class="note">Today's market sits outside the range Choi solved his
-     model over, so read this as an anchor rather than an answer.
-     <a href="./methodology.html#fitted-grid">Why, and how far</a>.</p>`;
+  // The extrapolation is section 3.6 of the methodology. It was a paragraph
+  // here, then a line, and it belonged in neither: a caveat printed beside
+  // every answer stops being read and only crowds the answer out.
+  $("range-note").innerHTML = "";
 }
 
 // --- boot -------------------------------------------------------------------
