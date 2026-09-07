@@ -2,7 +2,7 @@
 
     python tools/verify_model.py
 
-Four parts, each printing PASS or FAIL per check:
+Five parts, each printing PASS or FAIL per check:
 
     1  the model      mathematical properties that must hold for any input
     2  market data    the loading chain, from the TOML the refresh writes to
@@ -11,6 +11,8 @@ Four parts, each printing PASS or FAIL per check:
                       from the recorded components
     4  Choi           our answers against the stored answers in his workbook,
                       year by year and not only at the end
+    5  the document   the methodology's numbering, its cross-references and the
+                      figures it quotes, against the model that produced them
 
 Part 1 is a sweep, not a spot check: the properties are asserted across a grid
 of ages, risk aversions, wages, wealths and market inputs, so a defect that
@@ -417,11 +419,136 @@ def part_four() -> None:
     print(f"    equity share    {r.equity_share:.10f}")
 
 
+# ---------------------------------------------------------------------------
+# 5. The methodology document
+# ---------------------------------------------------------------------------
+
+DOC = ROOT / "docs" / "methodology.html"
+
+# A reference that resolves to a table is not the same as a reference that
+# resolves to the right table. Each entry pins one citation to a word that must
+# appear in the caption it lands on, so a renumbering cannot quietly move it.
+ANCHORS = [
+    (r"Table (\d+) measures the difference: a flat 5%",
+     "Error against the return that actually arrived"),
+    (r"points of the 9.7% in Table (\d+)", "9.7% wage discount rate"),
+    (r"The constants in Table (\d+) come from a calibration",
+     "Values fixed inside the approximation"),
+    (r"listed in Table (\d+) as implementation work", "Postponed"),
+    (r"Table (\d+) shows the answer spanning 19% to 100%",
+     "What the choice of estimator is worth"),
+    (r"college graduate values in Table (\d+)",
+     "Values fixed inside the approximation"),
+    (r"the figure in Table (\d+), measured from the standpoint",
+     "What each fixed constant is worth"),
+    (r"columns in Table (\d+)",
+     "What each fixed constant is worth"),
+    (r"wage shock volatilities from Table (\d+)",
+     "Values fixed inside the approximation"),
+]
+
+
+def part_five() -> None:
+    head(5, "The methodology document")
+
+    t = DOC.read_text(encoding="utf-8")
+    caps = {int(n): c for n, c in
+            re.findall(r"<caption>Table (\d+)\. ([^<]*)", t)}
+    order = [int(n) for n in re.findall(r"<caption>Table (\d+)\.", t)]
+
+    check("table captions run 1 to n with no gaps or repeats",
+          order == list(range(1, len(order) + 1)), f"{len(order)} tables")
+
+    cited = {int(n) for n in re.findall(r"Table (\d+)", t)}
+    dangling = sorted(cited - set(caps))
+    check("every cited table number exists", not dangling,
+          f"{len(cited)} cited" if not dangling else f"dangling {dangling}")
+
+    heads = [(lvl, num.rstrip("."))
+             for lvl, num in re.findall(r"<h([23])[^>]*>([\d.]+)[ .]", t)]
+    h2 = [n for lvl, n in heads if lvl == "2"]
+    check("top-level sections run 1 to n",
+          h2 == [str(i + 1) for i in range(len(h2))], f"1 to {h2[-1]}")
+    ragged_secs = []
+    for top in h2:
+        subs = [n for lvl, n in heads if lvl == "3" and n.startswith(top + ".")]
+        if subs != [f"{top}.{i + 1}" for i in range(len(subs))]:
+            ragged_secs.append(top)
+    check("subsections run 1 to n inside every section", not ragged_secs,
+          f"{len([1 for lvl, _ in heads if lvl == '3'])} subsections"
+          if not ragged_secs else f"broken in {ragged_secs}")
+
+    unbalanced = []
+    for tag in ("table", "tbody", "thead", "caption", "div", "p", "tr",
+                "h2", "h3"):
+        o = len(re.findall(rf"<{tag}[ >]", t))
+        c = len(re.findall(rf"</{tag}>", t))
+        if o != c:
+            unbalanced.append(f"{tag} {o}/{c}")
+    check("markup is balanced", not unbalanced, ", ".join(unbalanced) or "9 tags")
+
+    ragged = []
+    for m in re.finditer(r"<table>(.*?)</table>", t, re.S):
+        body = m.group(1)
+        thead = re.search(r"<thead>(.*?)</thead>", body, re.S)
+        if not thead:
+            continue
+        width = len(re.findall(r"<th", thead.group(1)))
+        cap = re.search(r"<caption>([^<]*)", body)
+        for row in re.findall(r"<tr>(.*?)</tr>", body[body.find("<tbody>"):], re.S):
+            spans = [int(s) for s in re.findall(r'colspan="(\d+)"', row)]
+            cells = len(re.findall(r"<t[dh]", row)) - len(spans) + sum(spans)
+            if cells != width:
+                ragged.append(cap.group(1)[:40] if cap else "?")
+    check("every row matches its header width", not ragged,
+          f"{len(order)} tables" if not ragged else f"ragged: {ragged[:3]}")
+
+    plain = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t))
+    wrong = []
+    for pattern, wanted in ANCHORS:
+        m = re.search(pattern, plain)
+        if not m:
+            wrong.append(f"{pattern[:34]}: prose gone")
+            continue
+        n = int(m.group(1))
+        if wanted not in caps.get(n, ""):
+            wrong.append(f"Table {n} is {caps.get(n, 'missing')[:30]!r}, "
+                         f"wanted {wanted[:30]!r}")
+    check(f"each of {len(ANCHORS)} pinned citations lands on the right table",
+          not wrong, "; ".join(wrong[:2]) or "by caption, not by number")
+
+    # Section 7 quotes five equity shares. Recompute each from the model, so a
+    # data refresh that moves the answer fails here rather than leaving a stale
+    # figure in the document.
+    m = load_market_data()
+    mu, rf, vol = (m.expected_stock_real_return, m.real_risk_free_rate,
+                   m.stock_volatility)
+    default = Household(500_000.0, [Person(45, 100_000.0)], 5.0)
+    seven = t[t.index("<h2>7. Declared deviations"):t.index('id="validation"')]
+    stale = []
+    for label, emu, evol in (
+            ("his 5% arithmetic, his volatility", 0.05, CALIB_VOL),
+            ("his 5% read as compound, his volatility",
+             arithmetic_from_compound(0.05, CALIB_VOL), CALIB_VOL),
+            ("his 5% arithmetic, our volatility", 0.05, vol),
+            ("our estimate, our volatility", mu, vol),
+            ("our estimate, his volatility", mu, CALIB_VOL)):
+        want = f"{recommend(default, emu, rf, evol).equity_share:.1%}"
+        if want not in seven:
+            stale.append(f"{label} is {want}")
+    check("every equity share quoted in section 7 is still what the model says",
+          not stale, "; ".join(stale) or "5 figures recomputed")
+
+    check("no em dash in the prose", "\u2014" not in t,
+          "table cells use the &mdash; entity for not applicable")
+
+
 if __name__ == "__main__":
     part_one()
     part_two()
     part_three()
     part_four()
+    part_five()
     print(f"\n{'=' * 72}")
     print(f"{passed} passed, {len(failed)} failed")
     for name in failed:
