@@ -778,7 +778,7 @@ h4 {
 
 <p>The expected return can be set directly, in both front ends and from the command line. Anyone holding a developed or global portfolio, or working from a house forecast, can enter it. That is the same latitude Choi gives, since the input is a user's best guess in his spreadsheet too, and it does not pretend to a regional estimate the free data cannot support.</p>
 
-<h3>3.6 The grid the coefficients were fitted on</h3>
+<h3 id="fitted-grid">3.6 The grid the coefficients were fitted on</h3>
 
 <p>The tool warns that its inputs sit outside a fitted range. That warning is worth reading properly, because the range is not a recommendation, it is not a band of sensible values, and it is not one range but two.</p>
 
@@ -1333,13 +1333,42 @@ h4 {
 
 <p><strong>The estimator in a buyback regime.</strong> The backtest in section 3.1 runs from 1910, and buybacks only became a material share of payout after 1982. Both terms of equation (5) are measured on a century in which companies issued shares on net, and the test cannot say how the estimator behaves in the regime the tool is now being used in. This is a known limit with a known direction, upward, and no way to size it from this data.</p>
 
+<p><strong>The house, and the mortgage on it.</strong> Choi's guide is explicit that both are outside: "enter into the <em>investable net worth</em> cell the value of non-housing assets minus the value of non-mortgage debt". Existing shares and bonds are inside, so a household that already holds equities is not a problem for the model at all; the answer is a target for the whole pot and the comparison is against what is already held. A house is different, because it is a large, undiversified, usually levered position in a risky asset that the model cannot see.</p>
+
+<p>The model already knows how to handle an illiquid asset. Human capital is counted in total wealth and the tradeable part carries the whole equity position; home equity could be treated the same way. The only open question is how equity-like a house is, and rather than pick a number the range is worth showing. Take a household with $500,000 invested, a $600,000 house and a $200,000 mortgage, so $400,000 of home equity, against the $998,427 of human capital the default household already has.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 25. What the house is worth to the answer, across every view of how risky a house is</caption>
+<thead><tr><th class="num">How equity-like the house is</th><th class="num">Equity already held in it</th><th class="num">Recommended financial share</th></tr></thead>
+<tbody>
+<tr><td class="num">not at all, a pure bond</td><td class="num">$0</td><td class="num">48.5%</td></tr>
+<tr><td class="num">0.2</td><td class="num">$80,000</td><td class="num">32.5%</td></tr>
+<tr><td class="num">0.4</td><td class="num">$160,000</td><td class="num">16.5%</td></tr>
+<tr><td class="num">0.6</td><td class="num">$240,000</td><td class="num">0.5%</td></tr>
+<tr><td class="num">fully, like equities</td><td class="num">$400,000</td><td class="num">0.0%</td></tr>
+<tr><td class="num"><strong>invisible, as the tool has it</strong></td><td class="num"><strong>&mdash;</strong></td><td class="num"><strong>38.3%</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">Home equity added to total wealth, the Merton share applied to the larger total, and whatever the house already supplies subtracted from what the financial portfolio must carry. The equity-like fraction is a correlation times a volatility ratio.</p>
+
+<p><strong>Narrowing it to what the literature supports still leaves a wide answer.</strong> House price volatility is usually put at 10% to 15% against equity's 17%, and the correlation between house prices and equities is low. A variance-matched equity equivalent is then 0.12 to 0.35, which gives a recommendation between <strong>39.2% and 20.6%</strong> against the 38.3% the tool reports. So ignoring the house is roughly right if housing risk is at the low end and makes the tool <strong>up to eighteen points too aggressive</strong> if it is at the high end.</p>
+
+<p>The mortgage cuts the same way on its own. It is a negative bond position, and netting the $200,000 against investable wealth rather than ignoring it moves the answer from 38.3% to 55.3%, which is the leverage the model is not pricing.</p>
+
+<p><strong>The theory is not settled, which is part of why this is left out rather than approximated.</strong> Grossman and Laroque (1990) treat the house as a durable with transaction costs, so it is never rebalanced and the exposure drifts. Flavin and Yamashita (2002) treat it as a levered undiversified holding that crowds equities out, most severely when young and most mortgaged. Cocco (2005) solves the same model this tool approximates with housing added, and finds it crowds out stockholding for the young and the poor. Against all three, Yao and Zhang (2005) find homeowners hold a <em>lower</em> equity share of net worth but a <em>higher</em> share of liquid assets, because owning hedges rent and so substitutes for the safe asset. The two forces point in opposite directions and their net depends on the household.</p>
+
+<p>What can be said without picking a side: a household whose house is large relative to its portfolio, and still carrying a mortgage, should read this tool's answer as an upper bound.</p>
+
 <p><strong>Whether anyone acts on it.</strong> No claim is made that a household following this allocation is better off than one following a simpler rule, only that this allocation is the one the model implies. Section 6 reports what the alternative rules cost <em>inside the model</em>, which is a different and much weaker statement.</p>
 
 <h2>9. Components included, postponed and excluded</h2>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 25. Included in version 1</caption>
+  <caption>Table 26. Included in version 1</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1356,7 +1385,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 26. Postponed</caption>
+  <caption>Table 27. Postponed</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1364,6 +1393,7 @@ h4 {
     <tr><td>Equity-correlated labour income</td><td>Choi, Liu and Liu (2025), equation (19)</td><td>Already derived and tested by the authors, so this is implementation rather than research. Matters for equity-compensated households. See section 7.3.</td></tr>
     <tr><td>Standard errors on the variance ratios</td><td>Lo and MacKinlay (1988)</td><td>The ratios themselves are measured in section 2.4 and fall to 0.21 by thirty years. Without their standard errors, and on three independent windows, that number cannot carry weight. Nothing in the model consumes it either way; see the two rows below.</td></tr>
     <tr><td>Uncertainty in the expected return</td><td>Barberis (2000), Pastor and Stambaugh (2012)</td><td>Version 1 treats a point estimate of the risk premium as certain, and section 3.1 shows that estimate spanning 7.05% to 2.42% across defensible methods. Allowing for the uncertainty lowers the equity share, more so at long horizons, and is the reason the variance ratios above cannot be read as licence to hold more. Requires a Bayesian layer. This is the largest single gap in the model.</td></tr>
+    <tr><td>Housing and the mortgage</td><td>Cocco (2005); Flavin and Yamashita (2002); Yao and Zhang (2005)</td><td>Section 8.5 measures the range at 39.2% to 20.6% against the 38.3% reported, plus 17 points for the mortgage alone. Treating home equity the way human capital is already treated needs no re-solving of the model, only a defensible equity-equivalent for a house, and the literature does not supply one.</td></tr>
     <tr><td>Return predictability</td><td>Campbell and Viceira (2002)</td><td>The only clean route to making horizon matter. Requires a vector autoregression plus a hedging demand term.</td></tr>
   </tbody>
 </table>
@@ -1371,7 +1401,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 27. Excluded</caption>
+  <caption>Table 28. Excluded</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1395,8 +1425,11 @@ h4 {
   <li>Campbell, J. Y. and Viceira, L. M. (2002). <em>Strategic Asset Allocation: Portfolio Choice for Long-Term Investors</em>. Oxford University Press.</li>
   <li>Choi, J. J., Liu, C. and Liu, P. (2025). Practical Finance: An Approximate Solution to Lifecycle Portfolio Choice. Yale University and NBER, November 2025. The paper and spreadsheet this tool implements.</li>
   <li>Cocco, J. F., Gomes, F. J. and Maenhout, P. J. (2005). Consumption and Portfolio Choice over the Life Cycle. <em>Review of Financial Studies</em>, 18(2), 491 to 533.</li>
+  <li>Cocco, J. F. (2005). Portfolio Choice in the Presence of Housing. <em>Review of Financial Studies</em>, 18(2), 535 to 567.</li>
   <li>Dimson, E., Marsh, P. and Staunton, M. (2002). <em>Triumph of the Optimists: 101 Years of Global Investment Returns</em>. Princeton University Press.</li>
   <li>Fama, E. F. and French, K. R. (1988). Permanent and Temporary Components of Stock Prices. <em>Journal of Political Economy</em>, 96(2), 246 to 273.</li>
+  <li>Flavin, M. and Yamashita, T. (2002). Owner-Occupied Housing and the Composition of the Household Portfolio. <em>American Economic Review</em>, 92(1), 345 to 362.</li>
+  <li>Grossman, S. J. and Laroque, G. (1990). Asset Pricing and Optimal Portfolio Choice in the Presence of Illiquid Durable Consumption Goods. <em>Econometrica</em>, 58(1), 25 to 51.</li>
   <li>Grinold, R. C. and Kroner, K. F. (2002). The Equity Risk Premium: Analyzing the Long-Run Prospects for the Stock Market. <em>Investment Insights</em>, Barclays Global Investors. Source of the building-block decomposition in equation (5).</li>
   <li>Lo, A. W. and MacKinlay, A. C. (1988). Stock Market Prices Do Not Follow Random Walks: Evidence from a Simple Specification Test. <em>Review of Financial Studies</em>, 1(1), 41 to 66.</li>
   <li>Merton, R. C. (1969). Lifetime Portfolio Selection under Uncertainty: The Continuous-Time Case. <em>Review of Economics and Statistics</em>, 51(3), 247 to 257.</li>

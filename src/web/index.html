@@ -500,16 +500,9 @@ td.why { min-width: 15rem; }
 </header>
 
 <div class="scope">
-  <p><b>What this answers.</b> Of the money you have invested and do not need on
-  any particular date, what share belongs in equities rather than in a safe
-  bond. It assumes you have a salary or a pension coming in, and that this money
-  is meant to last the rest of your life. United States only: the earnings,
-  mortality and Social Security assumptions behind it are American.</p>
-  <p><b>What it does not.</b> Money with a date on it. A house deposit in three
-  years, school fees in eight, anything you must pay on a given day: the model
-  has one horizon, the rest of your life, and no way to hold a payment aside.
-  It also does not tell you how much to save, which funds to buy, or what to do
-  about a house, a business or a mortgage.</p>
+  <p><b>For</b> money you have invested and do not need on any particular date,
+  meant to last the rest of your life. United States only.</p>
+  <p><b>Not for</b> money with a date on it, a house, or a business.</p>
 </div>
 
 <div id="boot" class="boot">Loading the market data.</div>
@@ -528,8 +521,7 @@ td.why { min-width: 15rem; }
       <div class="field">
         <label class="lbl" for="wage">After-tax annual wage</label>
         <input type="text" inputmode="numeric" id="wage" value="100000">
-        <span class="hint">In today's money. Include an employer match, less 20%
-        if pre-tax.</span>
+        <span class="hint">In today's money.</span>
       </div>
 
       <div class="field">
@@ -580,8 +572,6 @@ td.why { min-width: 15rem; }
             <span>Second adult in the household</span></label>
           <label class="check"><input type="checkbox" id="custom-path">
             <span>Enter earnings year by year</span></label>
-          <label class="check"><input type="checkbox" id="us-based">
-            <span>I live and will retire in the United States</span></label>
         </div>
         <span class="hint">Year by year lets you type each year's earnings
         instead of projecting them from your salary.</span>
@@ -644,8 +634,6 @@ td.why { min-width: 15rem; }
           <span class="verdict-figure" id="verdict-figure">&mdash;&mdash;</span>
           <span class="verdict-text" id="verdict-text"></span>
         </p>
-        <p class="warning" id="us-flag"></p>
-        <p class="note" id="safe-flag"></p>
         <p class="note" id="cap-flag"></p>
       </div>
       <div class="split">
@@ -726,8 +714,6 @@ td.why { min-width: 15rem; }
 
 <script type="module">
 import {
-  CHOI_FITTED_LOG_RISK_FREE_RANGE,
-  logRiskFree,
   withinFittedRiskFree,
   arithmeticFromCompound,
   certaintyEquivalent,
@@ -1067,12 +1053,7 @@ function render() {
   $("ce-value").textContent = usd.format(certaintyEquivalent(gamma));
   $("ce-readout").innerHTML =
     `A risk aversion of <b>${gamma}</b> out of 10. Drag until the amount above ` +
-    `is the one you would accept; lower amounts mean you dislike risk more.` +
-    (gamma < 4
-      ? ` <b>Below 4</b> is outside the 4 to 10 range Choi solved his model over, ` +
-        `though it is the benign side: he reports that at 4 the answer is already ` +
-        `often 100%, so lower values change little.`
-      : "");
+    `is the one you would accept; lower amounts mean you dislike risk more.`;
   $("mu-value").textContent = pct2.format(Number($("mu").value)) + " compound";
   $("mu-readout").innerHTML =
     `That is <b>${pct2.format(expected)}</b> as an arithmetic mean, which is what ` +
@@ -1089,19 +1070,6 @@ function render() {
     `of your ${usd.format(r.financialWealth)} portfolio belongs in equities, or <b>${usd.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`;
 
   drawSplit($("split-chart"), $("split-key"), r);
-
-  $("us-flag").innerHTML = $("us-based").checked ? "" :
-    `<b>Tick "I live and will retire in the United States" if you do.</b> ` +
-    `The half of this model that values your future earnings is American ` +
-    `throughout: the shape of a career, the chance of being alive to finish ` +
-    `it, and a retirement benefit set at 40% of final pay, which is Social ` +
-    `Security. None of that transfers, and the equity market priced above is ` +
-    `the S&amp;P 500. Read the answer as illustrative until it is ticked.`;
-
-  $("safe-flag").innerHTML =
-    `The safe asset here is a 30-year inflation-linked Treasury, paying ` +
-    `<b>${pct2.format(rf)} above inflation, guaranteed</b>. The answer is a ` +
-    `comparison against that, not a view about whether equities will do well.`;
 
   $("cap-flag").innerHTML = r.isCapped
     ? `<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The cap at 100% is imposed from outside; the model did not produce it.`
@@ -1220,7 +1188,6 @@ function render() {
   const inside = pi >= lo && pi <= hi;
   // Choi's grid has two axes and the tool used to check one. The safe rate is
   // the other, and it carries the larger coefficient of the two.
-  const [rfLo, rfHi] = CHOI_FITTED_LOG_RISK_FREE_RANGE;
   const rfInside = withinFittedRiskFree(rf);
   const prov = market.provenance || {};
   const label = { "building blocks": "dividend yield plus long-run growth",
@@ -1236,39 +1203,20 @@ function render() {
          [`what the model uses, +${((expected - shownCompound) * 100).toFixed(2)} ` +
           `points for the volatility drag`, "why"]]) +
     row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
-         [rfInside
-            ? "30-year TIPS yield, from FRED"
-            : `30-year TIPS yield, from FRED. ` +
-              `${pct2.format(logRiskFree(rf) - rfHi)} above the ` +
-              `${pct0.format(rfLo)} to ${pct0.format(rfHi)} band Choi fitted`, "why"]]) +
+         ["30-year TIPS yield, from FRED, which is what Choi's guide asks for", "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +
     row([["Your risk aversion", "k"], [num1.format(gamma), "n"], ["your answer to the coin question", "why"]]) +
     row([["Log excess drift", "k"], [pct2.format(pi), "n"],
-         [inside
-            ? `inside the ${pct0.format(lo)} to ${pct0.format(hi)} band Choi fitted`
-            : `${pct2.format(pi < lo ? lo - pi : pi - hi)} outside that band`, "why"]]);
+         ["the return and the safe rate above, in logs, less half the " +
+          "variance of Choi's 18.5% calibration", "why"]]);
 
-  // Part of the distance is the safe asset rather than the equity market, so
-  // the drift is shown against cash as well. Choi anchors his central example
-  // to AQR's log excess return, and AQR quotes excess of cash.
-  const piCash = logPremium(expected, market.real_cash ?? rf);
+  // One line. Which inputs are outside, by how much, and why it matters is
+  // section 3.6 of the methodology, and repeating it here buried the answer.
   $("range-note").innerHTML = inside && rfInside ? "" :
-    `<p class="note"><b>Two of the inputs sit outside the grid Choi's
-     coefficients were fitted on.</b> He solved his model at log excess drifts
-     of ${pct0.format(lo)}, 3% and ${pct0.format(hi)} and at log safe rates of
-     ${pct0.format(rfLo)}, 1% and ${pct0.format(rfHi)}. The drift here is
-     ${pct2.format(pi)} and the safe rate is ${pct2.format(logRiskFree(rf))} in
-     logs, so both are outside, and the answer is an extrapolation that should
-     be read as indicative. At every corner of his grid a household like the
-     default one is told to hold 83% or more in equities.` +
-    (market.real_cash != null
-      ? ` Some of that distance is the safe asset and not the stock market:
-     measured against cash at ${pct2.format(market.real_cash)} rather than a
-     30-year inflation-linked bond, the drift is ${pct2.format(piCash)}, and
-     the band was set on the cash convention.`
-      : "") +
-    `${prov.expected_return_estimates ? " Estimators: " + prov.expected_return_estimates + "." : ""}</p>`;
+    `<p class="note">Today's market sits outside the range Choi solved his
+     model over, so read this as an anchor rather than an answer.
+     <a href="./methodology.html#fitted-grid">Why, and how far</a>.</p>`;
 }
 
 // --- boot -------------------------------------------------------------------
@@ -1329,8 +1277,6 @@ async function boot() {
     showMoney($(id));
     $(id).addEventListener("blur", () => { showMoney($(id)); render(); });
   }
-
-  $("us-based").addEventListener("change", render);
 
   for (const id of ["age", "wage", "wealth", "benefit", "partner-age", "partner-wage", "ce", "mu"]) {
     $(id).addEventListener("input", render);
