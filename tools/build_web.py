@@ -41,7 +41,12 @@ sys.path.insert(0, str(ROOT / "src"))
 OUT = ROOT / "web"
 ZIP = ROOT / "your-equity-share-site.zip"
 
-# Copied verbatim. Source on the left, name in the built site on the right.
+# Source on the left, name in the built site on the right. Copied as they are
+# except that a fragment is given a document shell; see `as_document`.
+# The tool and its documentation should be distinguishable in a browser tab.
+# build_artifact.py makes the same substitution for the artifact copy.
+TITLES = {"methodology.html": "Equity Share Methodology"}
+
 COPIED = {
     "src/web/index.html": "index.html",
     "src/js/model.js": "model.js",
@@ -49,6 +54,47 @@ COPIED = {
 }
 
 CONFIG = ROOT / "config" / "market_data.toml"
+
+
+def as_document(body: str, title_override: str | None = None) -> str:
+    """Give a fragment the head a web server needs, and leave a page alone.
+
+    docs/methodology.html is written without a doctype or a head, because the
+    artifact host supplies both. A static host supplies neither, and the file
+    is also opened straight off disk, so the copy written here needs its own.
+    """
+    if body.lstrip().lower().startswith("<!doctype"):
+        return body
+
+    title = "Your Equity Share"
+    marker = "<title>"
+    if marker in body:
+        start = body.index(marker) + len(marker)
+        end = body.index("</title>", start)
+        title = body[start:end]
+        # Hoisted into the head, not copied there. A second <title> in the body
+        # is ignored by browsers and reads as a mistake in the source.
+        body = body[: start - len(marker)] + body[end + len("</title>"):]
+        body = body.lstrip("\n")
+
+    return _shell(title_override or title, body)
+
+
+def _shell(title: str, body: str) -> str:
+    """The head a static host will not supply and a local file has no source for."""
+    return (
+        "<!doctype html>\n"
+        '<html lang="en">\n'
+        "<head>\n"
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f"<title>{title}</title>\n"
+        "</head>\n"
+        "<body>\n"
+        f"{body}\n"
+        "</body>\n"
+        "</html>\n"
+    )
 
 
 def build_market_json() -> str:
@@ -111,7 +157,9 @@ def main() -> int:
         src = ROOT / source
         if not src.exists():
             raise SystemExit(f"missing: {source}")
-        (OUT / name).write_bytes(src.read_bytes())
+        body = src.read_text(encoding="utf-8")
+        (OUT / name).write_text(
+            as_document(body, TITLES.get(name)), encoding="utf-8")
         written.append(name)
 
     (OUT / "market.json").write_text(build_market_json(), encoding="utf-8")

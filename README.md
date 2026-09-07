@@ -18,7 +18,12 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 
 **For** money you have invested and do not need on any particular date, meant
 to last the rest of a life. United States only: the earnings profile, the
-mortality table and the retirement benefit are all American.
+mortality table and the retirement benefit are all American. Following Choi,
+the earnings risk is the average for **college graduates**; his spreadsheet
+declares the same assumption and this one does not vary it, because the
+estimates behind it are a cross-section of the 1970s to 1990s and there is no
+reason to think the relationship between education and earnings risk is
+stable.
 
 **Not for** money with a date on it, a house, or a business. Horizon does not
 appear in the Merton share at all, which is a result rather than a

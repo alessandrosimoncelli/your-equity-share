@@ -179,6 +179,20 @@ h4 {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/*
+  Narrow screens. The document is set for reading at a desk, but it is linked
+  from a page people open on a phone, and there it scrolled sideways: the
+  equation and where-blocks carry a 2rem indent, and the definition lists are a
+  two-column grid whose first column is monospaced and as wide as its longest
+  term. Wide tables were already handled, since .tablewrap scrolls on its own.
+*/
+@media (max-width: 34rem) {
+  .eqn, .where, .src { padding-left: 0; }
+  .eqn { gap: 0.75rem; }
+  .where dl { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
+  .where dt { margin-top: 0.45rem; }
+}
 </style>
 
 <div class="doc">
