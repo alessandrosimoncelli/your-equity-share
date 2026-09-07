@@ -245,6 +245,12 @@ regression baseline for stage 3:
 | Full inputs | human capital | 2,199,507.502 | matches to the cent |
 | Full inputs | equity share | 0.9145603885 | matches to 1e-9 |
 
+## Licence
+
+MIT, in [LICENSE](LICENSE). The model is the work of Choi, Liu and Liu (2025)
+and, behind it, Cocco, Gomes and Maenhout (2005); this licence covers the
+implementation and grants no rights in their papers.
+
 ## Sources
 
 - Merton, R. C. (1969). Lifetime Portfolio Selection under Uncertainty. *Review of Economics and Statistics*, 51(3).

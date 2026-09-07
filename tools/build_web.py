@@ -57,7 +57,11 @@ CONFIG = ROOT / "config" / "market_data.toml"
 
 
 def as_document(body: str, title_override: str | None = None) -> str:
-    """Give a fragment the head a web server needs, and leave a page alone.
+    """Give an HTML fragment the head a web server needs, and leave a page alone.
+
+    Only ever call this on HTML. It once ran over model.js as well, which
+    produced a JavaScript file beginning "<!doctype html>" and a site that
+    failed to boot.
 
     docs/methodology.html is written without a doctype or a head, because the
     artifact host supplies both. A static host supplies neither, and the file
@@ -158,8 +162,12 @@ def main() -> int:
         if not src.exists():
             raise SystemExit(f"missing: {source}")
         body = src.read_text(encoding="utf-8")
-        (OUT / name).write_text(
-            as_document(body, TITLES.get(name)), encoding="utf-8")
+        # Only HTML gets a document shell. This wrapped model.js once, which
+        # made the browser parse JavaScript as HTML and took the whole site
+        # down with "Unexpected token '<'".
+        if name.endswith(".html"):
+            body = as_document(body, TITLES.get(name))
+        (OUT / name).write_text(body, encoding="utf-8")
         written.append(name)
 
     (OUT / "market.json").write_text(build_market_json(), encoding="utf-8")
