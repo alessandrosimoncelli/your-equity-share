@@ -95,10 +95,6 @@ def build_market_json() -> str:
         "real_risk_free": float(market["real_risk_free"]),
         "stock_volatility": float(market["stock_volatility"]),
         "market_ticker": str(market.get("market_ticker", "SPY")),
-        # Reporting only. The model's safe asset is the 30-year real yield.
-        "real_cash": (
-            float(provenance["real_cash"]) if "real_cash" in provenance else None
-        ),
         # tomllib returns a date object; the page wants an ISO string.
         "as_of": str(market["as_of"]),
         "provenance": {k: str(v) if not isinstance(v, (int, float, bool)) else v

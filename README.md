@@ -16,7 +16,23 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 - **What each input means:** [docs/inputs.md](docs/inputs.md)
 - **Full derivation and sources:** [docs/methodology.html](docs/methodology.html)
 
+**For** money you have invested and do not need on any particular date, meant
+to last the rest of a life. United States only: the earnings profile, the
+mortality table and the retirement benefit are all American.
+
+**Not for** money with a date on it, a house, or a business. Horizon does not
+appear in the Merton share at all, which is a result rather than a
+simplification, so a model without one cannot tell money needed in three years
+from money needed in forty. Section 1.1 of the methodology has the argument.
+
 ## Before you use it, refresh the data
+
+**Run it monthly.** The tool warns on its own face once the data is more than
+90 days old, and the underlying sources move at different speeds: the TIPS
+yield daily, Damodaran's premium monthly, Shiller's history monthly but always
+a quarter behind, because earnings arrive after the prices they belong to.
+Double-click `update.bat`, or run `python update.py`. Nothing else in the
+project touches the network.
 
 ```bash
 python update.py
@@ -112,7 +128,8 @@ asserted.
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |
 | 5. Browser front end | **done** |
 | 6. Published as a static site, model ported to JavaScript | **done** |
-| 7. Portfolio analytics and factor exposure | planned |
+| 7. Validated against twelve published forecasts, and swept for properties | **done** |
+| 8. Portfolio analytics and factor exposure | planned |
 
 ### The published site
 
