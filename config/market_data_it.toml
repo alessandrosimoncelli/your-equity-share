@@ -14,12 +14,11 @@
 # FTSE All-World, through VWCE, is the accumulating UCITS share class most
 # European retail investors actually hold.
 #
-# The SAFE ASSET is the AAA-rated euro area government curve at thirty years,
-# deflated by euro inflation expectations, rather than a 30-year TIPS. Both
-# halves of that choice are argued at the field itself below. In short: AAA
-# because the extra 0.61 points on the all-government curve is credit risk the
-# model cannot represent, and deflated because the euro area has no liquid
-# long index-linked market to read a real yield from.
+# The SAFE ASSET is the longest outstanding euro inflation-linked government
+# bond, traded, which is the same kind of object the American variant reads
+# from FRED. The field itself argues the three compromises that come with it,
+# the largest being that it runs 19.6 years rather than 30 because no longer
+# euro linker exists.
 #
 # The REPLACEMENT RATE is 74% rather than 40%, from the OECD. It is the only
 # constant in the human capital half that can honestly be made Italian, and it
@@ -41,8 +40,8 @@
 #
 # The volatility is measured on a euro-priced series, so it carries the
 # currency risk an unhedged global fund gives a euro investor without anything
-# further being done to it. The safe rate is a euro yield deflated by euro
-# inflation expectations. Neither is in question.
+# further being done to it. The safe rate is a euro government bond's own
+# traded real yield. Neither is in question.
 #
 # The expected return is AQR's, and they publish LOCAL real returns: each
 # market in its own currency, deflated by its own inflation, cap-weighted. The
@@ -75,25 +74,40 @@ generated_by = "hand, from the sources named below"
 #   arithmetic      0.052107
 expected_stock_real_return = 0.052107
 
-# Measured. The AAA-rated euro area government spot rate at thirty years,
-# deflated by the ECB Survey of Professional Forecasters' longer-term HICP
-# expectation. tools/refresh_italy.py fetches both and does the arithmetic.
+# Measured, and it is a TRADED real yield rather than a constructed one.
 #
-# AAA rather than all euro area government bonds, which at the same maturity
-# yield 0.61 points more. That 0.61 is compensation for a government not
-# paying, and equation (4) has no way to represent default risk, so booking it
-# as a risk-free return would raise this rate and lower the recommendation
-# while looking prudent. An Italian household buying BTP is therefore NOT
-# holding the asset this rate describes, and is taking a credit risk the model
-# does not price.
+# The American variant reads FRED's 30-year TIPS. Deflating a nominal curve by
+# a survey would have been a different construction, and part of any gap
+# between a 38% American answer and a 65% Italian one would then have been
+# method rather than country. The Bund/euro-i 2046 is the euro analogue: a
+# government real yield, traded, from an issuer that will pay. Worth 5.4
+# points of equity share against the deflated figure, so it is a decision and
+# not a detail.
 #
-# Deflated rather than read directly, because the euro area has no liquid long
-# index-linked market to read it from: German linkers stopped being issued in
-# 2023 with four bonds outstanding, and the HICP-linked bonds that remain are
-# Italian and French, which carry exactly the credit spread the AAA choice
-# just excluded. The cost is that the deflator is a survey rather than a
-# traded price.
-real_risk_free = 0.017125
+# Three compromises come with it.
+#
+# It has 19.6 years to run, not 30, and shortens every year. It is the longest
+# euro linker in existence: Germany stopped issuing in 2023 and three bonds
+# remain, so there is no long anchor to roll into.
+#
+# Scarcity biases the yield DOWN. 47 billion outstanding against persistent
+# demand for euro safe assets, with no new supply.
+#
+# It is linked to euro area HICP, not Italian. An Italian household's cost of
+# living is Italian, and only BTP Italia tracks that, at five years and retail.
+# So the inflation hedge is approximate in a way an American's TIPS is not.
+#
+# The cross-check in the provenance brackets it. The traded yield is biased
+# low by scarcity; the deflated AAA curve is biased high, because the market
+# breakeven of 2.289% against the survey's 2.037% is an inflation risk premium
+# and deflating books it as return. The truth is inside those 22 basis points.
+#
+# AAA rather than all euro area government bonds, which yield 0.61 points more
+# at the same maturity. That spread is compensation for a government not
+# paying, equation (4) cannot represent default risk, and booking it as a
+# risk-free return would raise this rate and lower the recommendation while
+# looking prudent. An Italian household buying BTP is NOT holding this asset.
+real_risk_free = 0.014906
 
 # Measured: five years of daily dividend-adjusted closes of VWCE.DE to
 # 3 September 2026, annualised. Lower than the 17.18% of the S&P 500 sleeve,
@@ -114,9 +128,9 @@ expected_return_compound = 0.042000
 expected_return_source = "AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 31 December 2025: a 1.6% dividend yield plus 2.6% real EPS growth, no repricing"
 dividend_yield = 0.016
 real_growth = 0.026
-currency_basis = "EUR. The volatility is measured on a euro-priced series and the safe rate is a euro yield deflated by euro inflation expectations. The expected return is AQR's local real figure, read as a euro real figure on their own stated assumption that relative purchasing power is preserved, under which expected real returns are the same regardless of currency."
+currency_basis = "EUR. The volatility is measured on a euro-priced series and the safe rate is a euro government bond's traded real yield. The expected return is AQR's local real figure, read as a euro real figure on their own stated assumption that relative purchasing power is preserved, under which expected real returns are the same regardless of currency."
 equity_index = "FTSE All-World"
-real_risk_free_source = "ECB, AAA-rated euro area central government bond spot rate at 30 years, 3.7842% nominal on 2026-09-07, deflated by the longer-term HICP expectation of 2.0369% from the ECB Survey of Professional Forecasters, 2026-Q3"
+real_risk_free_source = "DE0001030575, Bund/euro-i, the longest outstanding euro inflation-linked government bond, 19.6 years remaining, traded real yield 1.4906% from the German finance agency. Cross-checked against the ECB AAA 30-year nominal of 3.7842% on 2026-09-07 deflated by the ECB Survey of Professional Forecasters longer-term HICP expectation of 2.0369% for 2026-Q3, which gives 1.7125%. The two bracket the rate: the traded yield is biased low by scarcity, the deflated one high by an inflation risk premium booked as return."
 volatility_source = "Yahoo daily closes of VWCE.DE, 5 years, dividend adjusted"
 volatility_currency = "EUR, unhedged"
 volatility_observations = 1254

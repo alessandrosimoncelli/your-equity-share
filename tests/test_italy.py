@@ -170,17 +170,45 @@ def test_the_euro_safe_rate_is_below_the_american_one(italy) -> None:
     assert italy.real_risk_free_rate < load_market_data().real_risk_free_rate
 
 
-def test_the_safe_rate_excludes_the_credit_spread(italy) -> None:
-    """AAA, not the all-government curve.
+def test_the_safe_rate_is_a_traded_real_yield(italy) -> None:
+    """The same kind of object the American variant reads, or the two variants
+    cannot be compared.
 
-    Equation (4) has no way to represent default risk, so the extra yield on
-    Italian paper is not a risk-free return and must not be booked as one.
-    Taking it would raise the safe rate, lower the recommendation, and look
-    prudent while being wrong.
+    FRED's 30-year TIPS is a traded real yield. Deflating a nominal curve by a
+    survey would have made part of the gap between the two answers a
+    difference in method rather than in country, and it was worth 5.4 points
+    of equity share, so it was not a rounding decision.
     """
     source = italy.provenance["real_risk_free_source"]
-    assert "AAA" in source
+    assert source.startswith("DE")
+    assert "traded real yield" in source
+
+
+def test_the_safe_rate_records_the_cross_check_that_brackets_it(italy) -> None:
+    """One number, two constructions, and the honest range between them.
+
+    The traded yield is biased low by scarcity: three bonds outstanding and no
+    issuance since 2023. The deflated AAA curve is biased high, because the
+    gap between the market breakeven and the survey expectation is an
+    inflation risk premium and deflating books it as return.
+    """
+    source = italy.provenance["real_risk_free_source"]
+    assert "Cross-checked" in source
+    assert "bracket" in source
     assert "Survey of Professional Forecasters" in source
+
+
+def test_the_safe_rate_is_not_italian_paper(italy) -> None:
+    """Equation (4) has no way to represent default risk.
+
+    All euro area government bonds yield about 0.61 points more at the same
+    maturity, and that spread is compensation for a government not paying.
+    Booking it as a risk-free return would raise the rate and lower the
+    recommendation while looking prudent.
+    """
+    text = Path("config/market_data_it.toml").read_text(encoding="utf-8")
+    assert "NOT holding this asset" in text
+    assert "0.61 points" in text
 
 
 def test_the_currency_basis_is_recorded_and_names_its_assumption(italy) -> None:
