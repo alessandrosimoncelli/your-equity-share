@@ -332,6 +332,29 @@ def discover_shiller_url() -> str:
     return url
 
 
+DATA_DIR = Path(__file__).resolve().parent / "data"
+
+
+def _keep(raw: bytes, name: str) -> None:
+    """Save the raw download beside the repository, for tools/analysis.py.
+
+    That tool recomputes the measured tables in the methodology and needs the
+    same history this refresh just read. Without a copy on disk it can only
+    skip, so anyone who has run a refresh gets the twenty-seven checks and
+    anyone who has not still gets the twelve that need no data.
+
+    The file is not committed. It is Shiller's series, not this project's, and
+    .gitignore excludes the directory.
+    """
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        (DATA_DIR / name).write_bytes(raw)
+    except OSError as exc:
+        # A refresh must not fail because a convenience copy could not be
+        # written. The tool skips, which is what it does anyway.
+        print(f"  note: could not keep {name} for tools/analysis.py: {exc}")
+
+
 def fetch_shiller_history() -> tuple[ShillerHistory, str]:
     """The long history, from whichever source answers first.
 
@@ -342,19 +365,25 @@ def fetch_shiller_history() -> tuple[ShillerHistory, str]:
 
     try:
         url = discover_shiller_url()
-        history = parse_shiller_xls(_get(url))
+        raw = _get(url)
+        history = parse_shiller_xls(raw)
+        _keep(raw, "shiller.xls")
         return history, "Shiller's own site"
     except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
         problems.append(f"Shiller's own site: {exc}")
 
     try:
-        history = parse_shiller_xls(_get(SHILLER_YALE_URL))
+        raw = _get(SHILLER_YALE_URL)
+        history = parse_shiller_xls(raw)
+        _keep(raw, "shiller.xls")
         return history, "Yale, no longer updated"
     except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
         problems.append(f"Yale: {exc}")
 
     try:
-        history = parse_shiller_csv(_get(SHILLER_MIRROR_URL).decode("utf-8", "replace"))
+        raw = _get(SHILLER_MIRROR_URL)
+        history = parse_shiller_csv(raw.decode("utf-8", "replace"))
+        _keep(raw, "shiller.csv")
         return history, "community CSV mirror"
     except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
         problems.append(f"mirror: {exc}")

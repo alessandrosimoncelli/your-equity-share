@@ -35,11 +35,31 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from your_equity_share.providers import parse_shiller_xls  # noqa: E402
+from your_equity_share.allocation import (  # noqa: E402
+    Household,
+    recommend,
+)
+from your_equity_share.expected_return import (  # noqa: E402
+    arithmetic_from_compound,
+    compound_from_arithmetic,
+    log_premium,
+)
+from your_equity_share.human_capital import (  # noqa: E402
+    CGM_CALIBRATION,
+    Person,
+    benefit_discount_rate,
+    wage_discount_rate,
+)
+from your_equity_share.market_data import load_market_data  # noqa: E402
+from your_equity_share.providers import (  # noqa: E402
+    parse_shiller_csv,
+    parse_shiller_xls,
+)
 
 DOC = ROOT / "docs" / "methodology.html"
 WORKBOOK_NAME = "shiller.xls"
 SHILLER_ENV = "SHILLER_WORKBOOK"
+CALIB_VOL = CGM_CALIBRATION.stock_volatility  # 0.185, Choi's
 
 # The two-sided 5% point of the standard normal, written out so this does not
 # depend on whatever library the original used.
@@ -184,9 +204,18 @@ def part_two() -> None:
 # ---------------------------------------------------------------------------
 
 def workbook_candidates(override: str | None) -> list[Path]:
+    """Where the history is looked for, in order.
+
+    ./data is first because update.py puts it there on every successful
+    refresh, so the twenty-seven checks run for anyone who has refreshed
+    without their having to fetch anything by hand. The mirror serves CSV
+    rather than the workbook, so both forms are looked for.
+    """
     if override:
         return [Path(override)]
-    return [ROOT.parent / WORKBOOK_NAME, ROOT / "data" / WORKBOOK_NAME]
+    return [ROOT / "data" / WORKBOOK_NAME,
+            ROOT / "data" / "shiller.csv",
+            ROOT.parent / WORKBOOK_NAME]
 
 
 def find_workbook(override: str | None = None) -> Path | None:
@@ -194,6 +223,14 @@ def find_workbook(override: str | None = None) -> Path | None:
         if candidate.exists():
             return candidate
     return None
+
+
+def read_history(path: Path):
+    """Parse whichever form the refresh happened to save."""
+    raw = path.read_bytes()
+    if path.suffix.lower() == ".csv":
+        return parse_shiller_csv(raw.decode("utf-8", "replace"))
+    return parse_shiller_xls(raw)
 
 
 def total_return_index(prices, dividends) -> list[float]:
@@ -238,7 +275,7 @@ def trend_growth(series, months: int) -> float | None:
 
 def part_three(workbook: Path) -> None:
     head(3, "Tables 4, 7 and 8, measured on Shiller's series")
-    history = parse_shiller_xls(workbook.read_bytes())
+    history = read_history(workbook)
     prices = list(history.real_prices)
     dividends = list(history.real_dividends)
     earnings = list(history.real_earnings)
@@ -325,6 +362,127 @@ def part_three(workbook: Path) -> None:
               f"bias {estimate - realised:+.2f} over {len(group)} starts")
 
 
+# ---------------------------------------------------------------------------
+# The model-derived tables
+# ---------------------------------------------------------------------------
+
+def part_four() -> None:
+    head(4, "Tables 12, 14, 16, 18 and 20, recomputed from the model")
+    import dataclasses
+
+    market = load_market_data()
+    mu = market.expected_stock_real_return
+    rf = market.real_risk_free_rate
+    vol = market.stock_volatility
+    compound = float(market.provenance["expected_return_compound"])
+    default = Household(500_000.0, [Person(45, 100_000.0)], 5.0)
+
+    # --- Table 12, the conversion at three volatilities -------------------
+    for label, at, want in (("a bond held to maturity", 0.0, "2.96%"),
+                            ("2% volatility", 0.02, "2.98%"),
+                            ("equities", vol, "4.49%")):
+        got = "%.2f%%" % (arithmetic_from_compound(rf, at) * 100)
+        check("Table 12, %s" % label, got == want and in_doc(want),
+              "%.2f%% compound becomes %s arithmetic" % (rf * 100, got))
+
+    # --- Table 14, what the safe asset is worth ---------------------------
+    # The equity estimate is held at its compound value and converted, so only
+    # the safe rate moves down the column.
+    held = arithmetic_from_compound(compound, vol)
+    for label, rate, want in (("cash", 0.013679, "81.1%"),
+                              ("the 5-year TIPS", 0.0215, "58.3%"),
+                              ("the 10-year TIPS", 0.0242, "51.3%"),
+                              ("the 30-year TIPS, used here", 0.0296, "38.3%")):
+        share = recommend(default, held, rate, vol).equity_share
+        drift = log_premium(held, rate, CALIB_VOL)
+        check("Table 14, %s" % label,
+              "%.1f%%" % (share * 100) == want and in_doc(want),
+              "a %.2f%% safe rate gives %.1f%%, drift %.2f%%"
+              % (rate * 100, share * 100, drift * 100))
+
+    # --- Table 16, the corners of Choi's grid -----------------------------
+    corners = []
+    for log_rf in (0.0, 0.01, 0.02):
+        for log_prem in (0.02, 0.04):
+            corner_rf = math.exp(log_rf) - 1
+            corner_mu = math.exp(log_rf + log_prem + CALIB_VOL ** 2 / 2) - 1
+            share = recommend(default, corner_mu, corner_rf, vol).equity_share
+            corners.append((compound_from_arithmetic(corner_mu, vol), share))
+    missing = ["%.2f%%" % (c * 100) for c, _ in corners
+               if "%.2f%%" % (c * 100) not in doc_text()]
+    check("Table 16, the implied return at each of the six corners", not missing,
+          ", ".join("%.2f%%" % (c * 100) for c, _ in corners)
+          if not missing else "absent: %s" % missing)
+    saturated = sum(1 for _, s in corners if s > 0.999)
+    check("Table 16, four of the six corners saturate at 100%", saturated == 4,
+          "everywhere Choi solved, this household would hold far more equity "
+          "than today's market tells it to")
+
+    # --- Table 18, where the 9.7% comes from ------------------------------
+    # At the values the document states beside it: gamma 5, mu 5%, r 2%, age
+    # 21. Not today's market data, which gives a different number entirely.
+    g, ex_mu, ex_rf, age = 5.0, 0.05, 0.02, 21
+    x = (age - 1) / 100.0
+    pi = log_premium(ex_mu, ex_rf, CALIB_VOL)
+    terms = [
+        ("permanent wage shocks",
+         4.332 * CGM_CALIBRATION.permanent_shock_volatility ** 2, "7.32"),
+        ("risk aversion", 0.087 * g / 10.0, "4.35"),
+        ("age", -0.149 * x + 0.142 * x ** 2, "2.41"),
+        ("the real safe rate", 1.132 * math.log(1 + ex_rf), "2.24"),
+        ("the constant", -0.020, "2.00"),
+        ("the replacement rate",
+         0.010 * CGM_CALIBRATION.benefit_replacement_rate, "0.40"),
+        ("the equity drift", -0.267 * pi, "0.32"),
+        ("temporary wage shocks",
+         0.028 * CGM_CALIBRATION.temporary_shock_volatility ** 2, "0.16"),
+    ]
+    wrong = [name for name, value, want in terms
+             if "%.2f" % abs(value * 100) != want]
+    check("Table 18, all eight terms of the wage discount rate", not wrong,
+          "at the values stated beside it, not today's" if not wrong
+          else "%s" % wrong)
+    total = sum(v for _, v, _ in terms)
+    live = wage_discount_rate(age, g, ex_mu, ex_rf)
+    check("Table 18, the terms sum to what the model returns",
+          abs(total - live) < 1e-12 and in_doc("9.75"),
+          "%.2f%%, and wage_discount_rate agrees exactly" % (total * 100))
+
+    # The benefit rate is a different equation on a different age range.
+    # Quoting the two together without their ages is how 3.3% came to sit
+    # beside a value the model puts at the safe rate.
+    at_21 = benefit_discount_rate(21, g, ex_mu, ex_rf)
+    at_67 = benefit_discount_rate(67, g, ex_mu, ex_rf)
+    check("the benefit rate is quoted at a retirement age, not at 21",
+          abs(at_21 - ex_rf) < 1e-12 and "%.1f%%" % (at_67 * 100) in doc_text(),
+          "%.2f%% at 21, which is the floor, and %.1f%% at 67"
+          % (at_21 * 100, at_67 * 100))
+
+    # --- Table 20, what each fixed constant is worth ----------------------
+    for field, low, high, want_low, want_high, want_range in (
+            ("permanent_shock_volatility", 0.08, 0.20, "49.3%", "27.3%", "22.0"),
+            ("benefit_replacement_rate", 0.0, 0.80, "36.7%", "39.6%", "2.9"),
+            ("temporary_shock_volatility", 0.15, 0.35, "38.0%", "38.7%", "0.7")):
+        shares = []
+        for value in (low, high):
+            calibration = dataclasses.replace(CGM_CALIBRATION, **{field: value})
+            shares.append(
+                recommend(default, mu, rf, vol, calibration).equity_share)
+        span = abs(shares[0] - shares[1]) * 100
+        ok = ("%.1f%%" % (shares[0] * 100) == want_low
+              and "%.1f%%" % (shares[1] * 100) == want_high
+              and "%.1f" % span == want_range
+              and in_doc(want_low, want_high))
+        check("Table 20, %s" % field.replace("_", " "), ok,
+              "%.1f%% to %.1f%%, a range of %.1f points"
+              % (shares[0] * 100, shares[1] * 100, span))
+
+    check("Table 20 lists the replacement rate once",
+          doc_text().count("replacement rate</td><td class=\"num\">3") <= 1,
+          "it appeared twice, measured before and after that rate became a "
+          "regressor in equation (12)")
+
+
 if __name__ == "__main__":
     part_one()
     part_two()
@@ -341,6 +499,8 @@ if __name__ == "__main__":
               f"recomputed and checked.")
     else:
         part_three(book)
+
+    part_four()
 
     print(f"\n{'=' * 72}")
     tally = f"{passed} passed, {len(failed)} failed"
