@@ -1449,24 +1449,11 @@ h4 {
 
 <p>Everything above is a list of things that pass. That a suite passes is a claim about the suite and not about the model, and this project has twice been shown the difference: a test that asserted two numbers add up, which was true of the wrong two, and a release the entire suite approved while the published page could not load at all. The only honest measurement is to break the model on purpose and count what notices.</p>
 
-<p><strong>56 deliberate defects</strong> were introduced one at a time, each a single changed coefficient, constant, boundary or operator, spread across the Merton share, both discount rates, the earnings path, the calibration, the statistics, the data layer, the input validation and the JavaScript port. After each, the whole gate ran. <strong>52 were caught. Four were not</strong>, and each was a real hole rather than a curiosity.</p>
+<p><strong>56 deliberate defects</strong> were introduced one at a time, each a single changed coefficient, constant, boundary or operator, across the Merton share, both discount rates, the earnings path, the calibration, the statistics, the data layer, the input validation and the JavaScript port. After each, the whole gate ran. <strong>52 were caught and four were not.</strong></p>
 
-<div class="tablewrap">
-<table>
-<caption>Table 27. The four defects that passed every check, and what each would have done</caption>
-<thead><tr><th>What was broken</th><th>What it would do</th><th>Why nothing caught it</th></tr></thead>
-<tbody>
-<tr><td>The compound to arithmetic conversion, inverted in the JavaScript only</td><td>The page converts your override from a compound rate before the model sees it, so an override would be wrong by twice the variance drag, and every point of the sensitivity exhibit with it. The same defect in the Python was caught immediately.</td><td>The conformance fixture covered the model's own functions and stopped at the two conversions the page runs around them</td></tr>
-<tr><td>The trading year set to 200 days instead of 252</td><td>Volatility enters the answer squared, so a fifth off the annualisation is worth roughly half the recommended equity share</td><td>It is a convention rather than a measurement, so no data would object to it and nothing asserted it</td></tr>
-<tr><td>The dividend yield taken from the month before last</td><td>Little today, but it is a yield computed from stale prices, which stays plausible while being wrong</td><td>That both halves come from the <em>same</em> month was pinned. That the month is the <em>latest</em> one was not.</td></tr>
-<tr><td>The grid Choi solved risk aversion and the safe rate over</td><td>Nothing, which was the finding: three constants and a function were read by nothing in either language</td><td>They were written for a warning the page later dropped, and the removal left the machinery behind</td></tr>
-</tbody>
-</table>
-</div>
+<p>The four were real holes rather than curiosities. The worst was in the browser code: the compound-to-arithmetic conversion could be inverted there and every check still passed, which would have corrupted any expected return a reader typed in and every point of the sensitivity exhibit, while the same defect in the Python was caught at once. The others were the trading year, which could be set to 200 days undetected and is worth about half the recommended share; the dividend yield, which could be taken from a stale month; and three fitted-grid constants that nothing read at all. All four are closed, and re-running the sweep now kills all 56, leaving only a control mutant that must survive or the exercise would prove nothing.</p>
 
-<p>All four are closed. The two conversions are now 144 cases in the conformance fixture, bound to live Python by the test suite and replayed through the port; the trading year and the yield's month are asserted directly; and the fitted-grid constants are read by the verifier, which now checks that the range printed in Table 16 and the grid printed in section 3.6 are the ones the code holds. Re-running the sweep kills all 56, and leaves only the control mutant, a comment, which must survive or the harness would be proving nothing.</p>
-
-<p><strong>What this does not establish.</strong> A mutation sweep measures whether the checks bind the code as written. It cannot tell you the code is the right model, and none of the 56 defects touched the two things most likely to be wrong here, which are the expected return and the assumption that returns do not repeat themselves. Those are argued in sections 3.1 and 2.4 and they are arguments, not measurements.</p>
+<p><strong>What this does not establish.</strong> A mutation sweep measures whether the checks bind the code as written. It cannot tell you the code is the right model, and none of the 56 defects touched the two things most likely to be wrong here, which are the expected return and the assumption that returns do not repeat themselves. Those are argued in sections 3.1 and 2.4, and they are arguments rather than measurements.</p>
 
 <h3 id="s8-2">8.2 The glide path, against what the industry builds</h3>
 
@@ -1474,7 +1461,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 28. Equity share by age, against a representative target date glide path</caption>
+  <caption>Table 27. Equity share by age, against a representative target date glide path</caption>
   <thead><tr><th class="num">Age</th><th class="num">Target date fund</th><th class="num">This model, today</th><th class="num">This model at 8% expected return</th></tr></thead>
   <tbody>
     <tr><td class="num">25</td><td class="num">90%</td><td class="num">100%</td><td class="num">100%</td></tr>
@@ -1491,41 +1478,48 @@ h4 {
 
 <p>That is not a defect in either. A target date fund is built on an unconditional premium, close to the long-run average, because it has to be set once and left alone for decades. This tool prices equities off what they cost today, and today they are expensive: a CAPE of 39.8 against a historical mean near 16. The two disagree because one conditions on valuation and the other does not, and a user who believes the historical premium will simply return should say so by setting the expected return by hand, which the tool allows. The disagreement is the tool's central claim, so it is stated here rather than buried.</p>
 
-<h3 id="s8-3">8.3 The estimate against twelve published forecasts</h3>
+<h3 id="s8-3">8.3 The estimate against ten published forecasts</h3>
 
 <p>The backtest in section 3.1 asks whether the estimator worked in the past. This asks whether anyone else, working today with the same market in front of them, arrives anywhere near the same number. Comparing capital market assumptions is easy to do badly, because published forecasts differ in four ways that each move the number by more than a point, so all four are stated for every row: whether the return is real or nominal, whether it is compound or arithmetic, which slice of the market it covers, and over what horizon. Nominal forecasts are deflated by the firm's own inflation assumption where it publishes one and by the 10-year breakeven of 2.35% where it does not.</p>
 
 <div class="tablewrap">
 <table>
-<caption>Table 29. Published expected returns on US equities, all converted to a compound real basis</caption>
-<thead><tr><th>Firm</th><th class="num">Published</th><th class="num">Compound real</th><th>Segment</th><th class="num">Horizon</th><th>Repricing assumed</th></tr></thead>
+<caption>Table 28. Published expected returns on US equities, each traced to a source<sup>a</sup></caption>
+<thead><tr><th>Firm</th><th class="num">Published</th><th class="num">Real</th><th>Segment</th><th class="num">Horizon</th><th>Repricing assumed</th><th class="num">As of</th><th class="num">Src</th></tr></thead>
 <tbody>
-<tr><td>Damodaran, implied</td><td class="num">7.05% real</td><td class="num">7.05%</td><td>S&amp;P 500</td><td class="num">perpetual</td><td>zero, implied</td></tr>
-<tr><td>Northern Trust</td><td class="num">6.8% nom.</td><td class="num">4.35%</td><td>US equities</td><td class="num">10y</td><td>contraction</td></tr>
-<tr><td>J.P. Morgan</td><td class="num">6.7% nom.</td><td class="num">4.10%</td><td>US large cap</td><td class="num">10-15y</td><td>some</td></tr>
-<tr><td><strong>AQR</strong></td><td class="num">3.9% real</td><td class="num"><strong>3.90%</strong></td><td>US large cap</td><td class="num">5-10y</td><td><strong>zero, stated</strong></td></tr>
-<tr><td>Schwab</td><td class="num">5.9% nom.</td><td class="num">3.42%</td><td>US large cap</td><td class="num">10y</td><td>not stated</td></tr>
-<tr><td><strong>This model</strong></td><td class="num"><strong>3.38% real</strong></td><td class="num"><strong>3.38%</strong></td><td><strong>US large cap</strong></td><td class="num"><strong>lifetime</strong></td><td><strong>zero, stated</strong></td></tr>
-<tr><td>Fidelity</td><td class="num">3.2% real</td><td class="num">3.20%</td><td>US equities</td><td class="num">20y</td><td>not stated</td></tr>
-<tr><td>Morningstar</td><td class="num">5.3% nom.</td><td class="num">2.88%</td><td>US equities</td><td class="num">10y</td><td>not stated</td></tr>
-<tr><td>BlackRock</td><td class="num">5.2% nom.</td><td class="num">2.78%</td><td>US equities</td><td class="num">10y</td><td>some</td></tr>
-<tr><td>Vanguard</td><td class="num">4.2-6.2% nom.</td><td class="num">2.78%</td><td>US equities</td><td class="num">10y</td><td>some</td></tr>
-<tr><td>Invesco</td><td class="num">4.9% nom.</td><td class="num">2.49%</td><td>US large cap</td><td class="num">10y</td><td>valuation change</td></tr>
-<tr><td>Research Affiliates</td><td class="num">3.1% nom.</td><td class="num">0.73%</td><td>US large cap</td><td class="num">10y</td><td>full reversion</td></tr>
-<tr><td>GMO</td><td class="num">-6.0% real</td><td class="num">-6.00%</td><td>US large cap</td><td class="num">7y</td><td>full reversion</td></tr>
+<tr><td>Damodaran, implied</td><td class="num">7.05% real</td><td class="num">7.05%</td><td>S&amp;P 500</td><td class="num">perpetual</td><td>zero, implied</td><td class="num">Sep 2026</td><td class="num">d</td></tr>
+<tr><td>J.P. Morgan</td><td class="num">6.7% nominal</td><td class="num">4.25%</td><td>US large cap</td><td class="num">10 to 15y</td><td>some</td><td class="num">Sep 2025</td><td class="num">b</td></tr>
+<tr><td>Schwab</td><td class="num">5.9% nominal</td><td class="num">3.47%</td><td>US large cap</td><td class="num">10y</td><td>not stated</td><td class="num">Oct 2025</td><td class="num">b</td></tr>
+<tr><td>AQR</td><td class="num">3.9% real</td><td class="num">3.90%</td><td>US large cap</td><td class="num">5 to 10y</td><td>zero, stated</td><td class="num">Dec 2025</td><td class="num">c</td></tr>
+<tr><td><strong>This model</strong></td><td class="num"><strong>3.38% real</strong></td><td class="num"><strong>3.38%</strong></td><td><strong>US large cap</strong></td><td class="num"><strong>lifetime</strong></td><td><strong>zero, stated</strong></td><td class="num"><strong>Sep 2026</strong></td><td class="num">d</td></tr>
+<tr><td>Fidelity</td><td class="num">5.8% nom., 3.2% real</td><td class="num">3.20%</td><td>US equities</td><td class="num">20y</td><td>not stated</td><td class="num">2025 to 2044</td><td class="num">b</td></tr>
+<tr><td>Morningstar</td><td class="num">5.3% nominal</td><td class="num">2.88%</td><td>US equities</td><td class="num">10y</td><td>not stated</td><td class="num">Dec 2025</td><td class="num">b</td></tr>
+<tr><td>BlackRock</td><td class="num">5.2% nominal</td><td class="num">2.78%</td><td>US equities</td><td class="num">10y</td><td>some</td><td class="num">Sep 2025</td><td class="num">b</td></tr>
+<tr><td>Vanguard</td><td class="num">3.5 to 5.5% nom.</td><td class="num">2.10%</td><td>US equities</td><td class="num">10y</td><td>some</td><td class="num">Oct 2025</td><td class="num">b</td></tr>
+<tr><td>Research Affiliates</td><td class="num">3.1% nominal</td><td class="num">0.73%</td><td>US large cap</td><td class="num">10y</td><td>full reversion</td><td class="num">Dec 2025</td><td class="num">b</td></tr>
+<tr><td>GMO</td><td class="num">&minus;6.0% real</td><td class="num">&minus;6.00%</td><td>US large cap</td><td class="num">7y</td><td>full reversion</td><td class="num">Nov 2025</td><td class="num">b</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">Vintages run from September 2025 to June 2026. Vanguard's figure is the midpoint of its published range from the June 2026 model run. Damodaran's is this project's own calculation from his implied premium plus the real safe rate, and is reported as a cross-check by the tool itself.</p>
+<ol class="notes" type="a">
+<li>Two rows in an earlier version of this table, from Northern Trust and Invesco, are gone: no source for either could be produced. A validation table whose rows cannot be checked validates nothing.</li>
+<li>Benz, C. (2026). Experts Forecast Stock and Bond Returns: 2026 Edition. Morningstar, 12 January 2026, which reports each firm's own published assumption with its as-of date.</li>
+<li>AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A. Their figure decomposes into a 1.3% payout yield and 2.7% real EPS growth, both checked against that exhibit.</li>
+<li>Computed by this project. Damodaran's is his implied premium plus the real safe rate, which the tool reports as a cross-check.</li>
+</ol>
 
-<p>The median of the twelve is 3.04% and the average of the ten between the extremes is 3.06%. <strong>This model's 3.38% sits 0.32 points above that average and 0.34 above the median</strong>, roughly a tenth of the spread between the highest and lowest forecast. It is not an outlier in either direction.</p>
+<p><strong>Six of the ten are published as nominal and converted here</strong>, at the 2.35% ten-year breakeven from FRED on 3 September 2026. That conversion is this project's judgement rather than the firm's, so each row shows what the firm actually published beside it. The other four are published as real returns and stand as they are: Damodaran's, AQR's, Fidelity's and GMO's.</p>
+
+<p>The median of the ten is <strong>3.04%</strong>, and the average of the eight between the extremes is <strong>2.91%</strong>. This model's 3.38% sits 0.34 points above that median and 0.47 above that average, seventh of eleven counting from the bottom. It is not an outlier in either direction.</p>
+
+<p><strong>The repricing column is what explains the spread.</strong> The four lowest all assume the market re-rates downward towards a historical average; the highest assumes today's prices are right and stay right. This model assumes no repricing and says so, which puts it with AQR rather than with GMO, and section 3.1 gives the evidence for that choice: from starting valuations as expensive as today's, the zero-repricing assumption has been close to unbiased.</p>
 
 <h4>Two corrections that pull in opposite directions</h4>
 
 <p><strong>The horizon is not matched, and matching it moves this model from slightly high to slightly low.</strong> Every peer forecast above runs seven to twenty years; this one runs a lifetime. That matters, because a valuation-conditioned forecast from an expensive market rises with the horizon as the effect of today's price is diluted. Vanguard is the only firm here publishing both horizons off one model run, and its 30-year US equity forecast sits 0.9 points above its 10-year. Adding that to the peer average gives 3.96% on a lifetime basis, against which this model's 3.38% is <strong>0.58 points low</strong>.</p>
 
-<p><strong>The repricing column explains most of the remaining spread</strong>, and it is why an average across all twelve is less informative than it looks. GMO's -6.0% and Research Affiliates' 0.73% both assume valuations revert to a fair value estimate over the forecast period; Damodaran's 7.05% is an internal rate of return that embeds analyst growth forecasts. Those three are answering a different question from the one asked here. Read only against the firms that hold ratios constant, as this model does, the agreement is much tighter.</p>
+<p><strong>The repricing column explains most of the remaining spread</strong>, and it is why an average across all ten is less informative than it looks. GMO's -6.0% and Research Affiliates' 0.73% both assume valuations revert to a fair value estimate over the forecast period; Damodaran's 7.05% is an internal rate of return that embeds analyst growth forecasts. Those three are answering a different question from the one asked here. Read only against the firms that hold ratios constant, as this model does, the agreement is much tighter.</p>
 
 <h4>AQR, which uses this exact construction</h4>
 
@@ -1535,7 +1529,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 30. The same construction, side by side</caption>
+<caption>Table 29. The same construction, side by side</caption>
 <thead><tr><th>Term</th><th class="num">AQR</th><th class="num">This model</th><th class="num">Difference</th></tr></thead>
 <tbody>
 <tr><td>Dividend yield</td><td class="num">1.3%</td><td class="num">1.10%</td><td class="num">0.20</td></tr>
@@ -1561,7 +1555,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 31. Two routes to almost the same growth rate</caption>
+<caption>Table 30. Two routes to almost the same growth rate</caption>
 <thead><tr><th>Step</th><th class="num">AQR</th><th class="num">This model</th></tr></thead>
 <tbody>
 <tr><td>Starting figure</td><td class="num">25-year real EPS growth, 5.70%</td><td class="num">100-year trend, 2.29%</td></tr>
@@ -1580,7 +1574,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 32. Root mean square error by growth window, against realised returns. Percentage points a year.</caption>
+<caption>Table 31. Root mean square error by growth window, against realised returns. Percentage points a year.</caption>
 <thead><tr><th class="num">Window</th><th class="num">10 years</th><th class="num">20 years</th><th class="num">30 years</th><th class="num">Estimate today</th></tr></thead>
 <tbody>
 <tr><td class="num">20 years</td><td class="num">6.14</td><td class="num">3.93</td><td class="num">3.56</td><td class="num">7.65%</td></tr>
@@ -1606,7 +1600,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 33. The drift, decomposed, against the one firm that publishes every piece of it</caption>
+<caption>Table 32. The drift, decomposed, against the one firm that publishes every piece of it</caption>
 <thead><tr><th>Quantity</th><th class="num">AQR</th><th class="num">This model</th></tr></thead>
 <tbody>
 <tr><td>Expected real return, US large cap, compound</td><td class="num">3.90%</td><td class="num">3.38%</td></tr>
