@@ -81,8 +81,62 @@ sub, sup { font-size: 12px; }
 a { color: var(--navy); }
 a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 
-.contents { margin: 0 0 1rem; padding-left: 0; list-style: none; }
-.contents li { margin-bottom: 0.25rem; font-size: var(--t-small); }
+.contents-panel { margin: 0 0 1.6rem; }
+.contents-head {
+  font-size: var(--t-head);
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 0.6rem;
+}
+.contents { margin: 0; padding-left: 0; list-style: none; }
+.contents li { margin-bottom: 0.3rem; font-size: var(--t-small); }
+.contents li.sub { padding-left: 1rem; }
+.contents a { text-decoration: none; }
+.contents a:hover { text-decoration: underline; }
+
+/* Headings are link targets now, so keep them clear of the viewport edge. */
+h2[id], h3[id] { scroll-margin-top: 1.5rem; }
+
+/*
+  Wide screens: the contents move into the left margin and stay there.
+
+  The margin beside a 52rem column is not doing anything on a 1600px window,
+  and this document is 21,000 words in ten sections. A reader who wants
+  section 8 should not have to scroll for it. Below 90rem the panel drops
+  back into the flow at the top, which is where it belongs on a laptop or a
+  phone.
+*/
+@media (min-width: 84rem) {
+  /*
+    Two columns, centred as a pair. Fixed positioning put the contents at a
+    computed offset and left the two halves visibly unbalanced on a 1366px
+    laptop; a grid centres the whole thing at every width above the
+    breakpoint without arithmetic.
+  */
+  .doc {
+    display: grid;
+    grid-template-columns: 16rem minmax(0, 58rem);
+    column-gap: 3.5rem;
+    justify-content: center;
+    max-width: none;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  .doc > * { grid-column: 2; }
+  .contents-panel {
+    grid-column: 1;
+    grid-row: 1 / span 999;
+    position: sticky;
+    top: 2.5rem;
+    align-self: start;
+    max-height: calc(100vh - 5rem);
+    overflow-y: auto;
+    margin: 0;
+    padding-right: 1rem;
+    border-right: 1px solid var(--rule-lt);
+  }
+  .contents-head { font-size: var(--t-body); }
+}
 
 .eqn {
   display: flex;
@@ -142,10 +196,23 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 */
 @media (min-width: 64rem) {
   .tablewrap {
-    --wide: min(68rem, calc(100vw - 8rem));
+    --wide: min(72rem, calc(100vw - 4rem));
     width: var(--wide);
     margin-left: calc(50% - var(--wide) / 2);
   }
+}
+
+/*
+  Once the contents take the left margin, the breakout has to know about
+  them. Centred on the text column it ran under the contents on one side
+  and past the window on the other, which showed as 57px of horizontal
+  scroll at 1351px. Half the text column plus the gutter is 32.5rem, so a
+  centred table can be 62rem before it reaches the contents, and 100vw
+  less 19.5rem before it leaves the window. This block must follow the one
+  above, since it wins on order rather than on specificity.
+*/
+@media (min-width: 84rem) {
+  .tablewrap { --wide: min(62rem, calc(100vw - 19.5rem)); }
 }
 
 table { border-collapse: collapse; width: 100%; font-size: var(--t-body); }
@@ -226,22 +293,24 @@ h4 {
 <p class="docmeta"><strong>Every market figure in this document is as of 3 September 2026</strong> and will have moved since. That includes the 3.38% expected real equity return, the 2.96% real safe rate, the 17.18% volatility, and every equity share computed from them. The constants taken from Choi, Liu and Liu (2025) and from Cocco, Gomes and Maenhout (2005) do not move, because they are fixed inside the fitted coefficients. Where a figure carries its own date in the text, that date governs. For current numbers, open the tool, which recomputes them from the market data it ships with.</p>
 <hr class="titlerule">
 
-<h2>Contents</h2>
+<nav class="contents-panel" aria-label="Contents">
+<p class="contents-head">Contents</p>
 <ol class="contents">
-  <li>1. Approach and scope</li>
-  <li>&nbsp;&nbsp;1.1 Who this is for</li>
-  <li>2. Layer one: the Merton share</li>
-  <li>3. Layer one: the four inputs</li>
-  <li>4. Layer two: the human capital multiplier</li>
-  <li>5. Layer two: valuing human capital</li>
-  <li>6. Accuracy, and what the alternative rules cost</li>
-  <li>7. Declared deviations</li>
-  <li>8. What has been checked, and what has not</li>
-  <li>9. Components included, postponed and excluded</li>
-  <li>10. References</li>
+  <li><a href="#s1">1. Approach and scope</a></li>
+  <li class="sub"><a href="#s1-1">1.1 Who this is for</a></li>
+  <li><a href="#s2">2. Layer one: the Merton share</a></li>
+  <li><a href="#s3">3. Layer one: the four inputs</a></li>
+  <li><a href="#s4">4. Layer two: the human capital multiplier</a></li>
+  <li><a href="#s5">5. Layer two: valuing human capital</a></li>
+  <li><a href="#s6">6. Accuracy, and what the alternative rules cost</a></li>
+  <li><a href="#s7">7. Declared deviations</a></li>
+  <li><a href="#s8">8. What has been checked, and what has not</a></li>
+  <li><a href="#s9">9. Components included, postponed and excluded</a></li>
+  <li><a href="#s10">10. References</a></li>
 </ol>
+</nav>
 
-<h2>1. Approach and scope</h2>
+<h2 id="s1">1. Approach and scope</h2>
 
 <p>This tool implements the approximation in Choi, Liu and Liu (2025), which builds on Merton (1969). The structure has two layers.</p>
 
@@ -274,7 +343,7 @@ h4 {
 
 <p>The source spreadsheet this tool replaces computes only the first factor. Choi's spreadsheet computes the whole expression but with simpler inputs: one equity asset, a fixed 5% expected return, no valuation input. This tool takes the input estimation from the former and the human capital treatment from the latter. It is calibrated for a household in the United States, for the reason given in section 7.4.</p>
 
-<h3>1.1 Who this is for</h3>
+<h3 id="s1-1">1.1 Who this is for</h3>
 
 <p>The model answers one question and it is worth naming, because a reader who brings the wrong question to it will get a confident answer to something they did not ask.</p>
 
@@ -286,9 +355,7 @@ h4 {
 
 <h4>What "no planned use or withdrawal date" rules out</h4>
 
-<p>Money you will spend on a known day does not belong here, and the reason is worth understanding because it is not a limitation anyone could remove. A deposit due in three years and a pension pot forty years out are the same problem to this model, because <strong>the horizon is not one of its inputs</strong>. Section 2.3 derives that: under constant relative risk aversion and returns that do not repeat themselves, the many-year problem collapses into the one-year problem, and the answer stops depending on how long you have. It is Samuelson's result and it is exact.</p>
-
-<p>So a model with no horizon in it cannot be asked to treat a three-year goal differently from a forty-year one. It is not that the answer would be approximate; there is no mechanism by which it could differ. A dated goal needs a different model, one that can hold a payment aside, and this is not it.</p>
+<p>Money you will spend on a known day does not belong here, and not because of a missing feature. Section 2.3 derives the reason: the horizon is not one of the model's inputs, so a deposit due in three years and a pension pot forty years out are the same problem to it. There is no mechanism by which its answer could differ between them.</p>
 
 <p>The practical reading: take the money you would be content to leave alone through a bad decade, and ask this about that. Money for a house, a car, a wedding or a tax bill should be set aside before you start, and the number you type in should be what remains.</p>
 
@@ -322,7 +389,7 @@ h4 {
 
 <p><strong>And for an American who did not go to college</strong>, the three rows in the first block are the wrong ones. The direction is not obvious: the permanent shock volatility is <em>lower</em> for the other two education levels, which raises the recommended equity share by six to eight points. That is Cocco, Gomes and Maenhout's estimate, from a cross-section of the 1970s to 1990s, and this project does not offer it as a choice because there is no reason to assume a relationship between education and earnings risk estimated then still holds.</p>
 
-<h2>2. Layer one: the Merton share</h2>
+<h2 id="s2">2. Layer one: the Merton share</h2>
 
 <p>The investor has <strong>constant relative risk aversion</strong>, meaning the percentage of wealth put at risk does not change as wealth changes. Utility is</p>
 
@@ -342,7 +409,7 @@ h4 {
 
 <p>The flattening is what produces risk aversion: each additional dollar adds less utility than the one before, so a gain does not offset an equally likely loss of the same size. Higher <code>&gamma;</code> means faster flattening.</p>
 
-<h3>2.1 The trade-off</h3>
+<h3 id="s2-1">2.1 The trade-off</h3>
 
 <p>Place a fraction <code>w</code> of wealth in equities and <code>1 &minus; w</code> in the safe asset. Over a short period, maximising expected utility is equivalent to maximising the certainty equivalent, the guaranteed return the investor would accept in place of the uncertain one. To second order:</p>
 
@@ -386,11 +453,11 @@ h4 {
 
 <p>Note that the numerator in equation (1) is written <code>ln(1+&mu;) &minus; ln(1+r)</code>. Under geometric Brownian motion an annual return quoted as <code>&mu;</code> corresponds to a drift of <code>ln(1+&mu;)</code>, and the Merton numerator is a difference of drifts. The source spreadsheet uses <code>&mu; &minus; r</code> directly. Measured on the spreadsheet's own three sleeves, that overstates the numerator by 3.6%.</p>
 
-<h3>2.2 Why volatility is squared</h3>
+<h3 id="s2-2">2.2 Why volatility is squared</h3>
 
 <p>Equation (3) penalises variance, not volatility, because to second order only the mean and variance of the return enter an expected utility calculation. The consequence is an asymmetry: doubling the risk premium doubles the position, while doubling volatility cuts it to a quarter. The result is about twice as sensitive to the volatility estimate as to the return estimate.</p>
 
-<h3>2.3 Why time horizon does not appear</h3>
+<h3 id="s2-3">2.3 Why time horizon does not appear</h3>
 
 <p>Equation (4) contains no term for holding period. Two households with the same <code>&gamma;</code> hold the same share of financial wealth in equities whether they are 30 or 70.</p>
 
@@ -444,7 +511,7 @@ h4 {
 
 <p>Two supporting results point the same way. Bodie (1995) shows that the cost of insuring an equity position against underperforming cash rises with the horizon, from 20.0% of the amount invested over ten years to 33.9% over thirty at 16% volatility; if long horizons reduced equity risk, that insurance would get cheaper. And the probability of underperforming cash does fall with the horizon, from 27.7% to 15.2% on the same parameters, but the average shortfall when one occurs nearly doubles, leaving the expected shortfall flat.</p>
 
-<h3>2.4 The empirical question</h3>
+<h3 id="s2-4">2.4 The empirical question</h3>
 
 <p>All of the above assumes returns are independent from year to year. Whether they are is empirical and unsettled.</p>
 
@@ -477,9 +544,9 @@ h4 {
 
 <p>Section 6 gives the practical size of this question: the age-based rule that the horizon argument produces costs 2.00% of lifetime consumption against 0.06% for the approach used here.</p>
 
-<h2>3. Layer one: the four inputs</h2>
+<h2 id="s3">3. Layer one: the four inputs</h2>
 
-<h3>3.1 Expected equity return</h3>
+<h3 id="s3-1">3.1 Expected equity return</h3>
 
 <p><strong>This is the input the answer is most sensitive to, and the only one nobody can observe.</strong> It is given more space than the others for that reason. Holding everything else at today's values, the recommendation for the default household moves as follows across estimates that are all defensible:</p>
 
@@ -771,7 +838,7 @@ h4 {
 
 <p><strong>The user can override all of it.</strong> The estimate is a default rather than a claim to know the number, and both front ends expose it directly.</p>
 
-<h3>3.2 Volatility</h3>
+<h3 id="s3-2">3.2 Volatility</h3>
 
 <p>The equity sleeve holds the S&amp;P 500, developed markets outside the United States, and emerging markets. Its variance is</p>
 
@@ -810,7 +877,7 @@ h4 {
 
 <p>The shortcut overstates the variance by 12.2% and costs 8.3 percentage points of allocation. An earlier draft of this document put it at nine points using an assumed correlation of 0.8; the measured figure is 8.3. The flat 0.8 turned out to be a fair guess for two of the three pairs and a poor one for the third, since the S&amp;P 500 and emerging markets correlate at 0.676.</p>
 
-<h3>3.3 The safe rate</h3>
+<h3 id="s3-3">3.3 The safe rate</h3>
 
 <p>Taken as a real rate directly, from the 30-year Treasury Inflation-Protected Securities yield, which is what Choi's guide asks for. Deriving it instead as a nominal yield less an inflation expectation would mismatch maturities, since the freely available series are a 3-month bill and a 10-year breakeven and their difference is neither a 3-month nor a 10-year real rate. Where bonds sit in a taxable account the guide reduces the rate by the marginal income tax rate.</p>
 
@@ -853,7 +920,7 @@ h4 {
 
 <p><strong>The one thing this weakens is the fitted grid, twice over.</strong> A higher safe rate lowers the drift <em>and</em> raises the safe rate itself above the grid the coefficients were fitted on, which section 3.6 sets out in full. Section 3.1 reports a log excess drift of 0.17%, well below the 2% to 4% values Choi solved at. Some of that distance is the safe asset rather than the equity market: Choi anchors his central 2% example to AQR's 1.9% log excess return, and AQR quotes excess <em>of cash</em>. Measured the same way, on cash, this model's drift is 1.73%, which is a quarter point below the band rather than 1.8 points below it. That inference rests on AQR's convention rather than on a statement in Choi's paper, so the tool continues to report the drift against its own safe asset and to warn, but the warning should be read as partly a statement about the shape of the real curve and not only about how thin the equity premium is.</p>
 
-<h3>3.4 Risk aversion</h3>
+<h3 id="s3-4">3.4 Risk aversion</h3>
 
 <p><code>&gamma;</code> describes the household, not the market. It cannot be estimated from prices and there is no value to look up. Household portfolio studies and experimental elicitation both produce values between 2 and 10, a range wide enough to change the recommendation by a factor of five.</p>
 
@@ -869,7 +936,7 @@ h4 {
 
 <p>The tool's slider carries whole numbers of risk aversion and shows Choi's own published amount for each, which are reproduced by this project's own calculation to within a dollar. It used to be a slider over dollars, which sounds equivalent and is not: the map from an answer in dollars to a risk aversion is steep near the top, so the midpoint of that slider sat at a risk aversion of 3.3 rather than 5.</p>
 
-<h3>3.5 Which equity market, and why not a global one</h3>
+<h3 id="s3-5">3.5 Which equity market, and why not a global one</h3>
 
 <p>Everything above estimates the expected return of the <strong>United States</strong> stock market, and the volatility in section 3.2 is measured on an S&amp;P 500 tracker. A reasonable question is whether the tool should offer developed-market or global alternatives instead. The honest answer is that the equity side could be done and the rest of the model could not, and offering the choice would advertise a generality the model does not have.</p>
 
@@ -980,7 +1047,7 @@ h4 {
 
 <p>This is the single largest reason to treat the output as an anchor rather than an answer, and it is a larger reason than any of the input uncertainties in section 3.</p>
 
-<h2>4. Layer two: the human capital multiplier</h2>
+<h2 id="s4">4. Layer two: the human capital multiplier</h2>
 
 <p>Equation (4) gives the equity share of <strong>total</strong> wealth, which has two components:</p>
 
@@ -1042,7 +1109,7 @@ h4 {
 
 <p>For younger workers the product exceeds 1, meaning the model calls for leverage. The clip prevents it. That cap is our constraint, not the model's conclusion. It binds until human capital falls below roughly 10 to 23% of financial wealth, which for a typical saver occurs in the late fifties, so the glide path is flat near 100% for most of a working life and then declines.</p>
 
-<h2>5. Layer two: valuing human capital</h2>
+<h2 id="s5">5. Layer two: valuing human capital</h2>
 
 <p>Everything in layer two reduces to one question: what discount rate applies to a wage to be received in twenty years?</p>
 
@@ -1063,7 +1130,7 @@ h4 {
 
 <p>Choi, Liu and Liu (2025) solved that model for 5,103 parameter sets, then fitted closed-form expressions to the resulting discount rates. This delivers the numerical result at the cost of one line of arithmetic, and adopting it rather than re-solving the model is the highest-value decision in this design.</p>
 
-<h3>5.1 The fitted discount rates</h3>
+<h3 id="s5-1">5.1 The fitted discount rates</h3>
 
 <p>Two expressions, taken from Choi's spreadsheet. Write <code>x</code> for age divided by 100 and <code>&pi;</code> for the log excess drift <code>ln(1+&mu;) &minus; &sigma;<sup>2</sup>/2 &minus; ln(1+r)</code>.</p>
 
@@ -1132,7 +1199,7 @@ h4 {
 
 <p>One detail about how these rates are built. They are <em>one-year-ahead</em> rates, fitted recursively: the paper first estimates the rate a 99 year old applies to age 100 income, then holds that fixed and estimates the rate a 98 year old applies, and works backwards to age 22. Present value at any age therefore compounds the chain of one-year rates between here and the year in question, rather than applying a single rate to everything.</p>
 
-<h3>5.2 Calibration constants</h3>
+<h3 id="s5-2">5.2 Calibration constants</h3>
 
 <p>These values are fixed inside the approximation. The spreadsheet this project follows uses the <strong>college graduate</strong> calibration of earnings risk; the paper solves separately for other education levels. The discount rates also embed a probability of dying each year taken from United States mortality statistics, so income in later years is already weighted by the chance of being alive to receive it.</p>
 
@@ -1171,7 +1238,7 @@ h4 {
 
 <p><strong>The permanent wage shock volatility is the second most influential number in the whole model</strong>, after the expected equity return and ahead of risk aversion. It is a single constant estimated by Cocco, Gomes and Maenhout from a panel of United States households, it is not surfaced anywhere in the tool, and it cannot be adjusted. A household whose earnings are genuinely more secure than the average, a tenured public employee for instance, has a lower value than 13% and is being told to hold roughly ten points less equity than it should. This is the strongest argument for treating the output as an anchor rather than an answer, and it is stronger than the usual one about risk aversion.</p>
 
-<h3>5.3 The imputed earnings path</h3>
+<h3 id="s5-3">5.3 The imputed earnings path</h3>
 
 <p>The tool asks for a current salary and fills in the career using the CGM age profile:</p>
 
@@ -1197,7 +1264,7 @@ h4 {
 
 <p>The tool supports one earner or two, with separate wage and benefit streams, and a benefit may be entered directly in place of the 40% replacement assumption.</p>
 
-<h2>6. Accuracy, and what the alternative rules cost</h2>
+<h2 id="s6">6. Accuracy, and what the alternative rules cost</h2>
 
 <p>Choi, Liu and Liu report both figures a user should want: how closely the approximation tracks the exact numerical solution, and how much worse the common rules of thumb are.</p>
 
@@ -1256,7 +1323,7 @@ h4 {
 
 <p>The loss is quadratic, so it is flat near the optimum. At <code>&gamma;</code> = 3 and <code>&sigma;</code> = 16%, an error of ten percentage points costs 3.8 basis points a year and an error of forty costs 61.4. The tool therefore aims to identify a defensible region rather than a figure to the percentage point.</p>
 
-<h2>7. Declared deviations</h2>
+<h2 id="s7">7. Declared deviations</h2>
 
 <p>Everything below is a place where this tool does something Choi's spreadsheet does not. Each is sized against the same household, at today's market, with only that one thing changed, because a deviation nobody has measured is a deviation nobody can defend.</p>
 
@@ -1274,7 +1341,7 @@ h4 {
 </table>
 </div>
 
-<h3>7.1 The expected return, and an ambiguity in his own default</h3>
+<h3 id="s7-1">7.1 The expected return, and an ambiguity in his own default</h3>
 
 <p>This is the input the tool replaces outright: his spreadsheet asks the user for it and offers 5%, and this computes it instead. It sounds like the largest departure in the project and it turns out to be among the smallest, for a reason worth setting out.</p>
 
@@ -1296,7 +1363,7 @@ h4 {
 
 <p><strong>So why compute it at all.</strong> Because his 5% was a reasonable figure for the market of late 2025 and is not a claim about every market. Table 7 measures the difference: a flat 5% is worse than every conditional estimator at every horizon tested, by one to two points of root mean square error. The estimate here will move as prices and yields move; his number would not. That the two agree today is corroboration, not redundancy.</p>
 
-<h3>7.2 Conflicting volatility assumptions</h3>
+<h3 id="s7-2">7.2 Conflicting volatility assumptions</h3>
 
 <p><strong>The problem.</strong> Equity volatility appears in two places and they disagree. Equation (4), the Merton share, needs the volatility of the portfolio you actually hold, currently measured at about 17.2%. Equations (9) and (10), the discount rates, have 18.5% baked into their coefficients, because that is the value the underlying model was solved at.</p>
 
@@ -1306,7 +1373,7 @@ h4 {
 
 <p><strong>What it costs.</strong> Little. Volatility reaches the discount rate only through the <code>&pi;</code> term, worth &minus;0.32 points of the 9.7% in Table 18, and human capital then enters the answer as a ratio to financial wealth, which dilutes a small valuation error further. The seam is declared because it exists, not because it is dangerous.</p>
 
-<h3>7.3 A floor on the benefit discount rate</h3>
+<h3 id="s7-3">7.3 A floor on the benefit discount rate</h3>
 
 <p><strong>This is the only place in the project where Choi's arithmetic is altered rather than extended.</strong> His equation (13) discounts a retirement benefit, and it is fitted on retirement years alone: 63 parameter sets by 34 years. The paper indexes by the age of the person doing the discounting, 66 to 99; this tool indexes by the age the income arrives, 67 to 100. Those are the same 34 years counted from opposite ends, and the ages below are arrival ages. Evaluated outside those ages it does not degrade, it inverts.</p>
 
@@ -1329,11 +1396,11 @@ h4 {
 
 <p><strong>Why this is reachable at all.</strong> The page offers a pension field to everybody, and a household drawing a benefit before 55 is not exotic: a disability pension, an inherited annuity, an early public-sector retirement. Choi's own spreadsheet has the same field and the same equation behind it, so the behaviour is his; the floor is this project's, and it is declared here rather than absorbed.</p>
 
-<h3>7.4 United States calibration</h3>
+<h3 id="s7-4">7.4 United States calibration</h3>
 
 <p>The constants in Table 19 come from a calibration to United States household earnings, and the Social Security treatment is specific to that system. The equity sleeve is global. The tool is calibrated for a household in the United States; applying it elsewhere would require re-estimating these constants.</p>
 
-<h3>7.5 Labour income correlated with equities</h3>
+<h3 id="s7-5">7.5 Labour income correlated with equities</h3>
 
 <p><strong>Who this affects.</strong> Anyone whose pay moves with the stock market: equity compensation, a trading seat, commission tied to markets, a job at an asset manager. <strong>Not</strong> the average household, whose wages correlate with the market at roughly 0.007, as section 5 explains.</p>
 
@@ -1343,7 +1410,7 @@ h4 {
 
 <p><strong>Until then, and this is larger than it sounds.</strong> The subtraction is the beta <em>times</em> HC/W, not the beta alone, and HC/W is about 2 for the default household and higher for anyone younger. So a beta of 0.1, meaning a tenth of your income shocks track the market, costs <strong>20 points</strong> of the equity share, and a beta of 0.2 takes the default household from 38% to zero. Anyone with meaningful equity compensation should treat this tool's answer as unusable rather than merely high, until equation (19) is implemented.</p>
 
-<h3>7.6 Departures from the source spreadsheet</h3>
+<h3 id="s7-6">7.6 Departures from the source spreadsheet</h3>
 
 <p>This project began as a port of a spreadsheet that contained four defects. All four are reproduced exactly in a frozen baseline module, so that fixing each one produces a measured change rather than an assertion, and none of them survives into the tool itself.</p>
 
@@ -1364,11 +1431,11 @@ h4 {
 
 <p>The first implementation stage reproduces the original outputs exactly as a regression baseline. Each correction then lands separately, so its effect is measured rather than asserted.</p>
 
-<h2 id="validation">8. What has been checked, and what has not</h2>
+<h2 id="s8">8. What has been checked, and what has not<span id="validation"></span></h2>
 
 <p>A model that reproduces its source exactly can still be wrong, because the source can be wrong, and this one was: the estimator in section 3.1 double counted buybacks for as long as the tool has existed and nothing in the test suite noticed, because the suite checked that two numbers added up rather than that they were the right two. Everything below is stated as what was checked and what it showed, not as reassurance.</p>
 
-<h3>8.1 Checks that pass</h3>
+<h3 id="s8-1">8.1 Checks that pass</h3>
 
 <div class="tablewrap">
 <table>
@@ -1390,7 +1457,7 @@ h4 {
 
 <p>Conformance testing compares this project against Choi. It cannot find a household his workbook never contains, and both of these were that kind of household.</p>
 
-<p><strong>A pension before retirement was discounted at a negative rate.</strong> Equation (13) is fitted on retirement years alone: 63 parameter sets by 34 years, ages 66 to 99 as the paper indexes them and 67 to 100 as this tool does. Evaluated at 30 it returns <strong>minus 2.7%</strong>, which values a future payment above its face amount, and it stays below the safe rate until age 55. The page reaches this, because it offers a pension field to everybody and a thirty-year-old on a disability pension is not exotic. The rate is now floored at the safe rate, on the ground that a government inflation-linked annuity cannot be worth more than a risk-free bond paying the same schedule. Across ages 67 to 100 the floor binds in 5 of 4,250 parameter combinations, all of them where the raw rate is itself below zero, so nothing Choi's own fitting supports is touched: the 58 checks against his workbook pass unchanged. For a 30-year-old on a $30,000 pension it cuts human capital from $1,290,049 to $808,713.</p>
+<p><strong>A pension before retirement was discounted at a negative rate.</strong> Equation (13) is fitted on retirement years only, and evaluated at age 30 it returns minus 2.7%, which values a future payment above its face amount. Section 7.3 sets out the floor added in response, where it binds and what it is worth; for a 30-year-old on a $30,000 pension it cuts human capital from $1,290,049 to $808,713.</p>
 
 <p><strong>One accessor was a method where its siblings were properties.</strong> <code>equity_dollars</code> returned a bound method rather than a number, so it was truthy in a condition and failed only where something tried to format it, and the Python interface differed from the JavaScript port for no reason. Now a property.</p>
 
@@ -1419,7 +1486,7 @@ h4 {
 
 <p><strong>What this does not establish.</strong> A mutation sweep measures whether the checks bind the code as written. It cannot tell you the code is the right model, and none of the 56 defects touched the two things most likely to be wrong here, which are the expected return and the assumption that returns do not repeat themselves. Those are argued in sections 3.1 and 2.4 and they are arguments, not measurements.</p>
 
-<h3>8.2 The glide path, against what the industry builds</h3>
+<h3 id="s8-2">8.2 The glide path, against what the industry builds</h3>
 
 <p>The sharpest external check available is whether the shape the model produces resembles the shape target date funds are actually built to. One household is aged forward from 25 to 85 on a $100,000 wage, saving 15% a year, at a risk aversion of 5.</p>
 
@@ -1442,7 +1509,7 @@ h4 {
 
 <p>That is not a defect in either. A target date fund is built on an unconditional premium, close to the long-run average, because it has to be set once and left alone for decades. This tool prices equities off what they cost today, and today they are expensive: a CAPE of 39.8 against a historical mean near 16. The two disagree because one conditions on valuation and the other does not, and a user who believes the historical premium will simply return should say so by setting the expected return by hand, which the tool allows. The disagreement is the tool's central claim, so it is stated here rather than buried.</p>
 
-<h3>8.3 The estimate against twelve published forecasts</h3>
+<h3 id="s8-3">8.3 The estimate against twelve published forecasts</h3>
 
 <p>The backtest in section 3.1 asks whether the estimator worked in the past. This asks whether anyone else, working today with the same market in front of them, arrives anywhere near the same number. Comparing capital market assumptions is easy to do badly, because published forecasts differ in four ways that each move the number by more than a point, so all four are stated for every row: whether the return is real or nominal, whether it is compound or arithmetic, which slice of the market it covers, and over what horizon. Nominal forecasts are deflated by the firm's own inflation assumption where it publishes one and by the 10-year breakeven of 2.35% where it does not.</p>
 
@@ -1582,11 +1649,11 @@ h4 {
 
 <p>Two things follow, and they are worth separating. This estimate is <strong>corroborated</strong>: an independent firm, using the same formula on the same market, lands within half a point. It is also <strong>conservative</strong>, by about half a point against that firm and about six tenths against the horizon-adjusted peer average. The tool's own answer would rise by roughly eight points of the equity share if the estimate were moved to AQR's 3.9%, which is well inside the band section 3.1 already reports as unresolved.</p>
 
-<h3>8.4 Whether the answer discriminates</h3>
+<h3 id="s8-4">8.4 Whether the answer discriminates</h3>
 
 <p>A recommendation that comes out at 100% for everyone is not advice. Across a grid of 1,040 households spanning ages 25 to 85, wages of $40,000 to $250,000, wealth of $25,000 to $3,000,000 and risk aversion of 2 to 8, <strong>30.3% of answers are pinned at 100% and none at 0%</strong>, leaving about seven in ten interior. Before the buyback correction, 40.0% were pinned. The saturation is concentrated where it should be, among the young, whose human capital dwarfs their savings, and where the model's own honest answer is that the constraint against borrowing binds. A frequency across a grid is a fact about the grid, so the useful form is the threshold. At the default risk aversion, the cap binds below 2.8 years of salary saved at age 25, 1.8 at 35, 1.5 at 45 and 1.0 at 65, and not above. Anyone under those levels is reading a constraint rather than a recommendation, which is why the page prints what the model asked for whenever the cap binds: at the median it wants 1.7 times the portfolio, and in the worst corner of that grid 10.2 times.</p>
 
-<h3>8.5 What has not been checked, in order of what it would cost</h3>
+<h3 id="s8-5">8.5 What has not been checked, in order of what it would cost</h3>
 
 <p><strong>Uncertainty in the expected return.</strong> The model treats a point estimate as known. Section 3.1 shows that estimate spanning 7.05% to 2.42% across methods that are all defensible, a range worth the entire allocation. Barberis (2000) shows that admitting the uncertainty lowers the equity share, and by more at longer horizons, which is the reverse of the usual intuition. This is the largest gap in the model and nothing here compensates for it.</p>
 
@@ -1608,7 +1675,7 @@ h4 {
 
 <p><strong>Whether anyone acts on it.</strong> No claim is made that a household following this allocation is better off than one following a simpler rule, only that this allocation is the one the model implies. Section 6 reports what the alternative rules cost <em>inside the model</em>, which is a different and much weaker statement.</p>
 
-<h2>9. Components included, postponed and excluded</h2>
+<h2 id="s9">9. Components included, postponed and excluded</h2>
 
 <div class="tablewrap">
 <table>
@@ -1657,7 +1724,7 @@ h4 {
 </table>
 </div>
 
-<h2>10. References</h2>
+<h2 id="s10">10. References</h2>
 
 <ol class="refs">
   <li>Ayres, I. and Nalebuff, B. (2010). <em>Lifecycle Investing</em>. Basic Books.</li>

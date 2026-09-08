@@ -619,7 +619,12 @@ def part_five() -> None:
     mu, rf, vol = (m.expected_stock_real_return, m.real_risk_free_rate,
                    m.stock_volatility)
     default = Household(500_000.0, [Person(45, 100_000.0)], 5.0)
-    seven = t[t.index("<h2>7. Declared deviations"):t.index('id="validation"')]
+    # Located by regex rather than by an exact tag, since the headings carry
+    # ids now and a literal "<h2>7." stopped matching the moment they did.
+    start = re.search(r"<h2[^>]*>7\. Declared deviations", t)
+    end = re.search(r"<h2[^>]*>8\. What has been checked", t)
+    assert start and end, "section 7 is not where it was"
+    seven = t[start.start():end.start()]
     stale = []
     for label, emu, evol in (
             ("his 5% arithmetic, his volatility", 0.05, CALIB_VOL),
