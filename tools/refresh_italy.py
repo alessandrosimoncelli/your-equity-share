@@ -14,30 +14,41 @@ hard way: run on the Italian file once, it wrote the 30-year United States
 TIPS in as the safe rate and deleted the note saying the rate was a guess.
 This tool changes two lines and nothing else.
 
-THE CONSTRUCTION, and the two judgements in it.
+THE SAFE RATE is the traded real yield of the longest euro inflation-linked
+government bond, which is Bund/euro-i 2046. That is the same kind of object
+the American variant reads from FRED, a government real yield set by a market
+rather than built out of two other numbers, and using the same kind of object
+is what makes the two answers comparable at all. Constructing it differently
+would have put part of the gap between a 38% American answer and a 70%
+Italian one into the method rather than into the countries.
 
-    real = (1 + nominal 30-year AAA) / (1 + long-run HICP expectation) - 1
+Three compromises come with it, and the report prints all three.
 
-The first judgement is AAA rather than all euro area government bonds. The
-model's equation (4) compares equities against an asset it assumes is
-riskless. The all-government curve is currently about sixty basis points
-higher at thirty years, and that sixty points is compensation for the chance
-that a government does not pay, which is not something the model can
-represent. Taking it would be booking a credit premium as a risk-free return
-and would lower the recommended equity share while pretending to be prudent.
-So the safe rate here is the AAA curve, which is essentially German and Dutch
-paper, and the Italian methodology says plainly that an Italian household
-buying BTP is not holding this asset.
+  It runs about twenty years, not thirty, and shortens every year. Germany
+  stopped issuing in 2023 and three bonds remain, so it is the longest euro
+  linker in existence and there is nothing to roll into.
 
-The second is the deflator. The American variant reads a real yield directly
-from FRED, because TIPS trade in size at thirty years. The euro area has no
-equivalent: German linkers stopped being issued in 2023 with four bonds left
-outstanding, and the HICP-linked bonds that remain are Italian and French, so
-their real yields carry the same credit spread the AAA choice just excluded.
-Deflating a nominal AAA yield by a survey expectation avoids that, at the
-cost of using a forecast rather than a traded price. The ECB's Survey of
-Professional Forecasters publishes a longer-term HICP expectation quarterly,
-which is the right horizon for a lifetime allocation.
+  Scarcity biases the yield DOWN: 47 billion outstanding, no new supply,
+  against steady demand for euro safe assets.
+
+  It tracks euro area HICP, not Italian. Only BTP Italia follows Italian
+  inflation, at five years and retail, so the hedge is approximate in a way
+  an American's TIPS is not.
+
+THE CROSS-CHECK builds the same rate the other way, from the ECB: the AAA
+euro area government curve at thirty years, deflated by the longer-term HICP
+expectation in the Survey of Professional Forecasters. It is reported rather
+than used, because the two bracket the answer. The traded yield is biased low
+by scarcity; the deflated one is biased high, because the gap between the
+market break-even and the survey expectation is an inflation risk premium and
+deflating books it as return.
+
+AAA rather than every euro area government bond, in that cross-check and in
+the choice of issuer. The all-government curve yields about sixty basis points
+more at the same maturity, and that spread is compensation for a government
+not paying. Equation (4) cannot represent default risk, so taking it would
+book a credit premium as a risk-free return, lowering the recommendation while
+looking prudent. An Italian household buying BTP is not holding this asset.
 """
 
 from __future__ import annotations
