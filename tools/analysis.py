@@ -477,6 +477,35 @@ def part_four() -> None:
               "%.1f%% to %.1f%%, a range of %.1f points"
               % (shares[0] * 100, shares[1] * 100, span))
 
+    # --- the glide path, which could not be reproduced before -------------
+    # Its setup was "aged forward from 25 to 85 on a $100,000 wage, saving 15%
+    # a year", which leaves out whether the savings earn anything, whether the
+    # wage follows a career profile, and what is held after 67. Ten
+    # combinations were tried against the published figures and none matched.
+    def glide(expected: float) -> dict:
+        wealth, out = 0.0, {}
+        for age in range(25, 86):
+            wage = 100_000.0 if age < 67 else 0.0
+            benefit = 0.0 if age < 67 else 40_000.0
+            if age in (25, 35, 45, 55, 65, 75):
+                household = Household(max(wealth, 1.0),
+                                      [Person(age, wage, benefit)], 5.0)
+                out[age] = recommend(household, expected, rf, vol).equity_share
+            wealth = wealth * (1 + rf) + (wage * 0.15 if age < 67 else 0.0)
+        return out
+
+    at_today, at_historical = glide(mu), glide(0.08)
+    stale = [age for age in at_today
+             if "%.0f%%" % (at_today[age] * 100) not in doc_text()
+             or "%.0f%%" % (at_historical[age] * 100) not in doc_text()]
+    check("Table 26, the glide path at both expected returns", not stale,
+          "flat wage, 15% saved at the real safe rate, retiring at 67 on 40%: "
+          + ", ".join("%d:%.0f%%" % (a, at_today[a] * 100) for a in at_today))
+    check("the glide path falls with age under both", 
+          all(at_today[a] >= at_today[b] - 1e-9
+              for a, b in zip(sorted(at_today), sorted(at_today)[1:])),
+          "which is the shape the comparison is about")
+
     check("Table 20 lists the replacement rate once",
           doc_text().count("replacement rate</td><td class=\"num\">3") <= 1,
           "it appeared twice, measured before and after that rate became a "
