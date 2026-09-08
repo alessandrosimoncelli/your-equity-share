@@ -239,3 +239,31 @@ def test_a_higher_replacement_rate_raises_the_share_on_its_own(italy) -> None:
     american = recommend(household, *args, CGM_CALIBRATION).equity_share
     italian = recommend(household, *args, ITALY_CALIBRATION).equity_share
     assert italian > american
+
+
+# --- the expected return was borrowed, so it needs an independent check -----
+
+def test_the_borrowed_growth_rate_has_an_independent_cross_check(italy) -> None:
+    """AQR's 2.6% is used, so something must corroborate it.
+
+    The Italian variant does not compute its own expected return, which is a
+    real dependency on one firm. It is checked against a reconstruction from
+    the Jorda-Schularick-Taylor Macrohistory Database, eighteen advanced
+    economies from 1870, which is free and has nothing to do with AQR.
+    """
+    check = italy.provenance["growth_cross_check"]
+    assert "Jorda-Schularick-Taylor" in check
+    assert "1.33%" in check and "3.16%" in check
+
+
+def test_the_cross_check_says_why_it_is_not_the_estimate(italy) -> None:
+    """A range of 1.82 points is not an estimate, and the config says so.
+
+    The reconstruction is seven times more sensitive to its start year than
+    the American estimator is to its window. That is the reason for borrowing
+    rather than building, and it is a measured reason rather than an assumed
+    one, which is what it was before.
+    """
+    check = italy.provenance["growth_cross_check"]
+    assert "1.82 point" in check
+    assert "seven times" in check
