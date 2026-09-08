@@ -33,7 +33,7 @@ body {
 }
 
 .doc {
-  max-width: 52rem;
+  max-width: 46rem;
   margin: 0 auto;
   padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 7vw, 5rem) 5rem;
 }
@@ -106,7 +106,7 @@ h2[id], h3[id] { scroll-margin-top: 1.5rem; }
   back into the flow at the top, which is where it belongs on a laptop or a
   phone.
 */
-@media (min-width: 84rem) {
+@media (min-width: 72rem) {
   /*
     Two columns, centred as a pair. Fixed positioning put the contents at a
     computed offset and left the two halves visibly unbalanced on a 1366px
@@ -115,7 +115,7 @@ h2[id], h3[id] { scroll-margin-top: 1.5rem; }
   */
   .doc {
     display: grid;
-    grid-template-columns: 16rem minmax(0, 58rem);
+    grid-template-columns: 15rem minmax(0, 46rem);
     column-gap: 3.5rem;
     justify-content: center;
     max-width: none;
@@ -194,26 +194,15 @@ h2[id], h3[id] { scroll-margin-top: 1.5rem; }
   centred on the column. Below 64rem nothing changes and .tablewrap scrolls
   on its own, which is what a phone needs.
 */
-@media (min-width: 64rem) {
-  .tablewrap {
-    --wide: min(72rem, calc(100vw - 4rem));
-    width: var(--wide);
-    margin-left: calc(50% - var(--wide) / 2);
-  }
-}
-
 /*
-  Once the contents take the left margin, the breakout has to know about
-  them. Centred on the text column it ran under the contents on one side
-  and past the window on the other, which showed as 57px of horizontal
-  scroll at 1351px. Half the text column plus the gutter is 32.5rem, so a
-  centred table can be 62rem before it reaches the contents, and 100vw
-  less 19.5rem before it leaves the window. This block must follow the one
-  above, since it wins on order rather than on specificity.
+  Tables sit in the text column, flush with it on both edges.
+
+  They were briefly allowed to break out wider, which did cut the number of
+  wrapped cells, but it left every table hanging past the prose on both
+  sides and the page read as two different documents. Alignment is worth
+  more than the wrapping. A table too wide for the column scrolls inside
+  .tablewrap, which is what that wrapper is for.
 */
-@media (min-width: 84rem) {
-  .tablewrap { --wide: min(62rem, calc(100vw - 19.5rem)); }
-}
 
 table { border-collapse: collapse; width: 100%; font-size: var(--t-body); }
 
@@ -476,11 +465,13 @@ h4 {
     </tr>
   </thead>
   <tbody>
-    <tr><td>10 years</td><td class="num">&minus;3.3% to +13.3%</td><td class="num">$7,173 to $37,896</td><td class="num">5.3&times;</td></tr>
-    <tr><td>30 years</td><td class="num">+0.2% to +9.8%</td><td class="num">$10,602 to $189,446</td><td class="num">17.9&times;</td></tr>
+    <tr><td>10 years</td><td class="num">&minus;3.3% to +14.3%</td><td class="num">$7,173 to $37,895</td><td class="num">5.3&times;</td></tr>
+    <tr><td>30 years</td><td class="num">+0.2% to +10.3%</td><td class="num">$10,603 to $189,438</td><td class="num">17.9&times;</td></tr>
   </tbody>
 </table>
 </div>
+
+<p class="src">Both bounds are stated as compound annual rates, so they reconcile with the ending values beside them. The interval itself is symmetric in logs, which is why the widths in Table 3 stand in exactly the ratio of the two volatilities.</p>
 
 <p>The annualised range narrows and the spread of outcomes widens. A household consumes the ending balance, not the annualised average. The third column is the scale-free version of the second: it removes the effect of compounding, which would otherwise widen any dollar range mechanically, and it still triples.</p>
 
@@ -499,9 +490,9 @@ h4 {
     <tr><th>Horizon</th><th class="num">Bond-like, 5% volatility</th><th class="num">Equity, 16% volatility</th><th class="num">Ratio</th></tr>
   </thead>
   <tbody>
-    <tr><td>10 years</td><td class="num">5.2 points</td><td class="num">16.6 points</td><td class="num">3.20&times;</td></tr>
-    <tr><td>30 years</td><td class="num">3.0 points</td><td class="num">9.6 points</td><td class="num">3.20&times;</td></tr>
-    <tr><td>100 years</td><td class="num">1.6 points</td><td class="num">5.3 points</td><td class="num">3.20&times;</td></tr>
+    <tr><td>10 years</td><td class="num">5.5 points</td><td class="num">17.5 points</td><td class="num">3.20&times;</td></tr>
+    <tr><td>30 years</td><td class="num">3.2 points</td><td class="num">10.1 points</td><td class="num">3.20&times;</td></tr>
+    <tr><td>100 years</td><td class="num">1.7 points</td><td class="num">5.5 points</td><td class="num">3.20&times;</td></tr>
   </tbody>
 </table>
 </div>
@@ -523,17 +514,17 @@ h4 {
 <caption>Table 4. Volatility of real total returns by horizon. A ratio of 1 is the square root of time holding exactly.</caption>
 <thead><tr><th class="num">Horizon</th><th class="num">Annualised volatility</th><th class="num">Variance ratio</th><th class="num">Independent windows</th></tr></thead>
 <tbody>
-<tr><td class="num">1 year</td><td class="num">18.30%</td><td class="num">1.00</td><td class="num">144</td></tr>
-<tr><td class="num">2 years</td><td class="num">17.85%</td><td class="num">0.95</td><td class="num">71</td></tr>
-<tr><td class="num">5 years</td><td class="num">16.44%</td><td class="num">0.81</td><td class="num">28</td></tr>
-<tr><td class="num">10 years</td><td class="num">15.28%</td><td class="num">0.70</td><td class="num">13</td></tr>
-<tr><td class="num">20 years</td><td class="num">12.46%</td><td class="num">0.46</td><td class="num">6</td></tr>
-<tr><td class="num">30 years</td><td class="num">8.42%</td><td class="num">0.21</td><td class="num">3</td></tr>
+<tr><td class="num">1 year</td><td class="num">18.30%</td><td class="num">1.00</td><td class="num">145</td></tr>
+<tr><td class="num">2 years</td><td class="num">17.85%</td><td class="num">0.95</td><td class="num">72</td></tr>
+<tr><td class="num">5 years</td><td class="num">16.44%</td><td class="num">0.81</td><td class="num">29</td></tr>
+<tr><td class="num">10 years</td><td class="num">15.28%</td><td class="num">0.70</td><td class="num">14</td></tr>
+<tr><td class="num">20 years</td><td class="num">12.46%</td><td class="num">0.46</td><td class="num">7</td></tr>
+<tr><td class="num">30 years</td><td class="num">8.42%</td><td class="num">0.21</td><td class="num">4</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">1,746 monthly real total returns, January 1881 to June 2026. The standard errors of Lo and MacKinlay (1988) are not computed, and with three independent thirty-year windows they would be wide enough to make the point below on their own.</p>
+<p class="src">1,746 monthly real total returns, January 1881 to June 2026. The standard errors of Lo and MacKinlay (1988) are not computed, and with four independent thirty-year windows they would be wide enough to make the point below on their own.</p>
 
 <p>Read naively this is alarming for the model. Merton's share is proportional to one over the variance, so if the volatility that matters over thirty years is 8.42% rather than the 17.18% the model is fed, the model is understating the equity share by a factor of four. That reading is wrong, for two reasons that are worth separating.</p>
 
@@ -606,7 +597,7 @@ h4 {
 <tbody>
 <tr><td>Dividend yield with per-share growth</td><td class="num">2.00%</td><td class="num">1.35%</td><td class="num">3.35%</td><td>correct, and what is used here</td></tr>
 <tr><td>Payout yield with aggregate growth</td><td class="num">3.33%</td><td class="num">0.00%</td><td class="num">3.33%</td><td>correct, but aggregate growth is not measurable from this data</td></tr>
-<tr><td>Payout yield with per-share growth</td><td class="num">3.33%</td><td class="num">1.35%</td><td class="num">4.69%</td><td>too high by the buyback yield</td></tr>
+<tr><td>Payout yield with per-share growth</td><td class="num">3.33%</td><td class="num">1.35%</td><td class="num">4.68%</td><td>too high by the buyback yield</td></tr>
 </tbody>
 </table>
 </div>

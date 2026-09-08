@@ -122,3 +122,55 @@ def test_the_workbook_is_still_found_where_the_author_keeps_it() -> None:
     assert result.returncode == 0, result.stdout[-2000:]
     assert "SKIP" not in result.stdout
     assert 'tab "Wage imputed"' in result.stdout
+
+
+# --- the measured tables ----------------------------------------------------
+#
+# Section 2 and section 3 report measurements rather than model output, and
+# none of the code behind them was in this repository: the numbers lived only
+# in the document. tools/analysis.py recomputes them. Two errors surfaced the
+# first time it ran, both in tables that had never been re-derived since they
+# were written.
+
+ANALYSIS = ROOT / "tools" / "analysis.py"
+
+
+def run_analysis(shiller: str | None) -> subprocess.CompletedProcess[str]:
+    env = dict(os.environ)
+    if shiller is None:
+        env.pop("SHILLER_WORKBOOK", None)
+    else:
+        env["SHILLER_WORKBOOK"] = shiller
+    return subprocess.run(
+        [sys.executable, str(ANALYSIS)],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=900,
+    )
+
+
+def test_the_tables_that_need_no_data_still_match_the_document() -> None:
+    """Tables 2, 3 and 6, recomputed and compared with what is published.
+
+    Table 2 stated its annualised bounds as log returns beside ending values
+    in dollars, so the two could not be reconciled: $37,896 over ten years is
+    14.25% a year, not the 13.3% printed next to it. Table 6 summed to 4.69%
+    where the arithmetic gives 4.68%.
+    """
+    result = run_analysis("Z:/no/shiller/here.xls")
+    assert result.returncode == 0, result.stdout[-3000:]
+    assert "0 failed" in result.stdout
+
+
+def test_an_absent_shiller_workbook_is_a_skip() -> None:
+    result = run_analysis("Z:/no/shiller/here.xls")
+    assert "SKIP" in result.stdout and "skipped" in result.stdout
+    assert "SHILLER_WORKBOOK" in result.stdout
+
+
+def test_the_annualised_bounds_agree_with_their_own_ending_values() -> None:
+    """The defect itself, asserted directly rather than through the runner."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import analysis
+
+    low, high, low_value, high_value = analysis.lognormal_interval(0.05, 0.16, 10)
+    assert (high_value / 10_000.0) ** 0.1 - 1 == pytest.approx(high, rel=1e-12)
+    assert (low_value / 10_000.0) ** 0.1 - 1 == pytest.approx(low, rel=1e-12)
