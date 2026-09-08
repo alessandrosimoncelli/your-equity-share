@@ -108,17 +108,16 @@ def test_the_expected_return_is_the_arithmetic_mean_the_model_takes(italy) -> No
 
 # --- the guard --------------------------------------------------------------
 
-def test_the_configuration_admits_which_inputs_are_not_measured(italy) -> None:
-    """The safe rate is reasoned about rather than read off a market.
+def test_no_input_is_provisional_any_more(italy) -> None:
+    """Both guesses have been replaced by measurements.
 
-    An answer built on a guessed safe rate is not the same kind of object as
-    one built on a measured one, and the difference has to survive into the
-    data rather than living in somebody's memory. The volatility started
-    provisional too and is now measured from the ticker, which is what this
-    field is for: it shrinks as the numbers get real.
+    The file shipped with a safe rate and a volatility that had been reasoned
+    about. The volatility is now five years of euro-priced closes and the safe
+    rate is an ECB curve deflated by an ECB survey. The field stays in the
+    configuration so that a guess added back has to declare itself.
     """
-    assert set(italy.provisional_fields) == {"real_risk_free"}
-    assert italy.is_provisional
+    assert italy.provisional_fields == ()
+    assert not italy.is_provisional
 
 
 def test_the_american_configuration_is_not_provisional() -> None:
@@ -135,27 +134,67 @@ def test_every_provisional_field_names_a_real_input(italy) -> None:
 
 # --- what the variant currently produces ------------------------------------
 
-def test_the_italian_inputs_saturate_the_cap_for_the_default_household(
-    italy,
-) -> None:
-    """Recorded because it is the phase one result, not because it is right.
+def test_the_answer_discriminates_rather_than_saturating(italy) -> None:
+    """With the safe rate measured, the variant is no longer a constant.
 
-    A higher expected return, a much lower safe rate and a lower volatility
-    compound into a Merton share well above the American one, and the
-    multiplier then takes it past 100%. The safe rate driving most of that is
-    provisional, so this saturation rests on a number nobody has measured and
-    must not be read as a recommendation.
+    It saturated for three of four households when the safe rate was a guess
+    of 1.35%. The measured 1.71% leaves one at the cap, the household with two
+    years of salary saved, which is where the American variant saturates too
+    and for the same reason: the model wants leverage and the clip refuses it.
     """
-    household = Household(200_000.0, [Person(45, 40_000.0)], 5.0)
-    answer = recommend(household, italy.expected_stock_real_return,
-                       italy.real_risk_free_rate, italy.stock_volatility,
-                       ITALY_CALIBRATION)
-    assert answer.is_capped
-    assert answer.equity_share == 1.0
-    assert italy.is_provisional, (
-        "if the inputs ever become measured, this test should be replaced by "
-        "one that checks the answer discriminates rather than saturating"
-    )
+    from your_equity_share.market_data import load_market_data
+
+    args = (italy.expected_stock_real_return, italy.real_risk_free_rate,
+            italy.stock_volatility)
+    households = [
+        Household(200_000.0, [Person(45, 40_000.0)], 5.0),
+        Household(600_000.0, [Person(45, 40_000.0)], 5.0),
+        Household(900_000.0, [Person(55, 60_000.0)], 5.0),
+        Household(500_000.0, [Person(68, 0.0, 25_000.0)], 5.0),
+    ]
+    shares = [recommend(h, *args, ITALY_CALIBRATION).equity_share
+              for h in households]
+    assert len(set(shares)) > 1, "a constant answer is not advice"
+    assert sum(1 for s in shares if s == 1.0) <= 1
+
+
+def test_the_euro_safe_rate_is_below_the_american_one(italy) -> None:
+    """And that difference goes straight into the drift.
+
+    A euro household is offered a materially lower real rate for the same
+    maturity and better credit, which raises the equity share against the
+    American answer before anything about Italy is considered at all.
+    """
+    from your_equity_share.market_data import load_market_data
+
+    assert italy.real_risk_free_rate < load_market_data().real_risk_free_rate
+
+
+def test_the_safe_rate_excludes_the_credit_spread(italy) -> None:
+    """AAA, not the all-government curve.
+
+    Equation (4) has no way to represent default risk, so the extra yield on
+    Italian paper is not a risk-free return and must not be booked as one.
+    Taking it would raise the safe rate, lower the recommendation, and look
+    prudent while being wrong.
+    """
+    source = italy.provenance["real_risk_free_source"]
+    assert "AAA" in source
+    assert "Survey of Professional Forecasters" in source
+
+
+def test_the_currency_basis_is_recorded_and_names_its_assumption(italy) -> None:
+    """Everything is in euro, and the one assumption is stated rather than hidden.
+
+    The volatility is measured on a euro-priced series and the safe rate is a
+    euro yield deflated by euro inflation. The expected return is AQR's local
+    real figure, which is only a euro real figure under purchasing power
+    parity. That is their own stated assumption and it is the weakest link in
+    the configuration, so it is written down where the numbers are.
+    """
+    basis = italy.provenance["currency_basis"]
+    assert basis.startswith("EUR")
+    assert "purchasing power" in basis
 
 
 def test_a_higher_replacement_rate_raises_the_share_on_its_own(italy) -> None:
