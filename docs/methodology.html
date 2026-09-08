@@ -305,8 +305,7 @@ h4 {
   <li><a href="#s6">6. Accuracy, and what the alternative rules cost</a></li>
   <li><a href="#s7">7. Declared deviations</a></li>
   <li><a href="#s8">8. What has been checked, and what has not</a></li>
-  <li><a href="#s9">9. Components included, postponed and excluded</a></li>
-  <li><a href="#s10">10. References</a></li>
+    <li><a href="#s9">9. References</a></li>
 </ol>
 </nav>
 
@@ -351,7 +350,7 @@ h4 {
 
 <p><strong>It does not answer anything with a date on it.</strong> A house deposit in three years, school fees in eight, a known payment on a known day: none of that fits, and the reason is structural rather than a missing feature. Section 2.3 shows that horizon does not appear in the Merton share at all, which is a result and not an omission. A model in which horizon does not appear cannot distinguish money needed in three years from money needed in forty, so it cannot be asked to. Goal-based allocation is a different problem with a different solution, and this tool has nothing to say about it.</p>
 
-<p>It also does not say how much to save, which securities or funds to hold, or what to do about a house, a business, a mortgage or an annuity. Section 9 lists what is excluded and why.</p>
+<p>It also does not say how much to save, which securities or funds to hold, or what to do about a house, a business, a mortgage or an annuity. Section 8.5 lists what is left out and what each omission costs.</p>
 
 <h4>What "no planned use or withdrawal date" rules out</h4>
 
@@ -692,18 +691,19 @@ h4 {
 
 <h4>How growth is estimated, and why as a trend</h4>
 
-<p>The series is monthly real earnings per share on the S&amp;P 500, running back to 1871. A hundred years of it is 1,200 monthly observations. The question is how to turn those into one annual growth rate, and there are two obvious ways.</p>
+<p>The series is monthly real earnings per share on the S&amp;P 500 back to 1871, so a century of it is 1,200 observations. There are two ways to turn those into one annual rate and they differ by a third of a point.</p>
 
-<p><strong>Point to point.</strong> Take the first observation and the last, and ask what constant annual rate connects them:</p>
+<p><strong>Point to point</strong> takes the first observation and the last and asks what constant rate connects them:</p>
 
 <div class="eqn">
   <div class="body">g = ( E<sub>last</sub> / E<sub>first</sub> )<sup>12 / (n &minus; 1)</sup> &minus; 1</div>
   <div class="no">(6)</div>
 </div>
 
-<p>On the current data that is real earnings of $15.29 in July 1923 and $181.77 in June 2023, which gives <strong>2.51% a year</strong>. Note what has happened: <strong>1,198 of the 1,200 observations were ignored.</strong> The answer is decided entirely by two months, and it inherits whatever the earnings cycle happened to be doing in each of them. July 1923 was six years before a crash; June 2023 sat near a post-pandemic earnings peak. Neither month was chosen for any reason except that it is where the window happens to end.</p>
 
-<p><strong>The trend.</strong> Take the logarithm of every observation, fit a straight line through all 1,200 of them by ordinary least squares, and read the slope:</p>
+<p>That gives <strong>2.51%</strong> a year, from real earnings of $15.29 in July 1923 and $181.77 in June 2023. It ignores 1,198 of the 1,200 observations and inherits whatever the earnings cycle was doing in the two it keeps: July 1923 was six years before a crash, June 2023 sat near a post-pandemic peak. Neither was chosen for any reason except being where the window ends.</p>
+
+<p><strong>The trend</strong> fits a line through all 1,200 in logs and reads the slope:</p>
 
 <div class="eqn">
   <div class="body">ln E<sub>t</sub> = a + b&sdot;t + &epsilon;<sub>t</sub>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g = e<sup>12b</sup> &minus; 1</div>
@@ -719,13 +719,12 @@ h4 {
   </dl>
 </div>
 
-<p>Logarithms are taken first because growth is multiplicative: a constant percentage growth rate is a straight line in logs, and a curve in levels. Fitting a line to the levels would let the large recent numbers dominate the small early ones and would not answer the question asked. On the current data the trend gives <strong>2.29% a year</strong>.</p>
 
-<p>Both describe the same century. They differ by 0.34 percentage points because one is an average over 1,200 months and the other is a measurement of two.</p>
+<p>Logs first, because a constant percentage rate is a straight line in logs and a curve in levels; fitting the levels would let the large recent numbers dominate. That gives <strong>2.29%</strong> a year, which is what this tool uses.</p>
 
 <h4>How much that choice matters</h4>
 
-<p>An estimator that is sensitive to arbitrary decisions is one you cannot rely on. Two such decisions can be varied and the movement measured. Both were run on the identical series.</p>
+<p>An estimator sensitive to arbitrary decisions cannot be relied on, so both arbitrary decisions here were varied on the identical series and the movement measured.</p>
 
 <div class="tablewrap">
 <table>
@@ -741,21 +740,10 @@ h4 {
 </table>
 </div>
 
-<p>Each cell is the spread between the highest and lowest estimate produced as that one thing is varied and everything else is held fixed.</p>
 
-<p><strong>The first column understates the problem, and this document said so for longer than it should have.</strong> Ninety to a hundred and ten years is a narrow band around a window already chosen, and it measures robustness rather than sensitivity. Across every window the data supports, the trend runs from <strong>6.55% at twenty years to 1.72% at a hundred and forty-five</strong>, and it is 5.70% at the twenty-five years AQR starts from. A growth estimate is not a measurement so much as a choice of era, and the choice is worth almost five percentage points.</p>
-
-<p>That is the argument for the long window rather than against it, and section 8.3 settles it with a test rather than an argument: the same out-of-sample comparison rerun with the window varied and nothing else. The shorter windows, which are the ones that would raise this estimate, predict worse at every horizon. A reader comparing this estimate with a shorter-window one should know that most of the difference between them is neither firm being wrong; it is the era each has chosen to average.</p>
-
-<p><strong>The first column asks how arbitrary the answer is.</strong> Nothing makes a hundred years the right window rather than ninety or a hundred and ten. If the estimate swings by 1.27 points as that choice changes, then more than a percentage point of the published number is an artefact of a decision nobody can justify. A quarter of a point is tolerable.</p>
-
-<p><strong>The second column asks what stale data costs.</strong> Earnings arrive months after the prices they belong to, so the series always ends behind the market. Rolling the end of the window back by up to three years simulates that lag. A point-to-point rate moves 0.82 points, which would be serious, because the whole equity risk premium is about 3.4 points. A trend moves 0.015 points, roughly a basis point and a half.</p>
-
-<p>That column bought this estimate its margin of safety, and it was needed. For a time the tool read the series from a community mirror that stopped carrying the consumer price index in September 2023. Every deflated column is computed from that index, so all of them went to zero at once while nominal prices kept arriving, and the growth estimate silently rested on data three years old. Because the estimator is a trend rather than two endpoints, the cost of that was about a basis point rather than most of a percentage point.</p>
+<p>The trend moves least on both. Point to point swings 1.27 points on the window length alone, which is to say that more than a point of any published number built that way is an artefact of where the window happened to stop.</p>
 
 <h4>Where the history comes from</h4>
-
-<p>It is now read from Shiller's own workbook, and three sources are tried in order:</p>
 
 <div class="tablewrap">
 <table>
@@ -768,12 +756,6 @@ h4 {
 </tbody>
 </table>
 </div>
-
-<p>Only five raw columns are read: the date, the index level, dividends, earnings and the consumer price index. Everything real is deflated here rather than taken from his sheet. That matters for durability twice over. A deflated column in his workbook is a spreadsheet formula, and reading one means trusting whatever value Excel last cached in it; and a column he renames or moves would break a reader that went looking for it by position. The five that are read are typed in, are located by the header rather than by column number, and are the five least likely to change.</p>
-
-<p>The result is checked before it is used: the months must be contiguous, the series must run to at least six hundred of them, and no month inside the window may carry non-positive earnings. A source that fails any of those is passed over for the next one, and if none answers the refresh stops rather than writing something it cannot stand behind.</p>
-
-<p>The ten-year average at each end is shown because it is the obvious middle option: it replaces each endpoint with an average of the 120 months around it. It is much better than point to point and still worse than the trend, for the same reason, that it uses 240 of the 1,200 observations rather than all of them.</p>
 
 <h4>Compound is not arithmetic</h4>
 
@@ -1406,7 +1388,7 @@ h4 {
 
 <p><strong>Why it matters for them.</strong> If your income already rises and falls with the market, part of your human capital is an implicit equity holding rather than an implicit bond. Counting it as a bond, which the baseline does, tells you to buy more equities on top of exposure you already have.</p>
 
-<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 35 as implementation work, not research.</p>
+<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is implementation rather than research, since the authors have already derived and tested it.</p>
 
 <p><strong>Until then, and this is larger than it sounds.</strong> The subtraction is the beta <em>times</em> HC/W, not the beta alone, and HC/W is about 2 for the default household and higher for anyone younger. So a beta of 0.1, meaning a tenth of your income shocks track the market, costs <strong>20 points</strong> of the equity share, and a beta of 0.2 takes the default household from 38% to zero. Anyone with meaningful equity compensation should treat this tool's answer as unusable rather than merely high, until equation (19) is implemented.</p>
 
@@ -1547,9 +1529,9 @@ h4 {
 
 <h4>AQR, which uses this exact construction</h4>
 
-<p>One firm publishes the method as well as the number, and it is the same method. AQR's 2026 assumptions state that expected real return is "approximately the sum of dividend yield (DY), expected growth (g) in real dividends or earnings per share (EPS), and expected change in valuation", and that "we assume no mean reversion in valuations, i.e., &Delta;v=0 even if a market looks cheap or expensive". That is equation (5) of this document, term for term, including the zero.</p>
+<p>One firm publishes the method as well as the number, and it is the same method. AQR's 2026 assumptions state that expected real return is "approximately the sum of dividend yield (DY), expected growth (g) in real dividends or earnings per share (EPS), and expected change in valuation", and that "we assume no mean reversion in valuations, i.e. &Delta;v=0 even if a market looks cheap or expensive". That is equation (5) of this document, term for term, including the zero.</p>
 
-<p>AQR also settles the question section 3.1 turns on. Their buyback term is an adjustment to <em>growth</em>, not to the yield: it is "10-year net buyback yield minus 25-year net buyback yield", and it "accounts for how recent changes in buyback activity may impact future EPS growth". A firm that builds this estimate for a living puts buybacks where this document argues they belong, and nowhere near the income term.</p>
+<p><strong>They also settle the question section 3.1 turns on.</strong> Their buyback term adjusts <em>growth</em>, not the yield: it is the "10-year net buyback yield minus 25-year net buyback yield", and it "accounts for how recent changes in buyback activity may impact future EPS growth". A firm that builds this estimate for a living puts buybacks where this document argues they belong, and nowhere near the income term.</p>
 
 <div class="tablewrap">
 <table>
@@ -1564,20 +1546,18 @@ h4 {
 </table>
 </div>
 
-<p>The gap is half a point and most of it is growth. An earlier version of this section said that gap was the buyback adjustment AQR make and this project does not. That was wrong, and reading their method properly is worth the space, because it changes what the half point means.</p>
 
-<h4>What AQR actually do, and why the chart label misleads</h4>
-
-<p><strong>They do not use a payout yield</strong>, despite Exhibit 3A labelling the component "Combined Payout Yield". Their text is unambiguous that the payout-based estimate is "the sum of current dividend yield and a country-specific estimate of next-10-year real EPS growth", and the arithmetic confirms it. They average two approaches:</p>
+<p><strong>The label on their chart misleads and the arithmetic corrects it.</strong> Exhibit 3A calls the component a "Combined Payout Yield", but their text defines the payout-based estimate as "the sum of current dividend yield and a country-specific estimate of next-10-year real EPS growth", and their second approach reaches a yield by multiplying a cyclically adjusted earnings yield by 0.5, "roughly the U.S. long-run dividend payout ratio".</p>
 
 <div class="eqn">
   <div class="body">payout based&nbsp;&nbsp;&nbsp;&nbsp;E(r)<sub>P</sub> = DY + g<sub>EPS-25</sub> + BBA + CSA + GGA<br>earnings anchor&nbsp;E(r)<sub>E</sub> = CAEP &times; (1 + g<sub>eqil</sub>&times;5) &times; 0.5 + g<sub>eqil</sub></div>
   <div class="no">&nbsp;</div>
 </div>
 
-<p>The first carries a dividend yield. The second carries a cyclically adjusted earnings yield multiplied by 0.5, which they describe as "roughly the U.S. long-run dividend payout ratio", so it is a dividend yield too, reached a different way. On this project's data at the end of 2025 those two terms are 1.10% and 1.37%, whose average is <strong>1.23% against the 1.3% they report</strong>. Damodaran's payout yield including buybacks is 2.63%, which is nowhere near it. Both of AQR's yield terms are dividend-like, and so is the one in equation (5).</p>
 
-<p><strong>And their growth adjustments are net downward, not upward.</strong> They start from a 25-year historical real EPS growth rate, which on this data is <strong>5.70%</strong>, and then apply four things to it: a buyback adjustment that raises it, a cross-sectional shrink that "is negative for countries with historical EPS growth above the global average", a shift one third of the way towards forecast GDP growth, and finally the average with the earnings anchor's 1.8% equilibrium growth. Three of the four pull down, and hard: 5.70% becomes 2.7%.</p>
+<p>On this project's data those two yield terms are 1.10% and 1.37%, averaging 1.23% against the 1.3% they report. Damodaran's payout yield including buybacks is 2.63%, nowhere near it. Both of AQR's yield terms are dividend-like, and so is equation (5)'s.</p>
+
+<p><strong>The half point of difference is growth, and it is a different construction rather than a missing term.</strong> They start from 25-year real EPS growth, 5.70% on this data, then shrink it: a buyback adjustment upward, a cross-sectional shrink that "is negative for countries with historical EPS growth above the global average", a shift a third of the way towards forecast GDP growth, and an average with the earnings anchor's 1.8% equilibrium rate. Three of the four pull down, and hard: 5.70% becomes 2.7%. Running their structure on this data without the shrinkage gives 4.98%, well above their own 3.90%, which measures how much work those adjustments do.</p>
 
 <div class="tablewrap">
 <table>
@@ -1593,11 +1573,10 @@ h4 {
 </table>
 </div>
 
-<p>So the two are not the same construction with one term missing. They are different constructions that land four tenths of a point apart on growth, one by shrinking a recent figure and one by measuring a long one. Running AQR's structure on this project's data without their shrinkage gives 4.98%, well above their own published 3.90%, which is a measure of how much work those adjustments do.</p>
 
 <h4>Whether to move the growth window towards theirs</h4>
 
-<p>A 25-year window would raise this estimate from 3.38% to 6.80%, and a 50-year one to 4.21%, either of which is nearer AQR than 3.38% is. That is not a reason to change it. The reason would be that a shorter window predicts better, so the out-of-sample test of section 3.1 was rerun with the window varied and nothing else.</p>
+<p>A 25-year window would raise this estimate to 6.80% and a 50-year one to 4.21%, either nearer AQR than 3.38% is. That is not a reason to change it. The reason would be that a shorter window predicts better, so the out-of-sample test of section 3.1 was rerun with the window varied and nothing else.</p>
 
 <div class="tablewrap">
 <table>
@@ -1616,15 +1595,14 @@ h4 {
 
 <p class="src">A fixed window throughout, so a start is only usable once that many years of history precede it. At 30 years the 100-year window leaves 188 starts, too few to report.</p>
 
-<p><strong>The shorter windows do not win.</strong> Seventy-five years is best at ten and twenty years and within two hundredths of a point of fifty at thirty. The window that would move this estimate towards AQR, fifty years, is not better than the one that keeps it where it is. And note what the last column says: the windows that predict worst are the ones that produce the largest numbers.</p>
 
-<p><strong>One limitation the table exposes, which was not previously stated.</strong> The 100-year window cannot be tested at a 30-year horizon on this data, because a start needs 130 years of history before it and there are only 188 such months. The window this tool uses is validated at ten and twenty years and not at the horizon it is actually used for. Seventy-five years can be tested throughout and gives 3.30%, within eight hundredths of the figure in use, so nothing turns on the choice; but the untested century is a real gap and it is recorded here rather than in a footnote.</p>
+<p>The shorter windows do not win. Seventy-five years is best at ten and twenty years and within two hundredths of fifty at thirty. The window that would move this estimate towards AQR, fifty years, is not better than the one that keeps it where it is, and the windows that predict worst are the ones producing the largest numbers.</p>
 
-<p><strong>AQR themselves point the same way for a horizon like this one.</strong> Their report says starting valuations "tend to be useful inputs" over five to ten years, and that "for multi-decade forecast horizons their impact is diluted, so theory and long-term historical averages may matter more in judging expected returns". A long-run historical average is what equation (5) uses. Their number is built for a decade; this one is built for a lifetime, and section 8.3 has already shown that matching the horizon moves this estimate from slightly above the peer average to slightly below it.</p>
+<p><strong>One limitation the table exposes.</strong> The 100-year window cannot be tested at a 30-year horizon, because a start needs 130 years of history before it and only 188 such months exist. The window this tool uses is validated at ten and twenty years, not at the horizon it is used for. Seventy-five years can be tested throughout and gives 3.30%, within eight hundredths of the figure in use, so nothing turns on the choice; the untested century is a real gap and is recorded here rather than in a footnote. AQR point the same way: starting valuations "tend to be useful inputs" over five to ten years, but "for multi-decade forecast horizons their impact is diluted, so theory and long-term historical averages may matter more". Their number is built for a decade, this one for a lifetime.</p>
 
 <h4>The log excess drift, and the real cash rate behind it</h4>
 
-<p>The same comparison can be made one level down, on the drift itself, and it tests a different part of the pipeline. AQR publishes an expected real cash return alongside its equity numbers.</p>
+<p>The same comparison one level down tests a different part of the pipeline, because AQR publishes an expected real cash return alongside its equity numbers.</p>
 
 <div class="tablewrap">
 <table>
@@ -1643,11 +1621,10 @@ h4 {
 
 <p class="src">The drift rows are the compound reading of section 3.3, which is the only basis on which two firms can be compared without knowing each other's volatility assumptions; the row below it applies this model's 0.24 point convention to both, which assumes AQR's volatility matches this one and is therefore indicative. AQR's real cash estimate is as of December 2025. This model's is the 3-month bill of 3.75% deflated by the 2.35% ten-year breakeven, both from FRED on 3 September 2026, and is not otherwise used: the model's safe asset is the 30-year TIPS.</p>
 
-<p><strong>The real cash rate agrees to seven basis points</strong>, which is worth stating because it is the one line here computed from raw market data rather than taken from a publication, and it comes out where a firm with a research department puts it.</p>
 
-<p>The drift then differs for two reasons that are already documented rather than a third that is not. Half a point is the equity estimate, which section 3.1 attributes to the buyback adjustment this model does not make. The rest is the safe asset, worth 1.56 points on its own and set out in section 3.3.</p>
+<p><strong>The two real cash rates agree to seven basis points</strong>, which is worth stating because it is the one line computed from raw market data rather than taken from a publication. The drift then differs for two documented reasons rather than a third that is not: half a point is the equity estimate, and the rest is the safe asset, worth 1.56 points and set out in section 3.3.</p>
 
-<p>Two things follow, and they are worth separating. This estimate is <strong>corroborated</strong>: an independent firm, using the same formula on the same market, lands within half a point. It is also <strong>conservative</strong>, by about half a point against that firm and about six tenths against the horizon-adjusted peer average. The tool's own answer would rise by roughly eight points of the equity share if the estimate were moved to AQR's 3.9%, which is well inside the band section 3.1 already reports as unresolved.</p>
+<p><strong>So this estimate is corroborated and conservative.</strong> An independent firm using the same formula on the same market lands within half a point, and this tool sits below them by about that much and about six tenths below the horizon-adjusted peer average. Moving to AQR's 3.9% would raise the recommended equity share by roughly eight points, well inside the band section 3.1 already reports as unresolved.</p>
 
 <h3 id="s8-4">8.4 Whether the answer discriminates</h3>
 
@@ -1673,58 +1650,11 @@ h4 {
 
 <p>So housing is left out rather than approximated, and this section exists to say what that costs rather than to plan a fix. What survives all four papers is one sentence: <strong>a household whose house is large relative to its portfolio, and still mortgaged, should read this tool's answer as an upper bound.</strong></p>
 
+<p><strong>Higher moments.</strong> Equation (3) keeps only the mean and the variance, so skewness and fat tails are not in the model at all. Including them means estimating co-skewness and co-kurtosis, which are noisy at the sample sizes available, for what the literature suggests is a small shift in the recommendation. It is a real omission and it is not measured here.</p>
+
 <p><strong>Whether anyone acts on it.</strong> No claim is made that a household following this allocation is better off than one following a simpler rule, only that this allocation is the one the model implies. Section 6 reports what the alternative rules cost <em>inside the model</em>, which is a different and much weaker statement.</p>
 
-<h2 id="s9">9. Components included, postponed and excluded</h2>
-
-<div class="tablewrap">
-<table>
-  <caption>Table 34. Included in version 1</caption>
-  <thead>
-    <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Merton share</td><td>Merton (1969), Samuelson (1969)</td><td>The foundation. Everything else is a correction to it.</td></tr>
-    <tr><td>Human capital multiplier</td><td>Bodie, Merton and Samuelson (1992)</td><td>Largest single effect, at the cost of one multiplication, and the only rigorous basis for varying allocation with age.</td></tr>
-    <tr><td>Risk-adjusted wage discounting</td><td>Choi, Liu and Liu (2025), fitted to Cocco, Gomes and Maenhout (2005)</td><td>Reduces welfare loss from 2.00% under the best rule of thumb to 0.06%, at the cost of two equations.</td></tr>
-    <tr><td>Valuation-based expected return</td><td>Campbell and Shiller (1988, 1998)</td><td>Conditions on current prices rather than an unconditional average with a two point standard error.</td></tr>
-    <tr><td>Full covariance matrix</td><td>Standard portfolio theory</td><td>Corrects a nine point error in the source spreadsheet.</td></tr>
-    <tr><td>Sensitivity across &gamma; and &mu;</td><td>Addition of this tool</td><td>Table 5 shows the answer spanning 19% to 100% across defensible estimates of the expected return, about as wide as the 16% to 100% that risk aversion produces over its whole 1 to 10 scale, and neither quantity can be observed.</td></tr>
-  </tbody>
-</table>
-</div>
-
-<div class="tablewrap">
-<table>
-  <caption>Table 35. Postponed</caption>
-  <thead>
-    <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Equity-correlated labour income</td><td>Choi, Liu and Liu (2025), equation (19)</td><td>Already derived and tested by the authors, so this is implementation rather than research. Matters for equity-compensated households. See section 7.5.</td></tr>
-    <tr><td>Standard errors on the variance ratios</td><td>Lo and MacKinlay (1988)</td><td>The ratios themselves are measured in section 2.4 and fall to 0.21 by thirty years. Without their standard errors, and on three independent windows, that number cannot carry weight. Nothing in the model consumes it either way; see the two rows below.</td></tr>
-    <tr><td>Uncertainty in the expected return</td><td>Barberis (2000), Pastor and Stambaugh (2012)</td><td>Version 1 treats a point estimate of the risk premium as certain, and section 3.1 shows that estimate spanning 7.05% to 2.42% across defensible methods. Allowing for the uncertainty lowers the equity share, more so at long horizons, and is the reason the variance ratios above cannot be read as licence to hold more. Requires a Bayesian layer. This is the largest single gap in the model.</td></tr>
-    <tr><td>Return predictability</td><td>Campbell and Viceira (2002)</td><td>The only clean route to making horizon matter. Requires a vector autoregression plus a hedging demand term.</td></tr>
-  </tbody>
-</table>
-</div>
-
-<div class="tablewrap">
-<table>
-  <caption>Table 36. Excluded</caption>
-  <thead>
-    <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Skewness and fat tails</td><td>Higher-moment portfolio choice</td><td>Requires estimating co-skewness and co-kurtosis, which are noisy in the sample sizes available, for a small shift in the recommendation.</td></tr>
-    <tr><td>Direct solution of the life-cycle model</td><td>Cocco, Gomes and Maenhout (2005)</td><td>The approximation costs 0.06% of lifetime consumption against the exact solution. Re-solving it is months of work for that margin.</td></tr>
-    <tr><td>Housing and the mortgage</td><td>Cocco (2005); Flavin and Yamashita (2002); Yao and Zhang (2005)</td><td>Excluded, following Choi's own instruction to enter non-housing assets less non-mortgage debt. Section 8.5 measures what it costs: a range of 39.2% to 20.6% against the 38.3% reported, and 17 points for the mortgage alone. Implementing it would mean choosing how equity-like a house is, and the four papers above disagree on the sign, so a number here would be an invention wearing the clothes of a measurement.</td></tr>
-    <tr><td>Leverage when young</td><td>Ayres and Nalebuff (2010)</td><td>The extrapolation of the capped result in section 4, noted but not adopted. The model prices neither margin calls, nor the link between job loss and market falls, nor investors abandoning leveraged strategies at the bottom.</td></tr>
-  </tbody>
-</table>
-</div>
-
-<h2 id="s10">10. References</h2>
+<h2 id="s9">9. References</h2>
 
 <ol class="refs">
   <li>Ayres, I. and Nalebuff, B. (2010). <em>Lifecycle Investing</em>. Basic Books.</li>

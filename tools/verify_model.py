@@ -497,6 +497,9 @@ def part_four() -> None:
 DOC = ROOT / "docs" / "methodology.html"
 
 # A reference that resolves to a table is not the same as a reference that
+# resolves to the right table. Three entries were retired when section 9
+# was cut: they pinned prose in the tables it held, and the check caught
+# their disappearance rather than passing over it.
 # resolves to the right table. Each entry pins one citation to a word that must
 # appear in the caption it lands on, so a renumbering cannot quietly move it.
 ANCHORS = [
@@ -505,9 +508,6 @@ ANCHORS = [
     (r"points of the 9.7% in Table (\d+)", "9.7% wage discount rate"),
     (r"The constants in Table (\d+) come from a calibration",
      "Values fixed inside the approximation"),
-    (r"listed in Table (\d+) as implementation work", "Postponed"),
-    (r"Table (\d+) shows the answer spanning 19% to 100%",
-     "What the choice of estimator is worth"),
     (r"college graduate values in Table (\d+)",
      "Values fixed inside the approximation"),
     (r"the figure in Table (\d+), measured from the standpoint",
@@ -522,8 +522,6 @@ ANCHORS = [
 # The same idea as ANCHORS, for section numbers rather than table numbers.
 SECTION_ANCHORS = [
     (r"for the reason given in section (\d+\.\d+)", "United States calibration"),
-    (r"equity-compensated households\. See section (\d+\.\d+)",
-     "Labour income correlated with equities"),
     (r"[Ss]ection (\d+\.\d+) shows that horizon does not appear", "horizon"),
 ]
 
