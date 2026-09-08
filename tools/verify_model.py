@@ -2,7 +2,7 @@
 
     python tools/verify_model.py
 
-Five parts, each printing PASS or FAIL per check:
+Six parts, each printing PASS or FAIL per check:
 
     1  the model      mathematical properties that must hold for any input
     2  market data    the loading chain, from the TOML the refresh writes to
@@ -13,6 +13,8 @@ Five parts, each printing PASS or FAIL per check:
                       year by year and not only at the end
     5  the document   the methodology's numbering, its cross-references and the
                       figures it quotes, against the model that produced them
+    6  the sources    the calibration, the fitted coefficients and the figures
+                      the document borrows, against Choi's paper and guide
 
 Part 1 is a sweep, not a spot check: the properties are asserted across a grid
 of ages, risk aversions, wages, wealths and market inputs, so a defect that
@@ -679,12 +681,129 @@ def part_five() -> None:
           or "checked against the headings, not the numbers")
 
 
+# ---------------------------------------------------------------------------
+# 6. Against the sources
+# ---------------------------------------------------------------------------
+
+FACTS = ROOT / "tests" / "choi_facts.json"
+
+
+def part_six() -> None:
+    head(6, "The model and the document, against Choi's paper and guide")
+
+    facts = json.loads(FACTS.read_text(encoding="utf-8"))
+    cal = facts["calibration"]
+    doc = DOC.read_text(encoding="utf-8")
+
+    # --- the model's constants are the paper's ----------------------------
+    for name, ours, theirs in (
+            ("equity volatility", CGM_CALIBRATION.stock_volatility,
+             cal["stock_volatility"]),
+            ("permanent shock volatility",
+             CGM_CALIBRATION.permanent_shock_volatility,
+             cal["college_permanent_shock_volatility"]),
+            ("temporary shock volatility",
+             CGM_CALIBRATION.temporary_shock_volatility,
+             cal["college_temporary_shock_volatility"]),
+            ("replacement rate", CGM_CALIBRATION.benefit_replacement_rate,
+             cal["replacement_rate_grid"][0]),
+    ):
+        check(f"calibration: {name} is the paper's college figure",
+              close(ours, theirs), f"{ours:.4g}, paper section 1.2")
+
+    # --- the fitted coefficients are the paper's Table 1 and Table 2 ------
+    # Rebuilt from the coefficients rather than read off the source, so a
+    # changed digit moves the answer and fails here.
+    w = facts["wage_discount_coefficients"]
+    b = facts["benefit_discount_coefficients"]
+    ex = facts["worked_example"]
+    g, rf_log, pi_log = (ex["risk_aversion"], ex["log_risk_free"],
+                         ex["log_premium"])
+    x = 55 / 100.0
+    rebuilt = (w["constant"] + w["risk_aversion_over_10"] * g / 10
+               + w["log_equity_premium"] * pi_log
+               + w["log_risk_free"] * rf_log
+               + w["permanent_shock_variance"]
+               * cal["college_permanent_shock_volatility"] ** 2
+               + w["transitory_shock_variance"]
+               * cal["college_temporary_shock_volatility"] ** 2
+               + w["replacement_rate"] * CGM_CALIBRATION.wage_equity_beta
+               + w["age_over_100"] * x + w["age_over_100_squared"] * x ** 2)
+    check("the paper's own worked wage rate at age 55 rebuilds from its "
+          "Table 1 coefficients",
+          abs(rebuilt - ex["wage_rate_at_55"]) < 5e-5,
+          f"{rebuilt:.4f} against the paper's {ex['wage_rate_at_55']}")
+
+    # And the model must produce the same number from its own code.
+    mu_ex = math.exp(rf_log + pi_log + CALIB_VOL ** 2 / 2) - 1
+    rf_ex = math.exp(rf_log) - 1
+    ours = wage_discount_rate(56, g, mu_ex, rf_ex)
+    check("and this tool's wage_discount_rate agrees with the paper there",
+          abs(ours - ex["wage_rate_at_55"]) < 5e-5,
+          f"{ours:.4f}, indexed by the year income arrives")
+
+    xb = 66 / 100.0
+    rebuilt_b = (b["constant"] + b["risk_aversion_over_10"] * g / 10
+                 + b["log_equity_premium"] * pi_log
+                 + b["log_risk_free"] * rf_log
+                 + b["age_over_100"] * xb + b["age_over_100_squared"] * xb ** 2)
+    check("the paper's worked benefit rate at age 66 rebuilds from its "
+          "Table 2 coefficients",
+          abs(rebuilt_b - ex["benefit_rate_at_66"]) < 5e-5,
+          f"{rebuilt_b:.4f} against the paper's {ex['benefit_rate_at_66']}")
+
+    # --- the paper's own example, end to end ------------------------------
+    level = math.exp(rf_log + pi_log + CALIB_VOL ** 2 / 2) - math.exp(rf_log)
+    check("the level equity premium the paper states for its example",
+          abs(level - ex["level_equity_premium"]) < 5e-5,
+          f"{level:.4%} against the paper's {ex['level_equity_premium']:.2%}")
+    share = merton_share(mu_ex, rf_ex, g, CALIB_VOL)
+    check("the Merton share the paper states for its example",
+          abs(share - ex["merton_share"]) < 5e-4,
+          f"{share:.6f} against the paper's {ex['merton_share']}")
+
+    # --- what the document says the sources say ---------------------------
+    welfare = facts["welfare_losses"]["all_parameter_sets"]
+    missing = [f"{v:.2%}" for v in welfare if f"{v:.2%}" not in doc]
+    check("every welfare figure the document quotes is the paper's",
+          not missing,
+          "5 figures from Table 4" if not missing else f"absent: {missing}")
+
+    stated = [
+        (cal["mortality"][:22], "the mortality source is named, not left blank"),
+        (facts["guide"]["safe_rate_instrument"],
+         "the guide's instrument for the safe rate"),
+        (facts["guide"]["expected_return_justification"][:60],
+         "the guide's justification for its 5% default, quoted"),
+        (facts["cited_by_the_paper"]["labour_income_equity_correlation"]
+         ["source"].split(",")[0], "the correlation names its own source"),
+        ("Table 1 of the paper", "the working-life coefficients cite Table 1"),
+    ]
+    absent = [why for text, why in stated if text not in doc]
+    check("the document attributes each borrowed fact to where it came from",
+          not absent, "; ".join(absent) or f"{len(stated)} attributions")
+
+    # --- the guide's risk aversion table ----------------------------------
+    ce = facts["guide"]["certainty_equivalents"]
+    gam = facts["guide"]["gamble"]
+    worst = max(abs(certainty_equivalent(float(k), gam["high"], gam["low"]) - v)
+                for k, v in ce.items())
+    check("all ten of the guide's certainty equivalents reproduce from "
+          "equation (2)", worst < 1.0, f"worst difference ${worst:.2f}")
+
+    # --- and that the market figures are dated ----------------------------
+    check("the document dates its market figures for a reader coming to it "
+          "later", "as of 3 September 2026" in doc,
+          "stated under the version line and on Table 1")
+
+
 if __name__ == "__main__":
     part_one()
     part_two()
     part_three()
     part_four()
     part_five()
+    part_six()
     print(f"\n{'=' * 72}")
     tally = f"{passed} passed, {len(failed)} failed"
     if skipped:

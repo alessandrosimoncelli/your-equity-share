@@ -125,6 +125,29 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 
 .tablewrap { overflow-x: auto; margin: 1.2rem 0 1.7rem; }
 
+/*
+  Tables break out of the prose column on a wide screen.
+
+  The 52rem measure is deliberate and stays: prose is easier to read at
+  around eighty characters a line, which is why the column does not fill a
+  desktop window. A table has no such reason to be narrow, and holding the
+  two to the same width was costing something measurable. At 1600px, 23% of
+  all body cells wrapped onto a second line, and in the six tables that
+  carry explanations rather than figures it was 93% to 100% of them, while
+  376px of window sat empty on each side.
+
+  So the prose keeps its measure and the tables take the space beside it,
+  centred on the column. Below 64rem nothing changes and .tablewrap scrolls
+  on its own, which is what a phone needs.
+*/
+@media (min-width: 64rem) {
+  .tablewrap {
+    --wide: min(68rem, calc(100vw - 8rem));
+    width: var(--wide);
+    margin-left: calc(50% - var(--wide) / 2);
+  }
+}
+
 table { border-collapse: collapse; width: 100%; font-size: var(--t-body); }
 
 caption {
@@ -200,6 +223,7 @@ h4 {
 <h1>Your Equity Share</h1>
 <p class="subtitle">Technical methodology for the equity allocation tool</p>
 <p class="docmeta">Version 1.0, September 2026</p>
+<p class="docmeta"><strong>Every market figure in this document is as of 3 September 2026</strong> and will have moved since. That includes the 3.38% expected real equity return, the 2.96% real safe rate, the 17.18% volatility, and every equity share computed from them. The constants taken from Choi, Liu and Liu (2025) and from Cocco, Gomes and Maenhout (2005) do not move, because they are fixed inside the fitted coefficients. Where a figure carries its own date in the text, that date governs. For current numbers, open the tool, which recomputes them from the market data it ships with.</p>
 <hr class="titlerule">
 
 <h2>Contents</h2>
@@ -284,9 +308,9 @@ h4 {
 <tr><td colspan="3"><strong>An American</strong>, not specific to education</td></tr>
 <tr><td>Retirement age</td><td class="num">67</td><td>The Social Security full retirement age. Wages stop, benefits begin.</td></tr>
 <tr><td>Retirement benefit</td><td class="num">40% of final wage</td><td>Social Security. Note what this is: Choi cites Biggs and Springstead, where the median benefit runs from <strong>40% in the highest lifetime earnings quintile to 82% in the second lowest</strong>. The default therefore describes a high earner, and a lower earner is being told to expect less retirement income than they will get.</td></tr>
-<tr><td>Mortality</td><td class="num">n/a</td><td>United States life tables, inside the fitted discount rates. Income in later years is already weighted by the chance of being alive to receive it, which is why the value is not simply a sum of future wages.</td></tr>
+<tr><td>Mortality</td><td class="num">2019 NCHS life table</td><td>The 2019 life table for the total United States population, from the National Center for Health Statistics, named in section 1.2 of the paper. It sits inside the fitted discount rates rather than being a setting. Income in later years is already weighted by the chance of being alive to receive it, which is why the value is not simply a sum of future wages.</td></tr>
 <tr><td>Labour income to equity beta</td><td class="num">0.40</td><td>Estimated against the United States market. It enters through a coefficient of 0.010 and is worth 0.4 points, so it is the least consequential of these.</td></tr>
-<tr><td colspan="3"><strong>American market data</strong>, and the only rows a reader can change</td></tr>
+<tr><td colspan="3"><strong>American market data</strong>, the only rows a reader can change and the only ones that go out of date. The three below are as of 3 September 2026.</td></tr>
 <tr><td>Equity market</td><td class="num">S&amp;P 500</td><td>Through SPY, for the volatility. Section 3.2.</td></tr>
 <tr><td>Expected return</td><td class="num">3.38% real</td><td>Shiller's United States history and Damodaran's United States premium. Overridable on the page. Section 3.1.</td></tr>
 <tr><td>Safe rate</td><td class="num">2.96% real</td><td>The 30-year United States TIPS yield. Section 3.3.</td></tr>
@@ -920,7 +944,7 @@ h4 {
 </table>
 </div>
 
-<p class="src">Coefficients from Table 2 of the paper, working-life specification. The discount rate effects are the coefficient times the distance, at September 2026 values.</p>
+<p class="src">Coefficients from Table 1 of the paper, third column, which is the working-life regression over ages 22 to 65. Its Table 2 is the retirement regression, over ages 66 to 99. The discount rate effects are the coefficient times the distance, at September 2026 values.</p>
 
 <p><strong>Being outside the grid does not touch the Merton share.</strong> Equation (4) is exact arithmetic, and the paper's own equation (8) writes it as <code>(&pi; + &sigma;<sup>2</sup>/2) / (&gamma;&sigma;<sup>2</sup>)</code>, which is algebraically the same expression this tool uses. What the extrapolation affects is the <em>value of human capital</em>, through the rate at which future wages are discounted. That is the second factor in equation (1), so it still moves the answer, but through one channel rather than both.</p>
 
@@ -1024,7 +1048,7 @@ h4 {
 
 <p>Not the safe rate, and the reason is not the obvious one.</p>
 
-<p>The intuitive story, that wages fall when markets fall, is <strong>not</strong> what drives this. Choi cites an estimated correlation between real labour income growth and real S&amp;P 500 returns of <strong>0.007</strong> for the average household. Effectively zero. The baseline model assumes labour income is uncorrelated with the stock market, and that assumption is precisely why human capital behaves like a bond rather than like equity.</p>
+<p>The intuitive story, that wages fall when markets fall, is <strong>not</strong> what drives this. Choi cites Wuthenow (2024), who estimates on the Panel Study of Income Dynamics that from 1980 to 2020 the correlation between real labour income growth and the S&amp;P 500's real returns for the average household is <strong>0.007</strong>. Effectively zero. The baseline model assumes labour income is uncorrelated with the stock market, and that assumption is precisely why human capital behaves like a bond rather than like equity.</p>
 
 <p>What makes a future wage worth less than a Treasury paying the same amount is that the household <strong>cannot get rid of the risk</strong>. Two features of the setting do the work:</p>
 
@@ -1123,6 +1147,7 @@ h4 {
     <tr><td>Permanent wage shock volatility</td><td class="sym">&sigma;<sub>perm</sub></td><td class="num">13.0%</td><td>largest driver of the wage discount rate</td></tr>
     <tr><td>Temporary wage shock volatility</td><td class="sym">&sigma;<sub>tran</sub></td><td class="num">24.2%</td><td>negligible, since it averages out over a career</td></tr>
     <tr><td>Labour income to equity beta</td><td class="sym">&beta;<sub>LS</sub></td><td class="num">0.40</td><td>enters only through the 0.010 coefficient</td></tr>
+    <tr><td>Time discount factor</td><td class="sym">&delta;</td><td class="num">0.96</td><td>how much less a year of consumption is worth for being a year away, following Cocco, Gomes and Maenhout</td></tr>
     <tr><td>Retirement age</td><td class="sym">none</td><td class="num">67</td><td>wages stop, benefits begin</td></tr>
     <tr><td>Social Security replacement rate</td><td class="sym">none</td><td class="num">40%</td><td>of final wage, unless entered directly</td></tr>
   </tbody>
@@ -1199,12 +1224,12 @@ h4 {
     <tr><td>100 minus your age in equities</td><td class="num">2.00%</td><td class="num">2.11%</td><td class="num">4.11%</td></tr>
     <tr><td>Constant 60% equities</td><td class="num">3.75%</td><td class="num">1.58%</td><td class="num">9.27%</td></tr>
     <tr><td>Never hold equities</td><td class="num">7.86%</td><td class="num">7.93%</td><td class="num">7.09%</td></tr>
-    <tr><td>Always 100% equities</td><td class="num">11.85%</td><td class="num">0.56%</td><td class="num">29.55%</td></tr>
+    <tr><td>Always 100% equities</td><td class="num">11.75%</td><td class="num">0.56%</td><td class="num">29.55%</td></tr>
   </tbody>
 </table>
 </div>
 
-<p class="src">Source: Choi, Liu and Liu (2025), their Table 18.</p>
+<p class="src">Source: Choi, Liu and Liu (2025), their Table 4.</p>
 
 <p>Three results follow directly from this table.</p>
 
@@ -1283,7 +1308,7 @@ h4 {
 
 <h3>7.3 A floor on the benefit discount rate</h3>
 
-<p><strong>This is the only place in the project where Choi's arithmetic is altered rather than extended.</strong> His equation (13) discounts a retirement benefit, and it is fitted on retirement years alone: 63 parameter sets by 34 years, and 34 years is age 67 to 100. Evaluated outside those ages it does not degrade, it inverts.</p>
+<p><strong>This is the only place in the project where Choi's arithmetic is altered rather than extended.</strong> His equation (13) discounts a retirement benefit, and it is fitted on retirement years alone: 63 parameter sets by 34 years. The paper indexes by the age of the person doing the discounting, 66 to 99; this tool indexes by the age the income arrives, 67 to 100. Those are the same 34 years counted from opposite ends, and the ages below are arrival ages. Evaluated outside those ages it does not degrade, it inverts.</p>
 
 <div class="tablewrap">
 <table>
@@ -1365,7 +1390,7 @@ h4 {
 
 <p>Conformance testing compares this project against Choi. It cannot find a household his workbook never contains, and both of these were that kind of household.</p>
 
-<p><strong>A pension before retirement was discounted at a negative rate.</strong> Equation (13) is fitted on retirement years alone: 63 parameter sets by 34 years, and 34 years is age 67 to 100. Evaluated at 30 it returns <strong>minus 2.7%</strong>, which values a future payment above its face amount, and it stays below the safe rate until age 55. The page reaches this, because it offers a pension field to everybody and a thirty-year-old on a disability pension is not exotic. The rate is now floored at the safe rate, on the ground that a government inflation-linked annuity cannot be worth more than a risk-free bond paying the same schedule. Across ages 67 to 100 the floor binds in 5 of 4,250 parameter combinations, all of them where the raw rate is itself below zero, so nothing Choi's own fitting supports is touched: the 58 checks against his workbook pass unchanged. For a 30-year-old on a $30,000 pension it cuts human capital from $1,290,049 to $808,713.</p>
+<p><strong>A pension before retirement was discounted at a negative rate.</strong> Equation (13) is fitted on retirement years alone: 63 parameter sets by 34 years, ages 66 to 99 as the paper indexes them and 67 to 100 as this tool does. Evaluated at 30 it returns <strong>minus 2.7%</strong>, which values a future payment above its face amount, and it stays below the safe rate until age 55. The page reaches this, because it offers a pension field to everybody and a thirty-year-old on a disability pension is not exotic. The rate is now floored at the safe rate, on the ground that a government inflation-linked annuity cannot be worth more than a risk-free bond paying the same schedule. Across ages 67 to 100 the floor binds in 5 of 4,250 parameter combinations, all of them where the raw rate is itself below zero, so nothing Choi's own fitting supports is touched: the 58 checks against his workbook pass unchanged. For a 30-year-old on a $30,000 pension it cuts human capital from $1,290,049 to $808,713.</p>
 
 <p><strong>One accessor was a method where its siblings were properties.</strong> <code>equity_dollars</code> returned a bound method rather than a number, so it was truthy in a condition and failed only where something tried to format it, and the Python interface differed from the JavaScript port for no reason. Now a property.</p>
 
@@ -1639,6 +1664,7 @@ h4 {
   <li>Barberis, N. (2000). Investing for the Long Run when Returns Are Predictable. <em>Journal of Finance</em>, 55(1), 225 to 264.</li>
   <li>Bernstein, P. L. and Arnott, R. D. (2003). Earnings Growth: The Two Percent Dilution. <em>Financial Analysts Journal</em>, 59(5), 47 to 55. Measures the gap between aggregate and per-share earnings growth that section 3.1 turns on.</li>
   <li>Bodie, Z. (1995). On the Risk of Stocks in the Long Run. <em>Financial Analysts Journal</em>, 51(3), 18 to 22.</li>
+  <li>Biggs, A. G. and Springstead, G. R. (2008). Alternate Measures of Replacement Rates for Social Security Benefits and Retirement Income. Social Security Bulletin, 68(2). The source of the 40% to 82% replacement rate range, and of the 40% this tool defaults to.</li>
   <li>Bodie, Z., Merton, R. C. and Samuelson, W. F. (1992). Labor Supply Flexibility and Portfolio Choice in a Life Cycle Model. <em>Journal of Economic Dynamics and Control</em>, 16(3 to 4), 427 to 449.</li>
   <li>Campbell, J. Y. and Shiller, R. J. (1988, 1998). Work on valuation ratios and long-horizon returns.</li>
   <li>Campbell, J. Y. and Viceira, L. M. (2002). <em>Strategic Asset Allocation: Portfolio Choice for Long-Term Investors</em>. Oxford University Press.</li>
@@ -1651,13 +1677,16 @@ h4 {
   <li>Grossman, S. J. and Laroque, G. (1990). Asset Pricing and Optimal Portfolio Choice in the Presence of Illiquid Durable Consumption Goods. <em>Econometrica</em>, 58(1), 25 to 51.</li>
   <li>Grinold, R. C. and Kroner, K. F. (2002). The Equity Risk Premium: Analyzing the Long-Run Prospects for the Stock Market. <em>Investment Insights</em>, Barclays Global Investors. Source of the building-block decomposition in equation (5).</li>
   <li>Lo, A. W. and MacKinlay, A. C. (1988). Stock Market Prices Do Not Follow Random Walks: Evidence from a Simple Specification Test. <em>Review of Financial Studies</em>, 1(1), 41 to 66.</li>
+  <li>National Center for Health Statistics (2019). Life table for the total United States population. The survival probabilities inside the fitted discount rates, per section 1.2 of the paper.</li>
   <li>Merton, R. C. (1969). Lifetime Portfolio Selection under Uncertainty: The Continuous-Time Case. <em>Review of Economics and Statistics</em>, 51(3), 247 to 257.</li>
   <li>Merton, R. C. (1971). Optimum Consumption and Portfolio Rules in a Continuous-Time Model. <em>Journal of Economic Theory</em>, 3(4), 373 to 413.</li>
   <li>Pástor, Ľ. and Stambaugh, R. F. (2012). Are Stocks Really Less Volatile in the Long Run? <em>Journal of Finance</em>, 67(2), 431 to 477.</li>
+  <li>Portfolio Solutions Group (2024). Capital Market Assumptions for Major Asset Classes. Alternative Thinking 2024(1), AQR Capital Management. The 1.9% log excess forecast Choi anchors his central example to, and the published estimate section 8.3 sets this tool's against.</li>
   <li>Poterba, J. M. and Summers, L. H. (1988). Mean Reversion in Stock Prices: Evidence and Implications. <em>Journal of Financial Economics</em>, 22(1), 27 to 59.</li>
   <li>Samuelson, P. A. (1969). Lifetime Portfolio Selection by Dynamic Stochastic Programming. <em>Review of Economics and Statistics</em>, 51(3), 239 to 246.</li>
   <li>Siegel, J. J. <em>Stocks for the Long Run</em>. McGraw-Hill, multiple editions since 1994.</li>
   <li>Straehl, P. U. and Ibbotson, R. G. (2017). The Long-Run Drivers of Stock Returns: Total Payouts and the Real Economy. <em>Financial Analysts Journal</em>, 73(3), 32 to 52. Sets out why a total payout yield has to be paired with aggregate rather than per-share growth.</li>
+  <li>Wuthenow, N. (2024). When It Rains, It Pours: Income Risk Perception and Stock Market Participation. Working paper. The source of the 0.007 correlation between labour income growth and equity returns, estimated on the Panel Study of Income Dynamics over 1980 to 2020.</li>
 </ol>
 
 <div class="footnote">

@@ -1,0 +1,117 @@
+{
+  "note": "Every figure this project takes from Choi, Liu and Liu (2025) or from the spreadsheet guide, with where it comes from. Checked against the paper text and the guide on 7 September 2026. Part 6 of tools/verify_model.py holds the model and the methodology to these, so a number cannot drift back without failing. Values are exactly as the sources state them.",
+  "sources": {
+    "paper": "Choi, J. J., Liu, C. and Liu, P. (2025). Practical Finance: An Approximate Solution to Lifecycle Portfolio Choice. 7 November 2025. NBER working paper 34166.",
+    "guide": "Practical finance spreadsheet guide, the document the workbook's instructions point to.",
+    "workbook": "Chai - Yale.xlsx, tabs Disclaimer, Full inputs and Wage imputed."
+  },
+  "calibration": {
+    "where": "paper section 1.2",
+    "stock_volatility": 0.185,
+    "stock_volatility_definition": "annualized standard deviation of the CRSP value-weighted market index log monthly return in excess of the 1-month Treasury log return, July 1926 to July 2024",
+    "time_discount_factor": 0.96,
+    "start_age": 22,
+    "last_working_age": 66,
+    "retirement_age": 67,
+    "final_age": 100,
+    "mortality": "2019 life table for the total U.S. population, National Center for Health Statistics",
+    "permanent_shock_volatility_by_education": [0.102, 0.103, 0.130],
+    "temporary_shock_volatility_by_education": [0.325, 0.272, 0.242],
+    "college_permanent_shock_volatility": 0.130,
+    "college_temporary_shock_volatility": 0.242,
+    "college_earnings_cubic": [-4.3148, 0.3194, -0.00577, 0.000033],
+    "replacement_rate_grid": [0.4, 0.6, 0.8],
+    "risk_aversion_grid": [4, 5, 6, 7, 8, 9, 10],
+    "log_risk_free_grid": [0.0, 0.01, 0.02],
+    "log_premium_grid": [0.02, 0.03, 0.04],
+    "working_parameter_sets": 5103,
+    "retirement_parameter_sets": 63,
+    "working_regression_ages": [22, 65],
+    "retirement_regression_ages": [66, 99]
+  },
+  "wage_discount_coefficients": {
+    "where": "paper Table 1, third column, ages 22 to 65",
+    "constant": -0.020,
+    "risk_aversion_over_10": 0.087,
+    "log_equity_premium": -0.267,
+    "log_risk_free": 1.132,
+    "permanent_shock_variance": 4.332,
+    "transitory_shock_variance": 0.028,
+    "replacement_rate": 0.010,
+    "age_over_100": -0.149,
+    "age_over_100_squared": 0.142
+  },
+  "benefit_discount_coefficients": {
+    "where": "paper Table 2, third column, ages 66 to 99",
+    "constant": -0.166,
+    "risk_aversion_over_10": 0.0003,
+    "log_equity_premium": -0.217,
+    "log_risk_free": 0.893,
+    "age_over_100": 0.476,
+    "age_over_100_squared": -0.295
+  },
+  "worked_example": {
+    "where": "paper section 3.3 and Table 3",
+    "age": 55,
+    "risk_aversion": 7,
+    "log_risk_free": 0.02,
+    "log_premium": 0.02,
+    "replacement_rate": 0.4,
+    "wage": 100000,
+    "benefit": 40000,
+    "financial_wealth": 1000000,
+    "level_equity_premium": 0.0386,
+    "merton_share": 0.155,
+    "human_capital": 924805,
+    "wage_rate_at_55": 0.0981,
+    "benefit_rate_at_66": 0.0334,
+    "stated_equity_share": 0.30
+  },
+  "welfare_losses": {
+    "where": "paper Table 4, from the perspective of a 22-year-old",
+    "columns": ["our rule", "0% equity", "60% equity", "100% equity", "(100 - age)% equity"],
+    "all_parameter_sets": [0.0006, 0.0786, 0.0375, 0.1175, 0.0200],
+    "risk_aversion_4": [0.0003, 0.0793, 0.0158, 0.0056, 0.0211],
+    "risk_aversion_10": [0.0007, 0.0709, 0.0927, 0.2955, 0.0411],
+    "equations_9_and_19": 0.0002
+  },
+  "cited_by_the_paper": {
+    "labour_income_equity_correlation": {
+      "value": 0.007,
+      "source": "Wuthenow (2024), Panel Study of Income Dynamics, 1980 to 2020, average household",
+      "where": "paper footnote 3"
+    },
+    "replacement_rate_range": {
+      "low": 0.40,
+      "high": 0.82,
+      "source": "Biggs and Springstead (2008), median Social Security benefit as a percent of average inflation-adjusted labor income over the final five years before claiming",
+      "note": "40% is the highest lifetime earnings quintile, 82% the second lowest",
+      "where": "paper section 1.2"
+    },
+    "aqr_forecast": {
+      "value": 0.019,
+      "description": "log excess return over cash for U.S. large-cap equities, year-end 2023, from dividend and payout discount models",
+      "source": "Portfolio Solutions Group (2024), AQR Capital Management",
+      "where": "paper section 1.2"
+    },
+    "realized_log_premium": {
+      "value": 0.065,
+      "description": "log equity premium realized July 1926 to July 2024",
+      "where": "paper section 1.2"
+    }
+  },
+  "guide": {
+    "expected_return_default": 0.05,
+    "expected_return_description": "your best guess of the average return of the stock market over your lifetime in excess of the inflation rate",
+    "expected_return_justification": "roughly equal to what is implied by current stock market valuation ratios if those ratios stay constant and future dividend or earnings growth equals its long-run historical average",
+    "safe_rate_instrument": "30-year TIPS yield",
+    "safe_rate_example": "about 2.5% in December 2025",
+    "education_assumption": "human capital of each adult has riskiness comparable to the average for college graduates",
+    "risk_aversion_scale": [1, 10],
+    "certainty_equivalents": {
+      "1": 70710, "2": 66667, "3": 63246, "4": 60571, "5": 58566,
+      "6": 57083, "7": 55978, "8": 55143, "9": 54499, "10": 53991
+    },
+    "gamble": {"high": 100000, "low": 50000}
+  }
+}
