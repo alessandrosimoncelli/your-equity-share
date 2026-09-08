@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 
 __all__ = [
     "CGM_CALIBRATION",
+    "ITALY_CALIBRATION",
     "Calibration",
     "EarningsYear",
     "Person",
@@ -68,6 +69,21 @@ class Calibration:
 
 
 CGM_CALIBRATION = Calibration()
+
+# The Italian variant. One constant differs and only one honestly can.
+#
+# Choi's equation (12) takes the replacement rate as a regressor, fitted over
+# 0.4, 0.6 and 0.8, so Italy's 74% sits inside the grid rather than outside it
+# and the approximation holds there. The OECD put the net replacement rate for
+# an average Italian earner at 74.0% in Pensions at a Glance 2025, against an
+# OECD average of 63.2% and the 40% this project uses for the United States.
+#
+# The earnings profile and the two shock volatilities stay American. They are
+# Cocco, Gomes and Maenhout's estimates on United States households, and the
+# profile is not a regressor at all: it is inside the numerical solution Choi
+# fitted to. So is United States mortality. Making those Italian means
+# re-solving his model, not editing a constant here.
+ITALY_CALIBRATION = Calibration(benefit_replacement_rate=0.74)
 
 
 def _log_excess_drift(

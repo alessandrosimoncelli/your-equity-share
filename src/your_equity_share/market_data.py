@@ -92,6 +92,24 @@ class MarketData:
     covariance_observations: int = 0
 
     @property
+    def provisional_fields(self) -> tuple[str, ...]:
+        """Inputs the configuration admits nobody has measured.
+
+        The Italian variant ships with a safe rate and a volatility that were
+        reasoned about rather than read off a market, and an answer built on
+        those is not the same kind of object as one built on measured data.
+        A tool that cannot tell the two apart will eventually present one as
+        the other, so the distinction is carried in the data and surfaced
+        everywhere the numbers are.
+        """
+        raw = self.provenance.get("provisional_fields", "")
+        return tuple(f.strip() for f in str(raw).split(",") if f.strip())
+
+    @property
+    def is_provisional(self) -> bool:
+        return bool(self.provisional_fields)
+
+    @property
     def expected_return_is_market_implied(self) -> bool:
         """True when the expected return was derived from market data."""
         return self.provenance.get("expected_return_method") in {

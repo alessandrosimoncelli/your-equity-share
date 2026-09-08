@@ -25,6 +25,7 @@ from your_equity_share.allocation import (
 )
 from your_equity_share.human_capital import (
     CGM_CALIBRATION,
+    ITALY_CALIBRATION,
     Calibration,
     Person,
     benefit_discount_rate,
@@ -43,6 +44,7 @@ from your_equity_share.risk_aversion import (
 
 __all__ = [
     "CGM_CALIBRATION",
+    "ITALY_CALIBRATION",
     "Calibration",
     "Household",
     "LegacyInputs",

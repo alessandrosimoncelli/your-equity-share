@@ -111,6 +111,18 @@ GROWTH_WINDOW_YEARS = 100
 # yield already, which is what the model needs and what Choi's guide asks for.
 FRED_REAL_RISK_FREE = "DFII30"
 
+# Which configurations this script knows how to refresh.
+#
+# It rebuilds the whole file from one template, so running it on a
+# configuration it does not understand does not merely replace a field: it
+# replaces the header, the expected return and the safe rate with American
+# ones, and drops the provenance recording that some of those numbers were
+# provisional. That happened once, to the Italian file, during the session
+# that added it. A tool quietly using the wrong country's safe asset, and
+# reporting it as measured, is worse than one that admits its inputs are not
+# measured yet, so an unknown variant is refused rather than rebuilt.
+KNOWN_VARIANTS = {"us"}
+
 # For reporting only. A 3-month bill and a 10-year breakeven do not describe
 # the same horizon, so their difference is a rough real cash rate rather than a
 # precise one, which is all it needs to be: it exists to show that part of the
@@ -506,6 +518,19 @@ def main(argv: list[str]) -> int:
 
     try:
         existing = load_market_data(args.config)
+        variant = str(existing.provenance.get("variant", "us")).lower()
+        if variant not in KNOWN_VARIANTS:
+            raise SystemExit(
+                "\n  " + str(args.config) + " declares itself the '" + variant
+                + "' variant.\n"
+                "  This script only knows how to refresh the United States "
+                "one, and refuses\n  to rebuild a file it would fill with the "
+                "wrong country's numbers.\n\n"
+                "  It would write " + FRED_REAL_RISK_FREE + ", the 30-year "
+                "United States TIPS, as the safe\n  rate, an American expected "
+                "return, and would drop the provenance saying\n  which of "
+                "those were provisional.\n"
+            )
     except FileNotFoundError as exc:
         print(f"\n{exc}")
         return 1

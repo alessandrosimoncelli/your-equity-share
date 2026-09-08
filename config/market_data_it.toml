@@ -1,0 +1,87 @@
+# Market data for the Italian variant of Your Equity Share.
+#
+# This file is NOT refreshed by update.py. That script rebuilds a whole
+# configuration from one American template, and running it here once already
+# replaced this file's expected return and safe rate with United States ones
+# and dropped the provenance saying which were provisional. It now refuses,
+# on the `variant` field below.
+#
+# Three things differ from config/market_data.toml, and one large thing does
+# not.
+#
+# The EQUITY SLEEVE is global rather than the S&P 500, because a euro investor
+# buying a home index would hold about 1% of world market capitalisation.
+# FTSE All-World, through VWCE, is the accumulating UCITS share class most
+# European retail investors actually hold.
+#
+# The SAFE ASSET is a euro inflation-linked government bond rather than a
+# 30-year TIPS, and the choice is not obvious. German linkers are the closest
+# thing to a euro risk-free real asset, but issuance stopped in 2023 and only
+# four bonds remain outstanding, so a household cannot build a position in
+# them. BTP is liquid and long, and carries Italian sovereign credit risk,
+# which the model has no way to represent. The safe rate here is therefore not
+# risk-free in the sense equation (4) assumes.
+#
+# The REPLACEMENT RATE is 74% rather than 40%, from the OECD. It is the only
+# constant in the human capital half that can honestly be made Italian, and it
+# is set in ITALY_CALIBRATION rather than here.
+#
+# The HUMAN CAPITAL CALIBRATION is otherwise still American: Cocco, Gomes and
+# Maenhout's earnings profile and shock volatilities, and United States
+# mortality, are fitted inside Choi's coefficients and cannot be changed from
+# a configuration file. That is the largest declared deviation of this variant.
+#
+# ONE PROVISIONAL NUMBER remains, marked below. The tool reports it as
+# provisional wherever it reports the answer, and tests/test_italy.py fails if
+# this file stops saying so.
+
+[meta]
+generated_at = "2026-09-08T00:00:00+00:00"
+generated_by = "hand, from the sources named below"
+
+[market]
+
+# AQR's expected real return for Global All Country equities as of
+# 31 December 2025: a 1.6% dividend yield plus 2.6% real EPS growth, with no
+# repricing assumed. That is equation (5) of the methodology term for term,
+# from the one firm that publishes every component, and section 8.3 of the
+# American methodology checks their US figure against that same report.
+#   compound        0.0420
+#   volatility      0.1389
+#   arithmetic      0.052107
+expected_stock_real_return = 0.052107
+
+# PROVISIONAL. A long euro real yield. Reasoned from mid-2026 BTP issuance
+# commentary rather than read off a curve, and it is the input this variant's
+# answer is most sensitive to, because the safe rate enters the drift
+# directly. Section 3.3 of the American methodology measures the same choice
+# at 43 points of equity share across the maturities available there.
+real_risk_free = 0.0135
+
+# Measured: five years of daily dividend-adjusted closes of VWCE.DE to
+# 3 September 2026, annualised. Lower than the 17.18% of the S&P 500 sleeve,
+# which is what diversifying across a world index is supposed to do, and it
+# already carries the currency exposure a euro investor takes on an unhedged
+# global fund, because the series is priced in euro.
+stock_volatility = 0.138942
+market_ticker = "VWCE.DE"
+
+as_of = 2026-09-08
+
+[provenance]
+variant = "it"
+provisional_fields = "real_risk_free"
+expected_return_method = "building blocks, global"
+expected_return_basis = "arithmetic mean, converted from compound"
+expected_return_compound = 0.042000
+expected_return_source = "AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 31 December 2025: a 1.6% dividend yield plus 2.6% real EPS growth, no repricing"
+dividend_yield = 0.016
+real_growth = 0.026
+equity_index = "FTSE All-World"
+real_risk_free_source = "provisional, reasoned from BTP issuance commentary rather than read from a curve"
+volatility_source = "Yahoo daily closes of VWCE.DE, 5 years, dividend adjusted"
+volatility_currency = "EUR, unhedged"
+volatility_observations = 1254
+replacement_rate_source = "OECD, Pensions at a Glance 2025, Italy country note: a net replacement rate of 74.0% for an average earner, against an OECD average of 63.2%"
+retirement_age_source = "OECD, Pensions at a Glance 2025: statutory 67, early 64"
+human_capital_calibration = "American apart from the replacement rate. Cocco, Gomes and Maenhout's earnings profile and shock volatilities, and United States mortality, are inside Choi's fitted coefficients and cannot be set from here."
