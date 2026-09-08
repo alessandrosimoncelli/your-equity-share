@@ -1,0 +1,109 @@
+# Build the tool and publish it to GitHub Pages.
+#
+# The built site is not in the repository. .gitignore excludes /web/ so that
+# what is tracked is the source, and the page a reader opens is produced from
+# it rather than committed beside it. That means something has to run the
+# build, and this is it.
+#
+# The gate runs first and the deploy needs it. This project has already
+# published a page that could not load: every test passed, because nothing had
+# ever opened a built file. Deploying without running the checks would be
+# rebuilding that same hole in a place where nobody is watching.
+
+name: Publish to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Pages needs id-token to prove the deployment came from this workflow.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time. A queued run is not cancelled, because cancelling
+# it would leave the site on an older build than the newest green commit.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Tests, conformance and the verifier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The model has no runtime dependencies at all. pytest is the only
+      # thing installed, and that is the whole of the environment.
+      - name: Install the test runner
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Tests
+        run: python -m pytest -q
+
+      - name: JavaScript against Python
+        run: node tools/check_golden.mjs
+
+      # Part four compares against Choi's spreadsheet, which is his and not
+      # in the repository, so it skips here and does not fail the run.
+      - name: Verifier
+        run: python tools/verify_model.py
+
+  build:
+    name: Build the site
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build
+        run: python tools/build_web.py
+
+      # Catches the exact defect that took the live site down: the build
+      # wrapping model.js in a document shell, so the browser parsed
+      # JavaScript as HTML and the page hung on "Loading the market data."
+      # tests/test_build_output.py checks this too; it is repeated here
+      # because this is the copy that actually gets published.
+      - name: The published files are what they claim to be
+        run: |
+          set -e
+          test -f web/index.html
+          test -f web/methodology.html
+          test -f web/model.js
+          test -f web/market.json
+          if head -c 200 web/model.js | grep -qi 'doctype'; then
+            echo "model.js was wrapped in an HTML document; the browser will"
+            echo "parse it as HTML and the page will never finish loading."
+            exit 1
+          fi
+          python -c "import json,sys; json.load(open('web/market.json'))"
+          grep -q '<!doctype html>' web/index.html
+          echo "the four published files are present and well formed"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
