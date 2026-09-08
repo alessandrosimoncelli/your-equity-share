@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import sys
 import zipfile
@@ -67,11 +68,35 @@ from your_equity_share.risk_aversion import (  # noqa: E402
     gamma_from_certainty_equivalent,
 )
 
-CHOI = Path(r"C:\Users\LORENZO\OneDrive\Desktop\Investimenti\Chai - Yale.xlsx")
+# Choi's workbook is his, not ours, so it is not in the repository. It is
+# looked for beside the repository and in ./data, and CHOI_WORKBOOK overrides
+# both. The override wins outright rather than being tried first, so that
+# pointing it somewhere wrong reports that instead of quietly finding another
+# copy and checking something you did not ask for.
+WORKBOOK_NAME = "Chai - Yale.xlsx"
+CHOI_ENV = "CHOI_WORKBOOK"
+
+
+def workbook_candidates(override: str | None) -> list[Path]:
+    """Where the workbook is looked for, in order."""
+    if override:
+        return [Path(override)]
+    return [ROOT.parent / WORKBOOK_NAME, ROOT / "data" / WORKBOOK_NAME]
+
+
+def find_workbook(override: str | None = None) -> Path | None:
+    for candidate in workbook_candidates(override):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+CHOI = find_workbook(os.environ.get(CHOI_ENV))
 CALIB_VOL = CGM_CALIBRATION.stock_volatility  # 0.185, what the workbook assumes
 
 passed = 0
 failed: list[str] = []
+skipped: list[str] = []
 
 
 def check(name: str, ok: bool, detail: str = "") -> None:
@@ -82,6 +107,17 @@ def check(name: str, ok: bool, detail: str = "") -> None:
     else:
         failed.append(name)
         print(f"  FAIL  {name}   {detail}")
+
+
+def skip(name: str, detail: str = "") -> None:
+    """Not checked, and not a failure either.
+
+    Kept apart from both counts, because a check that could not run is a
+    different fact from one that ran and passed, and printing it as either
+    would be a lie about what was verified.
+    """
+    skipped.append(name)
+    print(f"  SKIP  {name}" + (f"   {detail}" if detail else ""))
 
 
 def close(a: float, b: float, rel: float = 1e-9) -> bool:
@@ -384,9 +420,19 @@ def read_workbook() -> dict:
 def part_four() -> None:
     head(4, 'Against Choi\'s workbook, tab "Wage imputed"')
 
-    if not CHOI.exists():
-        check("the workbook is where it was expected", False, str(CHOI))
+    if CHOI is None:
+        override = os.environ.get(CHOI_ENV)
+        skip("Choi's workbook was not found, so this part did not run",
+             f"{CHOI_ENV}={override}" if override else "looked in: " + ", ".join(
+                 str(c) for c in workbook_candidates(None)))
+        print(f"\n  This is the one part that needs a file the repository does "
+              f"not carry.\n  It is the spreadsheet accompanying Choi, Liu and "
+              f"Liu (2025). Put a copy at\n  one of the paths above, or set "
+              f"{CHOI_ENV} to point at it, and this part\n  will check 58 of "
+              f"our answers against theirs. Parts 1, 2, 3 and 5 do not\n  need "
+              f"it and have already run.")
         return
+    print(f"  workbook: {CHOI}")
     c = read_workbook()
 
     gamma = c["B12"]
@@ -640,7 +686,12 @@ if __name__ == "__main__":
     part_four()
     part_five()
     print(f"\n{'=' * 72}")
-    print(f"{passed} passed, {len(failed)} failed")
+    tally = f"{passed} passed, {len(failed)} failed"
+    if skipped:
+        tally += f", {len(skipped)} skipped"
+    print(tally)
     for name in failed:
         print(f"  FAILED: {name}")
+    for name in skipped:
+        print(f"  SKIPPED: {name}")
     raise SystemExit(1 if failed else 0)
