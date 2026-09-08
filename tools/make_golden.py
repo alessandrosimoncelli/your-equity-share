@@ -37,6 +37,12 @@ from your_equity_share.human_capital import (  # noqa: E402
     project_earnings,
     wage_discount_rate,
 )
+from your_equity_share.expected_return import (  # noqa: E402
+    arithmetic_from_compound,
+    compound_from_arithmetic,
+    log_premium,
+    log_risk_free,
+)
 from your_equity_share.risk_aversion import (  # noqa: E402
     certainty_equivalent,
     gamma_from_certainty_equivalent,
@@ -271,6 +277,43 @@ def rejection_cases() -> list[dict]:
     ]
 
 
+def conversion_cases() -> list[dict]:
+    """The compound to arithmetic conversions, and the two log quantities.
+
+    These are not part of the model, they are what the page runs before and
+    after it: the override slider hands the model a compound rate and this is
+    what turns it into the arithmetic mean the model consumes. A mutation
+    sweep found the port could invert them undetected, because the fixture
+    stopped at the model's own functions.
+    """
+    cases = []
+    for value in (0.0, 0.01, 0.0338, 0.05, 0.07, 0.09, -0.02):
+        for sigma in (0.10, 0.1718, 0.185, 0.25):
+            cases.append({
+                "fn": "arithmetic_from_compound",
+                "args": [value, sigma],
+                "expect": arithmetic_from_compound(value, sigma),
+            })
+            cases.append({
+                "fn": "compound_from_arithmetic",
+                "args": [value, sigma],
+                "expect": compound_from_arithmetic(value, sigma),
+            })
+            for rf in (0.0, 0.0296, 0.05):
+                cases.append({
+                    "fn": "log_premium",
+                    "args": [value, rf, sigma],
+                    "expect": log_premium(value, rf, sigma),
+                })
+    for rf in (0.0, 0.01, 0.0296, 0.05):
+        cases.append({
+            "fn": "log_risk_free",
+            "args": [rf],
+            "expect": log_risk_free(rf),
+        })
+    return cases
+
+
 def main() -> int:
     wage_rates, benefit_rates = discount_rate_cases()
     forward_ce, inverse_ce = risk_aversion_cases()
@@ -285,6 +328,7 @@ def main() -> int:
         "project_earnings": earnings_cases(),
         "human_capital": human_capital_cases(),
         "recommend": recommend_cases(),
+        "conversions": conversion_cases(),
         "must_reject": rejection_cases(),
     }
 

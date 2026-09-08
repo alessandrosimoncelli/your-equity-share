@@ -473,7 +473,7 @@ h4 {
 </table>
 </div>
 
-<p class=footnote><sup>a</sup> The model consumes an expected real <em>return</em>, not a premium, so a premium has to have a rate added to it. Damodaran's premium is quoted against the 10-year nominal Treasury, and adding it to a <em>real</em> rate is nonetheless right: the expected nominal equity return and the nominal bond yield both carry the same expected inflation, so it cancels in the difference and the premium is already real. What does not cancel is maturity. He quotes against a 10-year bond while this model's safe asset is a 30-year one, and the real curve currently rises between them: the 30-year TIPS yield is 2.98% against 2.45% at 10 years, a difference of 0.53 points. This row is overstated by roughly that much.</p>
+<p class=footnote><sup>a</sup> The model consumes an expected real <em>return</em>, not a premium, so a premium has to have a rate added to it. Damodaran's premium is quoted against the 10-year nominal Treasury, and adding it to a <em>real</em> rate is nonetheless right: the expected nominal equity return and the nominal bond yield both carry the same expected inflation, so it cancels in the difference and the premium is already real. What does not cancel is maturity. He quotes against a 10-year bond while this model's safe asset is a 30-year one, and the real curve currently rises between them: the 30-year TIPS yield this model uses is 2.96% against about 2.45% at 10 years, a difference of about half a point. This row is overstated by roughly that much.</p>
 
 <p>Nothing else in the model spans anything like that range. The volatility estimate would have to be wrong by a third, or the risk aversion answer wrong by four points on a ten point scale, to move the recommendation as far as switching between the first and last rows above. Any presentation of this tool that does not say so is misleading.</p>
 
@@ -1204,7 +1204,7 @@ h4 {
 </table>
 </div>
 
-<p class="src">Source: Choi, Liu and Liu (2025), Table 18.</p>
+<p class="src">Source: Choi, Liu and Liu (2025), their Table 18.</p>
 
 <p>Three results follow directly from this table.</p>
 
@@ -1314,7 +1314,7 @@ h4 {
 
 <p><strong>Why it matters for them.</strong> If your income already rises and falls with the market, part of your human capital is an implicit equity holding rather than an implicit bond. Counting it as a bond, which the baseline does, tells you to buy more equities on top of exposure you already have.</p>
 
-<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 34 as implementation work, not research.</p>
+<p><strong>The fix exists and we have not implemented it.</strong> Choi, Liu and Liu give it as their equation (19): subtract <code>(&beta;<sub>perm</sub> + &phi;&sdot;&beta;<sub>tran</sub>) &sdot; HC/W</code> from the equity share, where the betas come from regressing your income shocks on stock returns. They test it and report a welfare loss of 0.02%. This tool omits it only because the spreadsheet it was built from omits it. It is listed in Table 35 as implementation work, not research.</p>
 
 <p><strong>Until then, and this is larger than it sounds.</strong> The subtraction is the beta <em>times</em> HC/W, not the beta alone, and HC/W is about 2 for the default household and higher for anyone younger. So a beta of 0.1, meaning a tenth of your income shocks track the market, costs <strong>20 points</strong> of the equity share, and a beta of 0.2 takes the default household from 38% to zero. Anyone with meaningful equity compensation should treat this tool's answer as unusable rather than merely high, until equation (19) is implemented.</p>
 
@@ -1352,7 +1352,7 @@ h4 {
   <tbody>
     <tr><td>Against Choi's own spreadsheet, both tabs</td><td>115 projected years to the cent; human capital, Merton share and equity share to a relative 1e-10</td></tr>
     <tr><td>Against the worked example in the paper, section 3.3</td><td>human capital $924,805 to the dollar, allocation 29.82% against a stated 30%</td></tr>
-    <tr><td>JavaScript against Python</td><td>2,196 cases, 12,977 values, worst deviation 3.5e-16. Changing one digit of one coefficient fails 2,151 of them</td></tr>
+    <tr><td>JavaScript against Python</td><td>2,340 cases, 13,121 values, worst deviation 8.9e-15. The fixture is bound to live Python by the test suite and replayed through the port by <code>tools/check_golden.mjs</code>, so neither side can move alone</td></tr>
     <tr><td>Reading Shiller's workbook</td><td>the binary format is parsed by this project rather than by a library, and is tested against workbooks built byte by byte in the test suite</td></tr>
     <tr><td>Estimator stability</td><td>moving the growth window 90 to 110 years shifts the trend 0.25 points; moving its end date back three years shifts it 0.015</td></tr>
     <tr><td>Properties of every answer</td><td>24,000 households swept across every age, wage, saving level, risk aversion and pension the page can produce, against the directions the theory requires. Now 262 tests in <code>tests/test_properties.py</code>. It found two defects; both are described below.</td></tr>
@@ -1371,13 +1371,36 @@ h4 {
 
 <p>Neither is a modelling error in Choi's sense and neither affects the default household. Both are the kind of thing that survives a test suite built around a reference implementation, which is the argument for testing properties as well as values.</p>
 
+<h4>What the checks are worth, measured</h4>
+
+<p>Everything above is a list of things that pass. That a suite passes is a claim about the suite and not about the model, and this project has twice been shown the difference: a test that asserted two numbers add up, which was true of the wrong two, and a release the entire suite approved while the published page could not load at all. The only honest measurement is to break the model on purpose and count what notices.</p>
+
+<p><strong>56 deliberate defects</strong> were introduced one at a time, each a single changed coefficient, constant, boundary or operator, spread across the Merton share, both discount rates, the earnings path, the calibration, the statistics, the data layer, the input validation and the JavaScript port. After each, the whole gate ran. <strong>52 were caught. Four were not</strong>, and each was a real hole rather than a curiosity.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 27. The four defects that passed every check, and what each would have done</caption>
+<thead><tr><th>What was broken</th><th>What it would do</th><th>Why nothing caught it</th></tr></thead>
+<tbody>
+<tr><td>The compound to arithmetic conversion, inverted in the JavaScript only</td><td>The page converts your override from a compound rate before the model sees it, so an override would be wrong by twice the variance drag, and every point of the sensitivity exhibit with it. The same defect in the Python was caught immediately.</td><td>The conformance fixture covered the model's own functions and stopped at the two conversions the page runs around them</td></tr>
+<tr><td>The trading year set to 200 days instead of 252</td><td>Volatility enters the answer squared, so a fifth off the annualisation is worth roughly half the recommended equity share</td><td>It is a convention rather than a measurement, so no data would object to it and nothing asserted it</td></tr>
+<tr><td>The dividend yield taken from the month before last</td><td>Little today, but it is a yield computed from stale prices, which stays plausible while being wrong</td><td>That both halves come from the <em>same</em> month was pinned. That the month is the <em>latest</em> one was not.</td></tr>
+<tr><td>The grid Choi solved risk aversion and the safe rate over</td><td>Nothing, which was the finding: three constants and a function were read by nothing in either language</td><td>They were written for a warning the page later dropped, and the removal left the machinery behind</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>All four are closed. The two conversions are now 144 cases in the conformance fixture, bound to live Python by the test suite and replayed through the port; the trading year and the yield's month are asserted directly; and the fitted-grid constants are read by the verifier, which now checks that the range printed in Table 16 and the grid printed in section 3.6 are the ones the code holds. Re-running the sweep kills all 56, and leaves only the control mutant, a comment, which must survive or the harness would be proving nothing.</p>
+
+<p><strong>What this does not establish.</strong> A mutation sweep measures whether the checks bind the code as written. It cannot tell you the code is the right model, and none of the 56 defects touched the two things most likely to be wrong here, which are the expected return and the assumption that returns do not repeat themselves. Those are argued in sections 3.1 and 2.4 and they are arguments, not measurements.</p>
+
 <h3>8.2 The glide path, against what the industry builds</h3>
 
 <p>The sharpest external check available is whether the shape the model produces resembles the shape target date funds are actually built to. One household is aged forward from 25 to 85 on a $100,000 wage, saving 15% a year, at a risk aversion of 5.</p>
 
 <div class="tablewrap">
 <table>
-  <caption>Table 27. Equity share by age, against a representative target date glide path</caption>
+  <caption>Table 28. Equity share by age, against a representative target date glide path</caption>
   <thead><tr><th class="num">Age</th><th class="num">Target date fund</th><th class="num">This model, today</th><th class="num">This model at 8% expected return</th></tr></thead>
   <tbody>
     <tr><td class="num">25</td><td class="num">90%</td><td class="num">100%</td><td class="num">100%</td></tr>
@@ -1400,7 +1423,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 28. Published expected returns on US equities, all converted to a compound real basis</caption>
+<caption>Table 29. Published expected returns on US equities, all converted to a compound real basis</caption>
 <thead><tr><th>Firm</th><th class="num">Published</th><th class="num">Compound real</th><th>Segment</th><th class="num">Horizon</th><th>Repricing assumed</th></tr></thead>
 <tbody>
 <tr><td>Damodaran, implied</td><td class="num">7.05% real</td><td class="num">7.05%</td><td>S&amp;P 500</td><td class="num">perpetual</td><td>zero, implied</td></tr>
@@ -1438,7 +1461,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 29. The same construction, side by side</caption>
+<caption>Table 30. The same construction, side by side</caption>
 <thead><tr><th>Term</th><th class="num">AQR</th><th class="num">This model</th><th class="num">Difference</th></tr></thead>
 <tbody>
 <tr><td>Dividend yield</td><td class="num">1.3%</td><td class="num">1.10%</td><td class="num">0.20</td></tr>
@@ -1466,7 +1489,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 30. Two routes to almost the same growth rate</caption>
+<caption>Table 31. Two routes to almost the same growth rate</caption>
 <thead><tr><th>Step</th><th class="num">AQR</th><th class="num">This model</th></tr></thead>
 <tbody>
 <tr><td>Starting figure</td><td class="num">25-year real EPS growth, 5.70%</td><td class="num">100-year trend, 2.29%</td></tr>
@@ -1486,7 +1509,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 31. Root mean square error by growth window, against realised returns. Percentage points a year.</caption>
+<caption>Table 32. Root mean square error by growth window, against realised returns. Percentage points a year.</caption>
 <thead><tr><th class="num">Window</th><th class="num">10 years</th><th class="num">20 years</th><th class="num">30 years</th><th class="num">Estimate today</th></tr></thead>
 <tbody>
 <tr><td class="num">20 years</td><td class="num">6.14</td><td class="num">3.93</td><td class="num">3.56</td><td class="num">7.65%</td></tr>
@@ -1513,7 +1536,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-<caption>Table 32. The drift, decomposed, against the one firm that publishes every piece of it</caption>
+<caption>Table 33. The drift, decomposed, against the one firm that publishes every piece of it</caption>
 <thead><tr><th>Quantity</th><th class="num">AQR</th><th class="num">This model</th></tr></thead>
 <tbody>
 <tr><td>Expected real return, US large cap, compound</td><td class="num">3.90%</td><td class="num">3.38%</td></tr>
@@ -1536,7 +1559,7 @@ h4 {
 
 <h3>8.4 Whether the answer discriminates</h3>
 
-<p>A recommendation that comes out at 100% for everyone is not advice. Across a grid of 1,040 households spanning ages 25 to 85, wages of $40,000 to $250,000, wealth of $25,000 to $3,000,000 and risk aversion of 2 to 8, <strong>30.3% of answers are pinned at 100% and none at 0%</strong>, leaving about seven in ten interior. Before the buyback correction, 40.0% were pinned. The saturation is concentrated where it should be, among the young, whose human capital dwarfs their savings, and where the model's own honest answer is that the constraint against borrowing binds.</p>
+<p>A recommendation that comes out at 100% for everyone is not advice. Across a grid of 1,040 households spanning ages 25 to 85, wages of $40,000 to $250,000, wealth of $25,000 to $3,000,000 and risk aversion of 2 to 8, <strong>30.3% of answers are pinned at 100% and none at 0%</strong>, leaving about seven in ten interior. Before the buyback correction, 40.0% were pinned. The saturation is concentrated where it should be, among the young, whose human capital dwarfs their savings, and where the model's own honest answer is that the constraint against borrowing binds. A frequency across a grid is a fact about the grid, so the useful form is the threshold. At the default risk aversion, the cap binds below 2.8 years of salary saved at age 25, 1.8 at 35, 1.5 at 45 and 1.0 at 65, and not above. Anyone under those levels is reading a constraint rather than a recommendation, which is why the page prints what the model asked for whenever the cap binds: at the median it wants 1.7 times the portfolio, and in the worst corner of that grid 10.2 times.</p>
 
 <h3>8.5 What has not been checked, in order of what it would cost</h3>
 
@@ -1564,7 +1587,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 33. Included in version 1</caption>
+  <caption>Table 34. Included in version 1</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1581,7 +1604,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 34. Postponed</caption>
+  <caption>Table 35. Postponed</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>
@@ -1596,7 +1619,7 @@ h4 {
 
 <div class="tablewrap">
 <table>
-  <caption>Table 35. Excluded</caption>
+  <caption>Table 36. Excluded</caption>
   <thead>
     <tr><th>Component</th><th>Source</th><th>Rationale</th></tr>
   </thead>

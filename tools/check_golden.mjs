@@ -22,7 +22,11 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 import {
+  arithmeticFromCompound,
   certaintyEquivalent,
+  compoundFromArithmetic,
+  logPremium,
+  logRiskFree,
   gammaFromCertaintyEquivalent,
   benefitDiscountRate,
   humanCapital,
@@ -80,6 +84,25 @@ const cases = fixture.cases;
   compare("calibration.temporary_shock_volatility", 0.242, c.temporary_shock_volatility);
   compare("calibration.wage_equity_beta", 0.4, c.wage_equity_beta);
   compare("calibration.benefit_replacement_rate", 0.4, c.benefit_replacement_rate);
+}
+
+// The conversions the page runs around the model. Not part of the model
+// itself, which is why they were unbound until a mutation sweep inverted them
+// in this file and every check still passed.
+const CONVERSIONS = {
+  arithmetic_from_compound: arithmeticFromCompound,
+  compound_from_arithmetic: compoundFromArithmetic,
+  log_premium: logPremium,
+  log_risk_free: logRiskFree,
+};
+
+for (const [i, c] of (cases.conversions ?? []).entries()) {
+  const fn = CONVERSIONS[c.fn];
+  if (!fn) {
+    console.error(`unknown conversion "${c.fn}" in the fixture`);
+    process.exit(1);
+  }
+  compare(`conversions[${i}].${c.fn}`, fn(...c.args), c.expect);
 }
 
 for (const [i, c] of cases.merton_share.entries()) {

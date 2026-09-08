@@ -38,6 +38,12 @@ from your_equity_share.human_capital import (  # noqa: E402
     imputed_wage,
     wage_discount_rate,
 )
+from your_equity_share.expected_return import (  # noqa: E402
+    arithmetic_from_compound,
+    compound_from_arithmetic,
+    log_premium,
+    log_risk_free,
+)
 from your_equity_share.risk_aversion import (  # noqa: E402
     certainty_equivalent,
     gamma_from_certainty_equivalent,
@@ -79,6 +85,41 @@ def test_javascript_reproduces_python() -> None:
 
 
 # --- the fixture must still describe the current Python ---------------------
+
+
+def test_fixture_still_matches_the_conversions(fixture: dict) -> None:
+    """The half of the fixture that is not the model.
+
+    The page converts a compound rate into the arithmetic mean the model takes
+    before it calls anything, and converts back to display the answer. Those
+    functions sat outside the fixture until a mutation sweep inverted them in
+    the port and every check passed, so they are bound here on the Python side
+    and replayed through the port on the other.
+    """
+    live = {
+        "arithmetic_from_compound": arithmetic_from_compound,
+        "compound_from_arithmetic": compound_from_arithmetic,
+        "log_premium": log_premium,
+        "log_risk_free": log_risk_free,
+    }
+    cases = fixture["cases"]["conversions"]
+    assert cases, "the fixture records no conversions"
+    for case in cases:
+        fn = live[case["fn"]]
+        assert fn(*case["args"]) == pytest.approx(case["expect"], rel=1e-12)
+
+
+def test_a_conversion_and_its_inverse_are_not_the_same_function(
+    fixture: dict,
+) -> None:
+    """The specific defect the sweep found: the two directions swapped.
+
+    Approximate equality would not catch a swap at zero volatility, where both
+    directions are the identity, so this asserts on a case where the variance
+    drag is large enough to be unmistakable.
+    """
+    assert arithmetic_from_compound(0.0338, 0.185) > 0.0338
+    assert compound_from_arithmetic(0.0338, 0.185) < 0.0338
 
 
 def test_fixture_still_matches_merton_share(fixture: dict) -> None:

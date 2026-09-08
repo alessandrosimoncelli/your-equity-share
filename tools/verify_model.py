@@ -45,6 +45,10 @@ from your_equity_share.allocation import (  # noqa: E402
 )
 from your_equity_share.expected_return import (  # noqa: E402
     CHOI_FITTED_LOG_PREMIUM_RANGE,
+    CHOI_FITTED_LOG_RISK_FREE_RANGE,
+    CHOI_FITTED_RISK_AVERSION_RANGE,
+    log_risk_free,
+    within_fitted_risk_free,
     arithmetic_from_compound,
     compound_from_arithmetic,
     log_premium,
@@ -323,6 +327,25 @@ def part_three() -> None:
           not close(erp, pi, 1e-3),
           f"{erp:.4%} arithmetic against {pi:.4%} log drift, "
           f"a gap of {erp - pi:.2%}")
+
+    # The other two axes of the same grid. Until now nothing read these
+    # constants in either language, though the document asserts what they
+    # say: Table 16 prints today's log safe rate, and section 3.6 states the
+    # range the coefficients were fitted over.
+    r_log = log_risk_free(rf)
+    lo_r, hi_r = CHOI_FITTED_LOG_RISK_FREE_RANGE
+    check("the log safe rate is reported against the grid Choi solved over",
+          within_fitted_risk_free(rf) == (lo_r <= r_log <= hi_r),
+          f"{r_log:.4%}, grid {lo_r:.0%} to {hi_r:.0%}, "
+          f"{'inside' if within_fitted_risk_free(rf) else 'OUTSIDE'}")
+    doc = (ROOT / "docs" / "methodology.html").read_text(encoding="utf-8")
+    check("the document's figure for today's log safe rate is current",
+          f"{r_log:.2%}" in doc, f"{r_log:.2%}, in Table 16")
+    lo_g, hi_g = CHOI_FITTED_RISK_AVERSION_RANGE
+    grid = ", ".join(str(g) for g in range(int(lo_g), int(hi_g) + 1))
+    check("the risk aversion grid is the seven values the document prints",
+          (lo_g, hi_g) == (4.0, 10.0) and grid in doc,
+          f"{grid}; the page's default of 5 is inside it")
 
     implied = prov.get("implied_erp")
     if implied is not None:
