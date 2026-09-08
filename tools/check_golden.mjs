@@ -82,7 +82,6 @@ const cases = fixture.cases;
   compare("calibration.stock_volatility", 0.185, c.stock_volatility);
   compare("calibration.permanent_shock_volatility", 0.13, c.permanent_shock_volatility);
   compare("calibration.temporary_shock_volatility", 0.242, c.temporary_shock_volatility);
-  compare("calibration.wage_equity_beta", 0.4, c.wage_equity_beta);
   compare("calibration.benefit_replacement_rate", 0.4, c.benefit_replacement_rate);
 }
 

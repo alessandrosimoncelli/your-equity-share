@@ -204,7 +204,6 @@ def test_the_calibration_recorded_in_the_fixture_is_current(fixture: dict) -> No
     assert recorded["temporary_shock_volatility"] == (
         CGM_CALIBRATION.temporary_shock_volatility
     )
-    assert recorded["wage_equity_beta"] == CGM_CALIBRATION.wage_equity_beta
     assert recorded["benefit_replacement_rate"] == (
         CGM_CALIBRATION.benefit_replacement_rate
     )

@@ -58,7 +58,12 @@ class Calibration:
     stock_volatility: float = 0.185
     permanent_shock_volatility: float = 0.13
     temporary_shock_volatility: float = 0.242
-    wage_equity_beta: float = 0.40
+    # One quantity, used twice: it sets the retirement benefit as a
+    # share of the final wage, and it is a regressor in equation (12).
+    # This carried a second copy called wage_equity_beta, described as a
+    # labour income to equity beta. The paper has no such regressor: its
+    # Table 1 row is the retirement income replacement rate, and its
+    # worked example reads 0.010 x 0.40 with 0.40 the replacement rate.
     benefit_replacement_rate: float = 0.40
 
 
@@ -105,7 +110,7 @@ def wage_discount_rate(
         + 1.132 * math.log(1.0 + real_risk_free)
         + 4.332 * calibration.permanent_shock_volatility**2
         + 0.028 * calibration.temporary_shock_volatility**2
-        + 0.010 * calibration.wage_equity_beta
+        + 0.010 * calibration.benefit_replacement_rate
         - 0.149 * x
         + 0.142 * x**2
     )

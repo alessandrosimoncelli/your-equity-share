@@ -343,7 +343,6 @@ def main() -> int:
             "stock_volatility": CGM_CALIBRATION.stock_volatility,
             "permanent_shock_volatility": CGM_CALIBRATION.permanent_shock_volatility,
             "temporary_shock_volatility": CGM_CALIBRATION.temporary_shock_volatility,
-            "wage_equity_beta": CGM_CALIBRATION.wage_equity_beta,
             "benefit_replacement_rate": CGM_CALIBRATION.benefit_replacement_rate,
         },
         "cases": cases,

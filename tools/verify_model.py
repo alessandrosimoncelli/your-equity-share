@@ -732,7 +732,8 @@ def part_six() -> None:
                * cal["college_permanent_shock_volatility"] ** 2
                + w["transitory_shock_variance"]
                * cal["college_temporary_shock_volatility"] ** 2
-               + w["replacement_rate"] * CGM_CALIBRATION.wage_equity_beta
+               + w["replacement_rate"]
+               * CGM_CALIBRATION.benefit_replacement_rate
                + w["age_over_100"] * x + w["age_over_100_squared"] * x ** 2)
     check("the paper's own worked wage rate at age 55 rebuilds from its "
           "Table 1 coefficients",
@@ -756,6 +757,15 @@ def part_six() -> None:
           "Table 2 coefficients",
           abs(rebuilt_b - ex["benefit_rate_at_66"]) < 5e-5,
           f"{rebuilt_b:.4f} against the paper's {ex['benefit_rate_at_66']}")
+
+    # The sixth regressor is the replacement rate. The model carried a second
+    # copy of 0.40 called a labour income to equity beta, which the paper does
+    # not estimate; both being 0.40 made the error invisible in every number.
+    check("the wage rate's sixth regressor is the replacement rate, and "
+          "nothing else",
+          not hasattr(CGM_CALIBRATION, "wage_equity_beta"),
+          "no labour income to equity beta, which the paper's Table 1 has no "
+          "row for")
 
     # --- the paper's own example, end to end ------------------------------
     level = math.exp(rf_log + pi_log + CALIB_VOL ** 2 / 2) - math.exp(rf_log)

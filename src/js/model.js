@@ -30,7 +30,10 @@ export const CGM_CALIBRATION = Object.freeze({
   stockVolatility: 0.185,
   permanentShockVolatility: 0.13,
   temporaryShockVolatility: 0.242,
-  wageEquityBeta: 0.4,
+  // One quantity, used twice: it sets the retirement benefit as a share
+  // of the final wage, and it is a regressor in equation (12). A second
+  // copy called wageEquityBeta described a labour income to equity beta
+  // the paper does not have; its Table 1 row is the replacement rate.
   benefitReplacementRate: 0.4,
 });
 
@@ -129,7 +132,7 @@ export function wageDiscountRate(
     1.132 * Math.log(1.0 + realRiskFree) +
     4.332 * calibration.permanentShockVolatility ** 2 +
     0.028 * calibration.temporaryShockVolatility ** 2 +
-    0.01 * calibration.wageEquityBeta -
+    0.01 * calibration.benefitReplacementRate -
     0.149 * x +
     0.142 * x ** 2
   );

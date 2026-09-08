@@ -376,7 +376,7 @@ h4 {
 <tr><td>Retirement age</td><td class="num">67</td><td>The Social Security full retirement age. Wages stop, benefits begin.</td></tr>
 <tr><td>Retirement benefit</td><td class="num">40% of final wage</td><td>Social Security. Note what this is: Choi cites Biggs and Springstead, where the median benefit runs from <strong>40% in the highest lifetime earnings quintile to 82% in the second lowest</strong>. The default therefore describes a high earner, and a lower earner is being told to expect less retirement income than they will get.</td></tr>
 <tr><td>Mortality</td><td class="num">2019 NCHS life table</td><td>The 2019 life table for the total United States population, from the National Center for Health Statistics, named in section 1.2 of the paper. It sits inside the fitted discount rates rather than being a setting. Income in later years is already weighted by the chance of being alive to receive it, which is why the value is not simply a sum of future wages.</td></tr>
-<tr><td>Labour income to equity beta</td><td class="num">0.40</td><td>Estimated against the United States market. It enters through a coefficient of 0.010 and is worth 0.4 points, so it is the least consequential of these.</td></tr>
+<tr><td>Retirement benefit, as a regressor</td><td class="num">40%</td><td>The same replacement rate as the row above, which is also one of the nine terms in the wage discount rate. It enters through a coefficient of 0.010 and is worth 0.4 points, so it is the least consequential of these. This row read "labour income to equity beta" until the paper was checked; its Table 1 has no such regressor.</td></tr>
 <tr><td colspan="3"><strong>American market data</strong>, the only rows a reader can change and the only ones that go out of date. The three below are as of 3 September 2026.</td></tr>
 <tr><td>Equity market</td><td class="num">S&amp;P 500</td><td>Through SPY, for the volatility. Section 3.2.</td></tr>
 <tr><td>Expected return</td><td class="num">3.38% real</td><td>Shiller's United States history and Damodaran's United States premium. Overridable on the page. Section 3.1.</td></tr>
@@ -1135,7 +1135,7 @@ h4 {
 <p>Two expressions, taken from Choi's spreadsheet. Write <code>x</code> for age divided by 100 and <code>&pi;</code> for the log excess drift <code>ln(1+&mu;) &minus; &sigma;<sup>2</sup>/2 &minus; ln(1+r)</code>.</p>
 
 <div class="eqn">
-  <div class="body">r<sub>wage</sub> = &minus;0.020 + 0.087(&gamma;/10) &minus; 0.267&pi; + 1.132 ln(1+r) + 4.332&sigma;<sup>2</sup><sub>perm</sub> + 0.028&sigma;<sup>2</sup><sub>tran</sub> + 0.010&beta;<sub>LS</sub> &minus; 0.149x + 0.142x<sup>2</sup></div>
+  <div class="body">r<sub>wage</sub> = &minus;0.020 + 0.087(&gamma;/10) &minus; 0.267&pi; + 1.132 ln(1+r) + 4.332&sigma;<sup>2</sup><sub>perm</sub> + 0.028&sigma;<sup>2</sup><sub>tran</sub> + 0.010&lambda; &minus; 0.149x + 0.142x<sup>2</sup></div>
   <div class="no">(12)</div>
 </div>
 
@@ -1154,7 +1154,7 @@ h4 {
     <dt>r</dt><dd>is the real safe rate</dd>
     <dt>&sigma;<sub>perm</sub></dt><dd>is the volatility of permanent wage shocks, pay changes that never reverse</dd>
     <dt>&sigma;<sub>tran</sub></dt><dd>is the volatility of temporary wage shocks</dd>
-    <dt>&beta;<sub>LS</sub></dt><dd>is the regression coefficient of log labour income shocks on log stock returns</dd>
+    <dt>&lambda;</dt><dd>is the retirement benefit as a share of the final wage, 0.40 here, the same quantity that sets the benefit itself</dd>
     <dt>x</dt><dd>is age divided by 100</dd>
   </dl>
 </div>
@@ -1179,7 +1179,7 @@ h4 {
     <tr><td>Age, &minus;0.149x + 0.142x<sup>2</sup></td><td class="num">&minus;2.41</td><td><strong>you</strong></td></tr>
     <tr><td>Real safe rate, 1.132 ln(1+r)</td><td class="num">+2.24</td><td>market data</td></tr>
     <tr><td>Constant</td><td class="num">&minus;2.00</td><td>calibration, fixed</td></tr>
-    <tr><td>Wage to equity beta, 0.010&beta;<sub>LS</sub></td><td class="num">+0.40</td><td>calibration, fixed</td></tr>
+    <tr><td>Retirement replacement rate, 0.010&lambda;</td><td class="num">+0.40</td><td>calibration, fixed</td></tr>
     <tr><td>Equity drift, &minus;0.267&pi;</td><td class="num">&minus;0.32</td><td>market data</td></tr>
     <tr><td>Temporary wage shocks, 0.028&sigma;<sup>2</sup><sub>tran</sub></td><td class="num">+0.16</td><td>calibration, fixed</td></tr>
     <tr><td><strong>Total</strong></td><td class="num"><strong>9.75</strong></td><td></td></tr>
@@ -1213,7 +1213,7 @@ h4 {
     <tr><td>Equity volatility</td><td class="sym">&sigma;</td><td class="num">18.5%</td><td>fixed inside equations (9) and (10)</td></tr>
     <tr><td>Permanent wage shock volatility</td><td class="sym">&sigma;<sub>perm</sub></td><td class="num">13.0%</td><td>largest driver of the wage discount rate</td></tr>
     <tr><td>Temporary wage shock volatility</td><td class="sym">&sigma;<sub>tran</sub></td><td class="num">24.2%</td><td>negligible, since it averages out over a career</td></tr>
-    <tr><td>Labour income to equity beta</td><td class="sym">&beta;<sub>LS</sub></td><td class="num">0.40</td><td>enters only through the 0.010 coefficient</td></tr>
+    <tr><td>Retirement benefit replacement rate</td><td class="sym">&lambda;</td><td class="num">40%</td><td>sets the benefit, and is also a regressor in equation (12) through the 0.010 coefficient</td></tr>
     <tr><td>Time discount factor</td><td class="sym">&delta;</td><td class="num">0.96</td><td>how much less a year of consumption is worth for being a year away, following Cocco, Gomes and Maenhout</td></tr>
     <tr><td>Retirement age</td><td class="sym">none</td><td class="num">67</td><td>wages stop, benefits begin</td></tr>
     <tr><td>Social Security replacement rate</td><td class="sym">none</td><td class="num">40%</td><td>of final wage, unless entered directly</td></tr>
@@ -1230,7 +1230,7 @@ h4 {
   <tbody>
     <tr><td>Permanent wage shock volatility</td><td class="num">49.3% at 8%</td><td class="num">38.3% at 13%</td><td class="num">27.3% at 20%</td><td class="num">22.0 points</td></tr>
     <tr><td>Social Security replacement rate</td><td class="num">37.1% at 20%</td><td class="num">38.3% at 40%</td><td class="num">39.4% at 60%</td><td class="num">2.3 points</td></tr>
-    <tr><td>Labour income to equity beta</td><td class="num">39.1% at 0.0</td><td class="num">38.3% at 0.4</td><td class="num">37.5% at 0.8</td><td class="num">1.6 points</td></tr>
+    <tr><td>Retirement benefit replacement rate</td><td class="num">36.7% at 0%</td><td class="num">38.3% at 40%</td><td class="num">39.6% at 80%</td><td class="num">2.9 points</td></tr>
     <tr><td>Temporary wage shock volatility</td><td class="num">38.0% at 15%</td><td class="num">38.3% at 24.2%</td><td class="num">38.7% at 35%</td><td class="num">0.7 points</td></tr>
   </tbody>
 </table>
