@@ -86,9 +86,28 @@ expected_stock_real_return = 0.052107
 #
 # Three compromises come with it.
 #
-# It has 19.6 years to run, not 30, and shortens every year. It is the longest
-# euro linker in existence: Germany stopped issuing in 2023 and three bonds
-# remain, so there is no long anchor to roll into.
+# It has 19.6 years to run, not 30, and shortens every year. Germany issued it
+# in 2015 AS a 30-year bond and stopped issuing linkers entirely in 2023;
+# three remain, maturing 2030, 2033 and 2046.
+#
+# That shortfall is nearly free TODAY, which is why the bond is still the
+# right choice, and it is a measured claim rather than a hopeful one: the ECB
+# AAA euro curve is flat past twenty years. 20Y 3.7769%, 25Y 3.8128%, 30Y
+# 3.7842%, so twenty years to thirty is worth 0.007 points. Buying ten years
+# of extra maturity would cost less than a basis point of yield.
+#
+# France is the alternative and was rejected on the same principle as Italy.
+# It has twelve OAT euro-i outstanding, still issued, the longest maturing in
+# July 2053, which is 26.9 years and a much better maturity match. But France
+# is AA where Germany is AAA, and the spread between them is tens of basis
+# points of credit compensation. Paying up to fix a shortfall the curve prices
+# at 0.007 points would be booking credit risk as return to solve a problem
+# that costs nothing.
+#
+# This will not hold forever. As the 2046 rolls down it becomes a fifteen and
+# then a ten year bond with nothing to replace it, and at some point the
+# shortfall stops being free. The rule then is to re-measure the slope, not to
+# assume the answer.
 #
 # Scarcity biases the yield DOWN. 47 billion outstanding against persistent
 # demand for euro safe assets, with no new supply.
