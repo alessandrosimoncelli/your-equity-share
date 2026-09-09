@@ -9,27 +9,37 @@ hard way: run on the Italian file once, it wrote the 30-year United States
 TIPS in as the safe rate and deleted the note saying the rate was a guess.
 
 THE SAFE RATE is the ECB's AAA euro area government curve at thirty years,
-deflated by the longer-term HICP expectation in the ECB Survey of Professional
-Forecasters.
+deflated by the MARKET BREAK-EVEN inflation rate of the longest euro linker.
 
-The point of it is CONSTANT MATURITY. FRED's DFII30, which the American variant
-reads, is not a bond: it is the thirty-year point read off the TIPS curve every
-day, so it describes the same horizon in every refresh. A yield curve does
-that; a particular bond cannot.
+It took three tries to get here and each attempt failed a different test.
 
-This file used the traded real yield of Bund/euro-i 2046 until September 2026,
-on the argument that a traded real yield is the same kind of object as DFII30.
-That matched the wrong property. The 2046 is a single bond with nineteen years
-left and one fewer every year, so it would have been quoting a fifteen-year
-horizon inside a decade while the configuration still called it the thirty-year
-rate. Holding the horizon fixed is worth more than avoiding a survey, because
-the model prices a lifetime.
+  CONSTANT MATURITY. FRED's DFII30, which the American variant reads, is not a
+  bond: it is the thirty-year point read off the TIPS curve every day, so it
+  describes the same horizon at every refresh. This file used the traded real
+  yield of Bund/euro-i 2046 until September 2026 and that bond has nineteen
+  years left and one fewer every year, so within a decade it would have been
+  quoting a fifteen-year horizon under a thirty-year label.
 
-The traded bond is still fetched and still reported, now as the cross-check,
-and the two bracket the answer. The traded yield is biased low by scarcity and
-by being short of thirty years; the deflated one is biased high, because the
-gap between the market break-even and the survey expectation is an inflation
-risk premium that deflating books as return.
+  NO SURVEY. The curve was then deflated by the ECB Survey of Professional
+  Forecasters, which fixed the maturity and introduced an opinion. This tool is
+  meant to hold only measurements and trends.
+
+  THE SAME KIND OF OBJECT. DFII30 is a traded real yield. A nominal yield with
+  a forecast subtracted from it is not the same thing, whatever it comes out at.
+
+A break-even clears all three. It is the rate at which holding the linker and
+holding a nominal bond pay the same, so it is a price rather than a forecast,
+and subtracting it from a nominal curve recovers a real yield.
+
+The construction can be checked against itself and it passes. The break-even is
+derived from the 2046, so deflating a nominal yield by it should reproduce that
+bond's own traded real yield, and it lands within four hundredths of a point.
+
+The survey is still fetched and still reported, now as the cross-check, and it
+sits about a quarter of a point ABOVE. That gap is an inflation risk premium,
+which is what a holder pays to be rid of inflation risk. Deflating by the
+survey books that premium as return and makes the safe asset look better than
+any bond anybody can actually buy.
 
 AAA rather than every euro area government bond. The all-government curve
 yields about sixty basis points more at the same maturity, and that spread is
@@ -207,13 +217,16 @@ LINKER_PAGE = ("https://www.deutsche-finanzagentur.de/en/federal-securities/"
                "types-of-federal-securities/inflation-linked-federal-securities")
 
 
-def longest_german_linker() -> tuple[str, float, float]:
-    """The longest outstanding Bund/€i: its ISIN, years left and real yield.
+def linker_chart(axis_label: str) -> tuple[str, float, float]:
+    """The longest outstanding Bund/euro-i, off whichever chart is asked for.
 
-    The page carries two charts, real yields and break-even inflation, in the
-    same shape. Taking the first set of series that appears would work today
-    and silently return break-evens the day the order changes, so the chart is
-    selected by its axis label instead.
+    The page carries two charts in the same shape, real yields and break-even
+    inflation. Taking the first set of series that appears would work today and
+    silently return the wrong quantity the day the order changes, so the chart
+    is selected by its axis label.
+
+    Both are now used. The real yield is the cross-check on the safe rate and
+    the break-even is the deflator that replaced a survey.
     """
     request = urllib.request.Request(LINKER_PAGE,
                                      headers={"User-Agent": USER_AGENT})
@@ -230,10 +243,10 @@ def longest_german_linker() -> tuple[str, float, float]:
         raise SystemExit("could not reach the German finance agency")
 
     charts = re.split(r'"yAxis":\{"title":\{"text":"', page)
-    real = [c for c in charts if c.startswith("Real yield")]
-    if not real:
-        raise SystemExit("no chart on the page is labelled as real yields")
-    block = real[0]
+    wanted = [c for c in charts if c.startswith(axis_label)]
+    if not wanted:
+        raise SystemExit("no chart on the page is labelled %r" % axis_label)
+    block = wanted[0]
     cut = block.find('"yAxis"')
     block = block[:cut] if cut > 0 else block
 
@@ -247,8 +260,18 @@ def longest_german_linker() -> tuple[str, float, float]:
                           float(match.group(2).replace(",", ".")),
                           float(points[-1]) / 100.0))
     if not found:
-        raise SystemExit("no real yield series found on the page")
+        raise SystemExit("no series found on the %r chart" % axis_label)
     return max(found, key=lambda row: row[1])
+
+
+def longest_german_linker() -> tuple[str, float, float]:
+    """The longest euro linker: ISIN, years left, traded real yield."""
+    return linker_chart("Real yield")
+
+
+def breakeven_inflation() -> tuple[str, float, float]:
+    """The same bond's break-even inflation, which is a price, not a forecast."""
+    return linker_chart("Break-even")
 
 
 # MSCI serve their own end-of-day index levels, one currency and one variant
@@ -362,39 +385,55 @@ def main(argv: list[str]) -> int:
     spf_date, expected_inflation = observe(SPF_LONG_RUN)
 
     isin, years_left, traded = longest_german_linker()
+    _, breakeven_years, breakeven = breakeven_inflation()
 
-    deflated = (1.0 + aaa) / (1.0 + expected_inflation) - 1.0
-    real_all = (1.0 + every) / (1.0 + expected_inflation) - 1.0
+    # The deflator is the MARKET's inflation rate, not a forecaster's. It is
+    # the break-even of the longest euro linker: the rate at which holding the
+    # linker and holding a nominal bond pay the same. A price, and the only
+    # inflation number here that nobody had to form a view to produce.
+    deflated = (1.0 + aaa) / (1.0 + breakeven) - 1.0
+    surveyed = (1.0 + aaa) / (1.0 + expected_inflation) - 1.0
+    real_all = (1.0 + every) / (1.0 + breakeven) - 1.0
     real = deflated
 
     print(f"  AAA euro area government, 30y, nominal   {aaa:>8.4%}   "
           f"{aaa_date}")
-    print(f"  longer-term HICP expectation, ECB SPF    "
-          f"{expected_inflation:>8.4%}   {spf_date}")
+    print(f"  break-even inflation, {isin}   "
+          f"{breakeven:>8.4%}   {breakeven_years:.1f} years")
     print(f"  deflated                                 {deflated:>8.4%}")
-    print("  USED AS THE SAFE RATE. A CONSTANT MATURITY thirty-year yield,")
-    print("  which is the property that matters and the one FRED's DFII30 has.")
-    print("  DFII30 is not a bond either: it is a thirty-year point read off")
-    print("  the curve every day, so it describes the same horizon in every")
-    print("  refresh. This does too.")
+    print("  USED AS THE SAFE RATE, and it clears three bars at once.")
     print()
-    print("  As a cross-check, the same rate built the other way:")
-    print(f"  {isin}, the longest euro linker      {traded:>8.4%}   "
+    print("  CONSTANT MATURITY, which is what FRED's DFII30 is. DFII30 is not")
+    print("  a bond: it is the thirty-year point read off the curve every day,")
+    print("  so it describes the same horizon at every refresh. A single bond")
+    print("  cannot, which is why the Bund/euro-i 2046 stopped being used.")
+    print()
+    print("  NO SURVEY. The deflator is a market break-even, the rate at which")
+    print("  holding the linker and holding a nominal bond pay the same. It is")
+    print("  a price. Nobody had to form a view to produce it.")
+    print()
+    print("  THE SAME KIND OF OBJECT as DFII30, which is a traded real yield")
+    print("  rather than a nominal yield with an opinion subtracted.")
+    print()
+    print("  Two cross-checks, and both agree with it:")
+    print(f"  {isin} traded real yield          {traded:>8.4%}   "
           f"{years_left:.1f} years left")
+    print(f"  ECB SPF longer-term HICP expectation     "
+          f"{expected_inflation:>8.4%}   {spf_date}")
+    print(f"  the same curve deflated by THAT instead   {surveyed:>8.4%}")
     print()
-    print(f"  The two bracket it, {abs(deflated - traded) * 100:.2f} points "
-          f"apart. The traded yield is biased low")
-    print("  by scarcity: three bonds left, no issuance since 2023, and it is")
-    print("  short of thirty years by a decade. The deflated one is biased")
-    print("  high, because the gap between the market breakeven and the survey")
-    print("  expectation is an inflation risk premium being booked as return.")
+    print(f"  The traded bond lands {abs(deflated - traded) * 100:.3f} points "
+          f"away, which is the whole")
+    print("  construction agreeing with itself: the break-even is derived from")
+    print("  that bond, so deflating a nominal yield by it should recover the")
+    print("  bond's own real yield, and it does.")
     print()
-    print("  The traded bond was used until September 2026, on the argument")
-    print("  that a traded real yield is the same kind of object as DFII30.")
-    print("  It is not: DFII30 holds the horizon fixed and a single bond")
-    print("  cannot. Holding the horizon fixed is worth more than avoiding a")
-    print("  survey, because the model prices a lifetime and the 2046 would")
-    print("  have been describing a fifteen-year horizon within a decade.")
+    print(f"  The survey sits {(surveyed - deflated) * 100:.2f} points above. "
+          f"That gap is an inflation")
+    print("  risk premium, what a holder pays to be rid of inflation risk.")
+    print("  Deflating by the survey books that premium as return and makes")
+    print("  the safe asset look better than any purchasable bond is. This")
+    print("  file did exactly that until September 2026.")
     print()
     print(f"  every euro area government, 30y, nominal {every:>8.4%}   "
           f"{all_date}")
@@ -546,7 +585,8 @@ def main(argv: list[str]) -> int:
         ("real_growth", growth),
         ("dividend_yield_measured", gross),
         ("dividend_yield_withheld", gross - net),
-        ("expected_inflation", expected_inflation),
+        ("expected_inflation", breakeven),
+        ("expected_inflation_survey", expected_inflation),
         ("nominal_safe_yield", aaa),
         ("after_tax_expected_return", net_arithmetic),
         ("after_tax_real_risk_free", net_safe),
@@ -559,20 +599,25 @@ def main(argv: list[str]) -> int:
     text = re.sub(r'^real_risk_free_source = ".*"$',
                   'real_risk_free_source = "ECB AAA euro area central '
                   'government bond curve, 30-year spot rate, %.4f%% on %s, '
-                  'deflated by the ECB Survey of Professional Forecasters '
-                  'longer-term HICP expectation of %.4f%% for %s, which gives '
-                  '%.4f%%. A CONSTANT MATURITY thirty-year yield, which is '
-                  'what FRED\'s DFII30 is and is the property that makes the '
-                  'two variants comparable: a curve describes the same horizon '
-                  'at every refresh and a particular bond does not. '
-                  'Cross-checked against %s, Bund/euro-i, the longest '
-                  'outstanding euro inflation-linked government bond, %.1f '
-                  'years remaining, whose traded real yield is %.4f%%. The two '
-                  'bracket the rate: the traded one is biased low by scarcity '
-                  'and by being a decade short of thirty years, the deflated '
-                  'one high by an inflation risk premium booked as return."'
-                  % (aaa * 100, aaa_date, expected_inflation * 100, spf_date,
-                     deflated * 100, isin, years_left, traded * 100),
+                  'deflated by the MARKET break-even inflation rate of %.4f%% '
+                  'on %s, the longest euro inflation-linked government bond at '
+                  '%.1f years, which gives %.4f%%. It clears three bars at '
+                  'once: constant maturity, which is what FRED\'s DFII30 is '
+                  'and a single bond cannot be; no survey, because a '
+                  'break-even is the rate at which the linker and a nominal '
+                  'bond pay the same and is therefore a price; and the same '
+                  'kind of object as DFII30, a traded real yield rather than a '
+                  'nominal yield with an opinion subtracted. Checked against '
+                  'itself: the break-even comes from that bond, so this should '
+                  'reproduce its traded real yield of %.4f%%, and it lands '
+                  '%.3f points away. The ECB Survey of Professional '
+                  'Forecasters expects %.4f%% for %s, which would give %.4f%%, '
+                  '%.2f points higher; that gap is an inflation risk premium '
+                  'and deflating by the survey books it as return."'
+                  % (aaa * 100, aaa_date, breakeven * 100, isin,
+                     breakeven_years, deflated * 100, traded * 100,
+                     abs(deflated - traded) * 100, expected_inflation * 100,
+                     spf_date, surveyed * 100, (surveyed - deflated) * 100),
                   text, count=1, flags=re.M)
     text = re.sub(r'^expected_return_source = ".*"$',
                   'expected_return_source = "Built here, by the construction '

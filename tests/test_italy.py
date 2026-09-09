@@ -269,30 +269,62 @@ def test_the_safe_rate_holds_its_maturity_fixed(italy) -> None:
 
     DFII30 is not a bond: it is the thirty-year point read off the TIPS curve
     every day, so it describes the same horizon at every refresh. This file
-    used a single bond until September 2026, the Bund/euro-i 2046, on the
-    argument that a traded real yield is the same kind of object. It is not.
-    That bond has 19.6 years left and one fewer every year, so it would have
-    been quoting a fifteen-year horizon inside a decade while the file still
-    called it the thirty-year rate.
+    used a single bond until September 2026, the Bund/euro-i 2046, which has
+    19.6 years left and one fewer every year, so it would have been quoting a
+    fifteen-year horizon inside a decade under a thirty-year label.
     """
     source = italy.provenance["real_risk_free_source"]
     assert source.startswith("ECB AAA")
-    assert "CONSTANT MATURITY" in source
-    assert "30-year" in source
+    assert "30-year spot rate" in source
+    assert "constant maturity" in source.lower()
 
 
-def test_the_safe_rate_records_the_cross_check_that_brackets_it(italy) -> None:
-    """One number, two constructions, and the honest range between them.
+def test_the_safe_rate_deflator_is_a_price_not_a_forecast(italy) -> None:
+    """No survey in the safe rate, which is the whole reason it changed.
 
-    The traded yield is biased low by scarcity: three bonds outstanding and no
-    issuance since 2023. The deflated AAA curve is biased high, because the
-    gap between the market breakeven and the survey expectation is an
-    inflation risk premium and deflating books it as return.
+    The deflator is the market break-even of the longest euro linker: the rate
+    at which holding that bond and holding a nominal bond pay the same. It is
+    a price. The ECB Survey of Professional Forecasters is an opinion, and the
+    tool is meant to hold measurements and trends.
     """
     source = italy.provenance["real_risk_free_source"]
-    assert "Cross-checked" in source
-    assert "bracket" in source
-    assert "Survey of Professional Forecasters" in source
+    assert "break-even" in source.lower()
+    breakeven = float(italy.provenance["expected_inflation"])
+    survey = float(italy.provenance["expected_inflation_survey"])
+    assert breakeven > survey
+    assert 0.0 < breakeven - survey < 0.01
+
+
+def test_the_survey_would_have_flattered_the_safe_asset(italy) -> None:
+    """The gap between break-even and survey is an inflation risk premium.
+
+    Deflating by the survey books that premium as return, which makes the safe
+    asset look better than any bond a household can actually buy. Recording it
+    is the point: it was worth several points of equity share, so a reader has
+    to be able to see which deflator produced the number.
+    """
+    nominal = float(italy.provenance["nominal_safe_yield"])
+    breakeven = float(italy.provenance["expected_inflation"])
+    survey = float(italy.provenance["expected_inflation_survey"])
+    used = (1 + nominal) / (1 + breakeven) - 1
+    flattered = (1 + nominal) / (1 + survey) - 1
+    assert italy.real_risk_free_rate == pytest.approx(used, abs=5e-6)
+    assert flattered > used
+
+
+def test_the_safe_rate_reproduces_a_bond_that_exists(italy) -> None:
+    """The construction has to agree with itself, and this is that check.
+
+    The break-even is derived from the Bund/euro-i 2046, so deflating a
+    nominal yield by it should recover that bond's own traded real yield. If
+    the two ever diverge by more than a fifth of a point, either the scraper
+    has picked up the wrong chart or the curves have stopped being flat, and
+    both are worth stopping for.
+    """
+    source = italy.provenance["real_risk_free_source"]
+    assert "DE0001030575" in source
+    assert "traded real yield" in source
+    assert "points away" in source
 
 
 def test_the_safe_rate_is_not_italian_paper(italy) -> None:

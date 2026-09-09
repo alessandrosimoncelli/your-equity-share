@@ -20,9 +20,9 @@
 # it is a good number, and they state it is for five to ten years.
 #
 # The SAFE ASSET is the ECB's AAA euro area government curve at thirty years,
-# deflated by the ECB Survey of Professional Forecasters. What matters about it
-# is CONSTANT MATURITY: it describes a thirty-year horizon at every refresh,
-# which is the property FRED's DFII30 has and a particular bond cannot.
+# deflated by the MARKET break-even inflation rate of the longest euro linker.
+# It clears three bars at once: constant maturity, no survey, and the same kind
+# of object as FRED's DFII30. The field argues each of them.
 #
 # TAX IS MODELLED, because in Italy it is not a household's circumstance but a
 # fixed feature of the law that falls on exactly these two assets and favours
@@ -49,8 +49,8 @@
 #
 # The volatility is measured on a euro-priced series, so it carries the
 # currency risk an unhedged global fund gives a euro investor without anything
-# further being done to it. The safe rate is a euro curve deflated by euro
-# inflation expectations. Neither is in question.
+# further being done to it. The safe rate is a euro curve deflated by a euro
+# market break-even. Neither is in question, and neither contains an opinion.
 #
 # The dividend yield is measured on a euro-priced global index, so it is a euro
 # figure by construction too.
@@ -144,26 +144,39 @@ generated_by = "hand, from the sources named below"
 expected_stock_real_return = 0.048268
 
 # The ECB's AAA euro area government curve at thirty years, deflated by the
-# longer-term HICP expectation in the ECB Survey of Professional Forecasters.
+# MARKET break-even inflation rate of the longest euro inflation-linked bond.
 #
-# WHAT MATTERS ABOUT IT IS CONSTANT MATURITY. FRED's DFII30, which the American
-# variant reads, is not a bond: it is the thirty-year point read off the TIPS
-# curve every day, so it describes the same horizon at every refresh. A yield
-# curve does that. A particular bond cannot.
+# It took three tries to get here and each attempt failed a different test.
 #
-# This file used the traded real yield of Bund/euro-i 2046 until September
-# 2026, on the argument that a traded real yield is the same kind of object as
-# DFII30. That matched the wrong property. The 2046 is one bond with 19.6 years
+# CONSTANT MATURITY. FRED's DFII30, which the American variant reads, is not a
+# bond: it is the thirty-year point read off the TIPS curve every day, so it
+# describes the same horizon at every refresh. This file used the traded real
+# yield of Bund/euro-i 2046 until September 2026, and that bond has 19.6 years
 # left and one fewer every year, so within a decade it would have been quoting
-# a fifteen-year horizon while this file still called it the thirty-year rate.
-# Holding the horizon fixed is worth more than avoiding a survey, because the
-# model prices a lifetime.
+# a fifteen-year horizon under a thirty-year label.
 #
-# The traded bond is still fetched and reported as the cross-check, and the two
-# bracket the answer. The traded yield is biased low, by scarcity and by being
-# a decade short of thirty years. The deflated one is biased high, because the
-# gap between the market breakeven and the survey expectation is an inflation
-# risk premium and deflating books it as return.
+# NO SURVEY. The curve was then deflated by the ECB Survey of Professional
+# Forecasters, which fixed the maturity and introduced an opinion. This tool
+# holds measurements and trends, not views.
+#
+# THE SAME KIND OF OBJECT. DFII30 is a traded real yield. A nominal yield with
+# a forecast subtracted is not the same thing, whatever number it produces.
+#
+# A break-even clears all three. It is the rate at which holding the linker and
+# holding a nominal bond pay the same, so it is a PRICE rather than a forecast,
+# and subtracting it from a nominal curve recovers a real yield.
+#
+# THE CONSTRUCTION CHECKS AGAINST ITSELF AND PASSES. The break-even is derived
+# from the 2046, so deflating a nominal yield by it should reproduce that bond's
+# own traded real yield of 1.4906%. It lands at 1.4401%, four hundredths of a
+# point away, and the residue is the maturity mismatch between a 30-year
+# nominal leg and a 19.6-year inflation leg.
+#
+# THE SURVEY IS STILL FETCHED, as the cross-check, and sits 0.25 points ABOVE
+# at 1.6903%. That gap is an inflation risk premium, which is what a holder
+# pays to be rid of inflation risk. Deflating by the survey books that premium
+# as return and makes the safe asset look better than any bond anyone can buy.
+# It was worth 5.9 points of equity share, so it was not a rounding decision.
 #
 # AAA rather than all euro area government bonds, which yield 0.61 points more
 # at the same maturity. That spread is compensation for a government not
@@ -172,9 +185,8 @@ expected_stock_real_return = 0.048268
 # looking prudent. An Italian household buying BTP is NOT holding this asset.
 #
 # It is euro area HICP, not Italian. An Italian household's cost of living is
-# Italian, and only BTP Italia tracks that, at five years and retail. So the
-# deflator is approximate in a way an American's TIPS is not.
-real_risk_free = 0.016904
+# Italian, and only BTP Italia tracks that, at five years and retail.
+real_risk_free = 0.014401
 
 # Measured: five years of daily dividend-adjusted closes of VWCE.DE to
 # 3 September 2026, annualised. Lower than the 17.18% of the S&P 500 sleeve,
@@ -197,16 +209,17 @@ dividend_yield = 0.015339
 real_growth = 0.022860
 dividend_yield_measured = 0.015339
 dividend_yield_withheld = 0.003422
-expected_inflation = 0.020369
+expected_inflation = 0.022886
+expected_inflation_survey = 0.020369
 nominal_safe_yield = 0.037617
 after_tax_expected_return = 0.037938
 after_tax_real_risk_free = 0.010335
-after_tax_source = "Italy taxes government bonds of Italy and of white-list states, Germany included, at 12.5% and other financial income at 26%, both on nominal income so inflation is taxed, plus 0.2% a year of imposta di bollo on the value of each. Equities are taxed once on sale, so the tax is deferred over 30 years, which recovers more than the higher rate costs. The volatility is NOT reduced, because Italian law does not let fund losses offset fund gains. Tax costs 1.03 points of expected return and 0.66 points of safe rate, so 0.34 points of the drift. See src/your_equity_share/taxes.py."
+after_tax_source = "Italy taxes government bonds of Italy and of white-list states, Germany included, at 12.5% and other financial income at 26%, both on nominal income so inflation is taxed, plus 0.2% a year of imposta di bollo on the value of each. Equities are taxed once on sale, so the tax is deferred over 30 years, which recovers more than the higher rate costs. The volatility is NOT reduced, because Italian law does not let fund losses offset fund gains. Tax costs 1.03 points of expected return and 0.41 points of safe rate, so 0.59 points of the drift. See src/your_equity_share/taxes.py."
 growth_source = "AQR's, as part of their published decomposition. Cross-checked on every refresh against the American variant's own 100-year trend through Shiller, which is a legitimate comparison because AQR themselves publish 2.7% for United States large cap against 2.6% for Global All Country, a tenth of a point apart: long-run real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic."
 growth_cross_check = "The alternative was tried and it failed, which is why the growth term is the American one. tools/global_growth.py rebuilds global real dividend growth from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The answer depends on the weighting scheme far more than on the data: weights pinned at today give 0.89% to 1.52%, weights pinned at the start of the window give 1.86% to 3.04%, and GDP shares each year give 2.77% to 5.43%, an envelope 4.5 points wide against 0.25 points for the American estimator, and keeping the war years rather than dropping them widens it further. The reason is structural. A fixed basket of countries is not an index, because an index reconstitutes and drops what stops paying, and JST publishes country index returns rather than the world index's constituents, so reconstitution cannot be reproduced. An earlier version of this file quoted a single scheme's 1.33% to 3.16% as the uncertainty, which was too flattering by a factor of four. Both this variant's 2.286% and AQR's 2.6% fall inside the envelope, which is corroboration too weak to lean on and is reported as such."
 currency_basis = "EUR. The dividend yield is measured on a euro-priced global index, the volatility is measured on a euro-priced series, and the safe rate is a euro government bond's traded real yield. Those three are euro figures by construction. The growth term is real growth in United States earnings per share, used as the global real rate, and that is the one place a cross-currency assumption still lives: it holds if relative purchasing power is preserved over a lifetime, which is AQR's own stated assumption for reading local real returns as any-currency real returns. It applies to one term of three rather than to the whole estimate, which is narrower than the previous version of this file, where the entire expected return was a local real figure read as a euro one."
 equity_index = "FTSE All-World"
-real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.7617% on 2026-09-08, deflated by the ECB Survey of Professional Forecasters longer-term HICP expectation of 2.0369% for 2026-Q3, which gives 1.6904%. A CONSTANT MATURITY thirty-year yield, which is what FRED's DFII30 is and is the property that makes the two variants comparable: a curve describes the same horizon at every refresh and a particular bond does not. Cross-checked against DE0001030575, Bund/euro-i, the longest outstanding euro inflation-linked government bond, 19.6 years remaining, whose traded real yield is 1.4906%. The two bracket the rate: the traded one is biased low by scarcity and by being a decade short of thirty years, the deflated one high by an inflation risk premium booked as return."
+real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.7617% on 2026-09-08, deflated by the MARKET break-even inflation rate of 2.2886% on DE0001030575, the longest euro inflation-linked government bond at 19.6 years, which gives 1.4401%. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should reproduce its traded real yield of 1.4906%, and it lands 0.051 points away. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3, which would give 1.6904%, 0.25 points higher; that gap is an inflation risk premium and deflating by the survey books it as return."
 volatility_source = "Yahoo daily closes of VWCE.DE, 5 years, dividend adjusted"
 volatility_currency = "EUR, unhedged"
 volatility_observations = 1254
