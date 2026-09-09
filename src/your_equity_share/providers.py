@@ -244,12 +244,35 @@ def parse_damodaran_erp(data: bytes) -> tuple[date, float]:
 
 @dataclass(frozen=True)
 class ShillerHistory:
-    """Robert Shiller's monthly S&P 500 series, cleaned.
+    """Robert Shiller's monthly S&P COMPOSITE series, cleaned.
+
+    Composite, not the S&P 500, and the difference is worth stating because
+    calling it the S&P 500 is the usual shorthand and it is wrong for most of
+    the history. Shiller splices three indices:
+
+        1871 to 1926   Cowles and Associates, Common Stock Indexes, 2nd ed.
+        1926 to 1957   Standard and Poor 90
+        1957 onward    Standard and Poor 500
+
+    THE MONTHLY EARNINGS ARE INTERPOLATED. Since 1926 they are computed from
+    S&P four-quarter totals and interpolated linearly to months; before 1926
+    they are Cowles figures interpolated from annual data. So a hundred years
+    of monthly earnings is about four hundred quarterly observations wearing a
+    monthly dress. That does not bias a trend through them, but any standard
+    error computed from the monthly count would overstate the precision by
+    roughly the square root of three, which is why this project reports the
+    estimator's sensitivity to its window rather than a standard error.
+
+    One convenient accident: the hundred-year window the growth trend uses
+    currently runs from July 1926, so it begins at the Cowles boundary and
+    rests on Standard and Poor data almost entirely. The reconstructed era is
+    in the file but not in the estimate.
 
     Only months carrying a real price, a real dividend and a CAPE are kept, so
-    the three lists are aligned and every entry is usable. Recent months often
-    lack fundamentals even when a price exists, and those are dropped rather
-    than carried as zeros.
+    the three lists are aligned and every entry is usable. That is also why the
+    cleaned series starts a decade after the raw one: CAPE needs ten years of
+    prior earnings behind it. Recent months often lack fundamentals even when a
+    price exists, and those are dropped rather than carried as zeros.
     """
 
     dates: tuple[str, ...]

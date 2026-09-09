@@ -336,6 +336,8 @@ h4 {
   <li><a href="#s1-8"><span class="tno">1.8</span>Withholding tax</a></li>
   <li><a href="#s1-9"><span class="tno">1.9</span>The Italian methodology</a></li>
   <li><a href="#s2"><span class="tno">2</span>Both variants</a></li>
+  <li><a href="#s2-2"><span class="tno">2.2</span>Show both returns on screen</a></li>
+  <li><a href="#s2-3"><span class="tno">2.3</span>One growth estimator</a></li>
   <li><a href="#s3"><span class="tno">3</span>Not on this list, and why</a></li>
 </ol>
 </nav>
@@ -376,6 +378,8 @@ default household</caption>
 <tr><td>Currency hedging</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Withholding tax leakage</td><td>Italy</td><td class="num">0.34 points of yield</td></tr>
 <tr><td>Horizon audit of the peer table</td><td>both</td><td class="num">about 0.9 points of return</td></tr>
+<tr><td>Show both expected returns on screen</td><td>both</td><td class="num">presentation only</td></tr>
+<tr><td>One growth estimator for both variants</td><td>both</td><td class="num">0.31 points of growth</td></tr>
 </tbody>
 </table>
 </div>
@@ -507,13 +511,28 @@ above its ten-year.</p>
 
 <h3 id="s2-2">2.2 A better global growth series</h3>
 
-<p><code>tools/global_growth.py</code> is the record of trying to measure global
-real dividend growth from free long-horizon data and failing: the answer moves
-4.5 points across weighting schemes that are equally defensible, because a fixed
-basket of countries is not an index and reconstitution cannot be reproduced from
-country index returns. If a series ever appears that carries the world index's
-own constituents, the growth term stops needing to be borrowed from the United
-States.</p>
+<p>Both variants currently use one number, the hundred-year trend through
+Shiller, and for the Italian one that is a United States growth rate standing in
+for a global one. It is the largest borrowed thing left in the model. AQR's own
+figures put the gap at a tenth of a point, 2.7% for United States large cap
+against 2.6% for Global All Country, and our trend sits 0.31 points below their
+global figure, so the error is small and its sign is known. It is still a
+substitution.</p>
+
+<p><code>tools/global_growth.py</code> is the record of trying to remove it and
+failing. Rebuilding global real dividend growth from free long-horizon data
+moves the answer 4.5 points across weighting schemes that are equally
+defensible, because a fixed basket of countries is not an index: an index
+reconstitutes, and reconstitution cannot be reproduced from country index
+returns.</p>
+
+<p><strong>What would fix it is a global series with earnings in it.</strong>
+That is the rare ingredient. Long price histories are common and long
+earnings-per-share histories are not, which is the whole reason Shiller's file
+is the one being used. If one appears, or if a vendor opens a global fundamental
+history far enough back to fit a century trend, then each variant could measure
+growth on the index it actually holds and the two would share a method rather
+than a number.</p>
 
 <h2 id="s3">3. Not on this list, and why</h2>
 
