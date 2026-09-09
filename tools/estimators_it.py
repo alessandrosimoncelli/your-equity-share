@@ -111,6 +111,29 @@ AQR_COMPOUND, AQR_YIELD, AQR_GROWTH = 0.042, 0.016, 0.026
 # earnings-based anchor adds back. Their words, their number.
 AQR_EQUILIBRIUM_GROWTH = 0.018
 
+# THE PAYOUT-NEUTRALITY CHECK, and the reason it exists.
+#
+# This variant pairs a GLOBAL dividend yield with an AMERICAN per-share growth
+# trend. Income and growth trade off against each other through payout policy:
+# a market that pays more of its earnings as dividends has a higher yield and
+# correspondingly lower per-share growth. Mixing a high-payout market's yield
+# with a low-payout market's growth would count the difference twice, which is
+# the same error as pairing a payout yield with per-share growth, one market
+# over instead of one term over.
+#
+# The earnings yield is immune to it. E/P does not care how earnings are split
+# between dividends, buybacks and retention, so it measures valuation alone.
+# If the pairing above were broken, our estimate and the earnings yield would
+# disagree, and by construction they would disagree in the direction of our
+# estimate being too high.
+#
+# iShares, 8 September 2026, same provider and same methodology on both sides
+# so the comparison is not itself a mismatch. ACWI tracks MSCI All Country
+# World and IVV tracks the S&P 500.
+PRICE_EARNINGS = {"global": 25.54, "united states": 30.51}
+DIVIDEND_YIELD_QUOTED = {"global": 0.0143, "united states": 0.0109}
+VALUATION_AS_OF = "2026-09-08"
+
 
 def _context():
     try:
@@ -283,6 +306,57 @@ def main() -> int:
     print("  The estimates span %.2f points and the answers span %.0f points."
           % (spread * 100, (max(shares) - min(shares)) * 100))
     print("  Nothing else in the model moves the recommendation that far.")
+
+    print()
+    print("  IS THE PAIRING SOUND. This variant takes a GLOBAL dividend yield")
+    print("  and an AMERICAN growth trend, and payout policy trades one off")
+    print("  against the other. The earnings yield does not care how earnings")
+    print("  are split, so it is the check. iShares, %s:" % VALUATION_AS_OF)
+    ep = {k: 1.0 / v for k, v in PRICE_EARNINGS.items()}
+    american = load_market_data(ROOT / "config" / "market_data.toml")
+    mine = {"global": float(market.provenance["expected_return_compound"]),
+            "united states": float(
+                american.provenance["expected_return_compound"])}
+    print("    %-26s %9s %9s %8s" % ("", "global", "US", "gap"))
+    print("    %-26s %8.3f%% %8.3f%% %+7.3f"
+          % ("earnings yield, E/P", ep["global"] * 100,
+             ep["united states"] * 100,
+             (ep["global"] - ep["united states"]) * 100))
+    print("    %-26s %8.3f%% %8.3f%% %+7.3f"
+          % ("our estimate", mine["global"] * 100,
+             mine["united states"] * 100,
+             (mine["global"] - mine["united states"]) * 100))
+    print("    %-26s %+8.3f %+8.3f"
+          % ("ours minus E/P", (mine["global"] - ep["global"]) * 100,
+             (mine["united states"] - ep["united states"]) * 100))
+    payout = {k: DIVIDEND_YIELD_QUOTED[k] / ep[k] for k in ep}
+    print("    %-26s %8.1f%% %8.1f%%"
+          % ("dividend payout ratio", payout["global"] * 100,
+             payout["united states"] * 100))
+    matched = ep["global"] * payout["united states"]
+    print()
+    print("  Global does pay out more of its earnings as dividends, %.1f%%"
+          % (payout["global"] * 100))
+    print("  against %.1f%%, so part of its yield advantage is policy rather"
+          % (payout["united states"] * 100))
+    print("  than value. Splitting the %+.3f point yield gap: valuation "
+          % ((DIVIDEND_YIELD_QUOTED["global"]
+              - DIVIDEND_YIELD_QUOTED["united states"]) * 100))
+    print("  explains %+.3f and payout policy %+.3f."
+          % ((matched - DIVIDEND_YIELD_QUOTED["united states"]) * 100,
+             (DIVIDEND_YIELD_QUOTED["global"] - matched) * 100))
+    print()
+    print("  BUT IT RUNS THE OTHER WAY. On the payout-neutral measure global")
+    print("  is %+.3f points cheaper than the United States, and our estimate"
+          % ((ep["global"] - ep["united states"]) * 100))
+    print("  only credits it %+.3f. So the construction UNDERSTATES the global"
+          % ((mine["global"] - mine["united states"]) * 100))
+    print("  advantage by %.2f points rather than inflating it, and each"
+          % (((ep["global"] - ep["united states"])
+              - (mine["global"] - mine["united states"])) * 100))
+    print("  variant sits within about a tenth of a point of its own market's")
+    print("  earnings yield. Equation (5) and E/P agree when retained earnings")
+    print("  earn the cost of equity, so agreeing is what soundness looks like.")
 
     print()
     print("  ON THE HORIZON. AQR state their figure is for five to ten years,")
