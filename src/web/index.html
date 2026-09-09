@@ -1172,6 +1172,29 @@ function render() {
     + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma).equityShare)}. `
     + `Nothing about the people changed.`;
 
+  // The same construction, run on a global index, printed beside the American
+  // number. Not a second recommendation: the model would also need the Italian
+  // human capital calibration to produce one. It is here because "3.38% real"
+  // is hard to judge on its own and easy to judge next to what the identical
+  // estimator says about a portfolio most readers could also buy.
+  //
+  // The two differ by the YIELD, not the method. Both use the same 100-year
+  // Shiller growth trend and both assume no repricing, so the gap is the price
+  // of the two markets today.
+  function globalRow(market) {
+    const g = market.global;
+    if (!g || g.expected_stock_real_return_compound == null) return "";
+    const parts = [];
+    if (g.dividend_yield != null && g.real_growth != null) {
+      parts.push(`${pct2.format(g.dividend_yield)} yield plus ` +
+                 `${pct2.format(g.real_growth)} growth`);
+    }
+    parts.push(g.as_of);
+    return row([[`&nbsp;&nbsp;the same estimator on ${g.index}`, "k"],
+                [pct2.format(g.expected_stock_real_return_compound), "n"],
+                [parts.join(", "), "why"]]);
+  }
+
   // The inputs, with where each came from.
   const pi = logPremium(expected, rf);
   const prov = market.provenance || {};
@@ -1187,6 +1210,7 @@ function render() {
          [pct2.format(expected), "n"],
          [`what the model uses, +${((expected - shownCompound) * 100).toFixed(2)} ` +
           `points for the volatility drag`, "why"]]) +
+    globalRow(market) +
     row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
          ["30-year TIPS yield, from FRED, which is what Choi's guide asks for", "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],

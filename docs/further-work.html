@@ -335,9 +335,11 @@ h4 {
   <li><a href="#s1-7"><span class="tno">1.7</span>Currency</a></li>
   <li><a href="#s1-8"><span class="tno">1.8</span>Withholding tax</a></li>
   <li><a href="#s1-9"><span class="tno">1.9</span>The Italian methodology</a></li>
+  <li><a href="#s1-10"><span class="tno">1.10</span>The growth term is inherited</a></li>
   <li><a href="#s2"><span class="tno">2</span>Both variants</a></li>
-  <li><a href="#s2-2"><span class="tno">2.2</span>Show both returns on screen</a></li>
-  <li><a href="#s2-3"><span class="tno">2.3</span>One growth estimator</a></li>
+  <li><a href="#s2-1"><span class="tno">2.1</span>The horizon audit of the peer table</a></li>
+  <li><a href="#s2-2"><span class="tno">2.2</span>A better global growth series</a></li>
+  <li><a href="#s2-3"><span class="tno">2.3</span>The American safe rate is extreme</a></li>
   <li><a href="#s3"><span class="tno">3</span>Not on this list, and why</a></li>
 </ol>
 </nav>
@@ -378,14 +380,17 @@ default household</caption>
 <tr><td>Currency hedging</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Withholding tax leakage</td><td>Italy</td><td class="num">0.34 points of yield</td></tr>
 <tr><td>Horizon audit of the peer table</td><td>both</td><td class="num">about 0.9 points of return</td></tr>
-<tr><td>Show both expected returns on screen</td><td>both</td><td class="num">presentation only</td></tr>
-<tr><td>One growth estimator for both variants</td><td>both</td><td class="num">0.31 points of growth</td></tr>
+<tr><td>Growth term inherited from the United States</td><td>Italy</td><td class="num">0.1 to 0.5 points of growth</td></tr>
+<tr><td>American safe rate at a historical extreme</td><td>United States</td><td class="num">context, not a defect</td></tr>
 </tbody>
 </table>
 </div>
 
 <p class="src">Computed on the current configuration. The two largest are both
-in the tax work, which is the newest part of the model and the least settled.</p>
+in the tax work, which is the newest part of the model and the least settled.
+Two items left this list in September 2026: showing both expected returns on
+screen, which is now done, and putting both variants on one growth estimator,
+which the horizon change did.</p>
 
 <h2 id="s1">1. The Italian variant</h2>
 
@@ -498,6 +503,42 @@ into a market return hides it inside a price.</p>
 <p>The reasoning behind the Italian variant currently lives in configuration
 comments and commit messages. It needs the document the American variant has.</p>
 
+<h3 id="s1-10">1.10 The growth term is inherited, and it leans one way</h3>
+
+<p>The Italian variant measures its own dividend yield on a global index but
+takes its growth term from the United States, because no free source carries a
+century of global earnings. That substitution has now been measured rather than
+assumed, in <code>tools/us_vs_global.py</code>, and it is <strong>not
+neutral</strong>.</p>
+
+<p><strong>The direction is settled and the size is not.</strong> Every estimate
+that is not built on a biased construction says the United States grew faster
+than the rest of the world, so the global growth term is too high. How much too
+high is open: AQR's published pair implies a gap costing 0.10 points on the
+global rate, and the modern MSCI sample, twenty-three years in local currency,
+implies 1.48.</p>
+
+<p>What keeps it small is arithmetic rather than either estimate. The global
+index is about 64% American, so an American growth rate is only wrong on the
+other 36%: a full point of annual difference between the United States and
+everywhere else costs 0.36 points on the global rate. The honest reading is
+that the growth term is too high by <strong>a tenth to half a point</strong>.</p>
+
+<p>AQR's figure is a <em>lower</em> bound rather than a best guess, because they
+shrink cross-country growth differences 50% toward the global average by
+construction, so their tight gap is partly their own method.</p>
+
+<p>One consolation, and it is real. The estimate this produces is 3.82%
+compound, already 0.38 points below AQR's own published 4.20% for the same
+index. Even at the top of the bias range the total lands under the number the
+firms publish, so the error does not tip the tool into optimism.</p>
+
+<p>It is not corrected, because correcting it would mean inventing a haircut.
+Scaling by AQR's ratio looks principled and is not: they publish to one decimal,
+and propagating that rounding through the 64% weight puts the implied gap
+anywhere between 0.10 and 0.59 points. An adjustment less reliable than the
+thing it adjusts is not an improvement.</p>
+
 <h2 id="s2">2. Both variants</h2>
 
 <h3 id="s2-1">2.1 The horizon audit of the peer table</h3>
@@ -584,6 +625,27 @@ reach back to the 1960s for most members, but they are aggregate rather than
 per share, and the dilution adjustment needed to convert them is about as
 uncertain as the quantity being estimated. Bernstein and Arnott put that wedge
 near two points a year for the twentieth century.</p>
+
+<h3 id="s2-3">2.3 The American safe rate is at a historical extreme</h3>
+
+<p>This is context rather than a defect, and it belongs here because it is the
+single largest thing driving the American answer and nothing on the page says
+so.</p>
+
+<p>FRED's 30-year TIPS yield is <strong>2.96%</strong>. Across its own history,
+4,140 daily observations from February 2010, that series has a minimum of
+&minus;0.59%, a median of <strong>1.01%</strong> and a maximum of 3.06%. Today
+sits at the <strong>100th percentile</strong>.</p>
+
+<p>So the American variant recommends 21% equities partly because its safe asset
+is paying more than it ever has. The model is right to use the rate the market
+offers today, and section 3.3 argues that case at length. But a reader seeing
+21% should know that the number is being held down by a real risk-free rate at
+its record, and that if that rate returns toward its own median the answer rises
+steeply.</p>
+
+<p>Nothing needs fixing. What is missing is the sentence saying it, on the page
+rather than only here.</p>
 
 <h2 id="s3">3. Not on this list, and why</h2>
 

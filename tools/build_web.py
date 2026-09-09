@@ -55,6 +55,13 @@ COPIED = {
 
 CONFIG = ROOT / "config" / "market_data.toml"
 
+# The Italian variant, read only so the page can print its expected return
+# beside the American one. The tool itself runs on CONFIG; this is context,
+# because "3.38% real" means little until a reader can see what the same
+# construction produces for a global index. Optional on purpose: a checkout
+# without the Italian file still builds.
+CONFIG_GLOBAL = ROOT / "config" / "market_data_it.toml"
+
 
 def as_document(body: str, title_override: str | None = None) -> str:
     """Give an HTML fragment the head a web server needs, and leave a page alone.
@@ -101,6 +108,37 @@ def _shell(title: str, body: str) -> str:
     )
 
 
+def build_global_block() -> dict | None:
+    """The global sleeve's expected return, for the comparison on the page.
+
+    Only the figures the page prints, not enough to run the model on, because
+    running it would need the Italian human capital calibration too and this is
+    a comparison rather than a second tool.
+    """
+    if not CONFIG_GLOBAL.exists():
+        return None
+    with CONFIG_GLOBAL.open("rb") as handle:
+        raw = tomllib.load(handle)
+    market = raw.get("market", {})
+    provenance = raw.get("provenance", {})
+    if "expected_stock_real_return" not in market:
+        return None
+    return {
+        "expected_stock_real_return": float(market["expected_stock_real_return"]),
+        "expected_stock_real_return_compound": (
+            float(provenance["expected_return_compound"])
+            if "expected_return_compound" in provenance else None),
+        "dividend_yield": (float(provenance["dividend_yield"])
+                           if "dividend_yield" in provenance else None),
+        "real_growth": (float(provenance["real_growth"])
+                        if "real_growth" in provenance else None),
+        "real_risk_free": float(market["real_risk_free"]),
+        "stock_volatility": float(market["stock_volatility"]),
+        "index": str(provenance.get("equity_index", "a global index")),
+        "as_of": str(market.get("as_of", "")),
+    }
+
+
 def build_market_json() -> str:
     """Convert the TOML the model reads into the JSON the page fetches.
 
@@ -138,6 +176,7 @@ def build_market_json() -> str:
         compound = float(found.group(1)) if found else None
 
     payload = {
+        "global": build_global_block(),
         "expected_stock_real_return": float(market["expected_stock_real_return"]),
         "expected_stock_real_return_compound": (
             float(compound) if compound is not None else None
