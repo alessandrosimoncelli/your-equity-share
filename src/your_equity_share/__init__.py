@@ -34,6 +34,13 @@ from your_equity_share.human_capital import (
     project_earnings,
     wage_discount_rate,
 )
+from your_equity_share.taxes import (
+    ITALY_TAX,
+    NO_TAX,
+    TaxRegime,
+    after_tax_equity_compound,
+    after_tax_safe_rate,
+)
 from your_equity_share.legacy import LegacyInputs, LegacySleeve, bull_formula_share
 from your_equity_share.legacy import merton_share as legacy_merton_share
 from your_equity_share.risk_aversion import (
@@ -45,6 +52,11 @@ from your_equity_share.risk_aversion import (
 __all__ = [
     "CGM_CALIBRATION",
     "ITALY_CALIBRATION",
+    "ITALY_TAX",
+    "NO_TAX",
+    "TaxRegime",
+    "after_tax_equity_compound",
+    "after_tax_safe_rate",
     "Calibration",
     "Household",
     "LegacyInputs",

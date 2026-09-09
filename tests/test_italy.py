@@ -95,51 +95,74 @@ def test_the_expected_return_is_equation_five_with_no_repricing(italy) -> None:
     assert yield_ + growth == pytest.approx(compound, abs=5e-6)
 
 
-def test_the_expected_return_is_computed_rather_than_quoted(italy) -> None:
-    """The provenance has to name the measurements, not just a firm.
+def test_the_expected_return_names_its_publisher_and_its_cadence(italy) -> None:
+    """A borrowed number has to say whose it is and when it goes stale.
 
-    A provenance that names a publisher and stops is a citation. This one has
-    to say where each half was measured, because the number is now ours.
+    The figure is AQR's and it is refreshed once a year, so the provenance
+    carries the report, the as-of date and the annual cadence. Without the
+    cadence a reader cannot tell whether a two-year-old file is current.
     """
     source = italy.provenance["expected_return_source"]
-    assert "Computed here" in source
+    assert "AQR" in source
+    assert "2025-12-31" in source
+    assert "once a year" in source
+
+
+def test_the_borrowed_return_carries_its_own_running_checks(italy) -> None:
+    """Borrowing annually is only safe if the halves are checked in between.
+
+    Both are, on every run of the refresh tool, against data that costs
+    nothing: the dividend yield against MSCI's own index levels and the growth
+    rate against the American variant's Shiller trend. The provenance has to
+    record what those checks currently return, or the check is invisible to a
+    reader and might as well not run.
+    """
+    source = italy.provenance["expected_return_source"]
     assert "MSCI" in source and "Shiller" in source
+    assert "points from theirs" in source
 
 
-def test_the_growth_term_is_the_american_estimator_unchanged(italy) -> None:
-    """One estimator, two variants, so neither can drift away from the other.
+def test_the_growth_rate_still_agrees_with_our_own_estimator(italy) -> None:
+    """AQR's growth rate is used, so our own has to keep confirming it.
 
-    The Italian growth term is the American variant's hundred-year trend
-    through Shiller, used as the global rate. If that stops being true the two
-    configurations measure growth two different ways, and any gap between
-    their answers stops being about the countries.
+    The American variant measures real growth in earnings per share over a
+    hundred years of Shiller. That is a genuine independent check on AQR's
+    global figure, and a legitimate comparison because AQR themselves publish
+    2.7% for United States large cap against 2.6% for Global All Country.
+
+    Half a point is the bar. Closer than that and the two are measuring the
+    same thing; further apart and one of them has moved, which is the signal
+    to go and read AQR's current report rather than wait for January.
     """
     sys.path.insert(0, str(ROOT))
     from tools.refresh_italy import american_growth_trend
 
-    measured, _ = american_growth_trend()
-    if measured is None:
+    ours, _ = american_growth_trend()
+    if ours is None:
         pytest.skip("Shiller's workbook is not on this machine")
-    assert float(italy.provenance["real_growth"]) == pytest.approx(
-        measured, abs=5e-6)
+    theirs = float(italy.provenance["real_growth"])
+    assert abs(ours - theirs) < 0.005
 
 
-def test_the_growth_term_says_it_is_american_and_why(italy) -> None:
-    """Using a United States growth rate globally is the deviation to justify."""
+def test_the_growth_source_says_what_checks_it(italy) -> None:
+    """The check is only worth something if its logic is written down."""
     source = italy.provenance["growth_source"]
     assert "American" in source
     assert "2.7%" in source and "2.6%" in source
 
 
-def test_the_dividend_yield_agrees_with_the_firm_that_publishes_one(italy) -> None:
-    """AQR quote 1.6% for this index, and the measurement has to land near it.
+def test_our_measured_yield_agrees_with_the_one_being_used(italy) -> None:
+    """AQR quote 1.6% for this index, and our measurement has to land near it.
 
     Not a tolerance picked to pass: a global dividend yield is a slow and
-    heavily reported quantity, so a measurement half a point from the one
-    published figure would mean the gross-minus-price construction is wrong.
+    heavily reported quantity, so a measurement a third of a point from the
+    published figure would mean either that the gross-minus-price construction
+    is wrong or that the market has moved away from the number in use. Both
+    are worth knowing and neither is quiet.
     """
-    assert float(italy.provenance["dividend_yield"]) == pytest.approx(
-        0.016, abs=0.003)
+    used = float(italy.provenance["dividend_yield"])
+    measured = float(italy.provenance["dividend_yield_measured"])
+    assert measured == pytest.approx(used, abs=0.0033)
 
 
 def test_the_withholding_tax_is_recorded_rather_than_netted_off(italy) -> None:
@@ -152,7 +175,7 @@ def test_the_withholding_tax_is_recorded_rather_than_netted_off(italy) -> None:
     """
     withheld = float(italy.provenance["dividend_yield_withheld"])
     assert 0.001 < withheld < 0.010
-    assert "withholding" in IT_CONFIG.read_text(encoding="utf-8").lower()
+    assert "withholding tax" in IT_CONFIG.read_text(encoding="utf-8").lower()
 
 
 def test_the_expected_return_is_the_arithmetic_mean_the_model_takes(italy) -> None:
@@ -228,18 +251,21 @@ def test_the_euro_safe_rate_is_below_the_american_one(italy) -> None:
     assert italy.real_risk_free_rate < load_market_data().real_risk_free_rate
 
 
-def test_the_safe_rate_is_a_traded_real_yield(italy) -> None:
-    """The same kind of object the American variant reads, or the two variants
-    cannot be compared.
+def test_the_safe_rate_holds_its_maturity_fixed(italy) -> None:
+    """A constant-maturity curve, which is what FRED's DFII30 is.
 
-    FRED's 30-year TIPS is a traded real yield. Deflating a nominal curve by a
-    survey would have made part of the gap between the two answers a
-    difference in method rather than in country, and it was worth 5.4 points
-    of equity share, so it was not a rounding decision.
+    DFII30 is not a bond: it is the thirty-year point read off the TIPS curve
+    every day, so it describes the same horizon at every refresh. This file
+    used a single bond until September 2026, the Bund/euro-i 2046, on the
+    argument that a traded real yield is the same kind of object. It is not.
+    That bond has 19.6 years left and one fewer every year, so it would have
+    been quoting a fifteen-year horizon inside a decade while the file still
+    called it the thirty-year rate.
     """
     source = italy.provenance["real_risk_free_source"]
-    assert source.startswith("DE")
-    assert "traded real yield" in source
+    assert source.startswith("ECB AAA")
+    assert "CONSTANT MATURITY" in source
+    assert "30-year" in source
 
 
 def test_the_safe_rate_records_the_cross_check_that_brackets_it(italy) -> None:
