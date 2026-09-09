@@ -95,44 +95,57 @@ def test_the_expected_return_is_equation_five_with_no_repricing(italy) -> None:
     assert yield_ + growth == pytest.approx(compound, abs=5e-6)
 
 
-def test_the_expected_return_names_its_publisher_and_its_cadence(italy) -> None:
-    """A borrowed number has to say whose it is and when it goes stale.
+def test_the_expected_return_is_built_rather_than_borrowed(italy) -> None:
+    """The provenance has to name the two measurements, because they are ours.
 
-    The figure is AQR's and it is refreshed once a year, so the provenance
-    carries the report, the as-of date and the annual cadence. Without the
-    cadence a reader cannot tell whether a two-year-old file is current.
+    This variant took AQR's published figure until September 2026. It now
+    builds the estimate from a measured yield and a measured growth trend, so
+    the source has to say where each half came from rather than name a firm.
     """
     source = italy.provenance["expected_return_source"]
-    assert "AQR" in source
-    assert "2025-12-31" in source
-    assert "once a year" in source
-
-
-def test_the_borrowed_return_carries_its_own_running_checks(italy) -> None:
-    """Borrowing annually is only safe if the halves are checked in between.
-
-    Both are, on every run of the refresh tool, against data that costs
-    nothing: the dividend yield against MSCI's own index levels and the growth
-    rate against the American variant's Shiller trend. The provenance has to
-    record what those checks currently return, or the check is invisible to a
-    reader and might as well not run.
-    """
-    source = italy.provenance["expected_return_source"]
+    assert "Built here" in source
     assert "MSCI" in source and "Shiller" in source
-    assert "points from theirs" in source
 
 
-def test_the_growth_rate_still_agrees_with_our_own_estimator(italy) -> None:
-    """AQR's growth rate is used, so our own has to keep confirming it.
+def test_the_expected_return_carries_no_horizon_and_says_why(italy) -> None:
+    """The reason for building it is a horizon mismatch, so record the reason.
 
-    The American variant measures real growth in earnings per share over a
-    hundred years of Shiller. That is a genuine independent check on AQR's
-    global figure, and a legitimate comparison because AQR themselves publish
-    2.7% for United States large cap against 2.6% for Global All Country.
+    AQR state their figure is for five to ten years and that at multi-decade
+    horizons "theory and long-term historical averages may matter more". This
+    model prices a lifetime. A current yield plus a long-run growth rate with
+    no repricing is the same number at any holding period, which is the
+    property that makes it usable at thirty years, and Table 7 of the American
+    methodology shows it is also the one that wins there.
+    """
+    source = italy.provenance["expected_return_source"]
+    assert "5 to 10 years" in source
+    assert "no horizon" in source
+    assert "AQR" in source
 
-    Half a point is the bar. Closer than that and the two are measuring the
-    same thing; further apart and one of them has moved, which is the signal
-    to go and read AQR's current report rather than wait for January.
+
+def test_aqr_is_kept_as_the_cross_check_with_its_numbers(italy) -> None:
+    """Demoting a source is not the same as dropping it.
+
+    AQR remain the only firm publishing every component of this estimate, so
+    they are still the best independent check on it, and the provenance has to
+    carry how far apart the two currently are or the check is invisible.
+    """
+    source = italy.provenance["expected_return_source"]
+    assert "2025-12-31" in source
+    assert "points from ours" in source
+
+
+def test_the_growth_term_is_the_american_estimator_exactly(italy) -> None:
+    """One estimator, two variants, so neither can drift away from the other.
+
+    The Italian growth term IS the American variant's hundred-year OLS trend
+    through Shiller, not something near it. If that stops being true the two
+    configurations measure growth two different ways and any gap between their
+    answers stops being about the countries.
+
+    This is the test that would have caught the horizon problem earlier: while
+    this variant borrowed AQR's five-to-ten-year figure it could only be
+    written as a tolerance, and a tolerance is what a mismatch hides in.
     """
     sys.path.insert(0, str(ROOT))
     from tools.refresh_italy import american_growth_trend
@@ -140,8 +153,8 @@ def test_the_growth_rate_still_agrees_with_our_own_estimator(italy) -> None:
     ours, _ = american_growth_trend()
     if ours is None:
         pytest.skip("Shiller's workbook is not on this machine")
-    theirs = float(italy.provenance["real_growth"])
-    assert abs(ours - theirs) < 0.005
+    assert float(italy.provenance["real_growth"]) == pytest.approx(
+        ours, abs=5e-6)
 
 
 def test_the_growth_source_says_what_checks_it(italy) -> None:
@@ -160,9 +173,9 @@ def test_our_measured_yield_agrees_with_the_one_being_used(italy) -> None:
     is wrong or that the market has moved away from the number in use. Both
     are worth knowing and neither is quiet.
     """
-    used = float(italy.provenance["dividend_yield"])
     measured = float(italy.provenance["dividend_yield_measured"])
-    assert measured == pytest.approx(used, abs=0.0033)
+    assert measured == pytest.approx(float(italy.provenance["dividend_yield"]))
+    assert measured == pytest.approx(0.016, abs=0.0033)
 
 
 def test_the_withholding_tax_is_recorded_rather_than_netted_off(italy) -> None:

@@ -408,62 +408,66 @@ def main(argv: list[str]) -> int:
     print("  that difference goes straight into the drift.")
 
     print()
-    print("The expected return, and whether AQR's still holds")
+    print("The expected return")
     print("=" * 68)
 
     gross, first, last = trailing_dividend_yield("GRTR")
     net, _, _ = trailing_dividend_yield("NETR")
     growth, growth_as_of = american_growth_trend()
 
-    compound = AQR_COMPOUND
+    if growth is None:
+        print("  Shiller's workbook was not found, so the growth term and the")
+        print("  expected return cannot be built. Run update.py first, or put")
+        print("  ie_data.xls at data/shiller.xls.")
+        if args.write:
+            print("\n  Nothing written: refusing to write half an estimate.")
+        return 0
+
+    compound = gross + growth
     volatility = float(re.search(r"^stock_volatility = ([0-9.]+)$",
                                  CONFIG.read_text(encoding="utf-8"),
                                  re.M).group(1))
     arithmetic = arithmetic_from_compound(compound, volatility)
 
-    print(f"  AQR, {AQR_REPORT},")
-    print(f"  as of {AQR_AS_OF}, refreshed once a year when they publish:")
-    print(f"    dividend yield                         {AQR_YIELD:>8.4%}")
-    print(f"    real EPS growth                        {AQR_GROWTH:>8.4%}")
+    print("  Built here, by the American variant's own construction, because")
+    print("  that construction carries no horizon and this model prices a")
+    print("  lifetime. See the module docstring.")
+    print(f"    dividend yield, MSCI ACWI EUR          {gross:>8.4%}   "
+          f"{first} to {last}")
+    print(f"      the same net of withholding tax      {net:>8.4%}")
+    print(f"    real EPS growth, {GROWTH_WINDOW_YEARS}y Shiller trend  "
+          f"{growth:>8.4%}   to {growth_as_of}")
     print(f"    repricing                              {0.0:>8.4%}   stated")
     print(f"    compound                               {compound:>8.4%}")
     print(f"    arithmetic, at {volatility:.2%} volatility    "
           f"{arithmetic:>8.4%}")
     print()
-    print("  They publish annually, in January, as of 31 December. No firm")
-    print("  publishes this decomposition more often, and the alternatives")
-    print("  that do publish quarterly or monthly assume valuations revert,")
-    print("  which is a different estimator and not this one.")
-    print()
-    print("  So the halves are checked here instead, as often as this runs.")
-    print()
 
     drift_yield = gross - AQR_YIELD
-    print(f"  measured dividend yield, MSCI ACWI EUR   {gross:>8.4%}   "
-          f"{first} to {last}")
-    print(f"    against AQR's                          "
-          f"{drift_yield * 100:>+7.2f} points")
-    print(f"    the same net of withholding tax        {net:>8.4%}")
-    if growth is not None:
-        print(f"  our own {GROWTH_WINDOW_YEARS}y Shiller growth trend       "
-              f"{growth:>8.4%}   to {growth_as_of}")
-        print(f"    against AQR's                          "
-              f"{(growth - AQR_GROWTH) * 100:>+7.2f} points")
-    stale = [name for name, drift in
-             (("the dividend yield", drift_yield),
-              ("the growth rate",
-               (growth - AQR_GROWTH) if growth is not None else 0.0))
+    drift_growth = growth - AQR_GROWTH
+    print(f"  AQR, {AQR_REPORT},")
+    print(f"  as of {AQR_AS_OF}, is the cross-check rather than the estimate,")
+    print(f"  because they state it is for a horizon of five to ten years:")
+    print(f"    their dividend yield                   {AQR_YIELD:>8.4%}   "
+          f"{drift_yield * 100:>+6.2f} against ours")
+    print(f"    their real EPS growth                  {AQR_GROWTH:>8.4%}   "
+          f"{drift_growth * 100:>+6.2f} against ours")
+    print(f"    their compound                         "
+          f"{AQR_COMPOUND:>8.4%}   {(AQR_COMPOUND - compound) * 100:>+6.2f} "
+          f"against ours")
+    stale = [name for name, drift in (("the dividend yield", drift_yield),
+                                      ("the growth rate", drift_growth))
              if abs(drift) > DRIFT_LIMIT]
     print()
     if stale:
-        print("  STALE: %s moved more than %.2f points from AQR's figure."
+        print("  DIVERGED: %s is more than %.2f points from AQR's."
               % (" and ".join(stale), DRIFT_LIMIT * 100))
-        print("  Fetch their current report before trusting the number above.")
+        print("  One of the two has moved. Read their current report.")
     else:
         print(f"  Both halves are within {DRIFT_LIMIT * 100:.2f} points of "
-              f"AQR's, so their")
-        print("  figure still describes today's market and does not need")
-        print("  replacing before their next January.")
+              f"AQR's, which is")
+        print("  the check passing: a firm that builds this for a living, on")
+        print("  their own data, gets the same two numbers we measure.")
 
     print()
     print("What the Italian tax code does to both")
@@ -538,8 +542,8 @@ def main(argv: list[str]) -> int:
         ("expected_stock_real_return", arithmetic),
         ("real_risk_free", real),
         ("expected_return_compound", compound),
-        ("dividend_yield", AQR_YIELD),
-        ("real_growth", AQR_GROWTH),
+        ("dividend_yield", gross),
+        ("real_growth", growth),
         ("dividend_yield_measured", gross),
         ("dividend_yield_withheld", gross - net),
         ("expected_inflation", expected_inflation),
@@ -571,23 +575,25 @@ def main(argv: list[str]) -> int:
                      deflated * 100, isin, years_left, traded * 100),
                   text, count=1, flags=re.M)
     text = re.sub(r'^expected_return_source = ".*"$',
-                  'expected_return_source = "AQR, %s, as of %s: a %.1f%% '
-                  'dividend yield plus %.1f%% real EPS growth and no '
-                  'repricing, which is equation (5) term for term from the one '
-                  'firm that publishes every component. Refreshed once a year, '
-                  'when they publish in January. Both halves are checked on '
-                  'every run of tools/refresh_italy.py against data that costs '
-                  'nothing: the measured trailing dividend yield of MSCI All '
-                  'Country World in euro was %.4f%% over %d to %d, %+.2f '
-                  'points from theirs, and the American variant\'s %d-year '
-                  'Shiller growth trend to %s was %.4f%%, %+.2f points from '
-                  'theirs."'
-                  % (AQR_REPORT, AQR_AS_OF, AQR_YIELD * 100, AQR_GROWTH * 100,
-                     gross * 100, first, last, (gross - AQR_YIELD) * 100,
-                     GROWTH_WINDOW_YEARS, growth_as_of,
-                     (growth if growth is not None else 0.0) * 100,
-                     ((growth - AQR_GROWTH) if growth is not None else 0.0)
-                     * 100),
+                  'expected_return_source = "Built here, by the construction '
+                  'the American variant uses, because that construction '
+                  'carries no horizon and this model prices a lifetime: a '
+                  '%.4f%% trailing dividend yield of MSCI All Country World in '
+                  'euro over %d to %d, measured from the gap between MSCI '
+                  'gross and price index levels and divided by the price at '
+                  'the end, plus %.4f%% real growth in earnings per share, the '
+                  '%d-year OLS trend through Shiller to %s, plus zero '
+                  'repricing. Cross-checked against AQR, %s, as of %s: their '
+                  'dividend yield of %.1f%% is %+.2f points from ours and '
+                  'their real EPS growth of %.1f%% is %+.2f points from ours. '
+                  'Theirs is the check and not the estimate because they state '
+                  'it is for a horizon of 5 to 10 years, while Table 7 of the '
+                  'American methodology shows this construction is the one '
+                  'that wins at 30."'
+                  % (gross * 100, first, last, growth * 100,
+                     GROWTH_WINDOW_YEARS, growth_as_of, AQR_REPORT, AQR_AS_OF,
+                     AQR_YIELD * 100, (AQR_YIELD - gross) * 100,
+                     AQR_GROWTH * 100, (AQR_GROWTH - growth) * 100),
                   text, count=1, flags=re.M)
     text = re.sub(r'^after_tax_source = ".*"$',
                   'after_tax_source = "Italy taxes government bonds of Italy '

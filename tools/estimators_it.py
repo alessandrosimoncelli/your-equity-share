@@ -13,7 +13,8 @@ a translation. This tool prices a lifetime. Nearly every published forecast
 prices five to ten years. Those are not the same number and the difference has
 a known sign.
 
-AQR SAY SO THEMSELVES, in the 2026 report this variant's figure comes from:
+AQR SAY SO THEMSELVES, in the 2026 report this variant took its figure from
+until September 2026:
 
     "We present local real (inflation-adjusted) and nominal annual compound
     rates of return for a horizon of 5 to 10 years. Over such intermediate
@@ -25,8 +26,9 @@ Both halves of their estimate are built to ten years and not to thirty. The
 payout half uses "a country-specific estimate of next-10-year real EPS growth".
 The earnings half multiplies the cyclically adjusted earnings yield by
 1 + (g x 5) explicitly "to account for earnings growth during the 10-year
-window". Their number is a good ten-year number and it is being used here at
-thirty.
+window". Their number is a good ten-year number that was being asked to do a
+thirty-year job, which is why this variant now builds its own and keeps theirs
+as the cross-check.
 
 WHICH WAY DOES THAT BIAS IT. Down, on two independent measurements, so the
 error is conservative rather than flattering.
@@ -44,8 +46,15 @@ section 8.3 of the American methodology records the gap: their thirty-year
 United States equity forecast sits 0.9 points above their ten-year.
 
 So a ten-year forecast used at thirty understates the expected return, which
-understates the equity share. This tool reports the estimators that carry no
-horizon at all beside the ones that do, and says which is which.
+understates the equity share. That is the safe direction to be wrong in, and it
+is why the mismatch survived as long as it did without looking like a problem.
+
+This tool reports the estimators that carry no horizon at all beside the ones
+that do, and says which is which. A current yield plus a long-run growth rate
+with no repricing is the same number at any holding period, because nothing in
+it forecasts when anything happens. Those are the rows a lifetime model can use
+unadjusted, and Table 7 of the American methodology shows the one now in use is
+also the one with the lowest error at thirty years.
 
 WHAT IS AND IS NOT COMPUTED HERE. The American table has a row regressing
 realised thirty-year returns on starting valuation. That row cannot be built
@@ -260,8 +269,11 @@ def main() -> int:
 
     print("  %-40s %9s %8s %8s" % ("estimate of the expected real return",
                                    "compound", "horizon", "equity"))
+    # Marked from the configuration rather than from a constant here, so the
+    # table cannot go on pointing at a row the model stopped using.
+    in_use = float(market.provenance["expected_return_compound"])
     for label, value, horizon in rows:
-        mark = "  <- used" if abs(value - AQR_COMPOUND) < 1e-9 else ""
+        mark = "  <- used" if abs(value - in_use) < 5e-5 else ""
         print("  %-40s %8.2f%% %8s %7.1f%%%s"
               % (label, value * 100, horizon, share(value, market) * 100, mark))
 
