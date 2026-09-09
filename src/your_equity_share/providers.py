@@ -268,6 +268,30 @@ class ShillerHistory:
     rests on Standard and Poor data almost entirely. The reconstructed era is
     in the file but not in the estimate.
 
+    DOES THE 1957 SPLICE MATTER. It was worth asking and the answer is no,
+    measured rather than argued:
+
+        1926-07 to 2026-06   S&P 90 then 500, the window in use   2.2860%
+        1957-03 to 2026-06   S&P 500 only                         2.2741%
+        1926-07 to 1957-02   S&P 90 only                          2.3005%
+        1880-12 to 1926-06   Cowles only                          1.1882%
+
+    The two Standard and Poor eras grow at the same rate to within three
+    hundredths of a point and there is no level break across the join. Refit
+    the whole estimator on S&P 500 data alone and it gives 2.2835% against
+    2.2860%, a difference of THREE THOUSANDTHS of a point, bought at the price
+    of thirty-one years of sample.
+
+    That price is not nominal. The trend is stable from about seventy years
+    upward and comes apart below sixty: 2.28% at 69 years, 2.48% at 60, 3.11%
+    at 50 and 3.98% at 40, as the window shortens onto the recent earnings
+    boom. Across 90 to 110 years it moves 0.133 points; across 60 to 80 it
+    moves 0.265. So the long window is measurably the better estimator and the
+    splice it spans is measurably harmless.
+
+    The Cowles era is the one that genuinely differs, at 1.19%, which is why
+    it being outside the window is worth stating rather than assuming.
+
     Only months carrying a real price, a real dividend and a CAPE are kept, so
     the three lists are aligned and every entry is usable. That is also why the
     cleaned series starts a decade after the raw one: CAPE needs ten years of

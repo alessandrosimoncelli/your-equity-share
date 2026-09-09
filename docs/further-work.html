@@ -529,10 +529,61 @@ returns.</p>
 <p><strong>What would fix it is a global series with earnings in it.</strong>
 That is the rare ingredient. Long price histories are common and long
 earnings-per-share histories are not, which is the whole reason Shiller's file
-is the one being used. If one appears, or if a vendor opens a global fundamental
-history far enough back to fit a century trend, then each variant could measure
-growth on the index it actually holds and the two would share a method rather
-than a number.</p>
+is the one being used.</p>
+
+<p>The sources were surveyed in September 2026 and the result is recorded here
+so the search does not have to be repeated. It is not that global index
+earnings do not exist. It is that <strong>every series long enough is
+paid</strong>, and every free one either has no earnings in it or gives sorted
+portfolio returns rather than earnings levels.</p>
+
+<div class="tablewrap" id="t2">
+<table>
+<caption>Table 2. Where global index earnings can and cannot be got</caption>
+<thead><tr><th>Source</th><th>Earnings</th><th class="num">Starts</th><th>Access</th></tr></thead>
+<tbody>
+<tr><td>MSCI index fundamentals</td><td>index-level EPS</td><td class="num">index from 1969</td><td>paid</td></tr>
+<tr><td>LSEG Worldscope and Datastream</td><td>company and index</td><td class="num">1980 developed</td><td>paid</td></tr>
+<tr><td>Compustat Global</td><td>company</td><td class="num">1987</td><td>paid</td></tr>
+<tr><td>Siblis Research global CAPE</td><td>implied, 10-year</td><td class="num">free view from 2022</td><td>paid</td></tr>
+<tr><td>Global Financial Data, Finaeon</td><td>unconfirmed</td><td class="num">world index from 1601</td><td>paid</td></tr>
+<tr><td>Kenneth French, international index portfolios</td><td>sorted <em>on</em> E/P</td><td class="num">1975</td><td>free</td></tr>
+<tr><td>Jorda, Schularick and Taylor</td><td>none, dividends only</td><td class="num">1870</td><td>free</td></tr>
+<tr><td>Dimson, Marsh and Staunton</td><td>none, dividends only</td><td class="num">1900</td><td>summary free</td></tr>
+<tr><td>MSCI end-of-day API</td><td>none, levels only</td><td class="num">1997</td><td>free</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">MSCI's free end-of-day service was probed directly: it answers
+for index levels and returns 404 for every fundamentals endpoint tried.
+Kenneth French's international portfolios are formed on earnings to price and
+cover 21 countries from 1975, but they publish the portfolios' returns rather
+than the ratio itself, so no earnings level can be recovered from them.</p>
+
+<p><strong>Buying the data would help less than it sounds.</strong> The longest
+paid global series starts around 1980, which is a 46-year window. The American
+estimator is stable from about seventy years upward and comes apart below
+sixty: on Shiller's own data it reads 2.28% at 69 years, 2.48% at 60, 3.11% at
+50 and 3.98% at 40, as the window shortens onto the recent earnings boom. A
+46-year global window would sit inside the range where the estimator is known
+not to work, which is the same reason the twenty-five years of MSCI data
+already in hand swing 2.37 points across start dates.</p>
+
+<p>So the honest statement of the position is not that an American series is
+being used because it is American. <strong>It is being used because it is the
+only equity earnings series anywhere that is long enough for a long-horizon
+trend</strong>, and the substitution it forces is one whose size is known: AQR,
+who do have the global data, publish 2.7% for United States large cap against
+2.6% for Global All Country.</p>
+
+<p>Two routes could still change that. A vendor opening a global fundamental
+history back to 1970 or earlier, which MSCI could do since their index starts
+in 1969. Or national accounts: cap-weighted corporate profits from the OECD
+reach back to the 1960s for most members, but they are aggregate rather than
+per share, and the dilution adjustment needed to convert them is about as
+uncertain as the quantity being estimated. Bernstein and Arnott put that wedge
+near two points a year for the twentieth century.</p>
 
 <h2 id="s3">3. Not on this list, and why</h2>
 
