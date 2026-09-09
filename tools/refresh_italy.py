@@ -297,12 +297,24 @@ def msci_levels(code: str, currency: str, variant: str,
 
 
 def trailing_dividend_yield(variant: str) -> tuple[float, int, int]:
-    """Dividends paid over the last twelve months, against the price then.
+    """Twelve months of dividends over TODAY's price.
 
     The gross index reinvests each dividend and the price index does not, so
-    the difference between their monthly returns is that month's dividend
-    divided by the price at the start of the month. Summing twelve of those is
-    a trailing twelve-month yield built from nothing but two index levels.
+    the difference between their returns over a month, times the price at the
+    start of it, is that month's dividend in index points. Twelve of those are
+    a year's dividends.
+
+    THE DENOMINATOR IS THE WHOLE QUESTION and it is worth a third of a point.
+    Shiller's dividend column is a trailing annual rate and the American
+    variant divides it by his LAST price, so a trailing dividend over today's
+    price is the object the two variants have to share.
+
+    Dividing instead by the price twelve months ago gives 1.87% on this data
+    where today's price gives 1.53%, and summing each month's dividend over
+    that month's own starting price gives 1.70%. Three defensible-sounding
+    constructions, a third of a point apart, because the index rose 22% across
+    the window. This one is not chosen because it is lowest; it is chosen
+    because it is the one Shiller's column already is.
     """
     price = msci_levels(ACWI, "EUR", "STRD")
     total = msci_levels(ACWI, "EUR", variant)
@@ -310,9 +322,9 @@ def trailing_dividend_yield(variant: str) -> tuple[float, int, int]:
     if len(dates) < YIELD_MONTHS + 1:
         raise SystemExit("MSCI returned too few months to measure a yield")
     window = dates[-(YIELD_MONTHS + 1):]
-    paid = sum(total[b] / total[a] - price[b] / price[a]
+    paid = sum((total[b] / total[a] - price[b] / price[a]) * price[a]
                for a, b in zip(window, window[1:]))
-    return paid, window[0], window[-1]
+    return paid / price[window[-1]], window[0], window[-1]
 
 
 def american_growth_trend() -> tuple[float, str] | tuple[None, None]:

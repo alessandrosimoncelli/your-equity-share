@@ -365,3 +365,43 @@ def test_the_cross_check_gives_the_structural_reason(italy) -> None:
     """
     check = italy.provenance["growth_cross_check"]
     assert "reconstitut" in check
+
+
+# --- the denominator, which is worth a third of a point ---------------------
+
+def test_the_measured_yield_uses_todays_price_as_its_denominator() -> None:
+    """A trailing dividend over TODAY's price, which is Shiller's convention.
+
+    Three constructions all sound like a trailing twelve-month yield and they
+    differ by a third of a point on this data, because the index rose 22%
+    across the window: dividends over the price a year ago give 1.87%, each
+    month's dividend over that month's own starting price gives 1.70%, and
+    dividends over today's price give 1.53%.
+
+    The American variant divides Shiller's trailing annual dividend column by
+    his LAST price, so the third is the object the two variants share. This
+    reproduces the tool's answer from the raw levels, which is the only way to
+    catch the denominator silently changing back.
+    """
+    import json
+
+    cache = ROOT / "data" / "msci_acwi_eur.json"
+    if not cache.exists():
+        pytest.skip("MSCI levels have not been cached; run tools/estimators_it.py")
+    levels = json.loads(cache.read_text(encoding="utf-8"))
+    price, gross = levels["STRD"], levels["GRTR"]
+    dates = sorted(set(price) & set(gross))[-13:]
+    cash = sum((gross[b] / gross[a] - price[b] / price[a]) * price[a]
+               for a, b in zip(dates, dates[1:]))
+
+    expected = cash / price[dates[-1]]
+    assert float(italy_provenance()["dividend_yield_measured"]) == \
+        pytest.approx(expected, abs=1e-5)
+
+    # And the two rejected constructions really are far enough away to matter.
+    over_old_price = cash / price[dates[0]]
+    assert abs(over_old_price - expected) > 0.003
+
+
+def italy_provenance():
+    return load_market_data(IT_CONFIG).provenance
