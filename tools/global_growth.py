@@ -1,39 +1,66 @@
-"""Build a global real dividend growth rate, and find out if it can be used.
+"""Can a global growth rate be measured, or only borrowed?
 
     python tools/global_growth.py
 
-The Italian variant takes AQR's expected return rather than computing its own,
-and the reason given was that no global equivalent of Shiller's series exists.
-That was an assertion. This tests it.
+The Italian variant needs real growth in earnings per share for a global index.
+It uses the American estimator, the hundred-year trend through Shiller, and
+that needs justifying because the index is not American. This is the attempt to
+do better, and it is reported because it FAILED, which is the justification.
 
-WHAT THE DATA IS. The Jordà-Schularick-Taylor Macrohistory Database, release
-6: eighteen advanced economies, annual, from 1870, free under a licence that
-forbids commercial data providers from reselling it. It carries equity
-dividend yields, capital gains and consumer prices, which is enough to rebuild
-equation (5) on a global index instead of the S&P 500.
+WHAT THE DATA IS. The Jorda-Schularick-Taylor Macrohistory Database, release 6:
+eighteen advanced economies, annual, from 1870, free under a licence that
+forbids commercial data providers from reselling it. It carries equity dividend
+yields, capital gains and consumer prices, which is enough to rebuild equation
+(5) on a global index instead of the S&P 500.
 
 Dividends rather than earnings per share, because JST has no EPS. The American
 methodology already prices that swap in its Table 7: dividend growth scores
-2.35 root mean square error at thirty years against 2.25 for per-share
-earnings growth. Worse, and not by much.
+2.35 root mean square error at thirty years against 2.25 for per-share earnings
+growth. Worse, and not by much.
 
     D_t / D_{t-1} = (dp_t / dp_{t-1}) x (1 + capgain_t)
 
 since dp is D/P and capgain is the change in P. Deflating by CPI makes it real.
 
-WHAT IT SHOWS, which is why the Italian variant still uses AQR's number. The
-estimate moves 1.82 points depending on which start year you pick, even under
-the most robust construction available: a median across countries so no single
-hyperinflation carries the aggregate, with the war years dropped. The American
-estimator moves 0.25 points when its window changes by twenty years. A global
-series spanning two world wars, several currency reforms and a few closed
-exchanges cannot be pinned the way one uninterrupted market can, and an
-estimate that swings almost two points on a choice nobody can justify is a
-choice wearing the clothes of a measurement.
+WHAT IT SHOWS. The answer depends on how the countries are weighted far more
+than it depends on the data, and no weighting is right:
 
-So this is not the Italian variant's expected return. It is the check on it,
-and the check passes: AQR's 2.6% falls inside the range this independent
-reconstruction produces from free data.
+    weights pinned at today       0.89% to 1.52%
+    weights pinned at the start   1.86% to 3.04%
+    GDP share, year by year       2.77% to 5.43%
+
+That is an envelope 4.5 points wide, and keeping the war years rather than
+dropping them widens it further. The American estimator moves 0.25 points
+when its window changes by twenty years.
+
+WHY IT FAILS, which matters more than that it does. A fixed basket of countries
+is not an index. An index RECONSTITUTES: it drops the markets and companies
+that stop paying and admits the ones that start, and that churn is most of the
+difference between a survivor basket's dividend record and a real index's.
+JST publishes country index returns, not the world index's constituents, so
+reconstitution cannot be reproduced at all. Pinning the weights at today then
+asks what today's survivors paid a century ago, which is hindsight; pinning
+them at the start hands 1870 the United States at 72%, which is fiction.
+
+TWO CORRECTIONS THIS FILE HAS ALREADY NEEDED, recorded because they are the
+kind of error the construction invites.
+
+The first version averaged growth FACTORS across countries each year and
+chained the average. That is a portfolio rebalanced to fixed weights annually,
+and a rebalanced portfolio compounds faster than its constituents do by roughly
+half the cross-sectional variance. It was worth 0.21 points, and it made the
+estimate look five times steadier than the American one, which is what gave it
+away.
+
+The second was reporting one scheme's range, 1.33% to 3.16%, as though it were
+the uncertainty. It is a quarter of the uncertainty.
+
+SO WHAT IS IT FOR. It brackets. The variant's 2.286% and AQR's 2.6% both fall
+inside the envelope, which is corroboration too weak to lean on and is reported
+as exactly that. The growth term is justified in config/market_data_it.toml on
+other grounds: AQR publish 2.7% for United States large cap and 2.6% for Global
+All Country, a tenth of a point apart, and long-run real growth in earnings per
+share is a return on retained capital rather than a national characteristic.
 """
 
 from __future__ import annotations
@@ -138,33 +165,49 @@ def annual_real_dividend_growth(path: Path) -> dict[str, dict[int, float]]:
     return growth
 
 
-def trend(growth, first_year: int, robust: bool, drop_wars: bool):
-    """Chain a global index from the cross-country growth, then fit its slope.
+# MSCI World country weights, 31 August 2026, from the index factsheet. They
+# are only a weighting, and one of the schemes below dispenses with them
+# entirely, which is the point.
+WEIGHTS = {
+    "USA": 72.14, "JPN": 5.78, "GBR": 3.53, "CAN": 3.30, "FRA": 2.40,
+    "CHE": 2.40, "DEU": 2.30, "AUS": 1.80, "NLD": 1.30, "SWE": 0.80,
+    "ITA": 0.80, "ESP": 0.70, "DNK": 0.60, "FIN": 0.20, "BEL": 0.20,
+    "NOR": 0.20, "IRL": 0.15, "PRT": 0.03,
+}
 
-    A median across countries rather than a mean, when robust, so that one
-    country's currency reform cannot carry the aggregate. Germany's dividend
-    index does things across 1923 and 1948 that are history rather than
-    economics, and a mean lets that through.
-    """
-    years = sorted({y for series in growth.values() for y in series})
-    level, index = 1.0, {}
-    for year in years:
-        if year < first_year:
-            continue
-        if drop_wars and (1914 <= year <= 1919 or 1939 <= year <= 1949):
-            continue
-        factors = [s[year] for s in growth.values()
-                   if year in s and 0.2 < s[year] < 5.0]
-        if len(factors) < 8:
-            continue
-        level *= statistics.median(factors) if robust else sum(factors) / len(factors)
-        index[year] = level
+# In MSCI World but not in JST: Hong Kong, Singapore, Israel, New Zealand and
+# Austria, about 1.1% between them. Dropped, and the weights renormalised.
 
-    points = sorted(index.items())
-    if len(points) < 25:
+WAR_YEARS = frozenset(range(1914, 1920)) | frozenset(range(1939, 1950))
+
+# Start years. Nine rather than four, because a spread measured on four points
+# is a claim about four points.
+STARTS = (1870, 1880, 1890, 1900, 1910, 1920, 1930, 1950, 1960)
+
+# Shiller says real earnings per share grew 0.52 points a year faster than real
+# dividends over this history, because American payout ratios fell for a
+# century as buybacks replaced dividends. JST carries dividends and the thing
+# being checked is earnings, so the wedge has to be added before the comparison
+# means anything. It is stable: +0.47, +0.47, +0.65 and +0.50 from 1870, 1900,
+# 1920 and 1950.
+EPS_WEDGE = 0.52
+
+# What the Italian configuration uses, and what AQR publish for the same index.
+CONFIG_GROWTH = 2.286
+AQR_GLOBAL_GROWTH = 2.60
+
+# The American estimator's own sensitivity: its trend moves this much when the
+# window changes from ninety years to a hundred and ten.
+US_WINDOW_SENSITIVITY = 0.25
+
+
+def slope(points: dict[int, float]) -> float | None:
+    """The annual growth rate implied by the OLS slope of the log level."""
+    pairs = sorted(points.items())
+    if len(pairs) < 25:
         return None
-    xs = [y for y, _ in points]
-    ys = [math.log(v) for _, v in points]
+    xs = [x for x, _ in pairs]
+    ys = [math.log(v) for _, v in pairs]
     n = len(xs)
     mean_x, mean_y = sum(xs) / n, sum(ys) / n
     numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
@@ -172,10 +215,111 @@ def trend(growth, first_year: int, robust: bool, drop_wars: bool):
     return math.exp(numerator / denominator) - 1
 
 
+def country_levels(growth, first_year: int, drop_wars: bool):
+    """Each country's real dividend level, chained from its growth factors.
+
+    Only countries covering the whole window are kept. One appearing halfway
+    through would inject its weight at that point, which is a rebalance by
+    another name and the bias this file already had once.
+    """
+    kept = {}
+    for iso in WEIGHTS:
+        if iso not in growth:
+            continue
+        level, index = 1.0, {}
+        for year in sorted(growth[iso]):
+            if year < first_year or (drop_wars and year in WAR_YEARS):
+                continue
+            factor = growth[iso][year]
+            if not 0.2 < factor < 5.0:
+                continue
+            level *= factor
+            index[year] = level
+        years = sorted(index)
+        if (years and years[0] <= first_year + 3 and years[-1] >= 2015
+                and len(index) >= 25):
+            kept[iso] = index
+    return kept
+
+
+def basket(levels, pin: str):
+    """A fixed basket of the country series, normalised at one end or the other.
+
+    Pinning at TODAY is what a cap-weighted index is: its dividend is the sum
+    of its constituents' dividends and today's weights are a fact. Running that
+    backwards asks what today's survivors were paying a century ago, which is
+    hindsight. Pinning at the START instead hands 1870 an index that is 72%
+    American. Neither is right, and the gap between them is the point.
+    """
+    if not levels:
+        return {}
+    common = sorted(set.intersection(*(set(v) for v in levels.values())))
+    if not common:
+        return {}
+    at = common[-1] if pin == "today" else common[0]
+    return {year: sum(WEIGHTS[iso] * series[year] / series[at]
+                      for iso, series in levels.items())
+            for year in common}
+
+
+def gdp_shares(path: Path):
+    """Each country's share of the sample's GDP, year by year.
+
+    A weighting that needs to know nothing about today, as a check on whether
+    knowing about today is carrying the answer. Nominal GDP in local currency
+    is not comparable across countries, so it is converted at the exchange rate
+    against the dollar that JST carries beside it.
+    """
+    rows, cells = read_rows(path)
+    index = {name: i for i, name in cells(rows[0]).items()}
+    if "gdp" not in index or "xrusd" not in index:
+        return None
+    raw: dict[int, dict[str, float]] = defaultdict(dict)
+    for row in rows[1:]:
+        cell = cells(row)
+        try:
+            year = int(float(cell[index["year"]]))
+            iso = cell[index["iso"]]
+            gdp = float(cell[index["gdp"]])
+            rate = float(cell[index["xrusd"]])
+        except (KeyError, ValueError):
+            continue
+        if gdp > 0 and rate > 0 and iso in WEIGHTS:
+            raw[year][iso] = gdp / rate
+    shares = {}
+    for year, by_iso in raw.items():
+        total = sum(by_iso.values())
+        if total > 0:
+            shares[year] = {i: v / total * 100.0 for i, v in by_iso.items()}
+    return shares
+
+
+def gdp_weighted(growth, shares, first_year: int, drop_wars: bool):
+    """Weights follow GDP share each year, so they know nothing about today."""
+    years = sorted({y for series in growth.values() for y in series})
+    level, index = 1.0, {}
+    for year in years:
+        if year < first_year or (drop_wars and year in WAR_YEARS):
+            continue
+        weights = shares.get(year)
+        if not weights:
+            continue
+        pairs = [(weights[iso], series[year])
+                 for iso, series in growth.items()
+                 if iso in weights and year in series
+                 and 0.2 < series[year] < 5.0]
+        if len(pairs) < 8:
+            continue
+        total = sum(w for w, _ in pairs)
+        level *= sum(w * g for w, g in pairs) / total
+        index[year] = level
+    return index
+
+
 def main() -> int:
     path = find_dataset(os.environ.get(JST_ENV))
     if path is None:
-        print("The Jordà-Schularick-Taylor dataset was not found.")
+        print("The Jorda-Schularick-Taylor dataset was not found.")
         print("  looked in: %s"
               % ", ".join(str(c) for c in dataset_candidates(None)))
         print(f"  Download {DATASET} from {JST_URL} and put it at one of those")
@@ -183,53 +327,73 @@ def main() -> int:
         return 0
 
     print("Global real dividend growth, from %s" % path.name)
-    print("=" * 74)
+    print("=" * 78)
     growth = annual_real_dividend_growth(path)
     years = sorted({y for s in growth.values() for y in s})
-    print("  %d countries, %d to %d\n" % (len(growth), years[0], years[-1]))
+    covered = sum(w for iso, w in WEIGHTS.items() if iso in growth)
+    print("  %d countries, %d to %d, covering %.1f%% of MSCI World by weight"
+          % (len(growth), years[0], years[-1], covered))
+    print("  War years are dropped throughout: 1914 to 1919 and 1939 to 1949.\n")
 
-    windows = (1870, 1920, 1950, 1970)
-    print("%-38s %8s %8s %8s %8s" % ("construction", *windows))
-    spreads = {}
-    for robust in (False, True):
-        for drop_wars in (False, True):
-            label = ("%s across countries%s"
-                     % ("median" if robust else "mean",
-                        ", wars dropped" if drop_wars else ""))
-            values = [trend(growth, first, robust, drop_wars) for first in windows]
-            shown = ["%.2f%%" % (v * 100) if v is not None else "   -"
-                     for v in values]
-            real = [v * 100 for v in values if v is not None]
-            spreads[label] = max(real) - min(real)
-            print("%-38s %8s %8s %8s %8s" % (label, *shown))
+    shares = gdp_shares(path)
+    schemes = [
+        ("weights pinned at today",
+         lambda first: slope(basket(country_levels(growth, first, True),
+                                    "today"))),
+        ("weights pinned at the start",
+         lambda first: slope(basket(country_levels(growth, first, True),
+                                    "start"))),
+    ]
+    if shares:
+        schemes.append(("GDP share, year by year",
+                        lambda first: slope(gdp_weighted(growth, shares,
+                                                         first, True))))
 
-    best = min(spreads, key=spreads.get)
-    spread = spreads[best]
+    print("  %-28s %s" % ("weighting scheme",
+                          " ".join("%6d" % s for s in STARTS)))
+    envelope = []
+    for label, estimate in schemes:
+        values = [estimate(first) for first in STARTS]
+        real = [v * 100 for v in values if v is not None]
+        envelope += real
+        print("  %-28s %s   %.2f to %.2f"
+              % (label,
+                 " ".join("%6s" % ("%.2f" % (v * 100) if v is not None else "-")
+                          for v in values),
+                 min(real), max(real)))
+
+    width = max(envelope) - min(envelope)
     print()
-    print("  The most stable construction is the %s," % best)
-    print("  and it still moves %.2f points depending on the start year." % spread)
+    print("  The envelope is %.2f%% to %.2f%%, which is %.1f points wide."
+          % (min(envelope), max(envelope), width))
     print("  The American estimator moves %.2f points when its window changes"
           % US_WINDOW_SENSITIVITY)
-    print("  by twenty years, so this is roughly %.0f times as sensitive to a"
-          % (spread / US_WINDOW_SENSITIVITY))
-    print("  choice nobody can justify. That is why the Italian variant uses")
-    print("  AQR's figure and treats this as the check on it rather than the")
-    print("  other way round.")
-
-    low = min(v for v in (trend(growth, f, True, True) for f in windows)
-              if v is not None)
-    high = max(v for v in (trend(growth, f, True, True) for f in windows)
-               if v is not None)
-    inside = low <= AQR_GLOBAL_GROWTH <= high
+    print("  by twenty years, so the weighting choice alone is %.0f times as"
+          % (width / US_WINDOW_SENSITIVITY))
+    print("  large as that, and no weighting here is the right one.")
     print()
-    print("  This reconstruction, robust, spans   %.2f%% to %.2f%%"
-          % (low * 100, high * 100))
-    print("  AQR's global real EPS growth         %.2f%%"
-          % (AQR_GLOBAL_GROWTH * 100))
-    print("  %s" % ("AQR sits inside the range, so the borrowed number is "
-                    "corroborated" if inside else
-                    "AQR sits OUTSIDE the range, which needs explaining"))
-    return 0 if inside else 1
+    print("  A fixed basket of countries is not an index. An index")
+    print("  reconstitutes, dropping what stops paying and admitting what")
+    print("  starts, and JST publishes country index returns rather than the")
+    print("  world index's constituents, so that cannot be reproduced.")
+    print()
+    print("  These are DIVIDEND growth. Adding the %+.2f point wedge Shiller"
+          % EPS_WEDGE)
+    print("  measures between real earnings per share and real dividends:")
+    low, high = min(envelope) + EPS_WEDGE, max(envelope) + EPS_WEDGE
+    print("    as earnings per share             %.2f%% to %.2f%%" % (low, high))
+    print("    this variant uses                 %.3f%%   %s"
+          % (CONFIG_GROWTH, "inside" if low <= CONFIG_GROWTH <= high
+             else "OUTSIDE"))
+    print("    AQR publish                       %.2f%%   %s"
+          % (AQR_GLOBAL_GROWTH, "inside" if low <= AQR_GLOBAL_GROWTH <= high
+             else "OUTSIDE"))
+    print()
+    print("  Both sit inside, which is corroboration too weak to lean on. The")
+    print("  growth term is justified in config/market_data_it.toml on other")
+    print("  grounds, and this file is the record of what the alternative")
+    print("  turned out to be worth.")
+    return 0 if low <= CONFIG_GROWTH <= high else 1
 
 
 if __name__ == "__main__":

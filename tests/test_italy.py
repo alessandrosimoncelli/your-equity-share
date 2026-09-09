@@ -82,19 +82,77 @@ def test_the_equity_sleeve_is_global_and_the_configuration_says_so(italy) -> Non
     assert "All-World" in italy.provenance.get("equity_index", "")
 
 
-def test_the_expected_return_is_traceable_to_a_published_source(italy) -> None:
-    """AQR's Global All Country figure, and its two halves.
+def test_the_expected_return_is_equation_five_with_no_repricing(italy) -> None:
+    """A measured dividend yield plus a measured growth rate, and nothing else.
 
-    1.6% dividend yield plus 2.6% real EPS growth is 4.2% compound, which is
-    equation (5) with no repricing, from the one firm that publishes every
-    component. Section 8.3 of the American methodology checks that same firm's
-    US figure against their own report.
+    This variant borrowed AQR's 4.2% whole until September 2026. It now builds
+    the estimate itself, from the same three terms the American variant uses,
+    so that the two answers differ by country rather than by method.
     """
     yield_ = float(italy.provenance["dividend_yield"])
     growth = float(italy.provenance["real_growth"])
     compound = float(italy.provenance["expected_return_compound"])
-    assert yield_ + growth == pytest.approx(compound, abs=5e-4)
-    assert "AQR" in italy.provenance["expected_return_source"]
+    assert yield_ + growth == pytest.approx(compound, abs=5e-6)
+
+
+def test_the_expected_return_is_computed_rather_than_quoted(italy) -> None:
+    """The provenance has to name the measurements, not just a firm.
+
+    A provenance that names a publisher and stops is a citation. This one has
+    to say where each half was measured, because the number is now ours.
+    """
+    source = italy.provenance["expected_return_source"]
+    assert "Computed here" in source
+    assert "MSCI" in source and "Shiller" in source
+
+
+def test_the_growth_term_is_the_american_estimator_unchanged(italy) -> None:
+    """One estimator, two variants, so neither can drift away from the other.
+
+    The Italian growth term is the American variant's hundred-year trend
+    through Shiller, used as the global rate. If that stops being true the two
+    configurations measure growth two different ways, and any gap between
+    their answers stops being about the countries.
+    """
+    sys.path.insert(0, str(ROOT))
+    from tools.refresh_italy import american_growth_trend
+
+    measured, _ = american_growth_trend()
+    if measured is None:
+        pytest.skip("Shiller's workbook is not on this machine")
+    assert float(italy.provenance["real_growth"]) == pytest.approx(
+        measured, abs=5e-6)
+
+
+def test_the_growth_term_says_it_is_american_and_why(italy) -> None:
+    """Using a United States growth rate globally is the deviation to justify."""
+    source = italy.provenance["growth_source"]
+    assert "American" in source
+    assert "2.7%" in source and "2.6%" in source
+
+
+def test_the_dividend_yield_agrees_with_the_firm_that_publishes_one(italy) -> None:
+    """AQR quote 1.6% for this index, and the measurement has to land near it.
+
+    Not a tolerance picked to pass: a global dividend yield is a slow and
+    heavily reported quantity, so a measurement half a point from the one
+    published figure would mean the gross-minus-price construction is wrong.
+    """
+    assert float(italy.provenance["dividend_yield"]) == pytest.approx(
+        0.016, abs=0.003)
+
+
+def test_the_withholding_tax_is_recorded_rather_than_netted_off(italy) -> None:
+    """The yield is gross, so the tax a euro investor pays has to stay visible.
+
+    Shiller's dividend column is gross, so the global yield is measured gross
+    too and the two variants compare. That leaves a real cost of a global
+    sleeve out of the model, and a cost left out without being written down is
+    a cost hidden.
+    """
+    withheld = float(italy.provenance["dividend_yield_withheld"])
+    assert 0.001 < withheld < 0.010
+    assert "withholding" in IT_CONFIG.read_text(encoding="utf-8").lower()
 
 
 def test_the_expected_return_is_the_arithmetic_mean_the_model_takes(italy) -> None:
@@ -241,29 +299,43 @@ def test_a_higher_replacement_rate_raises_the_share_on_its_own(italy) -> None:
     assert italian > american
 
 
-# --- the expected return was borrowed, so it needs an independent check -----
+# --- the global growth rate was attempted and abandoned, so say so ----------
 
-def test_the_borrowed_growth_rate_has_an_independent_cross_check(italy) -> None:
-    """AQR's 2.6% is used, so something must corroborate it.
+def test_the_abandoned_alternative_is_recorded(italy) -> None:
+    """Using a United States growth rate globally needs the failure written down.
 
-    The Italian variant does not compute its own expected return, which is a
-    real dependency on one firm. It is checked against a reconstruction from
-    the Jorda-Schularick-Taylor Macrohistory Database, eighteen advanced
-    economies from 1870, which is free and has nothing to do with AQR.
+    The honest alternative is to measure growth on global data, and it was
+    tried: tools/global_growth.py rebuilds it from the
+    Jorda-Schularick-Taylor Macrohistory Database, eighteen advanced economies
+    from 1870, free and unconnected to AQR. The configuration has to carry what
+    that found, because the reason for not using it IS the justification for
+    the American growth term.
     """
     check = italy.provenance["growth_cross_check"]
     assert "Jorda-Schularick-Taylor" in check
-    assert "1.33%" in check and "3.16%" in check
+    assert "0.89%" in check and "5.43%" in check
 
 
-def test_the_cross_check_says_why_it_is_not_the_estimate(italy) -> None:
-    """A range of 1.82 points is not an estimate, and the config says so.
+def test_the_cross_check_reports_the_whole_envelope(italy) -> None:
+    """One scheme's range is not the uncertainty, and this file said it was.
 
-    The reconstruction is seven times more sensitive to its start year than
-    the American estimator is to its window. That is the reason for borrowing
-    rather than building, and it is a measured reason rather than an assumed
-    one, which is what it was before.
+    An earlier version quoted 1.33% to 3.16%, the spread of a single weighting
+    scheme across start years, as though it were the error on the estimate.
+    The weighting scheme moves the answer four times further than the start
+    year does, and the config now says that and says what it used to say.
     """
     check = italy.provenance["growth_cross_check"]
-    assert "1.82 point" in check
-    assert "seven times" in check
+    assert "4.5 points" in check
+    assert "too flattering" in check
+
+
+def test_the_cross_check_gives_the_structural_reason(italy) -> None:
+    """A number that moves is a symptom. The config has to name the cause.
+
+    A fixed basket of countries is not an index, because an index
+    reconstitutes and JST publishes country index returns rather than the
+    world index's constituents. Without that sentence the cross-check reads as
+    an admission of defeat rather than a finding.
+    """
+    check = italy.provenance["growth_cross_check"]
+    assert "reconstitut" in check

@@ -14,6 +14,12 @@
 # FTSE All-World, through VWCE, is the accumulating UCITS share class most
 # European retail investors actually hold.
 #
+# The EXPECTED RETURN is built here rather than taken from a firm, by the same
+# three-term construction the American variant uses, so that the difference
+# between a 38% American answer and an Italian one is the country rather than
+# the method. Its yield is measured on a euro-priced global index and its
+# growth term is the American estimator, which the field itself argues for.
+#
 # The SAFE ASSET is the longest outstanding euro inflation-linked government
 # bond, traded, which is the same kind of object the American variant reads
 # from FRED. The field itself argues the three compromises that come with it,
@@ -35,28 +41,34 @@
 # added back it has to declare itself, and tests/test_italy.py checks that the
 # field is honest in both directions.
 #
-# EVERYTHING IS IN EURO, and one of the three needs an argument for it rather
-# than an assertion.
+# EVERYTHING IS IN EURO, and one term of one input needs an argument for it
+# rather than an assertion.
 #
 # The volatility is measured on a euro-priced series, so it carries the
 # currency risk an unhedged global fund gives a euro investor without anything
 # further being done to it. The safe rate is a euro government bond's own
-# traded real yield. Neither is in question.
+# traded real yield. The dividend yield is measured on a euro-priced global
+# index. None of the three is in question.
 #
-# The expected return is AQR's, and they publish LOCAL real returns: each
-# market in its own currency, deflated by its own inflation, cap-weighted. The
-# reason that figure can be read as a euro real return is the one they give
-# themselves, in the same report: "one simple assumption is that relative
-# purchasing power is preserved, which implies the expected spot currency
-# return is equal to the expected inflation differential. Under this
+# The growth term is the exception. It is real growth in UNITED STATES earnings
+# per share, the American variant's own hundred-year trend, used as the global
+# real rate. Reading a dollar real growth rate as a euro real growth rate needs
+# the assumption AQR state for exactly this purpose: "one simple assumption is
+# that relative purchasing power is preserved, which implies the expected spot
+# currency return is equal to the expected inflation differential. Under this
 # assumption, expected real returns are the same regardless of currency."
 #
-# That is an assumption, not a measurement, and it is the weakest link in this
-# configuration. It is defensible over a lifetime, which is the horizon this
-# tool works at, because real exchange rates mean-revert over decades. It is
-# not defensible over five years. A euro investor holding an unhedged world
-# fund can and does experience real currency losses for long stretches, and
-# nothing in the model represents that.
+# That is an assumption, not a measurement, and it remains the weakest link
+# here. It is defensible over a lifetime, which is the horizon this tool works
+# at, because real exchange rates mean-revert over decades. It is not
+# defensible over five years. A euro investor holding an unhedged world fund
+# can and does experience real currency losses for long stretches, and nothing
+# in the model represents that.
+#
+# It is worth noting how much this narrowed. Until September 2026 the whole
+# expected return was AQR's local real figure read as a euro one, so the
+# assumption carried all 4.20% of it. It now carries 2.286% of 3.985%, and the
+# other 1.699% is measured in euro.
 
 [meta]
 generated_at = "2026-09-08T00:00:00+00:00"
@@ -64,15 +76,53 @@ generated_by = "hand, from the sources named below"
 
 [market]
 
-# AQR's expected real return for Global All Country equities as of
-# 31 December 2025: a 1.6% dividend yield plus 2.6% real EPS growth, with no
-# repricing assumed. That is equation (5) of the methodology term for term,
-# from the one firm that publishes every component, and section 8.3 of the
-# American methodology checks their US figure against that same report.
-#   compound        0.0420
-#   volatility      0.1389
-#   arithmetic      0.052107
-expected_stock_real_return = 0.052107
+# COMPUTED HERE, not borrowed. This variant used to take AQR's 4.20% whole,
+# on the argument that no global equivalent of Shiller's series exists. That
+# argument was half right, and the half that was wrong is this line.
+#   dividend yield         0.016989   MSCI ACWI, euro, trailing twelve months
+#   real growth per share  0.022860   100 year trend, Shiller
+#   repricing              0.0000     ratios held constant, stated
+#   compound               0.039849
+#   volatility             0.138942
+#   arithmetic             0.049934   + volatility drag
+#
+# THE YIELD IS MEASURED, from MSCI's own index levels rather than from anyone's
+# forecast. The gross index reinvests dividends and the price index does not,
+# so the gap between their monthly returns is that month's dividend over the
+# price at the start of it, and twelve of those are a trailing yield. That is
+# the same object the American variant divides: Shiller's dividend column over
+# his price. AQR quote 1.6% for this index and the measurement says 1.699%, so
+# the two agree to a tenth of a point.
+#
+# GROSS, not net of withholding tax, because Shiller's dividend column is gross
+# and the two variants have to measure the same object. Withholding costs
+# 0.379 points here and an American holding domestic stock pays none of it, so
+# it is a real cost of a global sleeve that this model does not represent. It
+# is recorded in the provenance rather than netted off, because netting it here
+# would mix a tax into a market return and hide it.
+#
+# THE GROWTH TERM IS THE AMERICAN ONE, unchanged, and that is the deviation
+# this line has to argue for. Three things support it.
+#
+# AQR publish both halves: 2.7% real EPS growth for United States large cap
+# and 2.6% for Global All Country. A tenth of a point apart. The one firm that
+# publishes both measures long-run growth as very nearly the same in each.
+#
+# That is what theory expects. Real growth in earnings per share is a return on
+# retained capital net of share issuance, not a national characteristic, and
+# nothing in a national border makes retained euros compound differently from
+# retained dollars over a lifetime.
+#
+# And the alternative was tried and failed. tools/global_growth.py rebuilds
+# global real dividend growth from 155 years of free data across eighteen
+# countries, and the answer moves 4.5 points across weighting schemes that are
+# equally defensible, against 0.25 points for this estimator. The reason is
+# structural and is written up in that file: a fixed basket of countries is not
+# an index, because an index reconstitutes and a basket cannot.
+#
+# What this borrows from AQR is therefore an argument, not a number, and the
+# argument is checkable: it is their own two published figures.
+expected_stock_real_return = 0.049934
 
 # Measured, and it is a TRADED real yield rather than a constructed one.
 #
@@ -143,12 +193,14 @@ variant = "it"
 provisional_fields = ""
 expected_return_method = "building blocks, global"
 expected_return_basis = "arithmetic mean, converted from compound"
-expected_return_compound = 0.042000
-expected_return_source = "AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 31 December 2025: a 1.6% dividend yield plus 2.6% real EPS growth, no repricing"
-dividend_yield = 0.016
-real_growth = 0.026
-growth_cross_check = "Rebuilt independently from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The most stable construction available, a median across countries with the war years dropped, spans 1.33% to 3.16% depending on the start year, and AQR's 2.6% sits inside that. It is a check rather than the estimate because a 1.82 point swing on an unjustifiable choice is not a measurement: the American estimator moves 0.25 points over a comparable change of window, so this is seven times as sensitive. tools/global_growth.py recomputes it."
-currency_basis = "EUR. The volatility is measured on a euro-priced series and the safe rate is a euro government bond's traded real yield. The expected return is AQR's local real figure, read as a euro real figure on their own stated assumption that relative purchasing power is preserved, under which expected real returns are the same regardless of currency."
+expected_return_compound = 0.039849
+expected_return_source = "Computed here, not borrowed. A 1.6989% trailing dividend yield of MSCI All Country World in euro, measured over 20250829 to 20260831 from the gap between MSCI's gross and price index levels, plus 2.2860% real growth in earnings per share, the 100-year trend through Shiller to 2026-06-01 that the American variant uses, plus zero repricing. AQR publish 4.20% for the same index built the same way, so this is -0.22 points from theirs."
+dividend_yield = 0.016989
+dividend_yield_withheld = 0.003794
+real_growth = 0.022860
+growth_source = "The American variant's own estimator, unchanged: the 100-year trend through Shiller's real earnings per share. Used as the global rate on AQR's evidence that the two are the same to a tenth of a point, 2.7% for United States large cap against 2.6% for Global All Country, and on the argument that real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic."
+growth_cross_check = "The alternative was tried and it failed, which is why the growth term is the American one. tools/global_growth.py rebuilds global real dividend growth from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The answer depends on the weighting scheme far more than on the data: weights pinned at today give 0.89% to 1.52%, weights pinned at the start of the window give 1.86% to 3.04%, and GDP shares each year give 2.77% to 5.43%, an envelope 4.5 points wide against 0.25 points for the American estimator, and keeping the war years rather than dropping them widens it further. The reason is structural. A fixed basket of countries is not an index, because an index reconstitutes and drops what stops paying, and JST publishes country index returns rather than the world index's constituents, so reconstitution cannot be reproduced. An earlier version of this file quoted a single scheme's 1.33% to 3.16% as the uncertainty, which was too flattering by a factor of four. Both this variant's 2.286% and AQR's 2.6% fall inside the envelope, which is corroboration too weak to lean on and is reported as such."
+currency_basis = "EUR. The dividend yield is measured on a euro-priced global index, the volatility is measured on a euro-priced series, and the safe rate is a euro government bond's traded real yield. Those three are euro figures by construction. The growth term is real growth in United States earnings per share, used as the global real rate, and that is the one place a cross-currency assumption still lives: it holds if relative purchasing power is preserved over a lifetime, which is AQR's own stated assumption for reading local real returns as any-currency real returns. It applies to one term of three rather than to the whole estimate, which is narrower than the previous version of this file, where the entire expected return was a local real figure read as a euro one."
 equity_index = "FTSE All-World"
 real_risk_free_source = "DE0001030575, Bund/euro-i, the longest outstanding euro inflation-linked government bond, 19.6 years remaining, traded real yield 1.4906% from the German finance agency. Cross-checked against the ECB AAA 30-year nominal of 3.7842% on 2026-09-07 deflated by the ECB Survey of Professional Forecasters longer-term HICP expectation of 2.0369% for 2026-Q3, which gives 1.7125%. The two bracket the rate: the traded yield is biased low by scarcity, the deflated one high by an inflation risk premium booked as return."
 volatility_source = "Yahoo daily closes of VWCE.DE, 5 years, dividend adjusted"
