@@ -75,6 +75,7 @@ from your_equity_share.expected_return import (  # noqa: E402
     arithmetic_from_compound,
 )
 from your_equity_share.providers import read_xls_sheet  # noqa: E402
+from your_equity_share.taxes import ITALY_TAX, NO_TAX, TaxRegime  # noqa: E402
 
 WORKBOOK = ROOT / "data" / "shiller.xls"
 
@@ -132,25 +133,59 @@ def load():
 
 
 def monthly_returns(rows):
-    """Real total return on equities and on a ten-year bond, month by month.
+    """Each month's return, split into the parts tax treats differently.
+
+    Income and capital are separated because they are taxed differently and at
+    different times: a dividend and a coupon are taxed the year they arrive, a
+    capital gain only when it is realised. Everything is NOMINAL, because that
+    is what tax is charged on. The real series is kept alongside for the
+    volatility estimate and for reporting.
 
     The bond is a constant-maturity par bond, priced the standard way: it earns
     a twelfth of last month's yield and gains the change in yield times its
-    modified duration. Deflated by realised inflation, because that is what a
-    holder actually kept.
+    modified duration.
     """
     for a, b in zip(rows, rows[1:]):
-        equity = ((b["real_price"] + b["real_dividend"] / 12.0)
-                  / a["real_price"]) - 1.0
-        bond = None
+        b["inflation"] = b["cpi"] / a["cpi"]
+        b["equity_price_return"] = b["price"] / a["price"] - 1.0
+        b["equity_income"] = (b["dividend"] / 12.0) / a["price"]
+        b["equity_return"] = ((b["real_price"] + b["real_dividend"] / 12.0)
+                              / a["real_price"]) - 1.0
+        b["bond_income"] = b["bond_price_return"] = b["bond_return"] = None
         if a["rate"] is not None and b["rate"] is not None:
             y0, y1 = a["rate"] / 100.0, b["rate"] / 100.0
             duration = ((1.0 - (1.0 + y0) ** -BOND_MATURITY) / y0
                         if y0 > 0 else BOND_MATURITY)
-            nominal = y0 / 12.0 + duration * (y0 - y1)
-            bond = (1.0 + nominal) / (b["cpi"] / a["cpi"]) - 1.0
-        b["equity_return"], b["bond_return"] = equity, bond
+            b["bond_income"] = y0 / 12.0
+            b["bond_price_return"] = duration * (y0 - y1)
+            b["bond_return"] = ((1.0 + y0 / 12.0 + duration * (y0 - y1))
+                                / b["inflation"] - 1.0)
     return rows[1:]
+
+
+# WHAT IT COST TO DO THIS, by era, one way, on the value actually traded.
+# Commissions were negotiated and high before May Day 1975, fell through the
+# following decades, and are now a few basis points on an index fund. Charging
+# today's five basis points to 1901 would be the cheapest way to flatter a rule
+# that trades against one that does not.
+def trading_cost(year):
+    if year < 1975:
+        return 0.0075
+    if year < 2000:
+        return 0.0025
+    return 0.0005
+
+
+# WHAT IT COST TO HOLD IT. Index funds did not exist before 1976, so the
+# alternative was a managed fund or a hand-built portfolio, neither cheap. This
+# is charged to every strategy equally, so it lowers all the levels and leaves
+# the comparison alone.
+def holding_cost(year):
+    if year < 1976:
+        return 0.0060
+    if year < 2000:
+        return 0.0030
+    return 0.0007
 
 
 def trend(values):
@@ -241,7 +276,8 @@ def share(rows, index, gamma, lag, growth_years, freeze=None, running=None):
     return max(0.0, min(1.0, merton_share(mu, mean_safe, gamma, sigma)))
 
 
-def simulate(rows, weight_at, every, start=0, stop=None):
+def simulate(rows, weight_at, every, start=0, stop=None, net=True,
+             tax=None, costs=True):
     """Hold a target weight, let it drift, reset it every `every` months.
 
     `start` and `stop` bound the TRADING, not the data. The signal keeps the
@@ -249,9 +285,24 @@ def simulate(rows, weight_at, every, start=0, stop=None):
     entitled to every observation before 1971. Slicing the rows instead, which
     this file did first, both starved the estimator and made it re-serve its
     own thirty-year warm-up inside the slice.
+
+    NET OF EVERYTHING when `net`. Dividends and coupons are taxed as they
+    arrive. Capital gains are taxed only when a rebalance sells, which is the
+    charge a rule that trades pays and a fixed weight largely does not. An
+    annual levy on value, the imposta di bollo, is taken from both. Trading
+    costs are charged on the value traded, at the era's rate.
+
+    Run in NOMINAL money and deflated at the end, because tax falls on nominal
+    income and nominal gains. Taxing a real return would forgive the tax on
+    inflation, which is most of the bill in an inflationary decade.
     """
-    wealth, path, weights = 1.0, [], []
-    equity = bond = None
+    tax = tax if tax is not None else ITALY_TAX
+    equity_tax = tax.other_financial_income_rate if net else 0.0
+    bond_tax = tax.government_bond_rate if net else 0.0
+    levy = tax.wealth_tax_rate if net else 0.0
+
+    nominal, deflator, path, weights = 1.0, 1.0, [], []
+    equity = bond = basis = None
     target = None
     stop = len(rows) if stop is None else stop
     for i, row in enumerate(rows):
@@ -259,12 +310,13 @@ def simulate(rows, weight_at, every, start=0, stop=None):
             continue
         if row.get("equity_return") is None or row.get("bond_return") is None:
             continue
+        year = row["ym"] // 12
+
         if target is None or i % every == 0:
             # DECIDED ON DATA THROUGH i-1, THEN EARNS MONTH i's RETURN. Asking
             # for the weight at i and then applying rows[i]'s return would set
             # the allocation using a month that has already happened, which is
             # a one-month look-ahead and was in the first version of this file.
-            # It was worth about a point and a half a year of imaginary skill.
             proposed = weight_at(i - 1) if i >= 1 else None
             # A missing signal holds the previous weight. Skipping the month
             # instead would quietly take the strategy out of the market, which
@@ -273,12 +325,55 @@ def simulate(rows, weight_at, every, start=0, stop=None):
                 target = proposed
             if target is None:
                 continue
-            equity, bond = wealth * target, wealth * (1.0 - target)
+            if equity is None:
+                equity, bond = nominal * target, nominal * (1.0 - target)
+                basis = equity
+            else:
+                wanted = nominal * target
+                traded = abs(wanted - equity)
+                if wanted < equity and equity > 0:
+                    # Selling realises a share of the unrealised gain, and the
+                    # cost basis falls with the units sold.
+                    sold = equity - wanted
+                    gain = sold * max(0.0, 1.0 - basis / equity)
+                    charge = gain * equity_tax if net else 0.0
+                    basis -= sold * (basis / equity)
+                    equity, bond = wanted, bond + sold - charge
+                    nominal -= charge
+                elif wanted > equity:
+                    bought = wanted - equity
+                    equity, bond = wanted, bond - bought
+                    basis += bought
+                if net and costs and traded > 0:
+                    fee = traded * trading_cost(year)
+                    bond -= fee
+                    nominal -= fee
+
         weights.append(target)
-        equity *= 1.0 + row["equity_return"]
-        bond *= 1.0 + row["bond_return"]
-        wealth = equity + bond
-        path.append((row["ym"], wealth))
+
+        # Income first, taxed as it arrives, then reinvested in its own sleeve.
+        dividend = equity * row["equity_income"] * (1.0 - equity_tax)
+        coupon = bond * row["bond_income"] * (1.0 - bond_tax)
+        equity *= 1.0 + row["equity_price_return"]
+        bond *= 1.0 + row["bond_price_return"]
+        equity += dividend
+        basis += dividend  # taxed already, so it is new basis
+        bond += coupon
+
+        if net and costs:
+            drag = holding_cost(year) / 12.0
+            equity *= 1.0 - drag
+            bond *= 1.0 - drag
+            basis *= 1.0 - drag
+        if net:
+            monthly_levy = levy / 12.0
+            equity *= 1.0 - monthly_levy
+            bond *= 1.0 - monthly_levy
+            basis *= 1.0 - monthly_levy
+
+        nominal = equity + bond
+        deflator *= row["inflation"]
+        path.append((row["ym"], nominal / deflator))
     return path, weights
 
 
@@ -352,6 +447,12 @@ def report(title, rows, gamma, lag, growth_years, every, start=0, stop=None):
         "100% equities": simulate(rows, lambda i: 1.0, every, begin, stop),
         "100% bonds": simulate(rows, lambda i: 0.0, every, begin, stop),
     }
+    gross = {
+        "model, dynamic": simulate(rows, dyn, every, begin, stop, net=False)[0],
+        "its own average, fixed":
+            simulate(rows, lambda i: average, every, begin, stop, net=False)[0],
+        "60/40": simulate(rows, lambda i: 0.60, every, begin, stop, net=False)[0],
+    }
     bond_path = runs["100% bonds"][0]
     print("\n%s" % title)
     print("  %-24s %8s %8s %9s %7s %8s"
@@ -371,9 +472,24 @@ def report(title, rows, gamma, lag, growth_years, every, start=0, stop=None):
     turnover = sum(moves) / years if years else 0.0
     print("  %.0f years, %.1f independent 30-year periods, average weight %.1f%%"
           % (years, years / 30.0, average * 100))
-    print("  weight ranged %.0f%% to %.0f%%, turnover %.1f%% of the portfolio "
-          "a year, charged at zero"
+    print("  weight ranged %.0f%% to %.0f%%, turnover %.1f%% of the portfolio a year"
           % (min(weights) * 100, max(weights) * 100, turnover * 100))
+
+    # What the costs took, and from whom. The rule that trades should pay more,
+    # and the size of that bill is the whole question.
+    print("  %-24s %9s %9s %9s" % ("what costs took", "gross", "net", "taken"))
+    for name in ("model, dynamic", "its own average, fixed", "60/40"):
+        g = metrics(gross[name], gamma)
+        n = out.get(name)
+        if g and n:
+            print("  %-24s %8.2f%% %8.2f%% %8.2f points"
+                  % (name, g["annual"] * 100, n["annual"] * 100,
+                     (g["annual"] - n["annual"]) * 100))
+    edge_gross = (metrics(gross["model, dynamic"], gamma)["ce"]
+                  - metrics(gross["its own average, fixed"], gamma)["ce"])
+    edge_net = out["model, dynamic"]["ce"] - out["its own average, fixed"]["ce"]
+    print("  the conditioning is worth %+.2f points of CE gross, %+.2f net"
+          % (edge_gross * 100, edge_net * 100))
     return out, average, weights
 
 
