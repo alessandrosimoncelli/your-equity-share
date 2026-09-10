@@ -52,38 +52,41 @@ Euro area HICP is not Italian HICP. Only BTP Italia tracks Italian inflation,
 at five years and retail, so the deflator is approximate in a way an
 American's is not.
 
-THE EXPECTED RETURN is AQR's published figure for Global All Country, refreshed
-once a year when they publish it in January as of the previous 31 December.
-That is a deliberate choice of the simple thing: they publish every component,
-they assume no repricing, and that is equation (5) term for term.
+THE EXPECTED RETURN is built here, by the construction the American variant
+uses, and AQR's published figure is the cross-check rather than the estimate.
 
-No firm publishes the same decomposition more often. The houses that update
-quarterly or monthly all assume valuations revert towards a fair value, which
-is a different estimator, so switching to one for the sake of freshness would
-change the method rather than refresh the number.
+This file took AQR's 4.20% whole until September 2026. What ended that is
+their own sentence about it: "We present local real (inflation-adjusted) and
+nominal annual compound rates of return for a horizon of 5 to 10 years. For
+multi-decade forecast horizons their impact is diluted, so theory and long-term
+historical averages may matter more in judging expected returns." Both halves
+of their number are built to ten years and this model prices a lifetime.
 
-So the halves are checked here instead, every time this runs, against data that
-costs nothing:
+A current yield plus a long-run growth rate with no repricing carries no
+horizon at all, because nothing in it forecasts when anything happens. It is
+the same number at ten years or at thirty, and Table 7 of the American
+methodology shows it is also the one with the lowest error at thirty.
 
   The DIVIDEND YIELD is measured from MSCI's own index levels. The gross index
   reinvests dividends and the price index does not, so the gap between their
-  returns over a month is that month's dividend as a fraction of the starting
-  price, and twelve of them are a trailing yield. That is the same object as
-  Shiller's dividend column over his price. It currently lands a tenth of a
-  point from AQR's quote.
+  returns over a month is that month's dividend, and twelve of those over
+  TODAY's price are a trailing yield. Over today's price because that is the
+  denominator Shiller's column already has: the three plausible denominators
+  differ by a third of a point.
 
   Gross rather than net of withholding tax, because Shiller's column is gross
   and the two variants have to measure one thing one way. The net figure is
   printed beside it, because the gap is a real cost a euro investor pays on a
   global fund and an American holding domestic stock does not.
 
-  The GROWTH RATE is checked against the American variant's own hundred-year
-  trend through Shiller. Using a United States growth rate for a global index
-  is defensible on AQR's own evidence, since they publish 2.7% for United
-  States large cap against 2.6% for Global All Country.
+  The GROWTH RATE is the American variant's own hundred-year trend through
+  Shiller, used unchanged. tools/us_vs_global.py measures what that
+  substitution costs and finds it biases the growth term up by a tenth to half
+  a point.
 
-If either half drifts more than a third of a point, the report says so, which
-is the signal to go and read AQR's current report rather than wait for January.
+AQR's two halves are still fetched and compared on every run. If either drifts
+more than a third of a point from ours, the report says so, which is the signal
+that one of the two has moved and their current report is worth reading.
 
 THE TAX SECTION prices what Italy does to the two assets: 12.5% on government
 bonds against 26% on everything else, both on nominal income so inflation is
