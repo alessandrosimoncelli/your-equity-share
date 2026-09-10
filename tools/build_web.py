@@ -8,7 +8,7 @@ opens immediately.
 
     index.html        the tool, hand written
     model.js          the model, ported from Python
-    market.json       the three numbers, from config/market_data.toml
+    market.json       the three numbers, from variants/us/market_data.toml
     methodology.html  the technical document the footer links to
 
 The earlier build shipped Streamlit compiled to WebAssembly, which ran the
@@ -50,17 +50,17 @@ TITLES = {"methodology.html": "Equity Share Methodology"}
 COPIED = {
     "src/web/index.html": "index.html",
     "src/js/model.js": "model.js",
-    "docs/methodology.html": "methodology.html",
+    "variants/us/methodology.html": "methodology.html",
 }
 
-CONFIG = ROOT / "config" / "market_data.toml"
+CONFIG = ROOT / "variants" / "us" / "market_data.toml"
 
 # The Italian variant, read only so the page can print its expected return
 # beside the American one. The tool itself runs on CONFIG; this is context,
 # because "3.38% real" means little until a reader can see what the same
 # construction produces for a global index. Optional on purpose: a checkout
 # without the Italian file still builds.
-CONFIG_GLOBAL = ROOT / "config" / "market_data_it.toml"
+CONFIG_GLOBAL = ROOT / "variants" / "it" / "market_data.toml"
 
 
 def as_document(body: str, title_override: str | None = None) -> str:
@@ -70,7 +70,7 @@ def as_document(body: str, title_override: str | None = None) -> str:
     produced a JavaScript file beginning "<!doctype html>" and a site that
     failed to boot.
 
-    docs/methodology.html is written without a doctype or a head, because the
+    variants/us/methodology.html is written without a doctype or a head, because the
     artifact host supplies both. A static host supplies neither, and the file
     is also opened straight off disk, so the copy written here needs its own.
     """
@@ -143,7 +143,7 @@ def build_market_json() -> str:
     """Convert the TOML the model reads into the JSON the page fetches.
 
     The page cannot parse TOML and should not have to. This keeps
-    config/market_data.toml the single source that `update.py` writes and that
+    variants/us/market_data.toml the single source that `update.py` writes and that
     every Python entry point reads, and makes the monthly refresh a matter of
     replacing one small file in the deploy.
     """

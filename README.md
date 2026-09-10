@@ -14,7 +14,7 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 ```
 
 - **What each input means:** [docs/inputs.md](docs/inputs.md)
-- **Full derivation and sources:** [docs/methodology.html](docs/methodology.html)
+- **Full derivation and sources:** [variants/us/methodology.html](variants/us/methodology.html)
 
 **For** money you have invested and do not need on any particular date, meant
 to last the rest of a life. United States only: the earnings profile, the
@@ -262,4 +262,4 @@ implementation and grants no rights in their papers.
 
 Educational and illustrative only. Not investment, financial, tax or legal
 advice, and no advisory relationship is created by its use. Outputs depend
-entirely on the assumptions documented in `docs/methodology.html`.
+entirely on the assumptions documented in `variants/us/methodology.html`.

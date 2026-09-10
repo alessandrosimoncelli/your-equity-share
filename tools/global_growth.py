@@ -57,7 +57,7 @@ the uncertainty. It is a quarter of the uncertainty.
 
 SO WHAT IS IT FOR. It brackets. The variant's 2.286% and AQR's 2.6% both fall
 inside the envelope, which is corroboration too weak to lean on and is reported
-as exactly that. The growth term is justified in config/market_data_it.toml on
+as exactly that. The growth term is justified in variants/it/market_data.toml on
 other grounds: AQR publish 2.7% for United States large cap and 2.6% for Global
 All Country, a tenth of a point apart, and long-run real growth in earnings per
 share is a return on retained capital rather than a national characteristic.
@@ -390,7 +390,7 @@ def main() -> int:
              else "OUTSIDE"))
     print()
     print("  Both sit inside, which is corroboration too weak to lean on. The")
-    print("  growth term is justified in config/market_data_it.toml on other")
+    print("  growth term is justified in variants/it/market_data.toml on other")
     print("  grounds, and this file is the record of what the alternative")
     print("  turned out to be worth.")
     return 0 if low <= CONFIG_GROWTH <= high else 1

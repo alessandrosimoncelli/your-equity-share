@@ -318,7 +318,7 @@ def render_config(**f) -> str:
             else []
         ),
         'expected_return_source = "dividend yield plus long-run real growth in '
-        'earnings per share, no repricing; see docs/methodology.html section 3"'
+        'earnings per share, no repricing; see variants/us/methodology.html section 3"'
         if f["method"] == "building blocks"
         else 'expected_return_source = "set by hand"',
     ]

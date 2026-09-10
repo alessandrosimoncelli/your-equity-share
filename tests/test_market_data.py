@@ -330,7 +330,7 @@ def test_trim_to_window_keeps_the_most_recent() -> None:
 
 # --- the live config: structure only ---------------------------------------
 #
-# config/market_data.toml is rewritten every time `python update.py` runs, so
+# variants/us/market_data.toml is rewritten every time `python update.py` runs, so
 # these tests check that it is well formed, never what its numbers are.
 
 

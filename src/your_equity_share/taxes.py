@@ -7,7 +7,7 @@ resident, it applies to exactly the two assets this model chooses between, and
 it favours the safe one. So it belongs in the model rather than in a footnote
 telling the reader to adjust the numbers themselves.
 
-It lives here rather than in config/market_data_it.toml for the same reason
+It lives here rather than in variants/it/market_data.toml for the same reason
 ITALY_CALIBRATION lives in human_capital.py: a tax rate is not market data. It
 does not go stale in days, no provider publishes it, and refreshing the market
 figures must not silently rewrite it.

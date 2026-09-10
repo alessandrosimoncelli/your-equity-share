@@ -6,7 +6,7 @@
                         --wealth 500000 --risk-aversion 5
     python recommend.py --age 45 --wage 100000 --wealth 500000 --glide
 
-Market data comes from config/market_data.toml. Run `python update.py` first if
+Market data comes from variants/us/market_data.toml. Run `python update.py` first if
 it is stale; this script says so if it is.
 
 See docs/inputs.md for what each figure means. The short version: wages are
@@ -118,7 +118,7 @@ def print_report(result, market, household) -> None:
     if result.is_capped:
         print("  The model wants more than 100%, meaning it would borrow to")
         print("  invest. The cap is imposed from outside; the model did not")
-        print("  produce it. See docs/methodology.html section 4.")
+        print("  produce it. See variants/us/methodology.html section 4.")
         print()
 
     print(THIN)

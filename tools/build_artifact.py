@@ -102,7 +102,7 @@ def build_tool(methodology_href: str) -> Path:
 
 
 def build_methodology() -> Path:
-    doc = (ROOT / "docs" / "methodology.html").read_text(encoding="utf-8")
+    doc = (ROOT / "variants" / "us" / "methodology.html").read_text(encoding="utf-8")
     OUT.mkdir(exist_ok=True)
     path = OUT / "methodology.html"
     # A distinct title, so the tool and its documentation are told apart in a

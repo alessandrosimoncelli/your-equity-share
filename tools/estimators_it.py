@@ -90,7 +90,7 @@ from your_equity_share.providers import (  # noqa: E402
     parse_shiller_xls,
 )
 
-CONFIG = ROOT / "config" / "market_data_it.toml"
+CONFIG = ROOT / "variants" / "it" / "market_data.toml"
 CACHE = ROOT / "data" / "msci_acwi_eur.json"
 
 MSCI = ("https://app2.msci.com/products/service/index/indexmaster/"
@@ -313,7 +313,7 @@ def main() -> int:
     print("  against the other. The earnings yield does not care how earnings")
     print("  are split, so it is the check. iShares, %s:" % VALUATION_AS_OF)
     ep = {k: 1.0 / v for k, v in PRICE_EARNINGS.items()}
-    american = load_market_data(ROOT / "config" / "market_data.toml")
+    american = load_market_data(ROOT / "variants" / "us" / "market_data.toml")
     mine = {"global": float(market.provenance["expected_return_compound"]),
             "united states": float(
                 american.provenance["expected_return_compound"])}

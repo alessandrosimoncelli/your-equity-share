@@ -268,7 +268,7 @@ def part_two() -> None:
     head(2, "Market data, from the refresh script to the browser")
 
     m = load_market_data()
-    check("config/market_data.toml loads", True,
+    check("variants/us/market_data.toml loads", True,
           f"as of {m.as_of}")
     check("expected real return is plausible",
           0.0 < m.expected_stock_real_return < 0.20,
@@ -376,7 +376,7 @@ def part_three() -> None:
           within_fitted_risk_free(rf) == (lo_r <= r_log <= hi_r),
           f"{r_log:.4%}, grid {lo_r:.0%} to {hi_r:.0%}, "
           f"{'inside' if within_fitted_risk_free(rf) else 'OUTSIDE'}")
-    doc = (ROOT / "docs" / "methodology.html").read_text(encoding="utf-8")
+    doc = (ROOT / "variants" / "us" / "methodology.html").read_text(encoding="utf-8")
     check("the document's figure for today's log safe rate is current",
           f"{r_log:.2%}" in doc, f"{r_log:.2%}, in Table 16")
     lo_g, hi_g = CHOI_FITTED_RISK_AVERSION_RANGE
@@ -494,7 +494,7 @@ def part_four() -> None:
 # 5. The methodology document
 # ---------------------------------------------------------------------------
 
-DOC = ROOT / "docs" / "methodology.html"
+DOC = ROOT / "variants" / "us" / "methodology.html"
 
 # A reference that resolves to a table is not the same as a reference that
 # resolves to the right table. Three entries were retired when section 9

@@ -1,7 +1,7 @@
 """Refresh the euro safe rate, check AQR's return, and price the tax code.
 
     python tools/refresh_italy.py            report only
-    python tools/refresh_italy.py --write    update config/market_data_it.toml
+    python tools/refresh_italy.py --write    update variants/it/market_data.toml
 
 WHY NOT update.py. That script rebuilds a whole configuration from one
 American template and refuses to touch this file, for a reason it learned the
@@ -107,7 +107,7 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "config" / "market_data_it.toml"
+CONFIG = ROOT / "variants" / "it" / "market_data.toml"
 
 sys.path.insert(0, str(ROOT / "src"))
 

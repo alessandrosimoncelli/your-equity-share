@@ -1,6 +1,6 @@
 """The recommendation: how much of the portfolio belongs in equities.
 
-Two layers, as set out in docs/methodology.html.
+Two layers, as set out in variants/us/methodology.html.
 
     layer one   the Merton share: the equity share of TOTAL wealth
     layer two   rescale it, because most of a working household's total wealth
@@ -67,7 +67,7 @@ def merton_share(
 class Household:
     """Everything the model needs about the people.
 
-    Market inputs come separately, from config/market_data.toml. See
+    Market inputs come separately, from variants/us/market_data.toml. See
     docs/inputs.md for what each of these means, in particular that wages are
     after tax and in today's dollars, and that investable net worth excludes
     housing and is net of tax owed on withdrawal.

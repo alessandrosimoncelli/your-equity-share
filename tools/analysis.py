@@ -56,7 +56,7 @@ from your_equity_share.providers import (  # noqa: E402
     parse_shiller_xls,
 )
 
-DOC = ROOT / "docs" / "methodology.html"
+DOC = ROOT / "variants" / "us" / "methodology.html"
 WORKBOOK_NAME = "shiller.xls"
 SHILLER_ENV = "SHILLER_WORKBOOK"
 CALIB_VOL = CGM_CALIBRATION.stock_volatility  # 0.185, Choi's

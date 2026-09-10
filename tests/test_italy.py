@@ -32,7 +32,7 @@ from your_equity_share import (  # noqa: E402
 )
 from your_equity_share.market_data import load_market_data  # noqa: E402
 
-IT_CONFIG = ROOT / "config" / "market_data_it.toml"
+IT_CONFIG = ROOT / "variants" / "it" / "market_data.toml"
 
 
 @pytest.fixture(scope="module")
@@ -335,7 +335,7 @@ def test_the_safe_rate_is_not_italian_paper(italy) -> None:
     Booking it as a risk-free return would raise the rate and lower the
     recommendation while looking prudent.
     """
-    text = Path("config/market_data_it.toml").read_text(encoding="utf-8")
+    text = Path("variants/it/market_data.toml").read_text(encoding="utf-8")
     assert "NOT holding this asset" in text
     assert "0.61 points" in text
 

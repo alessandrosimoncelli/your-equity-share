@@ -59,4 +59,4 @@ volatility_source = "Yahoo daily closes"
 real_risk_free_source = "FRED DFII30"
 real_cash = 0.013679
 buyback_yield_not_counted = 0.015292
-expected_return_source = "dividend yield plus long-run real growth in earnings per share, no repricing; see docs/methodology.html section 3"
+expected_return_source = "dividend yield plus long-run real growth in earnings per share, no repricing; see variants/us/methodology.html section 3"

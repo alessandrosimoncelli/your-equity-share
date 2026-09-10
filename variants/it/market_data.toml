@@ -6,7 +6,7 @@
 # and dropped the provenance saying which were provisional. It now refuses,
 # on the `variant` field below.
 #
-# Three things differ from config/market_data.toml, and one large thing does
+# Three things differ from variants/us/market_data.toml, and one large thing does
 # not.
 #
 # The EQUITY SLEEVE is global rather than the S&P 500, because a euro investor
@@ -14,7 +14,7 @@
 # FTSE All-World, through VWCE, is the accumulating UCITS share class most
 # European retail investors actually hold.
 #
-# The EXPECTED RETURN is built here, by the construction config/market_data.toml
+# The EXPECTED RETURN is built here, by the construction variants/us/market_data.toml
 # uses, because that construction carries no horizon and this model prices a
 # lifetime. AQR's published figure is the cross-check rather than the estimate:
 # it is a good number, and they state it is for five to ten years.
@@ -76,7 +76,7 @@ generated_by = "hand, from the sources named below"
 
 [market]
 
-# BUILT HERE, by the construction config/market_data.toml uses, because that
+# BUILT HERE, by the construction variants/us/market_data.toml uses, because that
 # construction carries no horizon and this model prices a lifetime.
 #   dividend yield         0.015339   MSCI ACWI, euro, trailing over today's price
 #   real growth per share  0.022860   100 year OLS trend through Shiller

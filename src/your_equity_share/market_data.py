@@ -41,7 +41,7 @@ __all__ = [
 ]
 
 DEFAULT_CONFIG_PATH = (
-    Path(__file__).resolve().parents[2] / "config" / "market_data.toml"
+    Path(__file__).resolve().parents[2] / "variants" / "us" / "market_data.toml"
 )
 
 STALE_AFTER_DAYS = 90

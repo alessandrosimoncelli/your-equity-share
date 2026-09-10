@@ -16,7 +16,7 @@ Known defects, reproduced deliberately and corrected in later modules:
    of the human capital layer expect a 1 to 10 scale.
 4. Expected inflation is hardcoded at 2.5% inside `real_risk_free_rate`.
 
-See docs/methodology.html sections 3.2, 2.1, 3.4 and 7.4.
+See variants/us/methodology.html sections 3.2, 2.1, 3.4 and 7.4.
 """
 
 from __future__ import annotations
@@ -141,7 +141,7 @@ def bull_formula_share(inputs: LegacyInputs | None = None) -> float:
     """Cell G9. `=(125-B12-B9*500)/100`.
 
     Reproduced so the baseline covers the worksheet completely. It is not part
-    of the tool's recommendation: see docs/methodology.html Table 6, where the
+    of the tool's recommendation: see variants/us/methodology.html Table 6, where the
     age-based rule costs 2.00% of lifetime consumption against 0.06% for the
     approach this project implements.
     """

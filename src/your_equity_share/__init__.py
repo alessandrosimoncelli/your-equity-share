@@ -2,7 +2,7 @@
 
 Implements the approximation of Choi, Liu and Liu (2025), validated against
 their published spreadsheet. See docs/inputs.md for what each input means and
-docs/methodology.html for the derivation.
+variants/us/methodology.html for the derivation.
 
     from your_equity_share import Household, Person, recommend
     from your_equity_share.market_data import load_market_data

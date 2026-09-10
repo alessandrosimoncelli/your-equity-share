@@ -1,6 +1,6 @@
 # Frozen fixture for the config loader tests.
 #
-# Deliberately NOT the live config/market_data.toml. That file is rewritten
+# Deliberately NOT the live variants/us/market_data.toml. That file is rewritten
 # every time `python update.py` runs, so pinning its values in a test would
 # make the suite fail the moment anyone refreshed the data. Structure is tested
 # against the live file; values are tested against this one.
