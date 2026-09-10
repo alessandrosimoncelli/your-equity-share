@@ -450,3 +450,77 @@ def test_the_measured_yield_uses_todays_price_as_its_denominator() -> None:
 
 def italy_provenance():
     return load_market_data(IT_CONFIG).provenance
+
+
+# --- the Italian methodology, pinned to the configuration -------------------
+#
+# The document quoted a tax table computed before the safe rate changed, and
+# nothing noticed. The American methodology has 87 verifier checks holding its
+# figures to the model; these hold the Italian one to its configuration.
+
+IT_DOC = ROOT / "variants" / "it" / "methodology.html"
+
+
+def _doc() -> str:
+    """The document with its line breaks flattened.
+
+    Prose wraps, so "Cocco, Gomes and Maenhout" is a line break in the middle
+    of a name as often as not, and a test that searches the raw file fails on
+    typography rather than on content.
+    """
+    if not IT_DOC.exists():
+        pytest.skip("the Italian methodology has not been written")
+    raw = IT_DOC.read_text(encoding="utf-8")
+    return " ".join(raw.split())
+
+
+def test_the_italian_methodology_quotes_the_configuration(italy) -> None:
+    """Every headline figure in the document has to be the one in use.
+
+    Written as percentages to four decimals or fewer, the way the document
+    prints them, so a change to the configuration that is not carried into the
+    prose fails here rather than in a reader's head.
+    """
+    doc = _doc()
+    p = italy.provenance
+    expected = {
+        "dividend yield": "%.4f%%" % (float(p["dividend_yield"]) * 100),
+        "growth": "%.4f%%" % (float(p["real_growth"]) * 100),
+        "compound": "%.4f%%" % (float(p["expected_return_compound"]) * 100),
+        "arithmetic": "%.4f%%" % (italy.expected_stock_real_return * 100),
+        "safe rate": "%.4f%%" % (italy.real_risk_free_rate * 100),
+        "volatility": "%.4f%%" % (italy.stock_volatility * 100),
+        "nominal yield": "%.4f%%" % (float(p["nominal_safe_yield"]) * 100),
+        "break-even": "%.4f%%" % (float(p["expected_inflation"]) * 100),
+        "survey": "%.4f%%" % (float(p["expected_inflation_survey"]) * 100),
+    }
+    missing = [name for name, figure in expected.items() if figure not in doc]
+    assert not missing, "the document does not quote: %s" % ", ".join(
+        "%s (%s)" % (n, expected[n]) for n in missing)
+
+
+def test_the_italian_methodology_declares_what_it_cannot_check(italy) -> None:
+    """Two inputs have no external check and the document has to say which.
+
+    A validation document that quietly omits the unvalidated parts is worse
+    than one with no validation section, because it reads as complete.
+    """
+    doc = _doc()
+    assert "What is not validated" in doc
+    assert "Cocco, Gomes and Maenhout" in doc
+    assert "deferral horizon" in doc
+
+
+def test_the_italian_methodology_names_a_source_for_each_number(italy) -> None:
+    """The validation table is the point of the document, so it must be there."""
+    doc = _doc()
+    for source in ("AQR", "OECD", "iShares", "MSCI", "Deutsche Finanzagentur",
+                   "Rogoff", "Domar and Musgrave", "Horizon Actuarial"):
+        assert source in doc, "no citation of %s" % source
+
+
+def test_the_italian_methodology_has_no_em_dashes() -> None:
+    """The same house rule the American document is held to."""
+    doc = _doc()
+    assert "—" not in doc
+    assert "&mdash;" not in doc
