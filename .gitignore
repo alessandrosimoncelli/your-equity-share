@@ -17,3 +17,4 @@ dist/
 # Kept by update.py so tools/analysis.py can recompute the measured tables.
 # It is Shiller and Damodaran data, not this project's, so it is not committed.
 /data/
+.mutate-backup/

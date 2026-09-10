@@ -21,11 +21,25 @@ not a defect worth reporting), and the constants 0 and 1 where they appear as
 list indices, because turning index 0 into index 1 reports a crash rather than
 a silent wrong answer and the crash is not the thing being hunted.
 
-THE SOURCE IS RESTORED WHATEVER HAPPENS. Each module is read once at the start
-and written back in a finally block, and the run ends by verifying every file
-is byte-identical to how it started. If that check ever fails, the run says so
-loudly, because a mutation tester that leaves a mutant behind is worse than no
-mutation tester.
+THE SOURCE IS RESTORED, AND `finally` IS NOT ENOUGH. Each module is read once
+at the start and written back in a finally block, and the run ends by verifying
+every file is byte-identical to how it started.
+
+That was the whole of the protection until a backgrounded run was killed
+part-way through. `finally` does not run when the process is killed, so a
+mutant was left live in expected_return.py and six tests failed until someone
+noticed. A mutation tester that leaves a mutant behind is worse than no
+mutation tester, so there are now three defences instead of one.
+
+  Every original is written to .mutate-backup/ before anything is touched, so
+  a killed run can always be undone from disk.
+
+  A run refuses to start if the package is already modified, because that
+  means a previous run did not finish and starting again would overwrite the
+  only good copy left in the working tree.
+
+  The backup directory is removed only on a clean finish. Its presence is
+  therefore the signal that a run died, and the tool says how to recover.
 
 A NOTE ON READING THE RESULT. A surviving mutant is not automatically a bug.
 Some lines genuinely do not change any observable answer, and some constants
@@ -174,6 +188,29 @@ class Apply(ast.NodeTransformer):
         return node
 
 
+BACKUP = ROOT / ".mutate-backup"
+
+
+def check_clean(targets):
+    """Refuse to start on a tree a previous run may have damaged.
+
+    Starting a second run over a stranded mutant would read the mutant as the
+    original and write it back as "restored", which turns a recoverable
+    accident into a permanent one.
+    """
+    stale = sorted(p.name for p in BACKUP.glob("*.py")) if BACKUP.exists() else []
+    if not stale:
+        return
+    print("A previous run did not finish. %s holds the originals of:"
+          % BACKUP.name)
+    for name in stale:
+        print("  %s" % name)
+    print()
+    print("Recover with:  git checkout -- src/your_equity_share")
+    print("or copy them back by hand, then delete %s and rerun." % BACKUP.name)
+    raise SystemExit(2)
+
+
 def modules(only: str | None) -> list[Path]:
     found = sorted(p for p in PACKAGE.glob("*.py")
                    if p.name != "__init__.py")
@@ -202,7 +239,14 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv[1:])
 
     targets = modules(args.module)
+    check_clean(targets)
     originals = {p: p.read_text(encoding="utf-8") for p in targets}
+
+    # On disk, before anything is mutated, so that a killed process still
+    # leaves a way back.
+    BACKUP.mkdir(exist_ok=True)
+    for path, body in originals.items():
+        (BACKUP / path.name).write_text(body, encoding="utf-8")
     rng = random.Random(SEED)
 
     plan: list[tuple[Path, str, int, int]] = []
@@ -268,9 +312,19 @@ def main(argv: list[str]) -> int:
 
     for path, text in originals.items():
         if path.read_text(encoding="utf-8") != text:
-            print("\n  RESTORE FAILED for %s. Check it before committing."
-                  % path.name)
+            print("\n  RESTORE FAILED for %s. Recover from %s or with"
+                  % (path.name, BACKUP.name))
+            print("  git checkout -- src/your_equity_share")
             broken += 1
+    if not broken:
+        for leftover in BACKUP.glob("*.py"):
+            leftover.unlink()
+        try:
+            BACKUP.rmdir()
+        except OSError:
+            # Windows will not always release the directory, and it does not
+            # matter: check_clean looks for the files, not the folder.
+            pass
 
     print()
     print("=" * 74)
