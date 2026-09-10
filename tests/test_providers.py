@@ -15,6 +15,7 @@ import pytest
 
 from your_equity_share.providers import (
     DataUnavailable,
+    parse_damodaran_components,
     parse_damodaran_erp,
     parse_fred_csv,
     parse_price_json,
@@ -201,3 +202,126 @@ def test_rejects_something_that_is_not_a_workbook() -> None:
 def test_takes_the_most_recent_row_regardless_of_order() -> None:
     day, premium = parse_damodaran_erp(_workbook(44804, 0.0409))
     assert premium == pytest.approx(0.0409)  # row 14, not row 13's 0.0399
+
+
+# --- the payout components, which had no test at all ------------------------
+#
+# Found by tools/mutate.py: parse_damodaran_components was never called by the
+# suite, so every constant and every operator in it was free to be wrong. The
+# mutant that exposed it turned `epoch + timedelta(days=serial)` into
+# `epoch - timedelta(...)`, which dates the observation 1781 instead of 2026
+# and would let the staleness check pass on data two centuries stale.
+
+def _components(serial: int, index: float, trailing: float, smoothed: float,
+                date1904: bool = True) -> bytes:
+    """A workbook with the Historical ERP sheet actually populated.
+
+    The sibling fixture leaves that sheet empty because the premium comes from
+    a different tab. Columns are the ones the parser reads: A the date serial,
+    B the index level, E the ten-year average cash returned, F the trailing
+    twelve months of it.
+    """
+    flag = ' date1904="1"' if date1904 else ""
+    workbook = (
+        '<?xml version="1.0"?><workbook '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        f"<workbookPr{flag}/><sheets>"
+        '<sheet name="Historical ERP" sheetId="1" r:id="rId1"/>'
+        "</sheets></workbook>"
+    )
+    rels = (
+        '<?xml version="1.0"?><Relationships>'
+        '<Relationship Id="rId1" Type="x/worksheet" Target="worksheets/sheet1.xml"/>'
+        "</Relationships>"
+    )
+    # An older row first, and deliberately out of order, so the parser has to
+    # pick by serial rather than by position.
+    rows = (
+        f'<row r="9"><c r="A9"><v>{serial}</v></c><c r="B9"><v>{index}</v></c>'
+        f'<c r="E9"><v>{smoothed * index}</v></c>'
+        f'<c r="F9"><v>{trailing * index}</v></c></row>'
+        f'<row r="10"><c r="A10"><v>{serial - 400}</v></c>'
+        f'<c r="B10"><v>{index / 2}</v></c>'
+        f'<c r="E10"><v>{index / 2 * 0.03}</v></c>'
+        f'<c r="F10"><v>{index / 2 * 0.04}</v></c></row>'
+    )
+    sheet = f'<?xml version="1.0"?><worksheet><sheetData>{rows}</sheetData></worksheet>'
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zf:
+        zf.writestr("xl/workbook.xml", workbook)
+        zf.writestr("xl/_rels/workbook.xml.rels", rels)
+        zf.writestr("xl/worksheets/sheet1.xml", sheet)
+    return buffer.getvalue()
+
+
+def test_reads_the_payout_yields_from_the_latest_row() -> None:
+    """F over B and E over B, taken from the row with the highest serial."""
+    day, trailing, smoothed = parse_damodaran_components(
+        _components(44804, 7686.0, 0.0263, 0.0241))
+    assert trailing == pytest.approx(0.0263)
+    assert smoothed == pytest.approx(0.0241)
+    assert day == date(2026, 9, 1)
+
+
+def test_the_payout_date_is_not_merely_a_number() -> None:
+    """The date has to move the right way and land in the right century.
+
+    This is the assertion the suite was missing. Adding the serial to the epoch
+    gives 2026; subtracting it gives 1781, and nothing else in the file would
+    have noticed the difference.
+    """
+    day = parse_damodaran_components(_components(44804, 7686.0, 0.026, 0.024))[0]
+    assert day.year == 2026
+    assert day > date(2000, 1, 1)
+
+
+def test_the_payout_epoch_flag_is_read_rather_than_assumed() -> None:
+    """The two Excel epochs are four years apart and the workbook says which."""
+    with_1904 = parse_damodaran_components(
+        _components(44804, 7686.0, 0.026, 0.024, date1904=True))[0]
+    with_1900 = parse_damodaran_components(
+        _components(44804, 7686.0, 0.026, 0.024, date1904=False))[0]
+    assert with_1904 == date(2026, 9, 1)
+    assert with_1900 == date(2022, 8, 31)
+
+
+def test_the_later_row_wins_even_when_it_is_not_last() -> None:
+    """The fixture puts the newer row first on purpose."""
+    day = parse_damodaran_components(_components(44804, 7686.0, 0.026, 0.024))[0]
+    assert day == date(2026, 9, 1)
+
+
+def test_rejects_payout_yields_that_cannot_be_right() -> None:
+    """A layout change shows up as an absurd yield, not as a plausible one."""
+    with pytest.raises(DataUnavailable):
+        parse_damodaran_components(_components(44804, 7686.0, 0.45, 0.02))
+    with pytest.raises(DataUnavailable):
+        parse_damodaran_components(_components(44804, 7686.0, 0.02, -0.01))
+
+
+def test_rejects_a_workbook_with_no_payout_rows() -> None:
+    """Rows without the four columns the parser needs are not payout rows.
+
+    Built rather than edited: patching the bytes of a finished zip corrupts its
+    checksum, and the test then passes for the wrong reason.
+    """
+    workbook = (
+        '<?xml version="1.0"?><workbook '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<workbookPr date1904="1"/><sheets>'
+        '<sheet name="Historical ERP" sheetId="1" r:id="rId1"/>'
+        "</sheets></workbook>"
+    )
+    rels = ('<?xml version="1.0"?><Relationships>'
+            '<Relationship Id="rId1" Type="x/worksheet" '
+            'Target="worksheets/sheet1.xml"/></Relationships>')
+    sheet = ('<?xml version="1.0"?><worksheet><sheetData>'
+             '<row r="9"><c r="C9"><v>1</v></c><c r="D9"><v>2</v></c></row>'
+             "</sheetData></worksheet>")
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zf:
+        zf.writestr("xl/workbook.xml", workbook)
+        zf.writestr("xl/_rels/workbook.xml.rels", rels)
+        zf.writestr("xl/worksheets/sheet1.xml", sheet)
+    with pytest.raises(DataUnavailable):
+        parse_damodaran_components(buffer.getvalue())
