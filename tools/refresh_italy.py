@@ -580,6 +580,18 @@ def main(argv: list[str]) -> int:
         return 0
 
     text = CONFIG.read_text(encoding="utf-8")
+    # Stamp the file, or the page reports the date of the last HAND edit
+    # forever. The as-of date is the ECB curve's own observation date, which
+    # is the newest input and the one the safe rate is read off.
+    from datetime import datetime, timezone
+    text = re.sub(r"^as_of = .*$", "as_of = %s" % aaa_date, text,
+                  count=1, flags=re.M)
+    text = re.sub(r'^generated_at = ".*"$', 'generated_at = "%s"'
+                  % datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                  text, count=1, flags=re.M)
+    text = re.sub(r'^generated_by = ".*"$',
+                  'generated_by = "tools/refresh_italy.py"', text,
+                  count=1, flags=re.M)
     numbers = (
         ("expected_stock_real_return", arithmetic),
         ("real_risk_free", real),

@@ -1,3 +1,8 @@
+# FROZEN. The market data variants/us/methodology.html was written with, kept so the document
+# can be checked against the numbers it actually quotes. The tool reads
+# market_data.toml, which refreshes; this file changes only when the
+# document is rewritten against newer data. See variants/README.md.
+
 # Market data for Your Equity Share.
 #
 # Refresh with:  python update.py
@@ -8,7 +13,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-09-29T04:37:57+00:00"
+generated_at = "2026-09-07T22:19:07+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
@@ -27,19 +32,19 @@ generated_by = "update.py"
 # 0.0153. Retiring shares is what makes earnings
 # per share grow, so the growth term already carries them and
 # adding them here would count them twice.
-expected_stock_real_return = 0.049153
+expected_stock_real_return = 0.049198
 
 # FRED DFII30, the 30-year TIPS yield. A real yield
 # already, so no inflation adjustment is applied. Reduce it by your
 # marginal income tax rate if your bonds sit in a taxable account.
-real_risk_free = 0.032200
+real_risk_free = 0.029600
 
 # 5 years of daily adjusted closes of SPY,
-# 1253 returns, annualised.
-stock_volatility = 0.171558
+# 1254 returns, annualised.
+stock_volatility = 0.171808
 market_ticker = "SPY"
 
-as_of = 2026-09-25
+as_of = 2026-09-03
 
 # Where each number came from. The model does not read this section.
 [provenance]
@@ -47,16 +52,16 @@ expected_return_method = "building blocks"
 implied_erp = 0.040900
 erp_as_of = 2026-09-01
 volatility_window_years = 5
-volatility_observations = 1253
+volatility_observations = 1254
 volatility_dividend_adjusted = true
-expected_return_spread = 0.041859
+expected_return_spread = 0.039339
 expected_return_basis = "arithmetic mean, converted from compound"
 expected_return_compound = 0.033826
-expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0731; earnings anchor 0.0312; valuation regression, 30y 0.0532"
+expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0705; earnings anchor 0.0312; valuation regression, 30y 0.0532"
 history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
 volatility_source = "Yahoo daily closes"
 real_risk_free_source = "FRED DFII30"
-real_cash = 0.017002
+real_cash = 0.013679
 buyback_yield_not_counted = 0.015292
 expected_return_source = "dividend yield plus long-run real growth in earnings per share, no repricing; see variants/us/methodology.html section 3"

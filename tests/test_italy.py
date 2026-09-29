@@ -474,7 +474,7 @@ def _doc() -> str:
     return " ".join(raw.split())
 
 
-def test_the_italian_methodology_quotes_the_configuration(italy) -> None:
+def test_the_italian_methodology_quotes_the_configuration() -> None:
     """Every headline figure in the document has to be the one in use.
 
     Written as percentages to four decimals or fewer, the way the document
@@ -482,6 +482,9 @@ def test_the_italian_methodology_quotes_the_configuration(italy) -> None:
     prose fails here rather than in a reader's head.
     """
     doc = _doc()
+    # The snapshot the document was written with, not the live file, which
+    # refreshes while the document stays dated.
+    italy = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
     p = italy.provenance
     expected = {
         "dividend yield": "%.4f%%" % (float(p["dividend_yield"]) * 100),
@@ -524,3 +527,27 @@ def test_the_italian_methodology_has_no_em_dashes() -> None:
     doc = _doc()
     assert "—" not in doc
     assert "&mdash;" not in doc
+
+
+@pytest.mark.parametrize("variant", ["us", "it"])
+def test_each_snapshot_matches_the_date_its_document_states(variant) -> None:
+    """The documents are checked against a frozen snapshot, not live data.
+
+    That only works if the snapshot really is the data the document was written
+    with, so the date the document announces and the snapshot's as_of must be
+    the same day. Rewrite a document against newer data and this forces the
+    snapshot to move with it.
+    """
+    import re
+    from datetime import date
+
+    snap = load_market_data(ROOT / "variants" / variant / "snapshot.toml")
+    doc = " ".join((ROOT / "variants" / variant / "methodology.html")
+                   .read_text(encoding="utf-8").split())
+    stated = re.search(r"as of (\d{1,2}) (\w+) (\d{4})", doc)
+    assert stated, "the document does not state an as-of date"
+    months = ["January", "February", "March", "April", "May", "June", "July",
+              "August", "September", "October", "November", "December"]
+    day = date(int(stated.group(3)), months.index(stated.group(2)) + 1,
+               int(stated.group(1)))
+    assert snap.as_of == day

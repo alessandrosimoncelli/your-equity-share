@@ -370,7 +370,7 @@ def part_four() -> None:
     head(4, "Tables 12, 14, 16, 18 and 20, recomputed from the model")
     import dataclasses
 
-    market = load_market_data()
+    market = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
     mu = market.expected_stock_real_return
     rf = market.real_risk_free_rate
     vol = market.stock_volatility

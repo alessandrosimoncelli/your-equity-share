@@ -303,7 +303,7 @@ def part_two() -> None:
 def part_three() -> None:
     head(3, "The expected return and the equity risk premium")
 
-    m = load_market_data()
+    m = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
     prov = m.provenance
     mu, rf, sig = (m.expected_stock_real_return, m.real_risk_free_rate,
                    m.stock_volatility)
@@ -612,8 +612,10 @@ def part_five() -> None:
 
     # Section 7 quotes five equity shares. Recompute each from the model, so a
     # data refresh that moves the answer fails here rather than leaving a stale
-    # figure in the document.
-    m = load_market_data()
+    # figure in the document. Against the SNAPSHOT the document was written
+    # with, not live data: the document is dated, and holding it to live
+    # data made every refresh fail this gate and block the deploy.
+    m = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
     mu, rf, vol = (m.expected_stock_real_return, m.real_risk_free_rate,
                    m.stock_volatility)
     default = Household(500_000.0, [Person(45, 100_000.0)], 5.0)
