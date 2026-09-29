@@ -51,6 +51,11 @@ COPIED = {
     "src/web/index.html": "index.html",
     "src/js/model.js": "model.js",
     "variants/us/methodology.html": "methodology.html",
+    # Both countries' documents are published from the one site, beside the
+    # tool, so a reader following a link from either never lands on a copy
+    # that has drifted from the code that produced it.
+    "variants/it/methodology.html": "it/methodology.html",
+    "docs/further-work.html": "further-work.html",
 }
 
 CONFIG = ROOT / "variants" / "us" / "market_data.toml"
@@ -206,6 +211,7 @@ def main() -> int:
         # down with "Unexpected token '<'".
         if name.endswith(".html"):
             body = as_document(body, TITLES.get(name))
+        (OUT / name).parent.mkdir(parents=True, exist_ok=True)
         (OUT / name).write_text(body, encoding="utf-8")
         written.append(name)
 

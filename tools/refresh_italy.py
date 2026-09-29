@@ -121,6 +121,11 @@ from your_equity_share.providers import (  # noqa: E402
     parse_shiller_csv,
     parse_shiller_xls,
 )
+# The American variant's own volatility measurement, imported rather than
+# copied, so both variants fetch, validate and annualise a price series the
+# same way. update.py is safe to import: its work is behind a main guard.
+sys.path.insert(0, str(ROOT))
+from update import estimate_volatility  # noqa: E402
 from your_equity_share.taxes import (  # noqa: E402
     ITALY_TAX,
     TaxRegime,
@@ -147,6 +152,20 @@ AQR_COMPOUND = 0.042
 # of a point: large enough not to fire on the noise in a trailing yield, small
 # enough to catch a market that has moved away from the figure being used.
 DRIFT_LIMIT = 0.0033
+
+# The fund whose volatility is measured, and over how long. Five years of
+# daily closes, which is what update.py measures SPY over, so the two
+# variants' volatilities are the same kind of number.
+VOLATILITY_TICKER = "VWCE.DE"
+VOLATILITY_YEARS = 5
+
+# Xetra lines of UCITS ETFs can carry closes recorded in dollars during the
+# fund's first weeks, and a tick at a EUR/USD rate of 1.1 is a 9.5% jump,
+# well under the 25% that validate_prices treats as implausible. VWCE began
+# trading on 23 July 2019. A window that reaches back before this date is
+# refused rather than trusted, because the one failure it would let through is
+# the one the jump check cannot see.
+VOLATILITY_EARLIEST = "2020-01-01"
 
 # The horizon the equity tax is deferred over. Thirty years, to match the
 # maturity of the safe asset, so both sides are quoted at one horizon.
@@ -463,12 +482,37 @@ def main(argv: list[str]) -> int:
         print("  ie_data.xls at data/shiller.xls.")
         if args.write:
             print("\n  Nothing written: refusing to write half an estimate.")
+            # Non-zero, because a scheduled run that was asked to refresh and
+            # did not has failed, and exiting 0 here made that look fine.
+            return 1
         return 0
 
     compound = gross + growth
-    volatility = float(re.search(r"^stock_volatility = ([0-9.]+)$",
-                                 CONFIG.read_text(encoding="utf-8"),
-                                 re.M).group(1))
+    try:
+        volatility, vol_date, vol_obs, adjusted = estimate_volatility(
+            VOLATILITY_TICKER, VOLATILITY_YEARS, force=False)
+    except Exception as exc:  # DataUnavailable, or the network
+        print("  Could not measure the volatility of %s: %s"
+              % (VOLATILITY_TICKER, exc))
+        if args.write:
+            print("\n  Nothing written: a new expected return converted at a")
+            print("  stale volatility would be half an estimate.")
+            return 1
+        volatility = float(re.search(r"^stock_volatility = ([0-9.]+)$",
+                                     CONFIG.read_text(encoding="utf-8"),
+                                     re.M).group(1))
+        vol_date, vol_obs, adjusted = None, 0, False
+    else:
+        first = (vol_date.toordinal() - int(365.25 * VOLATILITY_YEARS))
+        from datetime import date as _date
+        if _date.fromordinal(first).isoformat() < VOLATILITY_EARLIEST:
+            print("  The %d-year window reaches back before %s, into the"
+                  % (VOLATILITY_YEARS, VOLATILITY_EARLIEST))
+            print("  weeks when Xetra lines can carry dollar closes. Refusing.")
+            return 1
+        print(f"  volatility, {VOLATILITY_TICKER}, {VOLATILITY_YEARS}y daily   "
+              f"{volatility:>8.4%}   {vol_obs} returns to {vol_date}"
+              f"{'' if adjusted else ', NOT dividend adjusted'}")
     arithmetic = arithmetic_from_compound(compound, volatility)
 
     print("  Built here, by the American variant's own construction, because")
@@ -605,10 +649,21 @@ def main(argv: list[str]) -> int:
         ("nominal_safe_yield", aaa),
         ("after_tax_expected_return", net_arithmetic),
         ("after_tax_real_risk_free", net_safe),
+        ("stock_volatility", volatility),
     )
     for field, value in numbers:
         text = re.sub(r"^%s = [0-9.]+$" % field,
                       "%s = %.6f" % (field, value), text, count=1, flags=re.M)
+    if vol_obs:
+        text = re.sub(r"^volatility_observations = \d+$",
+                      "volatility_observations = %d" % vol_obs, text,
+                      count=1, flags=re.M)
+        text = re.sub(r'^volatility_source = ".*"$',
+                      'volatility_source = "Yahoo daily closes of %s, %d years '
+                      'to %s, %s"' % (VOLATILITY_TICKER, VOLATILITY_YEARS,
+                                      vol_date, "dividend adjusted" if adjusted
+                                      else "NOT dividend adjusted"),
+                      text, count=1, flags=re.M)
     text = text.replace('provisional_fields = "real_risk_free"',
                         'provisional_fields = ""')
     text = re.sub(r'^real_risk_free_source = ".*"$',

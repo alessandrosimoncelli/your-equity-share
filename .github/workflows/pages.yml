@@ -1,49 +1,110 @@
-# Build the tool and publish it to GitHub Pages.
+# Refresh the market data every week, check it, build the site, publish it.
 #
 # The built site is not in the repository. .gitignore excludes /web/ so that
 # what is tracked is the source, and the page a reader opens is produced from
 # it rather than committed beside it. That means something has to run the
 # build, and this is it.
 #
-# The gate runs first and the deploy needs it. This project has already
-# published a page that could not load: every test passed, because nothing had
-# ever opened a built file. Deploying without running the checks would be
-# rebuilding that same hole in a place where nobody is watching.
+# THREE TRIGGERS, ONE PIPELINE.
+#
+#   A push to main publishes the code and data exactly as committed.
+#   Every Monday the data is refreshed first, then the same pipeline runs.
+#   "Run workflow" on the Actions tab does the Monday run on demand.
+#
+# The gate runs before anything is published and the deploy needs it. This
+# project has already published a page that could not load: every test passed,
+# because nothing had ever opened a built file. Deploying without the checks
+# would rebuild that same hole in a place where nobody is watching, and a
+# scheduled run is precisely a place where nobody is watching.
+#
+# WHY THE REFRESHED DATA IS COMMITTED BACK. GitHub switches off the schedule of
+# any public repository with no new commits for sixty days. A portfolio project
+# can easily sit untouched for longer than that, and the site would freeze on
+# whatever week it stopped, which is the failure this workflow exists to end.
+# Committing the refreshed files is real activity rather than a trick: the
+# data genuinely changed, and the history becomes a record of what the tool
+# said each week. Tools that fake activity to dodge the rule have been taken
+# down by GitHub, so this one does not. Set COMMIT_REFRESHED_DATA to "false"
+# to publish without committing, and accept the sixty-day rule instead.
 
-name: Publish to GitHub Pages
+name: Refresh and publish
 
 on:
   push:
     branches: [main]
+  schedule:
+    # Mondays at 05:17 UTC. Off the hour on purpose: the top of the hour is
+    # when GitHub's scheduler is busiest, and runs queued then are the ones
+    # that get delayed or dropped.
+    - cron: "17 5 * * 1"
   workflow_dispatch:
 
-# Pages needs id-token to prove the deployment came from this workflow.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-# One deployment at a time. A queued run is not cancelled, because cancelling
-# it would leave the site on an older build than the newest green commit.
+# One run at a time. A queued run is not cancelled, because cancelling it
+# would leave the site on an older build than the newest green one.
 concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  COMMIT_REFRESHED_DATA: "true"
+
 jobs:
-  check:
-    name: Tests, conformance and the verifier
+  build:
+    name: Refresh, check and build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # only to commit the refreshed data back
+    outputs:
+      us: ${{ steps.us.outcome }}
+      it: ${{ steps.it.outcome }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the commit step rebases, which needs history
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      # The model has no runtime dependencies at all. pytest is the only
-      # thing installed, and that is the whole of the environment.
+      # The model has no runtime dependencies. pytest runs the checks, and
+      # certifi is used by the refresh scripts when present.
       - name: Install the test runner
-        run: python -m pip install --upgrade pip pytest
+        run: python -m pip install --upgrade pip pytest certifi
+
+      # continue-on-error so that a refresh which fails still lets the run go
+      # on to republish the last good data, and the report job at the end
+      # turns the run red so the failure is not missed.
+      - name: Refresh the American market data
+        id: us
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: python update.py
+
+      - name: Refresh the Italian market data
+        id: it
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: python tools/refresh_italy.py --write
+
+      # ALL OR NOTHING. Both variants take real growth from the same Shiller
+      # trend and a test holds them equal to five decimals, so one refreshed
+      # file beside one stale file is a state the checks rightly reject. If
+      # either refresh failed, both files go back to what is committed, and
+      # the Shiller workbook the American refresh saved early is removed too,
+      # which leaves the checks exactly where a plain push would run them.
+      - name: Keep the two variants consistent
+        if: >-
+          github.event_name != 'push' &&
+          (steps.us.outcome != 'success' || steps.it.outcome != 'success')
+        run: |
+          echo "American refresh: ${{ steps.us.outcome }}"
+          echo "Italian refresh:  ${{ steps.it.outcome }}"
+          echo "A refresh did not complete. Publishing the committed data."
+          git checkout -- variants/
+          rm -f data/shiller.xls data/shiller.csv
 
       - name: Tests
         run: python -m pytest -q
@@ -56,16 +117,26 @@ jobs:
       - name: Verifier
         run: python tools/verify_model.py
 
-  build:
-    name: Build the site
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      # After the checks, never before: data that fails them is never
+      # committed. Only the two market data files are staged, so nothing else
+      # the run produced can slip into the history.
+      - name: Commit the refreshed data
+        if: >-
+          github.event_name != 'push' &&
+          env.COMMIT_REFRESHED_DATA == 'true' &&
+          steps.us.outcome == 'success' &&
+          steps.it.outcome == 'success'
+        run: |
+          git add variants/us/market_data.toml variants/it/market_data.toml
+          if git diff --cached --quiet; then
+            echo "The data did not change this week; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh market data, week of $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
+          git push origin HEAD:main
 
       - name: Build
         run: python tools/build_web.py
@@ -78,18 +149,18 @@ jobs:
       - name: The published files are what they claim to be
         run: |
           set -e
-          test -f web/index.html
-          test -f web/methodology.html
-          test -f web/model.js
-          test -f web/market.json
+          for f in index.html methodology.html it/methodology.html \
+                   further-work.html model.js market.json; do
+            test -f "web/$f" || { echo "missing: web/$f"; exit 1; }
+          done
           if head -c 200 web/model.js | grep -qi 'doctype'; then
             echo "model.js was wrapped in an HTML document; the browser will"
             echo "parse it as HTML and the page will never finish loading."
             exit 1
           fi
-          python -c "import json,sys; json.load(open('web/market.json'))"
+          python -c "import json; json.load(open('web/market.json'))"
           grep -q '<!doctype html>' web/index.html
-          echo "the four published files are present and well formed"
+          echo "the published files are present and well formed"
 
       - uses: actions/configure-pages@v5
 
@@ -101,9 +172,32 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write      # to publish
+      id-token: write   # to prove the deployment came from this workflow
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # A refresh that failed has already been handled safely above: the site
+  # was republished on its last good data. This job exists so that the run
+  # still ends red and GitHub emails the owner, because a refresh that fails
+  # quietly every week is how the site went stale in the first place.
+  report:
+    name: Say so if a refresh failed
+    needs: [build, deploy]
+    if: always() && github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "American refresh: ${{ needs.build.outputs.us }}"
+          echo "Italian refresh:  ${{ needs.build.outputs.it }}"
+          if [ "${{ needs.build.outputs.us }}" != "success" ] || \
+             [ "${{ needs.build.outputs.it }}" != "success" ]; then
+            echo "::error::A market data refresh failed. The site kept its previous data."
+            exit 1
+          fi
+          echo "Both refreshes succeeded."

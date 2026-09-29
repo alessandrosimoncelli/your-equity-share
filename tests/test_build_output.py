@@ -20,7 +20,10 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "web"
 ZIP = ROOT / "your-equity-share-site.zip"
-EXPECTED = {"index.html", "model.js", "market.json", "methodology.html"}
+# Both countries' documents are published beside the tool, the Italian one
+# in its own folder. Still an exact set: a stray file is still a failure.
+EXPECTED = {"index.html", "model.js", "market.json", "methodology.html",
+            "it/methodology.html", "further-work.html"}
 
 
 @pytest.fixture(scope="module")
@@ -33,8 +36,11 @@ def built() -> Path:
     return OUT
 
 
-def test_the_folder_holds_exactly_the_four_files(built: Path) -> None:
-    assert {p.name for p in built.iterdir() if p.is_file()} == EXPECTED
+def test_the_folder_holds_exactly_the_published_files(built: Path) -> None:
+    """Walked recursively, so a file in a subfolder cannot hide from the check."""
+    found = {p.relative_to(built).as_posix() for p in built.rglob("*")
+             if p.is_file()}
+    assert found == EXPECTED
 
 
 def test_the_model_is_javascript_and_not_a_web_page(built: Path) -> None:
@@ -55,7 +61,8 @@ def test_the_json_is_json_and_carries_what_the_page_reads(built: Path) -> None:
     assert 0.0 < data["stock_volatility"] < 1.0
 
 
-@pytest.mark.parametrize("name", ["index.html", "methodology.html"])
+@pytest.mark.parametrize("name", ["index.html", "methodology.html",
+                                  "it/methodology.html", "further-work.html"])
 def test_each_page_is_a_whole_document(built: Path, name: str) -> None:
     """A static host supplies no head, and the files also get opened from disk.
 

@@ -71,7 +71,7 @@
 # in the model represents that.
 
 [meta]
-generated_at = "2026-09-29T04:40:30+00:00"
+generated_at = "2026-09-29T21:43:27+00:00"
 generated_by = "tools/refresh_italy.py"
 
 [market]
@@ -141,7 +141,7 @@ generated_by = "tools/refresh_italy.py"
 # refresh and both currently sit within a third of a point, which is a firm
 # that does this for a living arriving at the same two numbers from their own
 # data. tools/estimators_it.py sets the whole family side by side.
-expected_stock_real_return = 0.048268
+expected_stock_real_return = 0.048147
 
 # The ECB's AAA euro area government curve at thirty years, deflated by the
 # MARKET break-even inflation rate of the longest euro inflation-linked bond.
@@ -186,17 +186,19 @@ expected_stock_real_return = 0.048268
 #
 # It is euro area HICP, not Italian. An Italian household's cost of living is
 # Italian, and only BTP Italia tracks that, at five years and retail.
-real_risk_free = 0.014379
+real_risk_free = 0.015102
 
-# Measured: five years of daily dividend-adjusted closes of VWCE.DE to
-# 3 September 2026, annualised. Lower than the 17.18% of the S&P 500 sleeve,
+# Measured: five years of daily dividend-adjusted closes of VWCE.DE,
+# annualised, refreshed weekly; volatility_source below says to when. It sits
+# within a tenth of a point of MSCI ACWI in euro over twenty-five years, which
+# is the check the Italian methodology runs. Lower than the S&P 500 sleeve,
 # which is what diversifying across a world index is supposed to do, and it
 # already carries the currency exposure a euro investor takes on an unhedged
 # global fund, because the series is priced in euro.
-stock_volatility = 0.138942
+stock_volatility = 0.138111
 market_ticker = "VWCE.DE"
 
-as_of = 2026-09-25
+as_of = 2026-09-28
 
 [provenance]
 variant = "it"
@@ -204,25 +206,25 @@ provisional_fields = ""
 expected_return_method = "building blocks, global"
 expected_return_basis = "arithmetic mean, converted from compound"
 expected_return_compound = 0.038198
-expected_return_source = "Built here, by the construction the American variant uses, because that construction carries no horizon and this model prices a lifetime: a 1.5339% trailing dividend yield of MSCI All Country World in euro over 20250829 to 20260831, measured from the gap between MSCI gross and price index levels and divided by the price at the end, plus 2.2860% real growth in earnings per share, the 100-year OLS trend through Shiller to 2026-06-01, plus zero repricing. Cross-checked against AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 2025-12-31: their dividend yield of 1.6% is +0.07 points from ours and their real EPS growth of 2.6% is +0.31 points from ours. Theirs is the check and not the estimate because they state it is for a horizon of 5 to 10 years, while Table 7 of the American methodology shows this construction is the one that wins at 30."
+expected_return_source = "Built here, by the construction the American variant uses, because that construction carries no horizon and this model prices a lifetime: a 1.5339% trailing dividend yield of MSCI All Country World in euro over 738062 to 20260831, measured from the gap between MSCI gross and price index levels and divided by the price at the end, plus 2.2860% real growth in earnings per share, the 100-year OLS trend through Shiller to 2026-06-01, plus zero repricing. Cross-checked against AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 2025-12-31: their dividend yield of 1.6% is +0.07 points from ours and their real EPS growth of 2.6% is +0.31 points from ours. Theirs is the check and not the estimate because they state it is for a horizon of 5 to 10 years, while Table 7 of the American methodology shows this construction is the one that wins at 30."
 dividend_yield = 0.015339
 real_growth = 0.022860
 dividend_yield_measured = 0.015339
 dividend_yield_withheld = 0.003422
-expected_inflation = 0.023163
+expected_inflation = 0.022981
 expected_inflation_survey = 0.020369
-nominal_safe_yield = 0.037875
-after_tax_expected_return = 0.037938
-after_tax_real_risk_free = 0.010557
-after_tax_source = "Italy taxes government bonds of Italy and of white-list states, Germany included, at 12.5% and other financial income at 26%, both on nominal income so inflation is taxed, plus 0.2% a year of imposta di bollo on the value of each. Equities are taxed once on sale, so the tax is deferred over 30 years, which recovers more than the higher rate costs. The volatility is NOT reduced, because Italian law does not let fund losses offset fund gains. Tax costs 1.03 points of expected return and 0.38 points of safe rate, so 0.61 points of the drift. See src/your_equity_share/taxes.py."
+nominal_safe_yield = 0.038430
+after_tax_expected_return = 0.037819
+after_tax_real_risk_free = 0.011033
+after_tax_source = "Italy taxes government bonds of Italy and of white-list states, Germany included, at 12.5% and other financial income at 26%, both on nominal income so inflation is taxed, plus 0.2% a year of imposta di bollo on the value of each. Equities are taxed once on sale, so the tax is deferred over 30 years, which recovers more than the higher rate costs. The volatility is NOT reduced, because Italian law does not let fund losses offset fund gains. Tax costs 1.03 points of expected return and 0.41 points of safe rate, so 0.59 points of the drift. See src/your_equity_share/taxes.py."
 growth_source = "AQR's, as part of their published decomposition. Cross-checked on every refresh against the American variant's own 100-year trend through Shiller, which is a legitimate comparison because AQR themselves publish 2.7% for United States large cap against 2.6% for Global All Country, a tenth of a point apart: long-run real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic."
 growth_cross_check = "The alternative was tried and it failed, which is why the growth term is the American one. tools/global_growth.py rebuilds global real dividend growth from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The answer depends on the weighting scheme far more than on the data: weights pinned at today give 0.89% to 1.52%, weights pinned at the start of the window give 1.86% to 3.04%, and GDP shares each year give 2.77% to 5.43%, an envelope 4.5 points wide against 0.25 points for the American estimator, and keeping the war years rather than dropping them widens it further. The reason is structural. A fixed basket of countries is not an index, because an index reconstitutes and drops what stops paying, and JST publishes country index returns rather than the world index's constituents, so reconstitution cannot be reproduced. An earlier version of this file quoted a single scheme's 1.33% to 3.16% as the uncertainty, which was too flattering by a factor of four. Both this variant's 2.286% and AQR's 2.6% fall inside the envelope, which is corroboration too weak to lean on and is reported as such."
 currency_basis = "EUR. The dividend yield is measured on a euro-priced global index, the volatility is measured on a euro-priced series, and the safe rate is a euro government bond's traded real yield. Those three are euro figures by construction. The growth term is real growth in United States earnings per share, used as the global real rate, and that is the one place a cross-currency assumption still lives: it holds if relative purchasing power is preserved over a lifetime, which is AQR's own stated assumption for reading local real returns as any-currency real returns. It applies to one term of three rather than to the whole estimate, which is narrower than the previous version of this file, where the entire expected return was a local real figure read as a euro one."
 equity_index = "FTSE All-World"
-real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.7875% on 2026-09-25, deflated by the MARKET break-even inflation rate of 2.3163% on DE0001030575, the longest euro inflation-linked government bond at 19.6 years, which gives 1.4379%. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should reproduce its traded real yield of 1.6105%, and it lands 0.173 points away. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3, which would give 1.7157%, 0.28 points higher; that gap is an inflation risk premium and deflating by the survey books it as return."
-volatility_source = "Yahoo daily closes of VWCE.DE, 5 years, dividend adjusted"
+real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.8430% on 2026-09-28, deflated by the MARKET break-even inflation rate of 2.2981% on DE0001030575, the longest euro inflation-linked government bond at 19.6 years, which gives 1.5102%. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should reproduce its traded real yield of 1.6389%, and it lands 0.129 points away. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3, which would give 1.7701%, 0.26 points higher; that gap is an inflation risk premium and deflating by the survey books it as return."
+volatility_source = "Yahoo daily closes of VWCE.DE, 5 years to 2026-09-29, dividend adjusted"
 volatility_currency = "EUR, unhedged"
-volatility_observations = 1254
+volatility_observations = 1259
 replacement_rate_source = "OECD, Pensions at a Glance 2025, Italy country note: a net replacement rate of 74.0% for an average earner, against an OECD average of 63.2%"
 retirement_age_source = "OECD, Pensions at a Glance 2025: statutory 67, early 64"
 human_capital_calibration = "American apart from the replacement rate. Cocco, Gomes and Maenhout's earnings profile and shock volatilities, and United States mortality, are inside Choi's fitted coefficients and cannot be set from here."
