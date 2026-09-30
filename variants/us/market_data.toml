@@ -30,8 +30,10 @@ generated_by = "update.py"
 expected_stock_real_return = 0.049153
 
 # FRED DFII30, the 30-year TIPS yield. A real yield
-# already, so no inflation adjustment is applied. Reduce it by your
-# marginal income tax rate if your bonds sit in a taxable account.
+# already, so no inflation adjustment is applied. Before tax: in a
+# taxable account the inflation increase in the principal is taxed
+# too, so what is left is about r(1 - t) - t * inflation, not r(1 - t).
+# Methodology section 3.3.
 real_risk_free = 0.032200
 
 # 5 years of daily adjusted closes of SPY,

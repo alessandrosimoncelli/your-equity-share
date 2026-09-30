@@ -4,14 +4,33 @@ Two countries, one model.
 
 ```
 variants/
-  us/  market_data.toml   methodology.html
-  it/  market_data.toml   methodology.html   (not written yet)
+  us/  market_data.toml   snapshot.toml   methodology.html
+  it/  market_data.toml   snapshot.toml   methodology.html
 ```
 
 Each folder holds everything a country owns: the market data its tool reads,
 and the document that argues for it. The filename does not repeat the country,
 because the folder already says it and saying it twice is how two files drift
 apart.
+
+Both documents are published beside the tool, the American one at
+`/methodology.html` and the Italian one at `/it/methodology.html`.
+
+## Live data and frozen data
+
+`market_data.toml` is live. It is rewritten every Monday, so the tool always
+runs on current figures.
+
+`snapshot.toml` is frozen. It is the market data the methodology was written
+with, and it changes only when the document is rewritten against newer data.
+The tests check each document against its snapshot, not against the live
+file, and a test holds each snapshot to the date its document states.
+
+The split exists because a document quotes numbers. Checked against the live
+file, a refresh made the document wrong and failed the build, which is what
+happened before the split existed. Checked against its
+snapshot, the tool can move with the market while the document stays true to
+the day it describes.
 
 ## What is deliberately not split
 
@@ -42,6 +61,11 @@ them would silently mix a country difference with a code difference.
 | tax | not modelled | modelled, `src/your_equity_share/taxes.py` |
 
 ## Refreshing
+
+GitHub Actions runs both refreshes every Monday, and keeps the result only if
+both succeed and every check passes; see the main README. By hand, run both,
+in this order, because the Italian refresh takes its growth term from the
+Shiller data the American one downloads:
 
 ```bash
 python update.py                      # rewrites variants/us/market_data.toml

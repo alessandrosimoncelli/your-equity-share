@@ -257,8 +257,10 @@ def render_config(**f) -> str:
         f"expected_stock_real_return = {f['expected_return']:.6f}",
         "",
         f"# FRED {FRED_REAL_RISK_FREE}, the 30-year TIPS yield. A real yield",
-        "# already, so no inflation adjustment is applied. Reduce it by your",
-        "# marginal income tax rate if your bonds sit in a taxable account.",
+        "# already, so no inflation adjustment is applied. Before tax: in a",
+        "# taxable account the inflation increase in the principal is taxed",
+        "# too, so what is left is about r(1 - t) - t * inflation, not r(1 - t).",
+        "# Methodology section 3.3.",
         f"real_risk_free = {f['real_risk_free']:.6f}",
         "",
         f"# {f['window_years']} years of daily "

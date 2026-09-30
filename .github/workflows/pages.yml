@@ -55,8 +55,12 @@ jobs:
   build:
     name: Refresh, check and build
     runs-on: ubuntu-latest
+    # Naming any permission here sets every one not named to none, so pages:
+    # read is spelled out for configure-pages, which reads the site's
+    # settings. GitHub's own starter workflow grants it to every job.
     permissions:
       contents: write   # only to commit the refreshed data back
+      pages: read       # for configure-pages
     outputs:
       us: ${{ steps.us.outcome }}
       it: ${{ steps.it.outcome }}
@@ -179,8 +183,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # v5, as in GitHub's own starter workflow for a static site; the
+      # other Pages actions above are the versions that workflow uses too.
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # A refresh that failed has already been handled safely above: the site
   # was republished on its last good data. This job exists so that the run

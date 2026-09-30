@@ -13,67 +13,97 @@ Samuelson, 1992), using the approximation of Choi, Liu and Liu (2025).
 w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 ```
 
+- **The tool:** [alessandrosimoncelli.github.io/your-equity-share](https://alessandrosimoncelli.github.io/your-equity-share/), market data refreshed every Monday
 - **What each input means:** [docs/inputs.md](docs/inputs.md)
-- **Full derivation and sources:** [variants/us/methodology.html](variants/us/methodology.html)
+- **Full derivation and sources:** [United States](https://alessandrosimoncelli.github.io/your-equity-share/methodology.html) and [Italy](https://alessandrosimoncelli.github.io/your-equity-share/it/methodology.html), from `variants/us/` and `variants/it/`
+- **What is not done yet:** [further work](https://alessandrosimoncelli.github.io/your-equity-share/further-work.html)
 
 **For** money you have invested and do not need on any particular date, meant
-to last the rest of a life. United States only: the earnings profile, the
-mortality table and the retirement benefit are all American. Following Choi,
-the earnings risk is the average for **college graduates**; his spreadsheet
-declares the same assumption and this one does not vary it, because the
-estimates behind it are a cross-section of the 1970s to 1990s and there is no
-reason to think the relationship between education and earnings risk is
-stable.
+to last the rest of a life. Two variants share one model. The **United
+States** variant holds the S&P 500 against 30-year TIPS. The **Italian**
+variant holds a global equity fund against the euro real safe rate, after
+Italian tax, with the Italian pension replacement rate. What neither variant
+changes is the earnings profile and the mortality table, which are American in
+both, because they sit inside the numerical solution Choi fitted his
+coefficients to; making them Italian means re-solving his model. Section 10 of
+the Italian methodology lists this as the variant's largest declared
+deviation.
+
+Following Choi, the earnings risk is the average for **college graduates**;
+his spreadsheet declares the same assumption and this one does not vary it,
+because the estimates behind it are a cross-section of the 1970s to 1990s and
+there is no reason to think the relationship between education and earnings
+risk is stable.
 
 **Not for** money with a date on it, a house, or a business. Horizon does not
 appear in the Merton share at all, which is a result rather than a
 simplification, so a model without one cannot tell money needed in three years
-from money needed in forty. Section 1.1 of the methodology has the argument.
+from money needed in forty. Section 1.1 of the United States methodology has
+the argument.
 
-## Before you use it, refresh the data
+## The data refreshes itself
 
-**Run it monthly.** The tool warns on its own face once the data is more than
-90 days old, and the underlying sources move at different speeds: the TIPS
-yield daily, Damodaran's premium monthly, Shiller's history monthly but always
-a quarter behind, because earnings arrive after the prices they belong to.
-Double-click `update.bat`, or run `python update.py`. Nothing else in the
-project touches the network.
+**Every Monday** GitHub Actions refreshes the market data of both variants,
+runs every check in the project, commits the new figures here, and republishes
+the site. The workflow is [.github/workflows/pages.yml](.github/workflows/pages.yml).
+It is built to be left alone:
+
+- **Both or neither.** The two variants share their growth term, so a week in
+  which one refresh fails keeps last week's data for both rather than
+  publishing a mismatched pair.
+- **A failure never takes the site down, and is never quiet.** The site stays
+  on the last good data, and the run ends red, which GitHub reports by email.
+- **New data is committed only after the checks pass.** The commits also keep
+  the schedule alive: GitHub switches off scheduled runs in a repository with
+  no commits for sixty days.
+
+The tool shows the date of its data on its own face, and warns once it is more
+than 90 days old, which would mean the schedule has stopped.
+
+To get the latest figures on your own machine, `git pull`. To refresh by hand,
+for example in a copy that is not on GitHub, run both scripts, in this order,
+because the Italian one takes its growth term from the Shiller data the
+American one downloads. Windows users can double-click `update.bat`, which
+does exactly that. Nothing else in the project touches the network.
 
 ```bash
 python update.py
+python tools/refresh_italy.py --write
 ```
 
-That is the whole thing. It fetches the latest market data, saves it, and tells
-you what changed. Windows users can double-click `update.bat` instead.
+A hand refresh leaves the two market data files changed. Discard it with
+`git checkout -- variants/` before pulling, or the pull will collide with the
+Monday commit.
+
+Part of a dry run of the American refresh, on 29 September 2026:
 
 ```
-Updating market data for Your Equity Share
-==============================================================
-
 Fetching...
-  real risk-free rate (30y TIPS)      2.96%   was  2.96%   unchanged
-  stock volatility (SPY, 5y)         17.18%   was 17.18%   unchanged
+  real risk-free rate (30y TIPS)      3.28%   was  3.22%   +0.06 points
+  stock volatility (SPY, 5y)         17.15%   was 17.16%   -0.01 points
 
   Expected real return on equities.
     building blocks                3.38%   <- used
-      1.10% dividend yield plus 2.29% real earnings growth
-      per share (100 year trend), no repricing
-      Buybacks return a further 1.53% that this does not
-      count as income, because per-share growth already
-      carries it.
+      1.10% dividend yield plus 2.29% real earnings growth per share (100 year trend), no repricing
+      Buybacks return a further 1.53% that this
+      does not count as income, because per-share growth
+      already carries it.
 
-  Cross-checks, not used.
-    implied premium                7.05%
+  Cross-checks, not used. See section 3 of the methodology
+  for why each is worse for a lifetime horizon.
+    implied premium                7.37%
+    earnings anchor                3.13%
     valuation regression, 30y      5.32% +/- 0.74%
-    spread of the cross-checks     3.67%   <- how little is known here
 
-    as an arithmetic mean          4.92%   +1.54 from the volatility drag
+    as an arithmetic mean          4.91%   +1.53 from the volatility drag
+    spread of the cross-checks     4.24%   <- how little is known here
 
-Saved. Market data is now current to 2026-09-03.
+Dry run, nothing saved. Run without --dry-run to apply.
 ```
 
-**All three** numbers the model uses are fetched, from free sources that need no
-key or account:
+**All three** numbers the American variant uses are fetched, from free sources
+that need no key or account. The Italian sources are in
+[variants/README.md](variants/README.md).
 
 | Input | Source | Note |
 | --- | --- | --- |
@@ -82,7 +112,7 @@ key or account:
 | expected stock return | Shiller: dividend yield plus 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
 
 The expected return is the number the answer is most sensitive to and the one
-nobody can observe. Two further estimates are computed as cross-checks and
+nobody can observe. Three further estimates are computed as cross-checks and
 reported alongside, precisely because they disagree by several points. Override
 it with `--fixed-return 0.05` if you prefer your own view. See
 [docs/inputs.md](docs/inputs.md) for why buybacks are deliberately not added to
@@ -134,13 +164,27 @@ asserted.
 | 5. Browser front end | **done** |
 | 6. Published as a static site, model ported to JavaScript | **done** |
 | 7. Validated against twelve published forecasts, and swept for properties | **done** |
-| 8. Portfolio analytics and factor exposure | planned |
+| 8. Italian variant: global equity, euro real safe rate, Italian tax and pension | **done** |
+| 9. Weekly refresh and publication, unattended | **done** |
+| 10. Portfolio analytics and factor exposure | planned |
+
+What is known to be missing is listed, with the reason for each, in
+[docs/further-work.html](https://alessandrosimoncelli.github.io/your-equity-share/further-work.html).
 
 ### The published site
 
-`python tools/build_web.py` writes `web/`, four files and about 100 KB, which
-any static host serves. It opens in well under a second and needs no server,
-so nothing a visitor enters is transmitted anywhere.
+The site is built from this repository by GitHub Actions, on every push to
+`main` and every Monday after the refresh, and served by GitHub Pages at
+**[alessandrosimoncelli.github.io/your-equity-share](https://alessandrosimoncelli.github.io/your-equity-share/)**.
+Nothing is published unless the tests, the check of the JavaScript against the
+Python and the verifier have all passed first.
+
+`python tools/build_web.py` writes the same thing locally to `web/`: the tool,
+its model and its market data, about 75 KB, plus the three documents, about
+300 KB in all. It opens in well under a second and needs no server, so nothing
+a visitor enters is transmitted anywhere. Every link in it is relative, and a
+test holds it so, because the site lives in a subfolder of the domain rather
+than at its root.
 
 The page runs `src/js/model.js`, a port of the model. **Python remains the
 reference implementation.** The two are held together by `tests/golden.json`,
@@ -204,8 +248,8 @@ return, so you can see by dragging how much the answer depends on each. The
 recommendation with its working, a sensitivity curve, the answer at every level
 of savings, and a box for typing your earnings year by year.
 
-The same folder is what gets published: drop `your-equity-share-site.zip` on a
-static host and that is the whole deployment.
+The same folder is what GitHub Pages serves. The build also packs it as
+`your-equity-share-site.zip`, for any other static host that takes an upload.
 
 **In the terminal**, for a quick answer or for scripting:
 
@@ -262,4 +306,5 @@ implementation and grants no rights in their papers.
 
 Educational and illustrative only. Not investment, financial, tax or legal
 advice, and no advisory relationship is created by its use. Outputs depend
-entirely on the assumptions documented in `variants/us/methodology.html`.
+entirely on the assumptions documented in `variants/us/methodology.html` and
+`variants/it/methodology.html`.

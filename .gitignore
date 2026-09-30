@@ -18,3 +18,7 @@ dist/
 # It is Shiller and Damodaran data, not this project's, so it is not committed.
 /data/
 .mutate-backup/
+
+# A one-off package that points the old Netlify address at GitHub Pages.
+/netlify-redirect/
+/netlify-redirect.zip

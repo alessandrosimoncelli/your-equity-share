@@ -90,6 +90,38 @@ def test_the_page_reaches_the_methodology(built: Path) -> None:
         encoding="utf-8")
 
 
+def test_the_page_reaches_every_document(built: Path) -> None:
+    """A published document nothing links to is one no visitor finds."""
+    tool = (built / "index.html").read_text(encoding="utf-8")
+    for name in ("methodology.html", "it/methodology.html", "further-work.html"):
+        assert f'href="./{name}"' in tool, name
+
+
+def test_every_link_works_below_a_subfolder(built: Path) -> None:
+    """The site is served from /your-equity-share/, not from the root.
+
+    A link written "/methodology.html" works on a host that serves from the
+    root and breaks on this one, where it points at the account's top level.
+    So links are relative, and each must name a file the build produced.
+    """
+    import re
+
+    for name in ("index.html", "methodology.html", "it/methodology.html",
+                 "further-work.html"):
+        body = (built / name).read_text(encoding="utf-8")
+        here = (built / name).parent
+        # Links, fetches, and the module import that loads the model.
+        pulls = [r'(?:src|href)="', r'fetch\(\s*["\']', r'\bfrom\s+["\']']
+        rooted = [hit for p in pulls for hit in re.findall(p + r'(/[^"\']*)', body)]
+        assert not rooted, f"{name} links from the root: {rooted}"
+        links = [hit for p in pulls
+                 for hit in re.findall(p + r'(\.{1,2}/[^"\'#?]*)', body)]
+        for link in links:
+            target = (here / link).resolve()
+            assert target.is_file(), f"{name} links to missing {link}"
+            assert built.resolve() in target.parents, f"{name} leaves the site: {link}"
+
+
 def test_nothing_is_fetched_from_anywhere_else(built: Path) -> None:
     """The privacy claim is architectural, so it is worth asserting."""
     import re
@@ -101,8 +133,8 @@ def test_nothing_is_fetched_from_anywhere_else(built: Path) -> None:
 
 
 def test_the_archive_serves_from_its_root(built: Path) -> None:
-    """Netlify unpacks the zip and serves the top of it, so index.html has to
-    sit there rather than inside a folder."""
+    """A host that takes the zip unpacks it and serves the top of it, so
+    index.html has to sit there rather than inside a folder."""
     with zipfile.ZipFile(ZIP) as archive:
         names = set(archive.namelist())
     assert names == EXPECTED

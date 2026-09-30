@@ -2,10 +2,10 @@
 
     python tools/build_artifact.py
 
-The Netlify build is four files that fetch each other. Some hosts serve one
-file and nothing else, and a page that fetches its own model and its own market
-data cannot run there. This inlines both, so each output is a single HTML file
-with no external request of any kind.
+The published build is a page that fetches its own model and its own market
+data. Some hosts serve one file and nothing else, and a page like that cannot
+run there. This inlines both, so each output is a single HTML file with no
+external request of any kind.
 
 Nothing about the model changes. `src/js/model.js` is inserted verbatim with
 its `export` keywords removed, which is the only edit, and the page's import

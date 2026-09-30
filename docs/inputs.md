@@ -4,6 +4,10 @@ Taken from the user guide to Choi, Liu and Liu (2025). Getting these definitions
 wrong is the most likely way to get a wrong answer out of a correct model, so
 they are recorded here rather than left to the interface.
 
+The market inputs below are the American variant's. The Italian variant keeps
+the same definitions and changes the sources, and its methodology,
+`variants/it/methodology.html`, gives each one.
+
 ## Risk aversion
 
 One question, from the guide.
@@ -83,9 +87,11 @@ observe. Choi makes it a user input and offers a default of 5%, justified as
 constant and future dividend or earnings growth equals its long-run historical
 average". He specifies no estimator.
 
-**One estimator is used**, and it is that sentence written as arithmetic:
+**One estimator is used**, and it is that sentence written as arithmetic. The
+figures on this page are those of 3 September 2026, the data the methodology
+was written with; the tool shows the current ones.
 
-| Term | Source | Latest |
+| Term | Source | 3 Sep 2026 |
 | --- | --- | --- |
 | Dividend yield | Dividends over price, same month of Shiller's workbook | 1.10% |
 | Real earnings growth | 100-year trend through log real earnings per share, Shiller | 2.29% |
@@ -161,32 +167,35 @@ at the point it is handed to the model:
 
 At 17.2% volatility that is worth **1.54 percentage points**: 3.38% compound
 becomes 4.92% arithmetic. Feeding the compound figure straight in would
-understate the input by more than the entire equity risk premium is currently
-worth, since that premium over a 2.96% real safe rate is 1.96 points.
+understate the input by those 1.54 points, which is most of the equity
+premium: over the 2.96% real safe rate the premium is 1.96 points, and it
+would shrink to 0.42.
 
 The intuition: +50% then −50% averages to zero, but leaves you down 25%. The
 arithmetic mean always sits above what money actually grows at, by roughly half
 the variance.
 
-### A cross-check worth entering by hand: AQR
+### A cross-check worth making once a year: AQR
 
 Choi anchors his own 2% figure to AQR's year-end 2023 forecast of **1.9%** for
 US large-cap equities' log excess return over cash, from their Capital Market
-Assumptions. That publication is free but arrives as an annual PDF, so it is not
-automated here.
+Assumptions. The publication is free but arrives as an annual PDF, so it is
+compared by hand rather than fetched.
 
-It is worth knowing how it maps onto this model, because it maps unusually well:
+The comparison is unusually clean, because AQR builds its equity forecast the
+way this tool does: a dividend yield, plus real growth in earnings per share,
+plus no repricing. Their 2026 edition puts US large caps at **3.9% real**, from
+a 1.3% yield and 2.7% growth, against this tool's 3.38% on 3 September 2026,
+from 1.10% and 2.29%. Most of the half point between them is growth: AQR
+starts from 25-year growth and shrinks it towards the global average,
+forecast GDP growth and an equilibrium rate, where this tool fits a
+hundred-year trend. Section 8.3 of the
+methodology sets the two side by side, with nine other firms.
 
-- It is already a **log** excess return, so it is directly comparable to the
-  `pi` the tool prints, with no conversion.
-- It is measured **over cash**, whereas this model's safe asset is a 30-year
-  TIPS. With the real curve upward sloping, an excess over cash is larger than
-  an excess over a long real bond by roughly the real term premium, currently
-  about half a point.
-
-So AQR's 1.9% over cash is roughly 1.4% over a long real bond, against the 1.87%
-this tool currently computes. Close enough to be reassuring, and a sensible
-annual sanity check.
+Compare the total real return, as that section does, rather than a premium.
+AQR's premium is over cash and this tool's safe asset is a 30-year TIPS, and a
+premium quoted in one year sits on that year's real rate, so two premiums from
+different years or over different safe assets do not measure the same thing.
 
 ### To override
 
@@ -211,8 +220,13 @@ it too. The answer is then an extrapolation and should be read as indicative.
 The return on the safe asset, above inflation. The guide suggests the **30-year
 TIPS yield**, which is a real yield directly and needs no inflation adjustment.
 
-If most of your bonds sit in a taxable account, reduce it by your marginal
-income tax rate: at a combined 30%, multiply by 0.7.
+The tool works before tax. If most of your bonds sit in a taxable account,
+the guide says to reduce the rate by your marginal income tax rate, which
+understates the tax: the yearly inflation increase in a TIPS principal is
+taxed as income too, in the year it occurs (IRS Publication 1212). What is
+left after tax is roughly `r(1 - t) - t * inflation`. At a 3% real yield, 2.5%
+inflation and a combined 30% rate that is about 1.4%, not the 2.1% that
+multiplying by 0.7 gives. Section 3.3 of the methodology has the detail.
 
 This project takes the real rate as a single input for that reason. Deriving it
 as a nominal yield minus an inflation expectation invites a maturity mismatch,

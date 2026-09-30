@@ -1275,7 +1275,9 @@ async function boot() {
     `<span class="${fresh ? "ok" : "stale"}">${days} day${days === 1 ? "" : "s"} old</span>` +
     `${fresh ? "" : ", past the 90 day limit"}.` + histNote + " " +
     `Everything on this page is computed in your browser; nothing you enter is sent anywhere. ` +
-    `<a href="./methodology.html">Read the methodology</a>. ` +
+    `Read the <a href="./methodology.html">methodology</a>, the ` +
+    `<a href="./it/methodology.html">Italian variant</a> and the ` +
+    `<a href="./further-work.html">further work</a>. ` +
     `Not investment advice.`;
 
   // Money fields reformat when focus leaves them, never while typing, so the

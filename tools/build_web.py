@@ -236,9 +236,9 @@ def main() -> int:
                 # not a reason to fail the build.
                 pass
 
-    # Also as an archive. Dragging one file is more reliable than dragging a
-    # folder, and Netlify unpacks it and serves the root, so index.html must
-    # sit at the top of the archive.
+    # Also as an archive, for a static host that takes an upload rather than
+    # building from the repository. Such hosts unpack it and serve the root,
+    # so index.html must sit at the top of the archive.
     with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(q for q in OUT.rglob("*") if q.is_file()):
             archive.write(path, path.relative_to(OUT).as_posix())
@@ -248,10 +248,11 @@ def main() -> int:
     for name in written:
         print(f"  {(OUT / name).stat().st_size:>7,}  {name}")
     print(f"  {total:>7,}  total ({total / 1024:.0f} KB)")
-    print(f"  {ZIP.stat().st_size:>7,}  {ZIP.name}  (upload this)")
+    print(f"  {ZIP.stat().st_size:>7,}  {ZIP.name}  (for any other host)")
 
     print("\nServe locally:  python -m http.server 8600 --directory web")
-    print("Publish:        drop the zip on app.netlify.com/drop")
+    print("Publish:        push to main. GitHub Actions rebuilds and deploys to")
+    print("                https://alessandrosimoncelli.github.io/your-equity-share/")
     return 0
 
 

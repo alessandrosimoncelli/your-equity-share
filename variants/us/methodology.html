@@ -937,6 +937,8 @@ h4 {
 
 <p>Taken as a real rate directly, from the 30-year Treasury Inflation-Protected Securities yield, which is what Choi's guide asks for. Deriving it instead as a nominal yield less an inflation expectation would mismatch maturities, since the freely available series are a 3-month bill and a 10-year breakeven and their difference is neither a 3-month nor a 10-year real rate. Where bonds sit in a taxable account the guide reduces the rate by the marginal income tax rate.</p>
 
+<p>That rule understates the tax. The yearly increase in a TIPS principal is itself taxable income in the year it occurs (Internal Revenue Service, Publication 1212), so the tax falls on the real yield and the inflation together, and what is left is roughly <code>r(1 &minus; t) &minus; t&pi;</code>, where <code>&pi;</code> is inflation. At a 3% real yield, 2.5% inflation and a combined 30% rate that is about 1.4%, not the 2.1% the guide's rule gives. This tool, like the guide, works before tax on both assets, because an American household's tax depends on the account it holds them in. The Italian variant models tax on both, because there the rates are set by law for every resident.</p>
+
 <h4>Which point on the real curve, and what it costs</h4>
 
 <p><strong>This is the second most expensive choice in the model and it was previously made in one sentence.</strong> The real yield curve is steeply upward sloping, and the model takes a single number for the safe rate, so which maturity is picked moves the answer by more than the whole buyback correction of section 3.1 did.</p>
@@ -1709,6 +1711,7 @@ h4 {
   <li>Flavin, M. and Yamashita, T. (2002). Owner-Occupied Housing and the Composition of the Household Portfolio. <em>American Economic Review</em>, 92(1), 345 to 362.</li>
   <li>Grossman, S. J. and Laroque, G. (1990). Asset Pricing and Optimal Portfolio Choice in the Presence of Illiquid Durable Consumption Goods. <em>Econometrica</em>, 58(1), 25 to 51.</li>
   <li>Grinold, R. C. and Kroner, K. F. (2002). The Equity Risk Premium: Analyzing the Long-Run Prospects for the Stock Market. <em>Investment Insights</em>, Barclays Global Investors. Source of the building-block decomposition in equation (5).</li>
+  <li>Internal Revenue Service (2025). Publication 1212, <em>Guide to Original Issue Discount (OID) Instruments</em>, December 2025 revision, section on inflation-indexed debt instruments. The rule that the yearly increase in a TIPS principal is income in the year it occurs, which section 3.3 turns on.</li>
   <li>Lo, A. W. and MacKinlay, A. C. (1988). Stock Market Prices Do Not Follow Random Walks: Evidence from a Simple Specification Test. <em>Review of Financial Studies</em>, 1(1), 41 to 66.</li>
   <li>National Center for Health Statistics (2019). Life table for the total United States population. The survival probabilities inside the fitted discount rates, per section 1.2 of the paper.</li>
   <li>Merton, R. C. (1969). Lifetime Portfolio Selection under Uncertainty: The Continuous-Time Case. <em>Review of Economics and Statistics</em>, 51(3), 247 to 257.</li>
