@@ -115,14 +115,16 @@ def main() -> int:
 
     failed = [(name, detail) for name, ok, detail in results if not ok]
     if os.environ.get("GITHUB_ACTIONS") == "true":
-        # One annotation per run, not one per source. A % would be read as an
-        # escape inside a workflow command, so it is escaped.
+        # One annotation per run, not one per source. In a workflow command a
+        # % is an escape everywhere, and in the title a comma or a colon ends
+        # it, which is how the first title was cut to "Data sources".
         summary = ("every source answered" if not failed else
                    "; ".join("%s: %s" % item for item in failed))
+        title = "Data sources: %d of %d answered" % (
+            len(results) - len(failed), len(results))
+        title = title.replace("%", "%25").replace(":", "%3A").replace(",", "%2C")
         level = "warning" if failed else "notice"
-        print("::%s title=Data sources, %d of %d answered::%s" % (
-            level, len(results) - len(failed), len(results),
-            summary.replace("%", "%25")))
+        print("::%s title=%s::%s" % (level, title, summary.replace("%", "%25")))
     return 0
 
 
