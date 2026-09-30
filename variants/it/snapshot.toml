@@ -34,7 +34,7 @@
 # the safe one: 12.5% on government bonds against 26% on everything else. The
 # rates and the reasoning are in src/your_equity_share/taxes.py.
 #
-# The REPLACEMENT RATE is 74% rather than 40%, from the OECD. It is the only
+# The REPLACEMENT RATE is 79% rather than 40%, from the OECD. It is the only
 # constant in the human capital half that can honestly be made Italian, and it
 # is set in ITALY_CALIBRATION rather than here.
 #
