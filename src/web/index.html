@@ -1212,7 +1212,7 @@ function render() {
           `points for the volatility drag`, "why"]]) +
     globalRow(market) +
     row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
-         ["30-year TIPS yield, from FRED, which is what Choi's guide asks for", "why"]]) +
+         ["30-year TIPS yield, from the Treasury's real yield curve (FRED's DFII30), which is what Choi's guide asks for", "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +
     row([["Your risk aversion", "k"], [num1.format(gamma), "n"], ["your answer to the coin question", "why"]]) +

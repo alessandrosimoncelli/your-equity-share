@@ -108,7 +108,7 @@ that need no key or account. The Italian sources are in
 
 | Input | Source | Note |
 | --- | --- | --- |
-| real risk-free rate | FRED, 30-year TIPS yield | a real yield already, no inflation adjustment |
+| real risk-free rate | US Treasury daily real yield curve, 30 years | a real yield already; FRED's DFII30 is the same series, used if the Treasury does not answer |
 | stock volatility | Yahoo, daily **adjusted** closes | dividend and split adjusted, so total returns |
 | expected stock return | Shiller: dividend yield plus 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
 

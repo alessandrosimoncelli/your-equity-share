@@ -78,6 +78,15 @@ jobs:
       - name: Install the test runner
         run: python -m pip install --upgrade pip pytest certifi
 
+      # Which sources answer GitHub's servers today. The refresh stops at the
+      # first source that fails, which hides every source after it; this asks
+      # all twelve at once and puts the answer on the summary page. It only
+      # reports, so it can never fail the run.
+      - name: Check which data sources answer
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: python tools/probe_sources.py
+
       # continue-on-error so that a refresh which fails still lets the run go
       # on to republish the last good data, and the report job at the end
       # turns the run red so the failure is not missed.

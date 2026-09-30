@@ -29,6 +29,7 @@ __all__ = [
     "parse_damodaran_components",
     "parse_damodaran_erp",
     "parse_fred_csv",
+    "parse_treasury_real_yield_csv",
     "parse_multpl_current",
     "parse_price_json",
     "read_xls_sheet",
@@ -146,6 +147,41 @@ def parse_fred_csv(text: str, series: str) -> tuple[date, float]:
             continue
     if latest is None:
         raise DataUnavailable(f"{series}: no observations in the response")
+    return latest
+
+
+def parse_treasury_real_yield_csv(
+    text: str, column: str = "30 YR"
+) -> tuple[date, float] | None:
+    """Return the latest value of one tenor of the Treasury's real yield curve.
+
+    The file is the Treasury's Daily Treasury Par Real Yield Curve Rates for
+    one calendar year: newest day first, dates written month/day/year, yields
+    in percent. FRED's DFII30 is this curve's 30-year point, republished
+    through the Federal Reserve's H.15 release.
+
+    Returns None when the year has no observation yet, as on its first
+    business day, so the caller can read the year before. A file without the
+    column is a changed format rather than an empty year, and raises.
+    """
+    reader = csv.reader(io.StringIO(text))
+    header = [cell.strip() for cell in next(reader, [])]
+    if "Date" not in header or column not in header:
+        raise DataUnavailable(
+            f"Treasury real yield curve: no {column!r} column in the response"
+        )
+    at, col = header.index("Date"), header.index(column)
+    latest: tuple[date, float] | None = None
+    for row in reader:
+        if len(row) <= max(at, col) or not row[col].strip():
+            continue
+        try:
+            day = datetime.strptime(row[at].strip(), "%m/%d/%Y").date()
+            value = float(row[col]) / 100.0
+        except ValueError:
+            continue
+        if latest is None or day > latest[0]:
+            latest = (day, value)
     return latest
 
 

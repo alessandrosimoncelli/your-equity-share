@@ -320,6 +320,80 @@ def test_parse_fred_csv_rejects_an_empty_series() -> None:
         parse_fred_csv("observation_date,DGS3MO\n2026-08-26,.\n", "DGS3MO")
 
 
+# --- where the 30-year real yield comes from --------------------------------
+#
+# The Treasury first, because FRED does not answer GitHub's servers, and FRED
+# second, because it does answer most other places. Nothing here touches the
+# network: _get is replaced by a stand-in that serves each URL from a table.
+
+TREASURY_2026 = ('Date,"5 YR","7 YR","10 YR","20 YR","30 YR"\n'
+                 "09/29/2026,2.72,2.80,2.91,3.15,3.29\n")
+TREASURY_EMPTY = 'Date,"5 YR","7 YR","10 YR","20 YR","30 YR"\n'
+DFII30_CSV = "observation_date,DFII30\n2026-09-28,3.28\n"
+
+
+def _serve(monkeypatch, pages: dict) -> list:
+    import update
+
+    asked: list = []
+
+    def fake_get(url: str, timeout: float = 0) -> bytes:
+        asked.append(url)
+        for fragment, body in pages.items():
+            if fragment in url:
+                if isinstance(body, Exception):
+                    raise body
+                return body.encode("utf-8")
+        raise DataUnavailable(f"no stand-in for {url}")
+
+    monkeypatch.setattr(update, "_get", fake_get)
+    return asked
+
+
+def test_the_treasury_is_asked_first_and_named_as_the_source(monkeypatch) -> None:
+    import update
+
+    asked = _serve(monkeypatch, {"treasury.gov": TREASURY_2026,
+                                 "fred.stlouisfed.org": DFII30_CSV})
+    day, value, source = update.fetch_real_risk_free(date(2026, 9, 30))
+    assert (day, value) == (date(2026, 9, 29), pytest.approx(0.0329))
+    assert source == update.TREASURY_SOURCE
+    assert not any("fred" in url for url in asked)
+
+
+def test_fred_answers_when_the_treasury_does_not(monkeypatch) -> None:
+    import update
+
+    _serve(monkeypatch, {
+        "treasury.gov": DataUnavailable("timed out after 40s: treasury"),
+        "fred.stlouisfed.org": DFII30_CSV})
+    day, value, source = update.fetch_real_risk_free(date(2026, 9, 30))
+    assert (day, value) == (date(2026, 9, 28), pytest.approx(0.0328))
+    assert source.startswith("FRED DFII30") and "timed out" in source
+
+
+def test_an_empty_new_year_reads_the_year_before(monkeypatch) -> None:
+    """On 2 January the new year's file has a header and nothing else."""
+    import update
+
+    asked = _serve(monkeypatch, {"/2027/": TREASURY_EMPTY,
+                                 "/2026/": TREASURY_2026})
+    day, _, source = update.fetch_real_risk_free(date(2027, 1, 2))
+    assert day == date(2026, 9, 29)
+    assert source == update.TREASURY_SOURCE
+    assert [url for url in asked if "/2027/" in url]
+
+
+def test_both_failing_names_both(monkeypatch) -> None:
+    import update
+
+    _serve(monkeypatch, {
+        "treasury.gov": DataUnavailable("HTTP 503 from treasury"),
+        "fred.stlouisfed.org": DataUnavailable("timed out after 40s: fred")})
+    with pytest.raises(DataUnavailable, match="Treasury failed.*FRED"):
+        update.fetch_real_risk_free(date(2026, 9, 30))
+
+
 def test_trim_to_window_keeps_the_most_recent() -> None:
     closes = {f"2026-01-{d:02d}": float(d) for d in range(1, 29)}
     trimmed = trim_to_window(closes, years=0)

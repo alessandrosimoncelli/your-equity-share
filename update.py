@@ -14,7 +14,8 @@ saved here. Run both by hand only for a copy that is not on GitHub.
 All three inputs the model uses are fetched, from free sources that need no
 key or account:
 
-    real risk-free rate       FRED, the 30-year TIPS yield
+    real risk-free rate       the US Treasury's daily real yield curve,
+                              30 years, which FRED republishes as DFII30
     stock market volatility   Yahoo, daily adjusted closes
     expected stock return     Shiller: the dividend yield plus the 100-year
                               trend in real earnings per share, no repricing
@@ -63,6 +64,7 @@ from your_equity_share.providers import (  # noqa: E402
     parse_damodaran_components,
     parse_damodaran_erp,
     parse_fred_csv,
+    parse_treasury_real_yield_csv,
     parse_multpl_current,
     parse_price_json,
     parse_shiller_csv,
@@ -119,6 +121,22 @@ GROWTH_WINDOW_YEARS = 100
 # yield already, which is what the model needs and what Choi's guide asks for.
 FRED_REAL_RISK_FREE = "DFII30"
 
+# The same number at its origin. FRED's DFII30 is the 30-year point of the
+# Treasury's Daily Treasury Par Real Yield Curve, republished through the
+# Federal Reserve's H.15 release: on all 186 trading days of 2026 to 28
+# September the two agree exactly, and the Treasury publishes a day sooner.
+# It is read first because FRED does not answer GitHub's servers, where the
+# weekly refresh runs: the first scheduled attempt timed out on it. FRED stays
+# as the fallback. One file per calendar year, so {year} is filled in.
+TREASURY_REAL_YIELD_URL = (
+    "https://home.treasury.gov/resource-center/data-chart-center/"
+    "interest-rates/daily-treasury-rates.csv/{year}/all"
+    "?type=daily_treasury_real_yield_curve&field_tdr_date_value={year}"
+    "&page&_format=csv"
+)
+TREASURY_REAL_COLUMN = "30 YR"
+TREASURY_SOURCE = "US Treasury daily par real yield curve, 30 years"
+
 # Which configurations this script knows how to refresh.
 #
 # It rebuilds the whole file from one template, so running it on a
@@ -142,19 +160,58 @@ FRED_BREAKEVEN = "T10YIE"
 # The price endpoint rejects the default urllib agent string.
 USER_AGENT = "Mozilla/5.0 (compatible; your-equity-share/0.1; research tool)"
 TIMEOUT_SECONDS = 40
+# For downloads that only feed a printed comparison, so a provider that does
+# not answer costs a quarter of a minute rather than two thirds of one.
+REPORTING_TIMEOUT_SECONDS = 15
 
 
-def _get(url: str) -> bytes:
+def _get(url: str, timeout: float = TIMEOUT_SECONDS) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return response.read()
     except urllib.error.HTTPError as exc:
         raise DataUnavailable(f"HTTP {exc.code} {exc.reason} from {url}") from exc
     except urllib.error.URLError as exc:
         raise DataUnavailable(f"could not reach {url}: {exc.reason}") from exc
     except TimeoutError as exc:
-        raise DataUnavailable(f"timed out after {TIMEOUT_SECONDS}s: {url}") from exc
+        raise DataUnavailable(f"timed out after {timeout:g}s: {url}") from exc
+
+
+def fetch_real_risk_free(today: date | None = None) -> tuple[date, float, str]:
+    """The 30-year real yield: from the Treasury, or from FRED if it fails.
+
+    Returns the observation date, the yield as a fraction, and which of the
+    two supplied it, so the written file says where the number came from.
+    The Treasury keeps one file per year and a new year's file is empty on
+    its first business day, so an empty current year falls back to the last.
+    """
+    today = today or date.today()
+    try:
+        for year in (today.year, today.year - 1):
+            latest = parse_treasury_real_yield_csv(
+                _get(TREASURY_REAL_YIELD_URL.format(year=year)).decode(
+                    "utf-8", "replace"),
+                TREASURY_REAL_COLUMN,
+            )
+            if latest is not None:
+                return latest[0], latest[1], TREASURY_SOURCE
+        raise DataUnavailable(
+            f"the Treasury's real yield files for {today.year} and "
+            f"{today.year - 1} hold no 30-year observation")
+    except DataUnavailable as treasury_error:
+        try:
+            day, value = parse_fred_csv(
+                _get(FRED_URL.format(series=FRED_REAL_RISK_FREE)).decode(
+                    "utf-8", "replace"),
+                FRED_REAL_RISK_FREE,
+            )
+        except DataUnavailable as fred_error:
+            raise DataUnavailable(
+                f"30-year real yield: the Treasury failed ({treasury_error}) "
+                f"and so did FRED ({fred_error})") from fred_error
+        return day, value, (f"FRED {FRED_REAL_RISK_FREE}, because the "
+                            f"Treasury failed: {treasury_error}")
 
 
 def trim_to_window(closes: dict[str, float], years: int) -> dict[str, float]:
@@ -264,7 +321,8 @@ def render_config(**f) -> str:
     out += [
         f"expected_stock_real_return = {f['expected_return']:.6f}",
         "",
-        f"# FRED {FRED_REAL_RISK_FREE}, the 30-year TIPS yield. A real yield",
+        f"# The 30-year TIPS yield, from the Treasury's real yield curve, which",
+        f"# FRED republishes as {FRED_REAL_RISK_FREE}. A real yield",
         "# already, so no inflation adjustment is applied. Before tax: in a",
         "# taxable account the inflation increase in the principal is taxed",
         "# too, so what is left is about r(1 - t) - t * inflation, not r(1 - t).",
@@ -311,7 +369,7 @@ def render_config(**f) -> str:
         f'history_source = "{f["history_source"]}"' if f.get("history_source")
         else "# history_source = none",
         f'volatility_source = "Yahoo daily closes"',
-        f'real_risk_free_source = "FRED {FRED_REAL_RISK_FREE}"',
+        f'real_risk_free_source = "{f.get("real_risk_free_source", "FRED " + FRED_REAL_RISK_FREE)}"',
         # Not an input. See the constant for what it is for.
         *(
             [f"real_cash = {f['real_cash']:.6f}"]
@@ -555,13 +613,15 @@ def main(argv: list[str]) -> int:
 
         try:
             _, short_nominal = parse_fred_csv(
-                _get(FRED_URL.format(series=FRED_SHORT_NOMINAL)).decode(
+                _get(FRED_URL.format(series=FRED_SHORT_NOMINAL),
+                     timeout=REPORTING_TIMEOUT_SECONDS).decode(
                     "utf-8", "replace"
                 ),
                 FRED_SHORT_NOMINAL,
             )
             _, breakeven = parse_fred_csv(
-                _get(FRED_URL.format(series=FRED_BREAKEVEN)).decode("utf-8", "replace"),
+                _get(FRED_URL.format(series=FRED_BREAKEVEN),
+                     timeout=REPORTING_TIMEOUT_SECONDS).decode("utf-8", "replace"),
                 FRED_BREAKEVEN,
             )
             real_cash = (1.0 + short_nominal) / (1.0 + breakeven) - 1.0
@@ -569,15 +629,12 @@ def main(argv: list[str]) -> int:
             # Reporting only, so a failure here must not stop a refresh.
             real_cash = None
 
-        rf_date, real_rf = parse_fred_csv(
-            _get(FRED_URL.format(series=FRED_REAL_RISK_FREE)).decode(
-                "utf-8", "replace"
-            ),
-            FRED_REAL_RISK_FREE,
-        )
+        rf_date, real_rf, rf_source = fetch_real_risk_free()
         print(f"  real risk-free rate (30y TIPS)   {real_rf:>8.2%}"
               f"   was {existing.real_risk_free_rate:>6.2%}"
               f"   {_change(real_rf, existing.real_risk_free_rate)}")
+        if rf_source != TREASURY_SOURCE:
+            print(f"    from {rf_source}")
 
         vol, vol_date, observations, adjusted = estimate_volatility(
             existing.market_ticker, args.years, args.force
@@ -719,6 +776,7 @@ def main(argv: list[str]) -> int:
         method=method,
         expected_return=expected,
         real_risk_free=real_rf,
+        real_risk_free_source=rf_source.replace('"', "'"),
         volatility=vol,
         ticker=existing.market_ticker,
         as_of=min(rf_date, vol_date),
