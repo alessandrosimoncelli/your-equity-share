@@ -58,10 +58,10 @@ them would silently mix a country difference with a code difference.
 | equity sleeve | S&P 500 | FTSE All-World |
 | dividend yield | Shiller, trailing over today's price | MSCI ACWI in euro, same construction |
 | real growth | 100-year Shiller trend | the same number, and `us_vs_global.py` measures what that substitution costs |
-| safe asset | FRED DFII30, a traded 30-year real yield | ECB AAA 30-year curve less the market break-even |
+| safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30 | ECB AAA 30-year curve less the market break-even |
 | volatility | SPY, five years daily | VWCE, five years daily |
-| pension | 40% replacement | 74%, from the OECD |
-| tax | not modelled | computed in `src/your_equity_share/taxes.py`, not yet applied to the answer |
+| pension | 40% replacement | 79%, from the OECD, paid from 67 |
+| tax | not modelled | applied to the answer by default, `src/your_equity_share/taxes.py` |
 
 ## Refreshing
 

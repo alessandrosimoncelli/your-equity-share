@@ -2,7 +2,7 @@
 
 Phase one of the Italian tool changes the equity sleeve from the S&P 500 to a
 global index, the safe asset from a 30-year TIPS to a euro inflation-linked
-bond, and the retirement benefit replacement rate from 40% to 74%. It changes
+bond, and the retirement benefit replacement rate from 40% to 79%. It changes
 nothing else in the human capital half, because nothing else in it can be
 changed from outside Choi's fitted coefficients.
 
@@ -58,15 +58,21 @@ def test_only_the_replacement_rate_differs_from_the_american_calibration() -> No
 
 
 def test_the_italian_replacement_rate_is_the_oecd_figure() -> None:
-    """74.0% net for an average earner, Pensions at a Glance 2025."""
-    assert ITALY_CALIBRATION.benefit_replacement_rate == 0.74
+    """79% net for an average earner, Pensions at a Glance 2025, Italy note.
+
+    It read 74% until September 2026, which was the top of the chart's
+    retirement-age scale read as Italy's replacement rate. The OECD's worker
+    retires at 70 and this model at 67; section 7 of the Italian methodology
+    states what paying the 79% from 67 does.
+    """
+    assert ITALY_CALIBRATION.benefit_replacement_rate == 0.79
 
 
 def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
     """This is why the swap is legitimate rather than an extrapolation.
 
     Equation (12) takes the replacement rate as a regressor, fitted over 0.4,
-    0.6 and 0.8. Italy's 74% is between the second and third, so the
+    0.6 and 0.8. Italy's 79% is between the second and third, so the
     coefficient is being interpolated rather than used outside its range. The
     American 40% sits on the bottom edge of the same grid.
     """
@@ -197,7 +203,7 @@ def test_the_expected_return_is_the_arithmetic_mean_the_model_takes(italy) -> No
 
     compound = float(italy.provenance["expected_return_compound"])
     expected = arithmetic_from_compound(compound, italy.stock_volatility)
-    assert italy.expected_stock_real_return == pytest.approx(expected, abs=5e-6)
+    assert italy.before_tax_expected_return == pytest.approx(expected, abs=5e-6)
 
 
 # --- the guard --------------------------------------------------------------
@@ -308,7 +314,7 @@ def test_the_survey_would_have_flattered_the_safe_asset(italy) -> None:
     survey = float(italy.provenance["expected_inflation_survey"])
     used = (1 + nominal) / (1 + breakeven) - 1
     flattered = (1 + nominal) / (1 + survey) - 1
-    assert italy.real_risk_free_rate == pytest.approx(used, abs=5e-6)
+    assert italy.before_tax_real_risk_free == pytest.approx(used, abs=5e-6)
     assert flattered > used
 
 
@@ -608,3 +614,59 @@ def test_the_yield_window_is_written_as_two_dates(name) -> None:
     assert window, "the note no longer names its window"
     first, last = (datetime.strptime(d, "%Y%m%d") for d in window.groups())
     assert 300 <= (last - first).days <= 400
+
+
+# --- the Italian answer is after tax ------------------------------------------
+
+def test_the_italian_answer_is_after_tax_by_default(italy) -> None:
+    """Italian tax is the law, not the household's choice, so it is applied.
+
+    The loader reads the after-tax pair the file carries in [market], and
+    keeps the figures before tax beside it for comparisons.
+    """
+    import tomllib
+
+    market = tomllib.loads(IT_CONFIG.read_text(encoding="utf-8"))["market"]
+    assert italy.tax_applied
+    assert italy.expected_stock_real_return == market["after_tax_expected_return"]
+    assert italy.real_risk_free_rate == market["after_tax_real_risk_free"]
+    assert italy.before_tax_expected_return == market["expected_stock_real_return"]
+    assert italy.before_tax_real_risk_free == market["real_risk_free"]
+
+
+def test_the_figures_before_tax_are_one_argument_away() -> None:
+    """What a comparison with the untaxed American variant needs."""
+    before = load_market_data(IT_CONFIG, apply_tax=False)
+    assert not before.tax_applied
+    assert before.expected_stock_real_return == before.before_tax_expected_return
+    assert before.real_risk_free_rate == before.before_tax_real_risk_free
+
+
+def test_the_american_file_has_no_tax_to_apply() -> None:
+    american = load_market_data()
+    assert not american.tax_applied
+    assert american.expected_stock_real_return == american.before_tax_expected_return
+    assert american.real_risk_free_rate == american.before_tax_real_risk_free
+
+
+def test_the_document_states_the_pension_the_code_uses() -> None:
+    """The document once said 74.0% while the chart it cited said 79."""
+    rate = f"<strong>{ITALY_CALIBRATION.benefit_replacement_rate:.0%}</strong>"
+    assert rate in _doc()
+
+
+def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
+    """Section 1 quotes the answer before and after tax; both are recomputed.
+
+    On the snapshot the document is written against, for its household:
+    45 years old, 100,000 of salary, 1,500,000 of savings, risk aversion 5.
+    """
+    household = Household(1_500_000.0, [Person(45, 100_000.0)], 5.0)
+    snapshot = ROOT / "variants" / "it" / "snapshot.toml"
+    doc = _doc()
+    for market in (load_market_data(snapshot),
+                   load_market_data(snapshot, apply_tax=False)):
+        share = recommend(household, market.expected_stock_real_return,
+                          market.real_risk_free_rate, market.stock_volatility,
+                          ITALY_CALIBRATION).equity_share
+        assert f"{share:.1%}" in doc, f"{share:.1%}"

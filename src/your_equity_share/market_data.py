@@ -91,6 +91,13 @@ class MarketData:
     covariance_as_of: date | None = None
     covariance_observations: int = 0
 
+    # The two figures before tax, as the file's [market] states them. They
+    # equal the two above unless tax was applied, which happens only for a
+    # file carrying an after-tax pair, and only when it was not declined.
+    before_tax_expected_return: float | None = None
+    before_tax_real_risk_free: float | None = None
+    tax_applied: bool = False
+
     @property
     def provisional_fields(self) -> tuple[str, ...]:
         """Inputs the configuration admits nobody has measured.
@@ -253,8 +260,17 @@ def _load_optional_sleeves(
     )
 
 
-def load_market_data(path: Path | str | None = None) -> MarketData:
+def load_market_data(
+    path: Path | str | None = None, *, apply_tax: bool = True
+) -> MarketData:
     """Load and validate the market data file.
+
+    A file whose [market] carries an after-tax pair, as the Italian one does,
+    is read after tax by default. There the tax is a fixed feature of the law
+    that falls on exactly the two assets the model chooses between, so the
+    answer before it is not the household's answer. Pass apply_tax=False for
+    the figures before tax, which is what a comparison with the untaxed
+    American variant needs; they are kept on the result either way.
 
     Raises ValueError on anything structurally wrong. Staleness is not an error,
     since a deliberately frozen file is a legitimate way to run the tool; call
@@ -282,19 +298,31 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
     except KeyError as exc:
         raise ValueError(f"{path}: [market] is missing {exc.args[0]!r}") from exc
 
+    after_expected = market.get("after_tax_expected_return")
+    after_rf = market.get("after_tax_real_risk_free")
+    if (after_expected is None) != (after_rf is None):
+        raise ValueError(
+            f"{path}: after-tax figures come as a pair, after_tax_expected_return "
+            f"and after_tax_real_risk_free; this file has one without the other"
+        )
+    taxed = apply_tax and after_expected is not None
+    used_expected = float(after_expected) if taxed else expected
+    used_rf = float(after_rf) if taxed else real_rf
+
     if volatility <= 0:
         raise ValueError(f"{path}: stock_volatility must be positive")
-    if expected <= real_rf:
+    if used_expected <= used_rf:
         raise ValueError(
-            f"{path}: expected_stock_real_return ({expected}) is not above "
-            f"real_risk_free ({real_rf}), so there is no reason to hold equities"
+            f"{path}: expected_stock_real_return ({used_expected}) is not above "
+            f"real_risk_free ({used_rf}){' after tax' if taxed else ''}, so there "
+            f"is no reason to hold equities"
         )
 
     sleeves, correlation, cov_as_of, observations = _load_optional_sleeves(raw, path)
 
     return MarketData(
-        expected_stock_real_return=expected,
-        real_risk_free_rate=real_rf,
+        expected_stock_real_return=used_expected,
+        real_risk_free_rate=used_rf,
         stock_volatility=volatility,
         market_ticker=ticker,
         as_of=_as_date(market["as_of"], "market.as_of"),
@@ -304,4 +332,7 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
         correlation=correlation,
         covariance_as_of=cov_as_of,
         covariance_observations=observations,
+        before_tax_expected_return=expected,
+        before_tax_real_risk_free=real_rf,
+        tax_applied=taxed,
     )

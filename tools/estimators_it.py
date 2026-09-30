@@ -234,7 +234,9 @@ def share(compound, market):
 
 
 def main() -> int:
-    market = load_market_data(CONFIG)
+    # Before tax: the candidates below are pre-tax estimators, set against
+    # the safe rate in the same terms, as the American comparison is.
+    market = load_market_data(CONFIG, apply_tax=False)
     levels = msci_levels()
     hicp = euro_hicp()
     dates, nominal, real = dividend_series(levels, hicp)

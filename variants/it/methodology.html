@@ -363,9 +363,10 @@ wherever Shiller's workbook is present, which includes every Monday refresh that
 the workbook is not in the repository, so a plain push skips it.</p>
 
 <p>That is deliberate and it is the point of the whole arrangement. <strong>The
-gap between a 21.3% American answer and a 63.9% Italian one, both before tax,
-is the country and not the method.</strong> Italian tax would take the Italian
-one to 59.2%, which section 8 measures. Were the model copied into two folders, the copies
+gap between a 21.3% American answer and a 64.1% Italian one, both before tax,
+is the country and not the method.</strong> The Italian answer itself is after
+Italian tax, 59.5%, which section 8 measures; the comparison uses the figures
+before tax because the American variant models none. Were the model copied into two folders, the copies
 would be edited on different days and every later comparison would quietly mix
 a country difference with a code difference.</p>
 
@@ -389,7 +390,7 @@ against</caption>
 <tr><td>Volatility, euro</td><td class="num">13.8942%</td><td>MSCI ACWI in euro, 25 years</td><td class="num">13.99%</td></tr>
 <tr><td>Real safe rate</td><td class="num">1.4401%</td><td>Bund/euro-i 2046 traded real yield</td><td class="num">1.4906%</td></tr>
 <tr><td>Nominal 30-year yield</td><td class="num">3.7617%</td><td>German 30-year Bund, 9 September</td><td class="num">3.886%</td></tr>
-<tr><td>Benefit replacement rate</td><td class="num">74.0%</td><td>OECD, Pensions at a Glance 2025</td><td class="num">74.0%</td></tr>
+<tr><td>Benefit replacement rate</td><td class="num">79%</td><td>OECD, Pensions at a Glance 2025, Italy country note, future net rate for an average earner</td><td class="num">79%</td></tr>
 <tr><td>Tax, government bonds</td><td class="num">12.5%</td><td>Italian law, white-list states</td><td class="num">12.5%</td></tr>
 <tr><td>Tax, other financial income</td><td class="num">26.0%</td><td>Italian law</td><td class="num">26.0%</td></tr>
 <tr><td>Imposta di bollo</td><td class="num">0.20%</td><td>Italian law, annually on value</td><td class="num">0.20%</td></tr>
@@ -707,9 +708,23 @@ period.</p>
 
 <h2 id="s7">7. The pension</h2>
 
-<p><strong>74.0%</strong>, the net replacement rate for an average earner,
-against an OECD average of 63.2%. From the OECD's <em>Pensions at a Glance
-2025</em>, Italy country note. Statutory retirement at 67, early at 64.</p>
+<p><strong>79%</strong>, the future net replacement rate for an average earner,
+against an OECD average of 63. From the OECD's <em>Pensions at a Glance
+2025</em>, Italy country note, whose worker starts at 22 in 2024 and retires
+at Italy's future normal retirement age of 70. Statutory retirement is 67
+today and early retirement 64, both linked to life expectancy.</p>
+
+<p><strong>This figure read 74.0% until 30 September 2026.</strong> That number
+is on the same chart, but it is the top of the retirement-age scale, the
+highest future retirement age in the OECD, not Italy's replacement rate.
+Corrected, it moves the Italian answer by 0.3 points.</p>
+
+<p><strong>The model pays the 79% from 67, not from 70.</strong> Choi fitted
+his coefficients with retirement at 67, and the age cannot be moved from
+outside them. Three years of pension in place of three years of wages
+understates lifetime income by about 0.6 of a year's wage, three times the
+21% by which the pension falls short of the wage. The approximation therefore
+leans slightly towards less equity, not more.</p>
 
 <p>It is the only constant in the human capital half that can honestly be made
 Italian, and it is set in <code>ITALY_CALIBRATION</code> rather than in the
@@ -724,8 +739,9 @@ Samuelson (1992) predict.</p>
 law that falls on exactly the two assets this model chooses between, and
 favours the safe one. So it is modelled rather than left to a footnote.
 <code>src/your_equity_share/taxes.py</code> holds the rates and the reasoning.
-The recommendation does not yet apply it: the figures below are what it does
-when applied, and applying it is item 1.1 of the further-work list.</p>
+The Italian answer applies it: the model reads the after-tax return and safe
+rate in the last row of Table 6. A comparison with the American variant, which
+models no tax, uses the figures before tax instead.</p>
 
 <p><strong>12.5%</strong> on interest and capital gains from Italian government
 bonds and those of white-list states, which includes Germany, so the safe asset
@@ -761,8 +777,8 @@ the arithmetic mean the model takes, at a thirty-year deferral.</caption>
 26% on both sides and the drift <em>widens</em>, because the safe asset is
 taxed every year on its whole nominal coupon while equities defer to sale. What
 tilts an Italian household towards bonds is the preference given to government
-paper, and that preference is worth 13.4 points of equity share on its own
-against 4.7 for the tax system as a whole.</p>
+paper, and that preference is worth 13.6 points of equity share on its own
+against 4.6 for the tax system as a whole.</p>
 
 <p><strong>One thing is deliberately not modelled, and it is the interesting
 one.</strong> A tax on investment returns normally makes a risky asset more
@@ -816,7 +832,8 @@ reader does not have to find them.</p>
 Maenhout's earnings profile, their permanent and temporary shock volatilities,
 and United States mortality are all fitted inside Choi's coefficients and
 cannot be changed from a configuration file. Only the benefit replacement rate
-could honestly be made Italian. This is the largest declared deviation of the
+could honestly be made Italian, and it is the OECD's figure for a retirement
+at 70, paid here from 67 (section 7). This is the largest declared deviation of the
 variant, and removing it would mean refitting the coefficients on the Bank of
 Italy's Survey on Household Income and Wealth rather than substituting an
 input.</p>
@@ -824,7 +841,7 @@ input.</p>
 <p><strong>The tax deferral horizon is a choice.</strong> An accumulating fund
 is taxed once, on sale, and how much that is worth depends on when. The model
 fixes it at thirty years to match the maturity of the safe asset. Across ten to
-forty years it is worth 11.6 points of equity share, which makes it the largest
+forty years it is worth 11.7 points of equity share, which makes it the largest
 free parameter in the variant. The household object already carries ages, so it
 can be removed rather than tuned, and <code>docs/further-work.html</code>
 records it as outstanding.</p>

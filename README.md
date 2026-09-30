@@ -286,6 +286,22 @@ result.uncapped_share        # before the no-leverage cap
 result.human_capital         # present value of future earnings
 ```
 
+The Italian variant runs the same way. Its answer is after Italian tax unless
+you ask for the figures before it:
+
+```python
+from your_equity_share import ITALY_CALIBRATION
+
+italy = load_market_data("variants/it/market_data.toml")  # apply_tax=False: before tax
+result = recommend(
+    Household(500_000, [Person(45, 100_000)], risk_aversion=5),
+    italy.expected_stock_real_return,
+    italy.real_risk_free_rate,
+    italy.stock_volatility,
+    ITALY_CALIBRATION,
+)
+```
+
 ### Validation
 
 Both tabs of Choi's published spreadsheet are reproduced exactly, which is the
