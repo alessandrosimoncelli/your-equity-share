@@ -149,8 +149,9 @@ consumption that produces the same loss of expected utility:
 
 The tool elicits risk aversion with Choi's certainty-equivalent question, asked
 as five quick choices with a final check, beside a 0 to 10 self-assessment,
-rather than a questionnaire. It matters, but the expected
-return matters more: the
+rather than a questionnaire. The coin pays what the household lives on now or
+half of it, the guide's own proportions. Risk aversion matters, but the
+expected return matters more: the
 answer to that question would have to be wrong by four points on a ten-point
 scale to move the recommendation as far as the choice between expected-return
 estimators does (section 3.1 of the methodology).

@@ -269,3 +269,40 @@ def test_answers_disagree_only_in_opposite_outer_thirds(willingness, gamma, expe
 def test_the_self_assessment_scale_is_zero_to_ten() -> None:
     with pytest.raises(ValueError, match="0 to 10"):
         answers_disagree(11, 5.0)
+
+
+# --- what the coin pays -------------------------------------------------------
+
+from your_equity_share.risk_aversion import GUIDE_GAMBLE_HIGH, coin_income  # noqa: E402
+
+
+def test_the_coin_pays_what_the_household_lives_on() -> None:
+    """Both wages and any pension being drawn, as the Health and Retirement
+    Study frames its gamble on current total family income."""
+    assert coin_income(200_000.0) == 200_000.0
+    assert coin_income(200_000.0, 80_000.0) == 280_000.0
+    assert coin_income(0.0, 0.0, 30_000.0) == 30_000.0
+
+
+def test_a_retired_person_with_a_working_partner_lives_on_both() -> None:
+    """The case the page used to get wrong: the pension was dropped whenever
+    anyone in the household earned a wage."""
+    assert coin_income(0.0, 80_000.0, 30_000.0) == 110_000.0
+
+
+def test_with_nothing_coming_in_the_guide_s_own_amount_is_asked() -> None:
+    assert coin_income(0.0) == GUIDE_GAMBLE_HIGH
+    assert coin_income(400.0, 0.0, 599.0) == GUIDE_GAMBLE_HIGH
+    assert coin_income(400.0, 0.0, 600.0) == 1_000.0
+
+
+def test_the_coin_is_rounded_to_the_dollar_half_up() -> None:
+    """Half up, as the browser rounds, not to even as Python's round() does."""
+    assert coin_income(100_000.5) == 100_001.0
+    assert coin_income(100_002.5) == 100_003.0
+
+
+@pytest.mark.parametrize("args", [(-1.0, 0.0, 0.0), (1.0, -1.0, 0.0), (1.0, 0.0, -1.0)])
+def test_negative_incomes_are_rejected(args) -> None:
+    with pytest.raises(ValueError):
+        coin_income(*args)

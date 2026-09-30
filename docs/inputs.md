@@ -40,12 +40,21 @@ to 10 range.
    other.
 2. Five choices between the coin and a sure amount, one at a time, each
    amount depending on the answer before, with no range shown and nothing
-   preselected. The coin pays your own after-tax income or half of it.
+   preselected. The coin pays what your household lives on now, after tax,
+   or half of it: your wage, a second adult's wage and any pension already
+   being received, added up, or the guide's own $100,000 when nothing is
+   coming in. As in the guide, the whole amount must be spent and nothing
+   can be borrowed.
 3. A check: the sure amount your choices imply, which you confirm or adjust.
 
-The table still applies, as shares of the good outcome (58.6% means 5),
-because only the ratio of the two outcomes matters. The five choices place
-risk aversion within about 4%. Section 3.4 of the methodology gives the
+Both percentages are the guide's: its $100,000 is the wage of the paper's
+worked example and its $50,000 half of that, and the Health and Retirement
+Study frames its own income gambles on current family income the same way.
+The table still applies, as shares of the good outcome (70.7% means 1, 58.6%
+means 5, 54.0% means 10), because only the ratio of the two outcomes matters.
+Each sure amount is the coin's worth at the middle of the range the answers
+so far leave open, starting at 62.8% of the good outcome, so the five choices
+place risk aversion within about 4%. Section 3.4 of the methodology gives the
 sources.
 
 That table is not a lookup table in this codebase: `your_equity_share.risk_aversion`

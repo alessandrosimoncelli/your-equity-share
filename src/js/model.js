@@ -362,11 +362,27 @@ export function guideTable(high = GUIDE_GAMBLE_HIGH, low = GUIDE_GAMBLE_LOW) {
 // --- the question as five choices -------------------------------------------
 //
 // The staircase of risk_aversion.py: five choices between the coin and a sure
-// amount, each amount depending on the answer before, the coin paying the
-// household's own income or half of it. Mirrors the Python function for
+// amount, each amount depending on the answer before, the coin paying what
+// the household lives on now or half of it. Mirrors the Python function for
 // function; tests/golden.json holds every path of answers at five incomes.
 
 export const STAIRCASE_CHOICES = 5;
+export const SMALLEST_COIN = 1000.0;
+
+/**
+ * The coin's good outcome: the household's after-tax income now, wages and
+ * any pension already being received added up, as the Health and Retirement
+ * Study frames its gamble on current total family income. Below
+ * SMALLEST_COIN nothing is coming in, and the guide's own $100,000 is asked.
+ */
+export function coinIncome(wage, partnerWage = 0.0, pension = 0.0) {
+  if (!(Math.min(wage, partnerWage, pension) >= 0)) {
+    throw new RangeError("incomes cannot be negative");
+  }
+  const household = wage + partnerWage + pension;
+  if (household < SMALLEST_COIN) return GUIDE_GAMBLE_HIGH;
+  return Math.floor(household + 0.5);
+}
 
 /** Before any answer: the whole range the guide describes, 1 to 10. */
 export function staircaseStart() {

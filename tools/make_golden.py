@@ -48,6 +48,7 @@ from your_equity_share.risk_aversion import (  # noqa: E402
     Staircase,
     answers_disagree,
     certainty_equivalent,
+    coin_income,
     gamma_from_certainty_equivalent,
     staircase_answer,
     staircase_offer,
@@ -152,6 +153,17 @@ def staircase_cases() -> list[dict]:
                           "low": state.low, "high": state.high,
                           "estimate": state.estimate})
     return cases
+
+
+def coin_income_cases() -> list[dict]:
+    """Each way a household can be paid, either side of the fallback and of
+    a half dollar, so the two languages put the same amount on the coin."""
+    return [
+        {"args": [w, p, b], "expect": coin_income(w, p, b)}
+        for w in (0.0, 400.0, 999.4, 35_000.0, 100_000.5, 200_000.0)
+        for p in (0.0, 599.6, 80_000.0)
+        for b in (0.0, 0.5, 30_000.0)
+    ]
 
 
 def disagreement_cases() -> list[dict]:
@@ -309,6 +321,9 @@ def rejection_cases() -> list[dict]:
         {"fn": "gamma_from_certainty_equivalent", "args": [75_000.0]},
         {"fn": "gamma_from_certainty_equivalent", "args": [50_000.0]},
         {"fn": "gamma_from_certainty_equivalent", "args": [49_000.0]},
+        {"fn": "coin_income", "args": [-1.0, 0.0, 0.0]},
+        {"fn": "coin_income", "args": [100_000.0, -1.0, 0.0]},
+        {"fn": "coin_income", "args": [100_000.0, 0.0, -1.0]},
     ]
 
 
@@ -361,6 +376,7 @@ def main() -> int:
         "certainty_equivalent": forward_ce,
         "gamma_from_certainty_equivalent": inverse_ce,
         "staircase": staircase_cases(),
+        "coin_income": coin_income_cases(),
         "answers_disagree": disagreement_cases(),
         "project_earnings": earnings_cases(),
         "human_capital": human_capital_cases(),

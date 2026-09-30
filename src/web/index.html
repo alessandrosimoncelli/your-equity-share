@@ -852,6 +852,7 @@ import {
   answersDisagree,
   arithmeticFromCompound,
   certaintyEquivalent,
+  coinIncome,
   gammaFromCertaintyEquivalent,
   offerStep,
   compoundFromArithmetic,
@@ -1126,8 +1127,11 @@ function pathText(person) {
 // before (the staircase of Falk and co-authors), with no counter and nothing
 // preselected. Then a check: the sure amount those choices imply, which the
 // person confirms or adjusts, so that one careless click cannot fix the
-// answer. The coin pays the household's own income or half of it; only that
-// ratio matters under the model's constant relative risk aversion.
+// answer. The coin pays what the household lives on now, after tax, or half
+// of it: the guide's $100,000 and $50,000 are the paper's example wage and
+// half of it, and only that ratio matters under the model's constant
+// relative risk aversion. The guide's conditions come with it: the whole
+// amount is spent and nothing can be borrowed.
 //
 // The self-assessment never changes the number, because nothing converts its
 // scale into Choi's; it only flags answers that contradict each other. Until
@@ -1139,12 +1143,13 @@ const freshRisk = () => ({
 });
 const risk = { ...freshRisk(), own: null };
 
+// Wages and any pension already being drawn, both adults', as the Health and
+// Retirement Study frames its gamble on current total family income.
 function questionIncome() {
-  const earned = readMoney($("wage"), 0) +
-    ($("partnered").checked ? readMoney($("partner-wage"), 0) : 0);
-  if (earned >= 1000) return Math.round(earned);
-  const pension = readMoney($("benefit"), 0);
-  return pension >= 1000 ? Math.round(pension) : 100000;
+  return coinIncome(
+    readMoney($("wage"), 0),
+    $("partnered").checked ? readMoney($("partner-wage"), 0) : 0,
+    readMoney($("benefit"), 0));
 }
 
 function riskPhase() {
@@ -1170,6 +1175,28 @@ function currentGamma() {
 function impliedAmount(income) {
   const step = offerStep(income);
   return Math.round(certaintyEquivalent(choiceGamma(), income, income / 2) / step) * step;
+}
+
+// The amount typed at the check, as risk aversion on Choi's scale of 1 to 10,
+// or null when it is not strictly between the coin's worse outcome and its
+// average, the only amounts that mean anything.
+function typedGamma() {
+  const income = questionIncome();
+  const amount = readMoney($("risk-amount"), 0);
+  if (!(amount > income / 2 && amount < 0.75 * income)) return null;
+  return Math.min(10, Math.max(1, gammaFromCertaintyEquivalent(amount, income, income / 2)));
+}
+
+function showAmountNote() {
+  const income = questionIncome();
+  const gamma = typedGamma();
+  if (gamma === null) {
+    $("risk-amount-note").textContent =
+      `Enter an amount between ${usd.format(income / 2)} and ${usd.format(0.75 * income)}.`;
+  } else {
+    $("risk-amount-note").innerHTML =
+      `That puts your risk aversion at <b>${num1.format(gamma)}</b> out of 10.`;
+  }
 }
 
 function riskSource() {
@@ -1209,7 +1236,7 @@ function renderRisk(gamma) {
   if (phase === "choices") {
     $("risk-question").innerHTML =
       `A coin flip decides what you live on next year: <b>${usd.format(income)}</b> ` +
-      `or <b>${usd.format(income / 2)}</b>. You must spend it all. ` +
+      `or <b>${usd.format(income / 2)}</b>. You must spend it all and cannot borrow. ` +
       `Which would you rather have?`;
     $("risk-sure").textContent = `${usd.format(staircaseOffer(risk.state, income))} for sure`;
   }
@@ -1572,8 +1599,21 @@ async function boot() {
   }
   $("risk-coin").addEventListener("click", () => answerRisk(false));
   $("risk-sure").addEventListener("click", () => answerRisk(true));
-  $("risk-right").addEventListener("click", confirmRisk);
-  $("risk-amount-done").addEventListener("click", confirmRisk);
+  // "That's about right" answers the sentence above it, which states what the
+  // choices imply, so it drops any amount typed below. "Done" keeps the typed
+  // amount, and only an amount that means something.
+  $("risk-right").addEventListener("click", () => {
+    risk.adjusted = null;
+    confirmRisk();
+  });
+  $("risk-amount-done").addEventListener("click", () => {
+    if (typedGamma() === null) {
+      showAmountNote();
+      $("risk-amount").focus();
+      return;
+    }
+    confirmRisk();
+  });
   $("risk-adjust").addEventListener("click", () => {
     $("risk-amount").value = usd.format(impliedAmount(questionIncome()));
     $("risk-amount-note").textContent = "";
@@ -1585,17 +1625,8 @@ async function boot() {
   // anchored on them. Only an amount between the coin's worse outcome and its
   // average means anything; the result is kept on Choi's scale of 1 to 10.
   $("risk-amount").addEventListener("input", () => {
-    const income = questionIncome();
-    const amount = readMoney($("risk-amount"), 0);
-    if (amount > income / 2 && amount < 0.75 * income) {
-      risk.adjusted = Math.min(10, Math.max(1,
-        gammaFromCertaintyEquivalent(amount, income, income / 2)));
-      $("risk-amount-note").innerHTML =
-        `That puts your risk aversion at <b>${num1.format(risk.adjusted)}</b> out of 10.`;
-    } else {
-      $("risk-amount-note").textContent =
-        `Enter an amount between ${usd.format(income / 2)} and ${usd.format(0.75 * income)}.`;
-    }
+    risk.adjusted = typedGamma();
+    showAmountNote();
     render();
   });
   $("risk-amount").addEventListener("blur", () => showMoney($("risk-amount")));

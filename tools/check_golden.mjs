@@ -24,6 +24,7 @@ import { dirname, join } from "node:path";
 import {
   arithmeticFromCompound,
   certaintyEquivalent,
+  coinIncome,
   compoundFromArithmetic,
   logPremium,
   logRiskFree,
@@ -151,6 +152,10 @@ for (const [i, c] of (cases.staircase ?? []).entries()) {
   compare(`staircase[${i}].estimate`, staircaseEstimate(state), c.estimate);
 }
 
+for (const [i, c] of (cases.coin_income ?? []).entries()) {
+  compare(`coin_income[${i}]`, coinIncome(...c.args), c.expect);
+}
+
 for (const [i, c] of (cases.answers_disagree ?? []).entries()) {
   compare(`answers_disagree[${i}]`, answersDisagree(...c.args), c.expect);
 }
@@ -215,6 +220,8 @@ for (const [i, c] of cases.must_reject.entries()) {
       makePerson(...c.args);
     } else if (c.fn === "gamma_from_certainty_equivalent") {
       gammaFromCertaintyEquivalent(...c.args);
+    } else if (c.fn === "coin_income") {
+      coinIncome(...c.args);
     } else {
       failures.push(`must_reject[${i}]: unknown function ${c.fn}`);
       continue;

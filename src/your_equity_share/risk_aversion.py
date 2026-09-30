@@ -1,8 +1,9 @@
 """Eliciting relative risk aversion the way Choi's user guide does.
 
 The guide asks one question. You face a coin flip: heads you live on $100,000
-for the next year, tails you live on $50,000. A genie offers to replace the
-gamble with a guaranteed $X. The X that leaves you indifferent identifies your
+for the next year, tails you live on $50,000, and you must spend the whole
+amount and cannot borrow, so a bad year cannot be smoothed away. A genie
+offers to replace the gamble with a guaranteed $X. The X that leaves you indifferent identifies your
 risk aversion, because that X is the certainty equivalent of the gamble under
 constant relative risk aversion.
 
@@ -23,11 +24,15 @@ A slider over the guide's table showed all ten answers at once and started
 at 5, and both the starting point of a slider and the middle of a displayed
 menu are documented pulls on the answer.
 
-The coin pays the household's own income or half of it, as the Health and
-Retirement Study frames its gamble on the respondent's own income. Under
-constant relative risk aversion only the ratio of the two outcomes matters,
-so the guide's table holds at any income: $58,566 on $100,000 is 58.6% of
-whatever the good outcome is, and it still means 5.
+The coin pays what the household lives on now, after tax, or half of it.
+Both percentages are the guide's: its $100,000 is the wage of the paper's
+worked example and its $50,000 half of that. Framing the gamble on the
+respondent's own income is how the Health and Retirement Study asks it
+("your current total family income"), and Hanna, Gutter and Fan (2001) ask it
+on take-home family income; a 50% cut is one of the Study's own gambles.
+Under constant relative risk aversion only the ratio of the two outcomes
+matters, so the guide's table holds at any income: $58,566 on $100,000 is
+58.6% of whatever the good outcome is, and it still means 5.
 """
 
 from __future__ import annotations
@@ -40,9 +45,11 @@ __all__ = [
     "GUIDE_GAMBLE_LOW",
     "PLAUSIBLE_GAMMA_RANGE",
     "STAIRCASE_CHOICES",
+    "SMALLEST_COIN",
     "Staircase",
     "answers_disagree",
     "certainty_equivalent",
+    "coin_income",
     "gamma_from_certainty_equivalent",
     "guide_table",
     "offer_step",
@@ -150,6 +157,10 @@ def guide_table(
 # fixed precision in the answer.
 STAIRCASE_CHOICES = 5
 
+# A household taking in less than this a year has no living to put on the
+# coin, so the question falls back to the guide's own amounts.
+SMALLEST_COIN = 1_000.0
+
 
 @dataclass(frozen=True)
 class Staircase:
@@ -167,6 +178,24 @@ class Staircase:
     def estimate(self) -> float:
         """The middle of the bracket in ratio terms: its geometric mean."""
         return math.sqrt(self.low * self.high)
+
+
+def coin_income(wage: float, partner_wage: float = 0.0, pension: float = 0.0) -> float:
+    """The coin's good outcome: what the household lives on now, after tax.
+
+    The wage, the second adult's wage and any pension already being received,
+    added up, because the Health and Retirement Study frames its gamble on
+    "your current total family income" and Hanna, Gutter and Fan (2001) on
+    take-home family income. A retired person whose partner still works lives
+    on both. Rounded to the dollar, half up as the browser rounds. Below
+    SMALLEST_COIN nothing is coming in, and the guide's own $100,000 is asked.
+    """
+    if min(wage, partner_wage, pension) < 0:
+        raise ValueError("incomes cannot be negative")
+    household = wage + partner_wage + pension
+    if household < SMALLEST_COIN:
+        return GUIDE_GAMBLE_HIGH
+    return float(math.floor(household + 0.5))
 
 
 def offer_step(income: float) -> float:
