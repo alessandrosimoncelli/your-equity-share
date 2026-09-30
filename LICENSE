@@ -23,7 +23,7 @@ SOFTWARE.
 ---
 
 This licence covers the software. It is not a substitute for the disclaimer in
-README.md and in docs/methodology.html: this project is for educational and
+README.md and in both methodology documents: this project is for educational and
 illustrative purposes, it is not investment, financial, tax or legal advice,
 and its use creates no advisory or fiduciary relationship.
 
@@ -31,5 +31,5 @@ The model implemented here is the work of others. Choi, Liu and Liu (2025),
 "Practical Finance: An Approximate Solution to Lifecycle Portfolio Choice",
 and the numerical solution it approximates, Cocco, Gomes and Maenhout (2005).
 This licence grants no rights in their papers or in the spreadsheet that
-accompanies theirs. See section 10 of docs/methodology.html for the full list
+accompanies theirs. See section 9 of variants/us/methodology.html for the full list
 of sources.

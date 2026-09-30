@@ -404,7 +404,7 @@ def main(argv: list[str]) -> int:
 
     aaa_date, aaa = observe(NOMINAL_30Y)
     all_date, every = observe(NOMINAL_30Y_ALL)
-    spf_date, expected_inflation = observe(SPF_LONG_RUN)
+    spf_date, survey_inflation = observe(SPF_LONG_RUN)
 
     isin, years_left, traded = longest_german_linker()
     _, breakeven_years, breakeven = breakeven_inflation()
@@ -414,7 +414,7 @@ def main(argv: list[str]) -> int:
     # linker and holding a nominal bond pay the same. A price, and the only
     # inflation number here that nobody had to form a view to produce.
     deflated = (1.0 + aaa) / (1.0 + breakeven) - 1.0
-    surveyed = (1.0 + aaa) / (1.0 + expected_inflation) - 1.0
+    surveyed = (1.0 + aaa) / (1.0 + survey_inflation) - 1.0
     real_all = (1.0 + every) / (1.0 + breakeven) - 1.0
     real = deflated
 
@@ -441,7 +441,7 @@ def main(argv: list[str]) -> int:
     print(f"  {isin} traded real yield          {traded:>8.4%}   "
           f"{years_left:.1f} years left")
     print(f"  ECB SPF longer-term HICP expectation     "
-          f"{expected_inflation:>8.4%}   {spf_date}")
+          f"{survey_inflation:>8.4%}   {spf_date}")
     print(f"  the same curve deflated by THAT instead   {surveyed:>8.4%}")
     print()
     print(f"  The traded bond lands {abs(deflated - traded) * 100:.3f} points "
@@ -463,8 +463,13 @@ def main(argv: list[str]) -> int:
     print(f"  credit spread not booked as return       "
           f"{(every - aaa) * 100:>7.2f} points")
     print()
+    us_rate = re.search(r"^real_risk_free = ([0-9.]+)$",
+                        (ROOT / "variants" / "us" / "market_data.toml")
+                        .read_text(encoding="utf-8"), re.M)
     print("  For comparison, the American variant's safe asset is the 30-year")
-    print("  TIPS at 2.96% real. A euro household is offered a materially")
+    print("  TIPS at %s real. A euro household is offered a materially"
+          % ("%.2f%%" % (float(us_rate.group(1)) * 100) if us_rate
+             else "its own rate"))
     print("  lower real rate for the same maturity and the same credit, and")
     print("  that difference goes straight into the drift.")
 
@@ -503,9 +508,12 @@ def main(argv: list[str]) -> int:
                                      re.M).group(1))
         vol_date, vol_obs, adjusted = None, 0, False
     else:
-        first = (vol_date.toordinal() - int(365.25 * VOLATILITY_YEARS))
+        # Its own name: this once reused `first`, the start of the
+        # dividend-yield window, and the source note then printed a day count
+        # where a date belonged.
+        vol_start = vol_date.toordinal() - int(365.25 * VOLATILITY_YEARS)
         from datetime import date as _date
-        if _date.fromordinal(first).isoformat() < VOLATILITY_EARLIEST:
+        if _date.fromordinal(vol_start).isoformat() < VOLATILITY_EARLIEST:
             print("  The %d-year window reaches back before %s, into the"
                   % (VOLATILITY_YEARS, VOLATILITY_EARLIEST))
             print("  weeks when Xetra lines can carry dollar closes. Refusing.")
@@ -558,9 +566,14 @@ def main(argv: list[str]) -> int:
     print()
     print("What the Italian tax code does to both")
     print("=" * 68)
-    net_equity = after_tax_equity_compound(compound, expected_inflation,
+    # Deflated by the same market break-even as the pre-tax safe rate above.
+    # Deflating the after-tax figures by the survey instead mixed two
+    # inflation rates in one comparison and overstated the after-tax safe
+    # rate by the inflation risk premium, about a quarter of a point, which
+    # cost the Italian answer about six points of equity share.
+    net_equity = after_tax_equity_compound(compound, breakeven,
                                            TAX_HORIZON_YEARS, ITALY_TAX)
-    net_safe = after_tax_safe_rate(aaa, expected_inflation, ITALY_TAX)
+    net_safe = after_tax_safe_rate(aaa, breakeven, ITALY_TAX)
     net_arithmetic = arithmetic_from_compound(net_equity, volatility)
     print(f"  equities, compound      {compound:>8.4%} -> {net_equity:>8.4%}"
           f"   {(net_equity - compound) * 100:>+6.2f} points")
@@ -585,9 +598,9 @@ def main(argv: list[str]) -> int:
     symmetric = TaxRegime(ITALY_TAX.other_financial_income_rate,
                           ITALY_TAX.other_financial_income_rate,
                           ITALY_TAX.wealth_tax_rate, "symmetric")
-    flat_equity = after_tax_equity_compound(compound, expected_inflation,
+    flat_equity = after_tax_equity_compound(compound, breakeven,
                                             TAX_HORIZON_YEARS, symmetric)
-    flat_safe = after_tax_safe_rate(aaa, expected_inflation, symmetric)
+    flat_safe = after_tax_safe_rate(aaa, breakeven, symmetric)
     for label, mu, rate in (("pre-tax", compound, real),
                             ("26% on both", flat_equity, flat_safe),
                             ("12.5% and 26%, the law", net_equity, net_safe)):
@@ -605,19 +618,21 @@ def main(argv: list[str]) -> int:
     print()
     print("  The equity figure depends on how long the tax is deferred, and")
     print("  that horizon is a choice this file makes rather than measures:")
+    drifts = {}
     for years in (10.0, 20.0, 30.0, 40.0):
-        at = after_tax_equity_compound(compound, expected_inflation, years,
-                                       ITALY_TAX)
+        at = after_tax_equity_compound(compound, breakeven, years, ITALY_TAX)
+        drifts[years] = (math.log(1 + arithmetic_from_compound(at, volatility))
+                         - math.log(1 + net_safe))
         mark = "  <- used" if years == TAX_HORIZON_YEARS else ""
         print("    %2.0f years   equity %7.4f%%   drift %7.4f%%%s"
-              % (years, at * 100,
-                 (math.log(1 + arithmetic_from_compound(at, volatility))
-                  - math.log(1 + net_safe)) * 100, mark))
+              % (years, at * 100, drifts[years] * 100, mark))
     print("  Thirty, to match the maturity of the safe asset, so both sides")
     print("  are quoted at one horizon. Deriving it from the household's own")
     print("  age instead would remove the choice, and is the obvious next")
-    print("  improvement: across ten to forty years it is worth about twelve")
-    print("  points of equity share.")
+    print("  improvement: across ten to forty years it moves the drift by")
+    print(f"  {(drifts[40.0] - drifts[10.0]) * 100:.2f} points. Section 10 of the "
+          f"Italian methodology gives")
+    print("  what that is worth in equity share for its example household.")
 
     if not args.write:
         print("\n  Report only. Pass --write to update the configuration.")
@@ -645,7 +660,7 @@ def main(argv: list[str]) -> int:
         ("dividend_yield_measured", gross),
         ("dividend_yield_withheld", gross - net),
         ("expected_inflation", breakeven),
-        ("expected_inflation_survey", expected_inflation),
+        ("expected_inflation_survey", survey_inflation),
         ("nominal_safe_yield", aaa),
         ("after_tax_expected_return", net_arithmetic),
         ("after_tax_real_risk_free", net_safe),
@@ -686,7 +701,7 @@ def main(argv: list[str]) -> int:
                   'and deflating by the survey books it as return."'
                   % (aaa * 100, aaa_date, breakeven * 100, isin,
                      breakeven_years, deflated * 100, traded * 100,
-                     abs(deflated - traded) * 100, expected_inflation * 100,
+                     abs(deflated - traded) * 100, survey_inflation * 100,
                      spf_date, surveyed * 100, (surveyed - deflated) * 100),
                   text, count=1, flags=re.M)
     text = re.sub(r'^expected_return_source = ".*"$',

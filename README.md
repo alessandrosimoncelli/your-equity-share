@@ -64,7 +64,8 @@ To get the latest figures on your own machine, `git pull`. To refresh by hand,
 for example in a copy that is not on GitHub, run both scripts, in this order,
 because the Italian one takes its growth term from the Shiller data the
 American one downloads. Windows users can double-click `update.bat`, which
-does exactly that. Nothing else in the project touches the network.
+does exactly that. Apart from these two and the analysis scripts in `tools/`,
+nothing in the project touches the network, and the tool itself never does.
 
 ```bash
 python update.py
@@ -144,11 +145,19 @@ consumption that produces the same loss of expected utility:
 | 100 minus your age in equities | 2.00% | 2.11% | 4.11% |
 | Constant 60% equities | 3.75% | 1.58% | 9.27% |
 | Never hold equities | 7.86% | 7.93% | 7.09% |
-| Always 100% equities | 11.85% | 0.56% | 29.55% |
+| Always 100% equities | 11.75% | 0.56% | 29.55% |
 
-Risk aversion decides the answer more than anything else, which is why the tool
-elicits it with Choi's certainty-equivalent question rather than a questionnaire,
-and reports a range across plausible values.
+The tool elicits risk aversion with Choi's certainty-equivalent question rather
+than a questionnaire. It matters, but the expected return matters more: the
+answer to that question would have to be wrong by four points on a ten-point
+scale to move the recommendation as far as the choice between expected-return
+estimators does (section 3.1 of the methodology).
+
+These costs are measured inside the ranges Choi solved his model over. Today's
+inputs sit outside two of them: the 30-year real rate is above his 0% to 2%,
+and the excess drift below his 2% to 4%. Section 3.6 of the methodology has the
+detail, and the answer should be read as indicative until the approximation
+is checked there.
 
 ## Status
 
@@ -163,7 +172,7 @@ asserted.
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |
 | 5. Browser front end | **done** |
 | 6. Published as a static site, model ported to JavaScript | **done** |
-| 7. Validated against twelve published forecasts, and swept for properties | **done** |
+| 7. Validated against ten published forecasts, and swept for properties | **done** |
 | 8. Italian variant: global equity, euro real safe rate, Italian tax and pension | **done** |
 | 9. Weekly refresh and publication, unattended | **done** |
 | 10. Portfolio analytics and factor exposure | planned |
@@ -181,7 +190,7 @@ Python and the verifier have all passed first.
 
 `python tools/build_web.py` writes the same thing locally to `web/`: the tool,
 its model and its market data, about 75 KB, plus the three documents, about
-300 KB in all. It opens in well under a second and needs no server, so nothing
+300 KB in all. It opens in well under a second and needs no backend, so nothing
 a visitor enters is transmitted anywhere. Every link in it is relative, and a
 test holds it so, because the site lives in a subfolder of the domain rather
 than at its root.

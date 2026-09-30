@@ -4,10 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "your-equity-share"
-version = "0.1.0"
+version = "0.3.0"
 description = "Equity allocation from the Merton share and a human capital multiplier"
 requires-python = ">=3.11"
 dependencies = []
+
+[project.urls]
+Homepage = "https://alessandrosimoncelli.github.io/your-equity-share/"
+Repository = "https://github.com/alessandrosimoncelli/your-equity-share"
 
 [project.optional-dependencies]
 # Nothing here has runtime dependencies: not the model, not the refresh

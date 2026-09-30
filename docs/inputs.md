@@ -113,14 +113,18 @@ The correct alternative pairing, a payout yield with *aggregate* earnings
 growth, is unavailable rather than rejected: aggregate growth needs a share
 count and the S&P earnings history is per share.
 
-Two others are computed as cross-checks and are **not used**: Damodaran's
+Three others are computed as cross-checks and are **not used**: Damodaran's
 implied premium (7.05%, the outlier, embedding near-term analyst growth
-forecasts and quoted against the wrong maturity) and a regression of realised
+forecasts and quoted against the wrong maturity), a regression of realised
 30-year returns on valuation (5.32%, R2 of 0.19 on about four independent
-periods). Section 3.1 of the methodology gives the full reasoning.
+periods), and an earnings anchor built the way AQR builds theirs, a cyclically
+adjusted earnings yield at a 50% payout plus 1.8% equilibrium growth (3.13% on
+29 September 2026). Section 3.1 of the methodology gives the full reasoning.
 
-The choice matters more than any other in the tool: across those estimates the
-recommendation for the default household runs from 19% to 100%.
+The choice matters more than any other in the tool: across the five estimators
+Table 5 of the methodology compares, from the cyclically adjusted earnings
+yield to Damodaran's premium, the recommendation for the default household
+runs from 19% to 100%.
 
 ### Why the horizon of the regression matters
 
@@ -134,9 +138,9 @@ years to 0.24 at thirty, and today's stretched valuation therefore predicts:
 | 20 years | 3.75% |
 | 30 years | 5.32% |
 
-A lifetime model must use a long horizon. Using the ten-year figure would put
-the recommendation at zero equities, which is an artefact of the horizon
-mismatch, not a finding.
+A lifetime model must use a long horizon. On the same data and the same day,
+the ten-year figure gives the default household 26% in equities and the
+thirty-year figure 78%. That gap is the horizon mismatch, not a finding.
 
 ### Risk aversion: the guide's scale is not the paper's grid
 
@@ -149,7 +153,7 @@ less than 4 is extrapolation, though on the side where the answer saturates at
 
 The regression uses overlapping windows, so its 1,387 observations contain only
 about **four independent** thirty-year periods. The reported error divides the
-residual spread by the square root of that number, not of 1,350. It is roughly
+residual spread by the square root of that number, not of 1,387. It is roughly
 0.7 percentage points, and that is generous.
 
 ### Compound is not arithmetic, and the gap is 1.5 points
@@ -203,7 +207,11 @@ different years or over different safe assets do not measure the same thing.
 python update.py --fixed-return 0.05
 ```
 
-### One more warning the tool gives you
+The figure is taken as an **arithmetic** mean, the form the model uses, so
+0.05 is Choi's default as he states it. The page's own override slider takes a
+compound rate instead, the form forecasts are published in, and converts it.
+
+### One more thing the answer depends on: the fitted range
 
 Choi fitted his approximation over **log** excess drifts of 2%, 3% and 4%, where
 
@@ -212,8 +220,14 @@ Choi fitted his approximation over **log** excess drifts of 2%, 3% and 4%, where
 An arithmetic premium is not that quantity: at 18.5% volatility the two differ
 by 1.71 points. At today's real rate of about 3%, an expected return below
 roughly 6.9% puts the log drift **below** the range the coefficients were fitted
-over, and the tool says so. Choi's own guide defaults, 5% and 2.5%, sit outside
-it too. The answer is then an extrapolation and should be read as indicative.
+over, and the 30-year real rate sits above the 0% to 2% range fitted for the
+safe rate as well. Choi's own guide defaults, 5% and 2.5%, sit outside it too.
+The answer is then an extrapolation and should be read as indicative.
+
+`update.py` says so every time it refreshes. The page shows the drift in its
+inputs table, Exhibit 5, but prints no warning beside the answer. Section 3.6
+of the methodology sets out what being outside the range affects, which is the
+value of future wages, and what it does not, which is the Merton share.
 
 ## Real risk-free interest rate
 

@@ -18,19 +18,21 @@ Both documents are published beside the tool, the American one at
 
 ## Live data and frozen data
 
-`market_data.toml` is live. It is rewritten every Monday, so the tool always
-runs on current figures.
+`market_data.toml` is live. It is rewritten every Monday when the refresh
+passes its checks, so the site and the Python tool run on the latest figures
+that did. A week that fails keeps the previous week's.
 
 `snapshot.toml` is frozen. It is the market data the methodology was written
 with, and it changes only when the document is rewritten against newer data.
-The tests check each document against its snapshot, not against the live
-file, and a test holds each snapshot to the date its document states.
+The tests check the figures each document quotes against its snapshot, not
+against the live file, and a test holds each snapshot to the date its document
+states. They check the inputs a document quotes, not every figure derived
+from them.
 
 The split exists because a document quotes numbers. Checked against the live
 file, a refresh made the document wrong and failed the build, which is what
-happened before the split existed. Checked against its
-snapshot, the tool can move with the market while the document stays true to
-the day it describes.
+happened before the split existed. Checked against its snapshot, the tool can
+move with the market while the document stays true to the day it describes.
 
 ## What is deliberately not split
 
@@ -38,11 +40,12 @@ the day it describes.
 
 That is not laziness about copying files. It is the property several rounds of
 work were spent establishing: **both variants use the same estimator, so the
-gap between a 21% American answer and a 64% Italian one is the country rather
-than the method.** Both take the dividend yield from their own index, both take
-real growth in earnings per share from the same hundred-year trend through
-Shiller, both assume no repricing, and a test asserts the growth term is
-identical to five decimal places rather than merely close.
+gap between a 21% American answer and a 64% Italian one, both before tax and on
+the documents' data, is the country rather than the method.** Both take the
+dividend yield from their own index, both take real growth in earnings per
+share from the same hundred-year trend through Shiller, both assume no
+repricing, and a test asserts the growth term is identical to five decimal
+places rather than merely close.
 
 Duplicate the model into two folders and that guarantee is gone within a month.
 The two would be edited on different days, and every later comparison between
@@ -58,7 +61,7 @@ them would silently mix a country difference with a code difference.
 | safe asset | FRED DFII30, a traded 30-year real yield | ECB AAA 30-year curve less the market break-even |
 | volatility | SPY, five years daily | VWCE, five years daily |
 | pension | 40% replacement | 74%, from the OECD |
-| tax | not modelled | modelled, `src/your_equity_share/taxes.py` |
+| tax | not modelled | computed in `src/your_equity_share/taxes.py`, not yet applied to the answer |
 
 ## Refreshing
 

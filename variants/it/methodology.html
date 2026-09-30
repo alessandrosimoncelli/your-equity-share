@@ -348,8 +348,8 @@ Merton (1969), Choi, Liu and Liu (2025), the human capital layer or the
 derivation of the equity share. Those are shared between the two variants and
 are argued there.</p>
 <p class="docmeta"><strong>Every market figure here is as of 8 September
-2026</strong> and will have moved. The tool recomputes them from the market
-data it ships with.</p>
+2026</strong> and will have moved. The Python tool recomputes them from the
+market data it ships with; the web page runs the American variant only.</p>
 <hr class="titlerule">
 
 <h2 id="s1">1. What this document is</h2>
@@ -358,11 +358,14 @@ data it ships with.</p>
 is not duplicated, so both variants take their dividend yield from their own
 index, both take real growth in earnings per share from the same hundred-year
 trend through Shiller, both assume no repricing, and a test asserts the growth
-term is identical to five decimal places rather than merely close.</p>
+term is identical to five decimal places rather than merely close. It runs
+wherever Shiller's workbook is present, which includes every Monday refresh that succeeds;
+the workbook is not in the repository, so a plain push skips it.</p>
 
 <p>That is deliberate and it is the point of the whole arrangement. <strong>The
-gap between a 21.3% American answer and a 63.9% Italian one is the country and
-not the method.</strong> Were the model copied into two folders, the copies
+gap between a 21.3% American answer and a 63.9% Italian one, both before tax,
+is the country and not the method.</strong> Italian tax would take the Italian
+one to 59.2%, which section 8 measures. Were the model copied into two folders, the copies
 would be edited on different days and every later comparison would quietly mix
 a country difference with a code difference.</p>
 
@@ -402,12 +405,11 @@ series YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_30Y. OECD, <em>Pensions at a Glance
 2025</em>, Italy country note.</p>
 
 <p><strong>Nothing in that table is within rounding of its check by accident.
-Two of the rows are further apart than the others and both are explained where
-they arise</strong>: the expected return sits 0.38 points below AQR's because
-theirs is a five to ten year figure and this one carries no horizon
-(section 4.3), and the safe rate sits 0.05 points below the traded bond because
-the bond is nineteen years from maturity and this is a thirty-year point
-(section 5).</p>
+The largest gap is the expected return</strong>, 0.38 points below AQR's, and
+0.31 of it is the growth term: theirs is a five to ten year figure and this one
+carries no horizon (section 4.3). Every other row is within 0.12 points of its
+check. The safe rate sits 0.05 points below the traded bond because the bond
+is nineteen years from maturity and this is a thirty-year point (section 5).</p>
 
 <h2 id="s3">3. The equity sleeve</h2>
 
@@ -564,8 +566,9 @@ long term", with differences "relatively large for equities". Vanguard, the one
 firm publishing both horizons off a single model run, has its thirty-year
 United States forecast 0.9 points above its ten-year.</p>
 
-<p>AQR's two halves are still fetched and compared on every refresh. If either
-drifts more than a third of a point from ours, the tool says so.</p>
+<p>AQR's two halves are entered by hand from their annual report and
+compared on every refresh. If either drifts more than a third of a point from
+ours, the refresh prints a warning; it does not stop the refresh.</p>
 
 <h3 id="s4-4">4.4 Is the pairing sound</h3>
 
@@ -619,7 +622,7 @@ recording because each looked right at the time.</p>
 <thead><tr><th>Construction</th><th class="num">Rate</th><th>Constant 30 years</th><th>Free of forecasts</th></tr></thead>
 <tbody>
 <tr><td>Bund/euro-i 2046, traded real yield</td><td class="num">1.4906%</td><td>no, 19.6 years</td><td>yes</td></tr>
-<tr><td>ECB curve less the SPF survey</td><td class="num">1.6903%</td><td>yes</td><td>no</td></tr>
+<tr><td>ECB curve less the SPF survey</td><td class="num">1.6904%</td><td>yes</td><td>no</td></tr>
 <tr><td colspan="4" class="sub">The two deflators, on the same 3.7617% nominal
 curve: market break-even <strong>2.2886%</strong>, ECB Survey of Professional
 Forecasters <strong>2.0369%</strong>. The 0.25 points between them is the
@@ -645,7 +648,7 @@ That choice was worth 5.9 points of equity share.</p>
 
 <p><strong>The construction checks against itself.</strong> The break-even is
 derived from the 2046, so deflating a nominal yield by it should reproduce that
-bond's own traded real yield of 1.4906%. It gives 1.4401%, four hundredths of a
+bond's own traded real yield of 1.4906%. It gives 1.4401%, five hundredths of a
 point away, and the residue is the mismatch between a thirty-year nominal leg
 and a 19.6-year inflation leg. <strong>The check is external</strong>: the
 1.4906% is the issuer's own published figure, from the Deutsche Finanzagentur,
@@ -680,7 +683,7 @@ over one window:</p>
 <table>
 <caption>Table 5. Annualised volatility of MSCI monthly gross total returns, by
 currency and window</caption>
-<thead><tr><th>Index and currency</th><th class="num">1997 to 2026</th><th class="num">Last 20 years</th><th class="num">Last 5 years</th></tr></thead>
+<thead><tr><th>Index and currency</th><th class="num">Longest available, to 2026</th><th class="num">Last 20 years</th><th class="num">Last 5 years</th></tr></thead>
 <tbody>
 <tr><td><strong>ACWI in euro</strong></td><td class="num"><strong>13.99%</strong></td><td class="num">13.37%</td><td class="num">12.92%</td></tr>
 <tr><td>ACWI in dollars</td><td class="num">15.72%</td><td class="num">16.09%</td><td class="num">15.06%</td></tr>
@@ -720,7 +723,9 @@ Samuelson (1992) predict.</p>
 <p>In Italy tax is not a household's circumstance but a fixed feature of the
 law that falls on exactly the two assets this model chooses between, and
 favours the safe one. So it is modelled rather than left to a footnote.
-<code>src/your_equity_share/taxes.py</code> holds the rates and the reasoning.</p>
+<code>src/your_equity_share/taxes.py</code> holds the rates and the reasoning.
+The recommendation does not yet apply it: the figures below are what it does
+when applied, and applying it is item 1.1 of the further-work list.</p>
 
 <p><strong>12.5%</strong> on interest and capital gains from Italian government
 bonds and those of white-list states, which includes Germany, so the safe asset
@@ -819,7 +824,7 @@ input.</p>
 <p><strong>The tax deferral horizon is a choice.</strong> An accumulating fund
 is taxed once, on sale, and how much that is worth depends on when. The model
 fixes it at thirty years to match the maturity of the safe asset. Across ten to
-forty years it is worth 10.6 points of equity share, which makes it the largest
+forty years it is worth 11.6 points of equity share, which makes it the largest
 free parameter in the variant. The household object already carries ages, so it
 can be removed rather than tuned, and <code>docs/further-work.html</code>
 records it as outstanding.</p>

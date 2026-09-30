@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
-"""Update the tool's market data. Run this before using the tool.
+"""Update the American variant's market data.
+
+The published site runs this every Monday, followed by
+tools/refresh_italy.py, which takes its growth term from the Shiller data
+saved here. Run both by hand only for a copy that is not on GitHub.
 
     python update.py                     # fetch the latest data and save it
     python update.py --dry-run           # show what would change, save nothing
     python update.py --years 10          # volatility over ten years, not five
-    python update.py --fixed-return 0.05 # set the expected return by hand
+    python update.py --fixed-return 0.05 # set the expected return by hand,
+                                         # as an arithmetic mean
 
-All three inputs the model uses are now fetched, from three free sources that
-need no key or account:
+All three inputs the model uses are fetched, from free sources that need no
+key or account:
 
     real risk-free rate       FRED, the 30-year TIPS yield
     stock market volatility   Yahoo, daily adjusted closes
-    expected stock return     Damodaran's implied equity risk premium,
-                              published monthly, plus the real risk-free rate
+    expected stock return     Shiller: the dividend yield plus the 100-year
+                              trend in real earnings per share, no repricing
+
+Damodaran's implied premium, an earnings anchor and a valuation regression are
+computed beside it as cross-checks and are not used.
 
 Nothing here runs when you use the tool. The model reads the saved file, so a
 slow or unreachable provider can never break a demonstration.
@@ -500,7 +508,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--years", type=int, default=5,
                         help="years of history for the volatility estimate")
     parser.add_argument("--fixed-return", type=float, default=None,
-                        help="set the expected real return by hand, e.g. 0.05")
+                        help="set the expected real return by hand, as an "
+                             "arithmetic mean, which is what the model takes; "
+                             "Choi's guide defaults to 0.05")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH,
                         help=argparse.SUPPRESS)
     parser.add_argument("--force", action="store_true",
@@ -617,8 +627,8 @@ def main(argv: list[str]) -> int:
             print(f"      Buybacks return a further {buyback_yield:.2%} that this")
             print("      does not count as income, because per-share growth")
             print("      already carries it. Counting it twice would add")
-            print(f"      {buyback_yield:.2%} to the estimate and roughly twenty")
-            print("      points to the recommended equity share.")
+            print(f"      {buyback_yield:.2%} to the estimate and roughly thirty")
+            print("      points to the default household's equity share.")
             print()
             print("  Cross-checks, not used. See section 3 of the methodology")
             print("  for why each is worse for a lifetime horizon.")
@@ -740,7 +750,8 @@ def main(argv: list[str]) -> int:
     args.config.write_text(document, encoding="utf-8")
     reloaded = load_market_data(args.config)
     print(f"\nSaved. Market data is now current to {reloaded.as_of}.")
-    print("Run this again whenever you use the tool.")
+    print("Next, run tools/refresh_italy.py --write, so the Italian variant")
+    print("takes the same growth term. On GitHub both run every Monday.")
     return 0
 
 

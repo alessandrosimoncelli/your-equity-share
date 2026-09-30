@@ -344,10 +344,10 @@ def test_the_currency_basis_is_recorded_and_names_its_assumption(italy) -> None:
     """Everything is in euro, and the one assumption is stated rather than hidden.
 
     The volatility is measured on a euro-priced series and the safe rate is a
-    euro yield deflated by euro inflation. The expected return is AQR's local
-    real figure, which is only a euro real figure under purchasing power
-    parity. That is their own stated assumption and it is the weakest link in
-    the configuration, so it is written down where the numbers are.
+    euro yield deflated by euro inflation. The expected return is built from a
+    local-currency yield and growth rate, which is only a euro real figure
+    under purchasing power parity. That is the weakest link in the
+    configuration, so it is written down where the numbers are.
     """
     basis = italy.provenance["currency_basis"]
     assert basis.startswith("EUR")
@@ -551,3 +551,60 @@ def test_each_snapshot_matches_the_date_its_document_states(variant) -> None:
     day = date(int(stated.group(3)), months.index(stated.group(2)) + 1,
                int(stated.group(1)))
     assert snap.as_of == day
+
+
+# --- one deflator, and the dates it is written with -------------------------
+
+def _fields(name: str) -> dict:
+    import tomllib
+
+    raw = tomllib.loads((ROOT / "variants" / "it" / name).read_text(encoding="utf-8"))
+    out: dict = {}
+    for section in raw.values():
+        if isinstance(section, dict):
+            out.update(section)
+    return out
+
+
+@pytest.mark.parametrize("name", ["snapshot.toml", "market_data.toml"])
+def test_the_after_tax_figures_use_the_same_deflator_as_the_pre_tax_ones(name) -> None:
+    """Tax is levied on nominal income and deflated back to real.
+
+    The pre-tax safe rate is the nominal AAA yield deflated by the market
+    break-even, so the after-tax figures must be deflated by that same
+    break-even. They were once deflated by the survey instead, which is an
+    inflation risk premium lower, and the after-tax safe rate came out a
+    quarter of a point too high while the document's own table printed the
+    right number. Nothing compared the two, and this does.
+    """
+    from your_equity_share.expected_return import arithmetic_from_compound
+    from your_equity_share.taxes import (
+        ITALY_TAX, after_tax_equity_compound, after_tax_safe_rate)
+
+    f = _fields(name)
+    breakeven = f["expected_inflation"]
+    assert f["real_risk_free"] == pytest.approx(
+        (1 + f["nominal_safe_yield"]) / (1 + breakeven) - 1, abs=5e-7)
+    assert f["after_tax_real_risk_free"] == pytest.approx(
+        after_tax_safe_rate(f["nominal_safe_yield"], breakeven, ITALY_TAX), abs=5e-7)
+    net = after_tax_equity_compound(f["expected_return_compound"], breakeven,
+                                    30.0, ITALY_TAX)
+    assert f["after_tax_expected_return"] == pytest.approx(
+        arithmetic_from_compound(net, f["stock_volatility"]), abs=5e-7)
+
+
+@pytest.mark.parametrize("name", ["snapshot.toml", "market_data.toml"])
+def test_the_yield_window_is_written_as_two_dates(name) -> None:
+    """A day count once took the place of the window's first date.
+
+    The volatility check reused the variable holding the start of the
+    dividend-yield window, and the note read "over 738062 to 20260831".
+    """
+    import re
+    from datetime import datetime
+
+    note = _fields(name)["expected_return_source"]
+    window = re.search(r"in euro over (\d+) to (\d+),", note)
+    assert window, "the note no longer names its window"
+    first, last = (datetime.strptime(d, "%Y%m%d") for d in window.groups())
+    assert 300 <= (last - first).days <= 400
