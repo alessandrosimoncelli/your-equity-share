@@ -71,7 +71,7 @@
 # in the model represents that.
 
 [meta]
-generated_at = "2026-09-29T21:43:27+00:00"
+generated_at = "2026-09-30T04:22:11+00:00"
 generated_by = "tools/refresh_italy.py"
 
 [market]
@@ -141,7 +141,7 @@ generated_by = "tools/refresh_italy.py"
 # refresh and both currently sit within a third of a point, which is a firm
 # that does this for a living arriving at the same two numbers from their own
 # data. tools/estimators_it.py sets the whole family side by side.
-expected_stock_real_return = 0.048147
+expected_stock_real_return = 0.048148
 
 # The ECB's AAA euro area government curve at thirty years, deflated by the
 # MARKET break-even inflation rate of the longest euro inflation-linked bond.
@@ -195,7 +195,7 @@ real_risk_free = 0.015102
 # which is what diversifying across a world index is supposed to do, and it
 # already carries the currency exposure a euro investor takes on an unhedged
 # global fund, because the series is priced in euro.
-stock_volatility = 0.138111
+stock_volatility = 0.138119
 market_ticker = "VWCE.DE"
 
 as_of = 2026-09-28
@@ -214,7 +214,7 @@ dividend_yield_withheld = 0.003422
 expected_inflation = 0.022981
 expected_inflation_survey = 0.020369
 nominal_safe_yield = 0.038430
-after_tax_expected_return = 0.037660
+after_tax_expected_return = 0.037661
 after_tax_real_risk_free = 0.008451
 after_tax_source = "Italy taxes government bonds of Italy and of white-list states, Germany included, at 12.5% and other financial income at 26%, both on nominal income so inflation is taxed, plus 0.2% a year of imposta di bollo on the value of each. Equities are taxed once on sale, so the tax is deferred over 30 years, which recovers more than the higher rate costs. The volatility is NOT reduced, because Italian law does not let fund losses offset fund gains. Tax costs 1.05 points of expected return and 0.67 points of safe rate, so 0.35 points of the drift. See src/your_equity_share/taxes.py."
 growth_source = "AQR's, as part of their published decomposition. Cross-checked on every refresh against the American variant's own 100-year trend through Shiller, which is a legitimate comparison because AQR themselves publish 2.7% for United States large cap against 2.6% for Global All Country, a tenth of a point apart: long-run real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic."
@@ -222,7 +222,7 @@ growth_cross_check = "The alternative was tried and it failed, which is why the 
 currency_basis = "EUR. The dividend yield is measured on a euro-priced global index, the volatility is measured on a euro-priced series, and the safe rate is a euro government bond's traded real yield. Those three are euro figures by construction. The growth term is real growth in United States earnings per share, used as the global real rate, and that is the one place a cross-currency assumption still lives: it holds if relative purchasing power is preserved over a lifetime, which is AQR's own stated assumption for reading local real returns as any-currency real returns. It applies to one term of three rather than to the whole estimate, which is narrower than the previous version of this file, where the entire expected return was a local real figure read as a euro one."
 equity_index = "FTSE All-World"
 real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.8430% on 2026-09-28, deflated by the MARKET break-even inflation rate of 2.2981% on DE0001030575, the longest euro inflation-linked government bond at 19.6 years, which gives 1.5102%. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should reproduce its traded real yield of 1.6389%, and it lands 0.129 points away. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3, which would give 1.7701%, 0.26 points higher; that gap is an inflation risk premium and deflating by the survey books it as return."
-volatility_source = "Yahoo daily closes of VWCE.DE, 5 years to 2026-09-29, dividend adjusted"
+volatility_source = "Yahoo daily closes of VWCE.DE, 5 years to 2026-09-28, dividend adjusted"
 volatility_currency = "EUR, unhedged"
 volatility_observations = 1259
 replacement_rate_source = "OECD, Pensions at a Glance 2025, Italy country note: a net replacement rate of 74.0% for an average earner, against an OECD average of 63.2%"
