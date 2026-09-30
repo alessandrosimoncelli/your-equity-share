@@ -81,17 +81,39 @@ jobs:
       # continue-on-error so that a refresh which fails still lets the run go
       # on to republish the last good data, and the report job at the end
       # turns the run red so the failure is not missed.
+      #
+      # And it says WHY, on the run's summary page. Step logs are shown only
+      # to signed-in users, but annotations are public, so the reason a
+      # source refused goes into one: the line the script printed naming the
+      # source and the error, or failing that its last lines. A % would be
+      # read as an escape in a workflow command, so it is escaped first.
       - name: Refresh the American market data
         id: us
         if: github.event_name != 'push'
         continue-on-error: true
-        run: python update.py
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! python update.py 2>&1 | tee "$RUNNER_TEMP/refresh-us.log"; then
+            reason=$(grep -iE "could not|refus|http [0-9]{3}|timed out|not found|unavailable" "$RUNNER_TEMP/refresh-us.log" | tail -n 3 | tr '\n' ' ')
+            [ -n "$reason" ] || reason=$(grep -v '^[[:space:]]*$' "$RUNNER_TEMP/refresh-us.log" | tail -n 3 | tr '\n' ' ')
+            echo "::error title=American refresh failed::$(printf '%s' "$reason" | sed 's/%/%25/g')"
+            exit 1
+          fi
 
       - name: Refresh the Italian market data
         id: it
         if: github.event_name != 'push'
         continue-on-error: true
-        run: python tools/refresh_italy.py --write
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! python tools/refresh_italy.py --write 2>&1 | tee "$RUNNER_TEMP/refresh-it.log"; then
+            reason=$(grep -iE "could not|refus|http [0-9]{3}|timed out|not found|unavailable|too few" "$RUNNER_TEMP/refresh-it.log" | tail -n 3 | tr '\n' ' ')
+            [ -n "$reason" ] || reason=$(grep -v '^[[:space:]]*$' "$RUNNER_TEMP/refresh-it.log" | tail -n 3 | tr '\n' ' ')
+            echo "::error title=Italian refresh failed::$(printf '%s' "$reason" | sed 's/%/%25/g')"
+            exit 1
+          fi
 
       # ALL OR NOTHING. Both variants take real growth from the same Shiller
       # trend and a test holds them equal to five decimals, so one refreshed
