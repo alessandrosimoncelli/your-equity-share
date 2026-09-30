@@ -85,6 +85,16 @@ def test_the_two_pages_are_told_apart_by_their_titles(built: Path) -> None:
     assert "<title>Equity Share Methodology</title>" in doc
 
 
+def test_the_coin_question_keeps_the_guide_s_conditions(built: Path) -> None:
+    """The guide's question says the whole amount is spent and nothing can be
+    borrowed. The page dropped the second half once, and without it a bad year
+    reads as one to borrow through. The amounts come from the household's
+    income as the reference implementation adds it up."""
+    page = (built / "index.html").read_text(encoding="utf-8")
+    assert "You must spend it all and cannot borrow." in page
+    assert "coinIncome(" in page
+
+
 def test_the_page_reaches_the_methodology(built: Path) -> None:
     assert 'href="./methodology.html' in (built / "index.html").read_text(
         encoding="utf-8")
