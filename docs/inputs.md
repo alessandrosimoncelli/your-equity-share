@@ -10,7 +10,7 @@ the same definitions and changes the sources, and its methodology,
 
 ## Risk aversion
 
-One question, from the guide.
+One question, from the guide, which the page asks as five quick choices.
 
 > A coin is flipped. Heads, you live on $100,000 for the next year. Tails, you
 > live on $50,000. You must spend the whole amount and cannot borrow. A genie
@@ -32,6 +32,14 @@ One question, from the guide.
 
 A lower answer means you dislike risk more. Economists generally work in the 1
 to 10 range.
+
+**On the page it is five choices, not one amount.** Each is the coin or a sure
+amount, one at a time, and each amount depends on the answer before, so no
+range is shown and nothing is preselected. The coin pays your own after-tax
+income or half of it. The table still applies, as shares of the good outcome
+(58.6% means 5), because only the ratio of the two outcomes matters. Five
+answers place risk aversion within about 4%. Section 3.4 of the methodology
+gives the sources.
 
 That table is not a lookup table in this codebase: `your_equity_share.risk_aversion`
 computes it, because each row is simply the certainty equivalent of the gamble

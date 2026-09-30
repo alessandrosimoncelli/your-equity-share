@@ -44,8 +44,12 @@ from your_equity_share.expected_return import (  # noqa: E402
     log_risk_free,
 )
 from your_equity_share.risk_aversion import (  # noqa: E402
+    STAIRCASE_CHOICES,
+    Staircase,
     certainty_equivalent,
     gamma_from_certainty_equivalent,
+    staircase_answer,
+    staircase_offer,
 )
 
 OUT = ROOT / "tests" / "golden.json"
@@ -126,6 +130,27 @@ def risk_aversion_cases() -> tuple[list[dict], list[dict]]:
         for a in range(50_100, 75_000, 500)
     ]
     return forward, inverse
+
+
+def staircase_cases() -> list[dict]:
+    """Every path of five answers, at incomes that exercise the rounding.
+
+    The amounts a person is shown must be identical in both languages, or the
+    two would ask different questions and could never agree on the answer.
+    """
+    cases = []
+    for income in (100_000.0, 45_000.0, 250_000.0, 1_234_567.0, 18_500.0):
+        for path in range(2 ** STAIRCASE_CHOICES):
+            answers = [bool(path >> k & 1) for k in range(STAIRCASE_CHOICES)]
+            state, offers = Staircase(), []
+            for took_sure in answers:
+                offer = staircase_offer(state, income)
+                offers.append(offer)
+                state = staircase_answer(state, income, offer, took_sure)
+            cases.append({"income": income, "answers": answers, "offers": offers,
+                          "low": state.low, "high": state.high,
+                          "estimate": state.estimate})
+    return cases
 
 
 def _person_payload(p: Person) -> dict:
@@ -325,6 +350,7 @@ def main() -> int:
         "imputed_wage": imputed_wage_cases(),
         "certainty_equivalent": forward_ce,
         "gamma_from_certainty_equivalent": inverse_ce,
+        "staircase": staircase_cases(),
         "project_earnings": earnings_cases(),
         "human_capital": human_capital_cases(),
         "recommend": recommend_cases(),

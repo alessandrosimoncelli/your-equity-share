@@ -147,8 +147,9 @@ consumption that produces the same loss of expected utility:
 | Never hold equities | 7.86% | 7.93% | 7.09% |
 | Always 100% equities | 11.75% | 0.56% | 29.55% |
 
-The tool elicits risk aversion with Choi's certainty-equivalent question rather
-than a questionnaire. It matters, but the expected return matters more: the
+The tool elicits risk aversion with Choi's certainty-equivalent question, asked
+as five quick choices rather than a questionnaire. It matters, but the expected
+return matters more: the
 answer to that question would have to be wrong by four points on a ten-point
 scale to move the recommendation as far as the choice between expected-return
 estimators does (section 3.1 of the methodology).
@@ -252,8 +253,9 @@ python tools/build_web.py
 python -m http.server 8600 --directory web
 ```
 
-Then open http://localhost:8600. Sliders for risk aversion and the expected
-return, so you can see by dragging how much the answer depends on each. The
+Then open http://localhost:8600. Five quick choices set your risk aversion,
+and a slider for the expected return shows by dragging how much the answer
+depends on it. The
 recommendation with its working, a sensitivity curve, the answer at every level
 of savings, and a box for typing your earnings year by year.
 

@@ -13,19 +13,40 @@ far more than someone who holds out for $70,000.
 
 The published table is reproduced by `guide_table()` to the dollar, so the
 numbers a user sees here are the numbers in the guide.
+
+THE PAGE ASKS IT AS FIVE CHOICES, not as one amount to state. Each choice is
+the coin or a sure amount, the amounts are never shown as a range, and each
+one depends on the answer before: the staircase of Falk, Becker, Dohmen,
+Huffman and Sunde's Preference Survey Module (Management Science, 2023), the
+format that best predicted real-money choices among the thirty they tested.
+A slider over the guide's table showed all ten answers at once and started
+at 5, and both the starting point of a slider and the middle of a displayed
+menu are documented pulls on the answer.
+
+The coin pays the household's own income or half of it, as the Health and
+Retirement Study frames its gamble on the respondent's own income. Under
+constant relative risk aversion only the ratio of the two outcomes matters,
+so the guide's table holds at any income: $58,566 on $100,000 is 58.6% of
+whatever the good outcome is, and it still means 5.
 """
 
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 
 __all__ = [
     "GUIDE_GAMBLE_HIGH",
     "GUIDE_GAMBLE_LOW",
     "PLAUSIBLE_GAMMA_RANGE",
+    "STAIRCASE_CHOICES",
+    "Staircase",
     "certainty_equivalent",
     "gamma_from_certainty_equivalent",
     "guide_table",
+    "offer_step",
+    "staircase_answer",
+    "staircase_offer",
 ]
 
 # The gamble used in the user guide.
@@ -118,3 +139,77 @@ def guide_table(
 ) -> dict[int, float]:
     """The lookup table printed in the user guide, computed rather than copied."""
     return {g: certainty_equivalent(float(g), high, low) for g in range(1, 11)}
+
+
+# --- the question as five choices -------------------------------------------
+
+# Five choices halve the bracket five times, into 32 parts. The halving is in
+# ratio terms, so each part spans the same 7.5% of risk aversion wherever it
+# falls: the equity share is proportional to 1/gamma, and a fixed ratio is a
+# fixed precision in the answer.
+STAIRCASE_CHOICES = 5
+
+
+@dataclass(frozen=True)
+class Staircase:
+    """Where the answers so far place the household's risk aversion."""
+
+    low: float = PLAUSIBLE_GAMMA_RANGE[0]
+    high: float = PLAUSIBLE_GAMMA_RANGE[1]
+    answered: int = 0
+
+    @property
+    def done(self) -> bool:
+        return self.answered >= STAIRCASE_CHOICES
+
+    @property
+    def estimate(self) -> float:
+        """The middle of the bracket in ratio terms: its geometric mean."""
+        return math.sqrt(self.low * self.high)
+
+
+def offer_step(income: float) -> float:
+    """What sure amounts are rounded to: $100 on an income in six figures.
+
+    A thousandth of the income's order of magnitude, counted from its digits
+    rather than from a logarithm, so the browser port rounds identically.
+    """
+    if income < 1:
+        raise ValueError("the income behind the question must be at least 1")
+    digits = len(str(int(income)))
+    return max(1.0, 10.0 ** (digits - 1) / 1000.0)
+
+
+def staircase_offer(state: Staircase, income: float) -> float:
+    """The sure amount to set against the coin next.
+
+    The coin pays `income` or half of it. The offer is the amount the coin is
+    worth at the middle of the current bracket, rounded to a friendly figure.
+    It starts near the middle of the dollar range, $62,800 on $100,000, which
+    is where the validated staircase starts too.
+    """
+    if state.done:
+        raise ValueError("all the choices have been answered")
+    exact = certainty_equivalent(state.estimate, income, income / 2.0)
+    step = offer_step(income)
+    return math.floor(exact / step + 0.5) * step
+
+
+def staircase_answer(
+    state: Staircase, income: float, offer: float, took_sure: bool
+) -> Staircase:
+    """Narrow the bracket by one answer.
+
+    Taking the sure amount says the coin is worth less to this household than
+    the offer, so its risk aversion is at least the value at which the offer
+    is exactly the coin's worth; choosing the coin says it is at most that.
+    The split is computed from the offer as shown, after rounding, so what is
+    inferred is what the person actually saw.
+    """
+    if state.done:
+        raise ValueError("all the choices have been answered")
+    split = gamma_from_certainty_equivalent(offer, income, income / 2.0)
+    split = min(max(split, state.low), state.high)
+    if took_sure:
+        return Staircase(split, state.high, state.answered + 1)
+    return Staircase(state.low, split, state.answered + 1)

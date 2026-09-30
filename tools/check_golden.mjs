@@ -36,6 +36,10 @@ import {
   mertonShare,
   projectEarnings,
   recommend,
+  staircaseAnswer,
+  staircaseEstimate,
+  staircaseOffer,
+  staircaseStart,
   wageDiscountRate,
 } from "../src/js/model.js";
 
@@ -130,6 +134,20 @@ for (const [i, c] of cases.certainty_equivalent.entries()) {
 
 for (const [i, c] of cases.gamma_from_certainty_equivalent.entries()) {
   compare(`gamma_from_certainty_equivalent[${i}]`, gammaFromCertaintyEquivalent(c.args[0]), c.expect);
+}
+
+// Each path is replayed with the port's own offers, so a single amount that
+// rounds differently sends the rest of the path elsewhere and fails loudly.
+for (const [i, c] of (cases.staircase ?? []).entries()) {
+  let state = staircaseStart();
+  c.answers.forEach((tookSure, k) => {
+    const offer = staircaseOffer(state, c.income);
+    compare(`staircase[${i}].offers[${k}]`, offer, c.offers[k]);
+    state = staircaseAnswer(state, c.income, offer, tookSure);
+  });
+  compare(`staircase[${i}].low`, state.low, c.low);
+  compare(`staircase[${i}].high`, state.high, c.high);
+  compare(`staircase[${i}].estimate`, staircaseEstimate(state), c.estimate);
 }
 
 for (const [i, c] of cases.project_earnings.entries()) {

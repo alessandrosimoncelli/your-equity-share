@@ -169,3 +169,77 @@ def test_answers_just_above_the_worst_outcome_invert_cleanly() -> None:
         gamma = gamma_from_certainty_equivalent(amount)
         assert gamma > 0
         assert certainty_equivalent(gamma) == pytest.approx(amount, abs=1.0)
+
+
+# --- the question as five choices -------------------------------------------
+
+from your_equity_share.risk_aversion import (  # noqa: E402
+    STAIRCASE_CHOICES,
+    Staircase,
+    offer_step,
+    staircase_answer,
+    staircase_offer,
+)
+
+
+def _answer_truthfully(gamma: float, income: float) -> tuple[Staircase, list[float]]:
+    """A respondent whose risk aversion is exactly `gamma`, answering every
+    choice by comparing the coin's worth to them with the amount offered."""
+    state, offers = Staircase(), []
+    while not state.done:
+        offer = staircase_offer(state, income)
+        offers.append(offer)
+        worth = certainty_equivalent(gamma, income, income / 2.0)
+        state = staircase_answer(state, income, offer, took_sure=worth < offer)
+    return state, offers
+
+
+@pytest.mark.parametrize("income", [100_000.0, 45_000.0, 250_000.0, 1_234_567.0])
+@pytest.mark.parametrize("gamma", [1.3, 2.0, 3.5, 4.0, 5.0, 6.5, 8.0, 9.7])
+def test_five_choices_recover_a_respondent_s_risk_aversion(gamma, income) -> None:
+    """Within 4% anywhere on the scale: the bracket's ratio is about 1.075."""
+    state, _ = _answer_truthfully(gamma, income)
+    assert state.answered == STAIRCASE_CHOICES
+    assert state.low <= gamma <= state.high
+    assert state.estimate == pytest.approx(gamma, rel=0.04)
+
+
+def test_the_answer_does_not_depend_on_the_size_of_the_income() -> None:
+    """Only the ratio of the two outcomes matters, so a household on $250,000
+    and one on $45,000 with the same risk aversion end in the same place,
+    to within the rounding of the amounts they were shown."""
+    for gamma in (1.5, 3.0, 5.0, 8.0):
+        small, _ = _answer_truthfully(gamma, 45_000.0)
+        large, _ = _answer_truthfully(gamma, 250_000.0)
+        assert small.estimate == pytest.approx(large.estimate, rel=0.01)
+
+
+def test_the_first_offer_sits_near_the_middle_of_the_range() -> None:
+    """$62,800 on $100,000, against a range of $53,991 to $70,711."""
+    offer = staircase_offer(Staircase(), 100_000.0)
+    assert offer == 62_800.0
+    assert abs(offer - (certainty_equivalent(1.0) + certainty_equivalent(10.0)) / 2) < 600
+
+
+def test_offers_are_round_amounts_scaled_to_the_income() -> None:
+    assert offer_step(100_000.0) == 100.0
+    assert offer_step(45_000.0) == 10.0
+    assert offer_step(1_234_567.0) == 1_000.0
+    _, offers = _answer_truthfully(4.2, 45_000.0)
+    assert all(o == round(o / 10.0) * 10.0 for o in offers)
+
+
+def test_always_taking_the_sure_amount_ends_at_the_cautious_end() -> None:
+    state, _ = _answer_truthfully(40.0, 100_000.0)
+    assert state.high == 10.0 and state.estimate > 9.0
+
+
+def test_always_taking_the_coin_ends_at_the_relaxed_end() -> None:
+    state, _ = _answer_truthfully(0.2, 100_000.0)
+    assert state.low == 1.0 and state.estimate < 1.1
+
+
+def test_a_sixth_choice_is_refused() -> None:
+    state, _ = _answer_truthfully(5.0, 100_000.0)
+    with pytest.raises(ValueError, match="answered"):
+        staircase_offer(state, 100_000.0)

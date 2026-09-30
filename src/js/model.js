@@ -359,6 +359,58 @@ export function guideTable(high = GUIDE_GAMBLE_HIGH, low = GUIDE_GAMBLE_LOW) {
   return table;
 }
 
+// --- the question as five choices -------------------------------------------
+//
+// The staircase of risk_aversion.py: five choices between the coin and a sure
+// amount, each amount depending on the answer before, the coin paying the
+// household's own income or half of it. Mirrors the Python function for
+// function; tests/golden.json holds every path of answers at five incomes.
+
+export const STAIRCASE_CHOICES = 5;
+
+/** Before any answer: the whole range the guide describes, 1 to 10. */
+export function staircaseStart() {
+  return Object.freeze({ low: 1.0, high: 10.0, answered: 0 });
+}
+
+export function staircaseDone(state) {
+  return state.answered >= STAIRCASE_CHOICES;
+}
+
+/** The middle of the bracket in ratio terms: its geometric mean. */
+export function staircaseEstimate(state) {
+  return Math.sqrt(state.low * state.high);
+}
+
+/** What sure amounts are rounded to: $100 on an income in six figures. */
+export function offerStep(income) {
+  if (income < 1) throw new RangeError("the income behind the question must be at least 1");
+  const digits = String(Math.trunc(income)).length;
+  return Math.max(1.0, 10.0 ** (digits - 1) / 1000.0);
+}
+
+/** The sure amount to set against the coin next. */
+export function staircaseOffer(state, income) {
+  if (staircaseDone(state)) throw new RangeError("all the choices have been answered");
+  const exact = certaintyEquivalent(staircaseEstimate(state), income, income / 2.0);
+  const step = offerStep(income);
+  return Math.floor(exact / step + 0.5) * step;
+}
+
+/**
+ * Narrow the bracket by one answer. Taking the sure amount says the coin is
+ * worth less than the offer, so risk aversion is at least the value at which
+ * the offer is the coin's exact worth; choosing the coin says at most that.
+ */
+export function staircaseAnswer(state, income, offer, tookSure) {
+  if (staircaseDone(state)) throw new RangeError("all the choices have been answered");
+  let split = gammaFromCertaintyEquivalent(offer, income, income / 2.0);
+  split = Math.min(Math.max(split, state.low), state.high);
+  return Object.freeze(tookSure
+    ? { low: split, high: state.high, answered: state.answered + 1 }
+    : { low: state.low, high: split, answered: state.answered + 1 });
+}
+
 // --- the recommendation -----------------------------------------------------
 
 /**

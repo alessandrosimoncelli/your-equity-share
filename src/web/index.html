@@ -236,7 +236,7 @@ p { margin: 0.85rem 0 0; }
 
 .field { margin-bottom: 0; }
 
-label.lbl {
+.lbl {
   display: block;
   font-size: var(--t-small);
   font-weight: 700;
@@ -321,6 +321,65 @@ input:focus-visible, a:focus-visible {
   font-variant-numeric: tabular-nums;
   margin-top: 0.1rem;
 }
+
+/*
+  The risk question: one choice at a time, as two plain buttons of equal
+  weight, so neither reads as the expected answer. No range is shown and no
+  answer is preselected, because both pull on what people choose.
+*/
+.question { margin: 0.45rem 0 0; max-width: 40rem; }
+.question b { color: var(--green); font-variant-numeric: tabular-nums; }
+
+.choice-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  max-width: 34rem;
+}
+@media (max-width: 40rem) {
+  .choice-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+.choice {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+  background: var(--paper);
+  border: 1px solid var(--green);
+  border-radius: 0;
+  padding: 0.7rem 0.75rem;
+  cursor: pointer;
+}
+.choice:hover { background: var(--tint); }
+.choice:focus-visible, .linkbtn:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.step { font-size: var(--t-small); margin: 0.5rem 0 0; }
+
+.risk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.linkbtn {
+  font-family: var(--body);
+  font-size: var(--t-small);
+  color: var(--green);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#risk-own { margin-top: 0.5rem; max-width: 10rem; }
 
 /* --- the answer ---------------------------------------------------------- */
 
@@ -530,14 +589,26 @@ td.why { min-width: 15rem; }
       </div>
 
       <div class="field span-2">
-        <label class="lbl" for="ce">How much you dislike risk</label>
-        <span class="hint">A coin decides whether you live on $100,000 or
-        $50,000 next year, and you must spend it all. What guaranteed amount
-        would leave you indifferent?</span>
-        <div class="slider-value" id="ce-value">$58,566</div>
-        <input type="range" id="ce" min="1" max="10" step="1" value="5">
-        <div class="slider-ends"><span>$70,710, least averse</span><span>$53,991, most averse</span></div>
-        <div class="readout" id="ce-readout"></div>
+        <span class="lbl" id="risk-label">How much you dislike risk</span>
+        <div id="risk-quiz" role="group" aria-labelledby="risk-label">
+          <span class="hint">Five quick choices. There are no right answers:
+          pick what you would really take.</span>
+          <p class="question" id="risk-question" aria-live="polite"></p>
+          <div class="choice-row">
+            <button type="button" class="choice" id="risk-coin">The coin flip</button>
+            <button type="button" class="choice" id="risk-sure"></button>
+          </div>
+          <p class="step" id="risk-step"></p>
+        </div>
+        <div class="readout" id="risk-readout" aria-live="polite"></div>
+        <div class="risk-actions">
+          <button type="button" class="linkbtn" id="risk-restart" hidden>Answer again</button>
+          <button type="button" class="linkbtn" id="risk-own-toggle">Enter my own number</button>
+        </div>
+        <div id="risk-own" hidden>
+          <label class="hint" for="risk-own-value">Risk aversion, from 1 to 10</label>
+          <input type="number" id="risk-own-value" min="1" max="10" step="0.1" inputmode="decimal">
+        </div>
       </div>
 
       <div class="field">
@@ -706,14 +777,19 @@ td.why { min-width: 15rem; }
 
 <script type="module">
 import {
+  STAIRCASE_CHOICES,
   arithmeticFromCompound,
-  certaintyEquivalent,
   compoundFromArithmetic,
   projectEarnings,
   logPremium,
   makeHousehold,
   makePerson,
   recommend,
+  staircaseAnswer,
+  staircaseDone,
+  staircaseEstimate,
+  staircaseOffer,
+  staircaseStart,
 } from "./model.js";
 
 const $ = (id) => document.getElementById(id);
@@ -966,6 +1042,76 @@ function pathText(person) {
     .join("\n");
 }
 
+// --- the risk question -------------------------------------------------
+//
+// Five choices between the coin and a sure amount, one at a time. The amounts
+// are never shown as a range, none is preselected, and each depends on the
+// answer before: the staircase of Falk and co-authors' Preference Survey
+// Module. The coin pays the household's own income or half of it; under the
+// model's constant relative risk aversion only that ratio matters, so the
+// answer means the same at any income. Until all five are answered the model
+// uses 5, the middle of the scale, and says so.
+
+const DEFAULT_GAMMA = 5;
+const risk = { state: staircaseStart(), own: null };
+
+function questionIncome() {
+  const earned = readMoney($("wage"), 0) +
+    ($("partnered").checked ? readMoney($("partner-wage"), 0) : 0);
+  if (earned >= 1000) return Math.round(earned);
+  const pension = readMoney($("benefit"), 0);
+  return pension >= 1000 ? Math.round(pension) : 100000;
+}
+
+function currentGamma() {
+  if (risk.own !== null) return risk.own;
+  if (staircaseDone(risk.state)) return Math.min(10, Math.max(1, staircaseEstimate(risk.state)));
+  return DEFAULT_GAMMA;
+}
+
+function riskSource() {
+  if (risk.own !== null) return "the number you entered";
+  if (staircaseDone(risk.state)) return "your five choices about the coin flip";
+  return "the middle of the scale, until you answer the five choices";
+}
+
+function answerRisk(tookSure) {
+  const income = questionIncome();
+  const offer = staircaseOffer(risk.state, income);
+  risk.state = staircaseAnswer(risk.state, income, offer, tookSure);
+  render();
+  $(staircaseDone(risk.state) ? "risk-restart" : "risk-coin").focus();
+}
+
+function renderRisk(gamma) {
+  const done = staircaseDone(risk.state);
+  const own = risk.own !== null;
+  $("risk-quiz").hidden = done || own;
+  if (!done && !own) {
+    const income = questionIncome();
+    $("risk-question").innerHTML =
+      `A coin flip decides what you live on next year: <b>${usd.format(income)}</b> ` +
+      `or <b>${usd.format(income / 2)}</b>. You must spend it all. ` +
+      `Which would you rather have?`;
+    $("risk-sure").textContent = `${usd.format(staircaseOffer(risk.state, income))} for sure`;
+    $("risk-step").textContent = `Choice ${risk.state.answered + 1} of ${STAIRCASE_CHOICES}`;
+  }
+  // Choi solved his model at 4 to 10; below 4 the answer is extrapolated, on
+  // the side where it tends to reach 100% anyway (methodology section 3.6).
+  const below = (done || own) && gamma < 4
+    ? " Choi solved his model for values from 4 to 10, so below 4 the answer is an extrapolation."
+    : "";
+  $("risk-readout").innerHTML = own
+    ? `Risk aversion <b>${num1.format(gamma)}</b> out of 10, as you entered it.${below}`
+    : done
+      ? `Your risk aversion is <b>${num1.format(gamma)}</b> out of 10, from your five ` +
+        `choices. 1 is relaxed about risk, 10 is very cautious.${below}`
+      : `Until you answer, the model uses <b>5</b>, the middle of the scale.`;
+  $("risk-restart").hidden = !(done || risk.state.answered > 0);
+  $("risk-own-toggle").textContent = own || !$("risk-own").hidden
+    ? "Use the five choices instead" : "Enter my own number";
+}
+
 function readInputs() {
   const clampInt = (el, lo, hi, fallback) => {
     const v = Math.round(Number(el.value));
@@ -973,10 +1119,7 @@ function readInputs() {
   };
   const nonNegative = (el, fallback) => readMoney(el, fallback);
 
-  // The slider now carries risk aversion itself, one step per whole number,
-  // because it used to carry dollars and the map from dollars to risk aversion
-  // is steep enough that its midpoint sat at 3.3 rather than 5.
-  const gamma = Math.min(10, Math.max(1, Number($("ce").value)));
+  const gamma = currentGamma();
   const custom = $("custom-path").checked;
 
   const age1 = clampInt($("age"), 20, 99, 45);
@@ -1040,10 +1183,7 @@ function render() {
   const sigma = market.stock_volatility;
   const r = recommend(household, expected, rf, sigma);
 
-  $("ce-value").textContent = usd.format(certaintyEquivalent(gamma));
-  $("ce-readout").innerHTML =
-    `A risk aversion of <b>${gamma}</b> out of 10. Drag until the amount above ` +
-    `is the one you would accept; lower amounts mean you dislike risk more.`;
+  renderRisk(gamma);
   $("mu-value").textContent = pct2.format(Number($("mu").value)) + " compound";
   $("mu-readout").innerHTML =
     `That is <b>${pct2.format(expected)}</b> as an arithmetic mean, which is what ` +
@@ -1215,7 +1355,7 @@ function render() {
          ["30-year TIPS yield, from the Treasury's real yield curve (FRED's DFII30), which is what Choi's guide asks for", "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +
-    row([["Your risk aversion", "k"], [num1.format(gamma), "n"], ["your answer to the coin question", "why"]]) +
+    row([["Your risk aversion", "k"], [num1.format(gamma), "n"], [riskSource(), "why"]]) +
     row([["Log excess drift", "k"], [pct2.format(pi), "n"],
          ["the return and the safe rate above, in logs, less half the " +
           "variance of Choi's 18.5% calibration", "why"]]);
@@ -1287,9 +1427,33 @@ async function boot() {
     $(id).addEventListener("blur", () => { showMoney($(id)); render(); });
   }
 
-  for (const id of ["age", "wage", "wealth", "benefit", "partner-age", "partner-wage", "ce", "mu"]) {
+  for (const id of ["age", "wage", "wealth", "benefit", "partner-age", "partner-wage", "mu"]) {
     $(id).addEventListener("input", render);
   }
+
+  $("risk-coin").addEventListener("click", () => answerRisk(false));
+  $("risk-sure").addEventListener("click", () => answerRisk(true));
+  $("risk-restart").addEventListener("click", () => {
+    risk.state = staircaseStart();
+    render();
+    $("risk-coin").focus();
+  });
+  $("risk-own-toggle").addEventListener("click", () => {
+    const opening = $("risk-own").hidden && risk.own === null;
+    $("risk-own").hidden = !opening;
+    if (!opening) {
+      risk.own = null;
+      $("risk-own-value").value = "";
+    }
+    render();
+    if (opening) $("risk-own-value").focus();
+  });
+  $("risk-own-value").addEventListener("input", () => {
+    const v = Number($("risk-own-value").value);
+    risk.own = $("risk-own-value").value.trim() !== "" && Number.isFinite(v) && v >= 1 && v <= 10
+      ? v : null;
+    render();
+  });
   $("partnered").addEventListener("change", () => {
     $("partner-fields").hidden = !$("partnered").checked;
     $("path-2-field").hidden = !($("partnered").checked && $("custom-path").checked);
