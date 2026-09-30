@@ -85,6 +85,11 @@ def test_the_two_pages_are_told_apart_by_their_titles(built: Path) -> None:
     assert "<title>Equity Share Methodology</title>" in doc
 
 
+def test_the_page_says_who_it_is_calibrated_for(built: Path) -> None:
+    page = (built / "index.html").read_text(encoding="utf-8")
+    assert "calibrated for a college-educated household" in page
+
+
 def test_the_coin_question_keeps_the_guide_s_conditions(built: Path) -> None:
     """The guide's question says the whole amount is spent and nothing can be
     borrowed. The page dropped the second half once, and without it a bad year

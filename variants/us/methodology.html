@@ -431,6 +431,8 @@ h4 {
 
 <p><strong>It answers:</strong> of the money a United States household has invested and does not need on any particular date, what share belongs in equities rather than in a safe bond. It assumes wages or a pension are coming in, and that the money is meant to last the rest of a life.</p>
 
+<p><strong>It is calibrated for</strong> a college-educated American household whose Social Security will replace about 40% of final pay, as it does for high earners. Table 1 below lists every number behind that description and where it comes from. A household that knows its own benefit can type it year by year on the page.</p>
+
 <p><strong>It does not answer anything with a date on it.</strong> A house deposit in three years, school fees in eight, a known payment on a known day: none of that fits, and the reason is structural rather than a missing feature. Section 2.3 shows that horizon does not appear in the Merton share at all, which is a result and not an omission. A model in which horizon does not appear cannot distinguish money needed in three years from money needed in forty, so it cannot be asked to. Goal-based allocation is a different problem with a different solution, and this tool has nothing to say about it.</p>
 
 <p>It also does not say how much to save, which securities or funds to hold, or what to do about a house, a business, a mortgage or an annuity. Section 8.5 lists what is left out and what each omission costs.</p>
@@ -534,6 +536,14 @@ h4 {
 <p>Hold equities in proportion to the reward for risk, and in inverse proportion to the amount of risk and the investor's dislike of it.</p>
 
 <p>Note that the numerator in equation (1) is written <code>ln(1+&mu;) &minus; ln(1+r)</code>. Under geometric Brownian motion an annual return quoted as <code>&mu;</code> corresponds to a drift of <code>ln(1+&mu;)</code>, and the Merton numerator is a difference of drifts. The source spreadsheet uses <code>&mu; &minus; r</code> directly. Measured on the spreadsheet's own three sleeves, that overstates the numerator by 3.6%.</p>
+
+<h4>Why a premium near zero still buys equities</h4>
+
+<p>The premium in equation (4) is the <strong>average</strong> return of equities over the safe rate, not what they compound at in a typical year. Because returns swing, the average sits above the compound rate by about half the variance: at 17% volatility, about 1.5 points. A forecast that compounds barely above the safe rate is therefore still an average premium of about 1.5 points, and the formula still puts part of total wealth in equities.</p>
+
+<p><strong>This comes from the model, not from a choice made here.</strong> Merton's <code>&mu;</code> is the expected return, which is the average. Choi writes the same term out in his equation (8): the log premium plus half the variance, divided by risk aversion times the variance. When the log premium is zero, what remains is one over twice the risk aversion: 10% of total wealth at a risk aversion of 5.</p>
+
+<p>The intuition is rebalancing (Booth and Fama, 1992). A stock that rises 20% or falls 15% with equal odds compounds at 1.0% a year. Hold half of it beside a bond paying 1% and rebalance every year, and the mix compounds at 1.37%, faster than either on its own. The one step this project adds is the conversion: its forecast is a compound return (section 3.1), so the page adds half the variance before the formula uses it. The same arithmetic says when the answer reaches zero: only once the forecast falls below the safe rate by more than half the variance.</p>
 
 <h3 id="s2-2">2.2 Why volatility is squared</h3>
 
@@ -1715,6 +1725,7 @@ h4 {
   <li>Biggs, A. G. and Springstead, G. R. (2008). Alternate Measures of Replacement Rates for Social Security Benefits and Retirement Income. Social Security Bulletin, 68(2). The source of the 40% to 82% replacement rate range, and of the 40% this tool defaults to.</li>
   <li>Bodie, Z. (1995). On the Risk of Stocks in the Long Run. <em>Financial Analysts Journal</em>, 51(3), 18 to 22.</li>
   <li>Bodie, Z., Merton, R. C. and Samuelson, W. F. (1992). Labor Supply Flexibility and Portfolio Choice in a Life Cycle Model. <em>Journal of Economic Dynamics and Control</em>, 16(3 to 4), 427 to 449.</li>
+  <li>Booth, D. G. and Fama, E. F. (1992). Diversification Returns and Asset Contributions. <em>Financial Analysts Journal</em>, 48(3), 26 to 32. Why a premium near zero still buys equities, section 2.1.</li>
   <li>Campbell, J. Y. and Shiller, R. J. (1988, 1998). Work on valuation ratios and long-horizon returns.</li>
   <li>Campbell, J. Y. and Viceira, L. M. (2002). <em>Strategic Asset Allocation: Portfolio Choice for Long-Term Investors</em>. Oxford University Press.</li>
   <li>Chapman, J., Snowberg, E., Wang, S. and Camerer, C. (2024). Dynamically Optimized Sequential Experimentation (DOSE) for Estimating Economic Preference Parameters. NBER Working Paper 33013. Why the risk question ends with a check.</li>
