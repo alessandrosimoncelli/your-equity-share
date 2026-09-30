@@ -46,6 +46,7 @@ from your_equity_share.expected_return import (  # noqa: E402
 from your_equity_share.risk_aversion import (  # noqa: E402
     STAIRCASE_CHOICES,
     Staircase,
+    answers_disagree,
     certainty_equivalent,
     gamma_from_certainty_equivalent,
     staircase_answer,
@@ -151,6 +152,15 @@ def staircase_cases() -> list[dict]:
                           "low": state.low, "high": state.high,
                           "estimate": state.estimate})
     return cases
+
+
+def disagreement_cases() -> list[dict]:
+    """Every self-assessment against risk aversions either side of each edge."""
+    return [
+        {"args": [w, g], "expect": answers_disagree(w, g)}
+        for w in range(11)
+        for g in (1.0, 2.5, 3.99, 4.0, 5.5, 6.99, 7.0, 8.5, 10.0)
+    ]
 
 
 def _person_payload(p: Person) -> dict:
@@ -351,6 +361,7 @@ def main() -> int:
         "certainty_equivalent": forward_ce,
         "gamma_from_certainty_equivalent": inverse_ce,
         "staircase": staircase_cases(),
+        "answers_disagree": disagreement_cases(),
         "project_earnings": earnings_cases(),
         "human_capital": human_capital_cases(),
         "recommend": recommend_cases(),

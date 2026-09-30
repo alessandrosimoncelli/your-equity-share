@@ -381,6 +381,41 @@ input:focus-visible, a:focus-visible {
 
 #risk-own { margin-top: 0.5rem; max-width: 10rem; }
 
+/*
+  The self-assessment: eleven boxes in one row, none preselected, so the scale
+  reads as a scale without a handle sitting anywhere on it. The gap is tight
+  so that each box stays at least 24 pixels wide on a phone.
+*/
+.scale-row {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 0.2rem;
+  margin-top: 0.6rem;
+  max-width: 34rem;
+}
+.scale {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+  background: var(--paper);
+  border: 1px solid var(--green);
+  border-radius: 0;
+  padding: 0.45rem 0;
+  cursor: pointer;
+}
+.scale:hover { background: var(--tint); }
+.scale:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+#risk-self .slider-ends { max-width: 34rem; }
+
+#risk-amount-field { margin-top: 0.75rem; max-width: 34rem; }
+#risk-amount-field input { max-width: 12rem; }
+#risk-amount-done { margin-left: 0.5rem; }
+
 /* --- the answer ---------------------------------------------------------- */
 
 /*
@@ -590,16 +625,53 @@ td.why { min-width: 15rem; }
 
       <div class="field span-2">
         <span class="lbl" id="risk-label">How much you dislike risk</span>
-        <div id="risk-quiz" role="group" aria-labelledby="risk-label">
-          <span class="hint">Five quick choices. There are no right answers:
-          pick what you would really take.</span>
+        <span class="hint">Quick questions with no right answers: pick what you
+        would really choose.</span>
+
+        <div id="risk-self" role="group" aria-labelledby="risk-self-q">
+          <p class="question" id="risk-self-q">In financial matters, how willing
+          are you to take risks?</p>
+          <div class="scale-row" id="risk-scale">
+            <button type="button" class="scale" data-w="0">0</button>
+            <button type="button" class="scale" data-w="1">1</button>
+            <button type="button" class="scale" data-w="2">2</button>
+            <button type="button" class="scale" data-w="3">3</button>
+            <button type="button" class="scale" data-w="4">4</button>
+            <button type="button" class="scale" data-w="5">5</button>
+            <button type="button" class="scale" data-w="6">6</button>
+            <button type="button" class="scale" data-w="7">7</button>
+            <button type="button" class="scale" data-w="8">8</button>
+            <button type="button" class="scale" data-w="9">9</button>
+            <button type="button" class="scale" data-w="10">10</button>
+          </div>
+          <div class="slider-ends"><span>Completely unwilling</span><span>Very willing</span></div>
+        </div>
+
+        <div id="risk-quiz" role="group" aria-labelledby="risk-question" hidden>
           <p class="question" id="risk-question" aria-live="polite"></p>
           <div class="choice-row">
             <button type="button" class="choice" id="risk-coin">The coin flip</button>
             <button type="button" class="choice" id="risk-sure"></button>
           </div>
-          <p class="step" id="risk-step"></p>
+          <p class="step">Each choice stands on its own: answer it as if it were
+          the only one.</p>
         </div>
+
+        <div id="risk-check" role="group" aria-labelledby="risk-check-q" hidden>
+          <p class="question" id="risk-check-q" aria-live="polite"></p>
+          <div class="choice-row">
+            <button type="button" class="choice" id="risk-right">That's about right</button>
+            <button type="button" class="choice" id="risk-adjust">Let me adjust it</button>
+          </div>
+          <div id="risk-amount-field" hidden>
+            <label class="hint" for="risk-amount">The sure amount worth the same
+            to you as the coin flip</label>
+            <input type="text" inputmode="numeric" id="risk-amount"><button
+              type="button" class="btn" id="risk-amount-done">Done</button>
+            <div class="readout" id="risk-amount-note"></div>
+          </div>
+        </div>
+
         <div class="readout" id="risk-readout" aria-live="polite"></div>
         <div class="risk-actions">
           <button type="button" class="linkbtn" id="risk-restart" hidden>Answer again</button>
@@ -777,8 +849,11 @@ td.why { min-width: 15rem; }
 
 <script type="module">
 import {
-  STAIRCASE_CHOICES,
+  answersDisagree,
   arithmeticFromCompound,
+  certaintyEquivalent,
+  gammaFromCertaintyEquivalent,
+  offerStep,
   compoundFromArithmetic,
   projectEarnings,
   logPremium,
@@ -1044,16 +1119,25 @@ function pathText(person) {
 
 // --- the risk question -------------------------------------------------
 //
-// Five choices between the coin and a sure amount, one at a time. The amounts
-// are never shown as a range, none is preselected, and each depends on the
-// answer before: the staircase of Falk and co-authors' Preference Survey
-// Module. The coin pays the household's own income or half of it; under the
-// model's constant relative risk aversion only that ratio matters, so the
-// answer means the same at any income. Until all five are answered the model
-// uses 5, the middle of the scale, and says so.
+// Three steps, from what the research on eliciting risk attitudes agrees on
+// (methodology section 3.4). First a self-assessment, how willing you are to
+// take financial risks from 0 to 10 (Dohmen and co-authors). Then five
+// choices between a coin flip and a sure amount, each depending on the answer
+// before (the staircase of Falk and co-authors), with no counter and nothing
+// preselected. Then a check: the sure amount those choices imply, which the
+// person confirms or adjusts, so that one careless click cannot fix the
+// answer. The coin pays the household's own income or half of it; only that
+// ratio matters under the model's constant relative risk aversion.
+//
+// The self-assessment never changes the number, because nothing converts its
+// scale into Choi's; it only flags answers that contradict each other. Until
+// the steps are done the model uses 5, the middle of the scale, and says so.
 
 const DEFAULT_GAMMA = 5;
-const risk = { state: staircaseStart(), own: null };
+const freshRisk = () => ({
+  willingness: null, state: staircaseStart(), checked: false, adjusted: null,
+});
+const risk = { ...freshRisk(), own: null };
 
 function questionIncome() {
   const earned = readMoney($("wage"), 0) +
@@ -1063,16 +1147,41 @@ function questionIncome() {
   return pension >= 1000 ? Math.round(pension) : 100000;
 }
 
+function riskPhase() {
+  if (risk.own !== null) return "own";
+  if (risk.willingness === null) return "self";
+  if (!staircaseDone(risk.state)) return "choices";
+  return risk.checked ? "done" : "check";
+}
+
+// What the choices say, or what the person set the check's amount to.
+function choiceGamma() {
+  if (risk.adjusted !== null) return risk.adjusted;
+  return Math.min(10, Math.max(1, staircaseEstimate(risk.state)));
+}
+
 function currentGamma() {
-  if (risk.own !== null) return risk.own;
-  if (staircaseDone(risk.state)) return Math.min(10, Math.max(1, staircaseEstimate(risk.state)));
+  const phase = riskPhase();
+  if (phase === "own") return risk.own;
+  if (phase === "check" || phase === "done") return choiceGamma();
   return DEFAULT_GAMMA;
 }
 
+function impliedAmount(income) {
+  const step = offerStep(income);
+  return Math.round(certaintyEquivalent(choiceGamma(), income, income / 2) / step) * step;
+}
+
 function riskSource() {
-  if (risk.own !== null) return "the number you entered";
-  if (staircaseDone(risk.state)) return "your five choices about the coin flip";
-  return "the middle of the scale, until you answer the five choices";
+  const phase = riskPhase();
+  if (phase === "own") return "the number you entered";
+  if (phase === "done") {
+    return risk.adjusted !== null
+      ? "your choices about the coin flip, adjusted at the final check"
+      : "your choices about the coin flip, confirmed at the final check";
+  }
+  if (phase === "check") return "your choices about the coin flip";
+  return "the middle of the scale, until you answer the questions";
 }
 
 function answerRisk(tookSure) {
@@ -1080,36 +1189,59 @@ function answerRisk(tookSure) {
   const offer = staircaseOffer(risk.state, income);
   risk.state = staircaseAnswer(risk.state, income, offer, tookSure);
   render();
-  $(staircaseDone(risk.state) ? "risk-restart" : "risk-coin").focus();
+  $(staircaseDone(risk.state) ? "risk-right" : "risk-coin").focus();
+}
+
+function confirmRisk() {
+  risk.checked = true;
+  $("risk-amount-field").hidden = true;
+  render();
+  $("risk-restart").focus();
 }
 
 function renderRisk(gamma) {
-  const done = staircaseDone(risk.state);
-  const own = risk.own !== null;
-  $("risk-quiz").hidden = done || own;
-  if (!done && !own) {
-    const income = questionIncome();
+  const phase = riskPhase();
+  const income = questionIncome();
+  $("risk-self").hidden = phase !== "self";
+  $("risk-quiz").hidden = phase !== "choices";
+  $("risk-check").hidden = phase !== "check";
+
+  if (phase === "choices") {
     $("risk-question").innerHTML =
       `A coin flip decides what you live on next year: <b>${usd.format(income)}</b> ` +
       `or <b>${usd.format(income / 2)}</b>. You must spend it all. ` +
       `Which would you rather have?`;
     $("risk-sure").textContent = `${usd.format(staircaseOffer(risk.state, income))} for sure`;
-    $("risk-step").textContent = `Choice ${risk.state.answered + 1} of ${STAIRCASE_CHOICES}`;
   }
+  // Left alone while the amount is being adjusted, so the sentence does not
+  // change under the person typing.
+  if (phase === "check" && $("risk-amount-field").hidden) {
+    $("risk-check-q").innerHTML =
+      `Your choices mean that <b>${usd.format(impliedAmount(income))}</b> for sure is ` +
+      `worth about the same to you as the coin flip between <b>${usd.format(income)}</b> ` +
+      `and <b>${usd.format(income / 2)}</b>. Does that sound right?`;
+  }
+
   // Choi solved his model at 4 to 10; below 4 the answer is extrapolated, on
   // the side where it tends to reach 100% anyway (methodology section 3.6).
-  const below = (done || own) && gamma < 4
+  const below = (phase === "done" || phase === "own") && gamma < 4
     ? " Choi solved his model for values from 4 to 10, so below 4 the answer is an extrapolation."
     : "";
-  $("risk-readout").innerHTML = own
-    ? `Risk aversion <b>${num1.format(gamma)}</b> out of 10, as you entered it.${below}`
-    : done
-      ? `Your risk aversion is <b>${num1.format(gamma)}</b> out of 10, from your five ` +
-        `choices. 1 is relaxed about risk, 10 is very cautious.${below}`
-      : `Until you answer, the model uses <b>5</b>, the middle of the scale.`;
-  $("risk-restart").hidden = !(done || risk.state.answered > 0);
-  $("risk-own-toggle").textContent = own || !$("risk-own").hidden
-    ? "Use the five choices instead" : "Enter my own number";
+  const clash = phase === "done" && answersDisagree(risk.willingness, gamma)
+    ? ` You rated your willingness to take financial risks ${risk.willingness} out of 10, ` +
+      `yet your choices were ${risk.willingness >= 7 ? "cautious" : "relaxed about risk"}. ` +
+      `If either doesn't sound like you, answer again.`
+    : "";
+  $("risk-readout").innerHTML =
+    phase === "own" ? `Risk aversion <b>${num1.format(gamma)}</b> out of 10, as you entered it.${below}`
+    : phase === "done" ? `Your risk aversion is <b>${num1.format(gamma)}</b> out of 10. ` +
+      `1 is relaxed about risk, 10 is very cautious.${below}${clash}`
+    : phase === "check" ? `Your choices put your risk aversion at <b>${num1.format(gamma)}</b> out of 10.`
+    : `Until you answer, the model uses <b>5</b>, the middle of the scale.`;
+
+  $("risk-restart").hidden = phase === "own" || risk.willingness === null;
+  $("risk-own-toggle").textContent = phase === "own" || !$("risk-own").hidden
+    ? "Answer the questions instead" : "Enter my own number";
 }
 
 function readInputs() {
@@ -1431,12 +1563,47 @@ async function boot() {
     $(id).addEventListener("input", render);
   }
 
+  for (const button of document.querySelectorAll("#risk-scale .scale")) {
+    button.addEventListener("click", () => {
+      risk.willingness = Number(button.dataset.w);
+      render();
+      $("risk-coin").focus();
+    });
+  }
   $("risk-coin").addEventListener("click", () => answerRisk(false));
   $("risk-sure").addEventListener("click", () => answerRisk(true));
-  $("risk-restart").addEventListener("click", () => {
-    risk.state = staircaseStart();
+  $("risk-right").addEventListener("click", confirmRisk);
+  $("risk-amount-done").addEventListener("click", confirmRisk);
+  $("risk-adjust").addEventListener("click", () => {
+    $("risk-amount").value = usd.format(impliedAmount(questionIncome()));
+    $("risk-amount-note").textContent = "";
+    $("risk-amount-field").hidden = false;
+    $("risk-amount").focus();
+    $("risk-amount").select();
+  });
+  // The typed amount is Choi's own question, answered after the choices and
+  // anchored on them. Only an amount between the coin's worse outcome and its
+  // average means anything; the result is kept on Choi's scale of 1 to 10.
+  $("risk-amount").addEventListener("input", () => {
+    const income = questionIncome();
+    const amount = readMoney($("risk-amount"), 0);
+    if (amount > income / 2 && amount < 0.75 * income) {
+      risk.adjusted = Math.min(10, Math.max(1,
+        gammaFromCertaintyEquivalent(amount, income, income / 2)));
+      $("risk-amount-note").innerHTML =
+        `That puts your risk aversion at <b>${num1.format(risk.adjusted)}</b> out of 10.`;
+    } else {
+      $("risk-amount-note").textContent =
+        `Enter an amount between ${usd.format(income / 2)} and ${usd.format(0.75 * income)}.`;
+    }
     render();
-    $("risk-coin").focus();
+  });
+  $("risk-amount").addEventListener("blur", () => showMoney($("risk-amount")));
+  $("risk-restart").addEventListener("click", () => {
+    Object.assign(risk, freshRisk());
+    $("risk-amount-field").hidden = true;
+    render();
+    document.querySelector("#risk-scale .scale").focus();
   });
   $("risk-own-toggle").addEventListener("click", () => {
     const opening = $("risk-own").hidden && risk.own === null;

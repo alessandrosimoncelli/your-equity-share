@@ -411,6 +411,22 @@ export function staircaseAnswer(state, income, offer, tookSure) {
     : { low: state.low, high: split, answered: state.answered + 1 });
 }
 
+/**
+ * True when the 0 to 10 self-assessment and the choices point opposite ways:
+ * very willing yet cautious, or very unwilling yet relaxed. It never changes
+ * gamma, because nothing converts one scale into the other.
+ */
+export function answersDisagree(willingness, gamma) {
+  if (!(willingness >= 0 && willingness <= 10)) {
+    throw new RangeError("willingness is on a scale from 0 to 10");
+  }
+  const willing = willingness >= 7;
+  const unwilling = willingness <= 3;
+  const cautious = gamma >= 7.0;
+  const relaxed = gamma < 4.0;
+  return (willing && cautious) || (unwilling && relaxed);
+}
+
 // --- the recommendation -----------------------------------------------------
 
 /**

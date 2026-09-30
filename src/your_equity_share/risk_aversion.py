@@ -41,6 +41,7 @@ __all__ = [
     "PLAUSIBLE_GAMMA_RANGE",
     "STAIRCASE_CHOICES",
     "Staircase",
+    "answers_disagree",
     "certainty_equivalent",
     "gamma_from_certainty_equivalent",
     "guide_table",
@@ -213,3 +214,27 @@ def staircase_answer(
     if took_sure:
         return Staircase(split, state.high, state.answered + 1)
     return Staircase(state.low, split, state.answered + 1)
+
+
+# --- the self-assessment, as a check on the choices -------------------------
+
+def answers_disagree(willingness: int, gamma: float) -> bool:
+    """True when the self-assessment and the choices point opposite ways.
+
+    `willingness` is the answer to "in financial matters, how willing are you
+    to take risks?" on the 0 to 10 scale of Dohmen, Falk, Huffman, Sunde,
+    Schupp and Wagner (2011), higher meaning more willing. `gamma` is the
+    risk aversion the choices imply, higher meaning more cautious.
+
+    The self-assessment does not change gamma: nothing converts one scale into
+    the other, so it is used only to notice a contradiction. Each scale is cut
+    into thirds, and the answers disagree when they sit in opposite outer
+    thirds: very willing yet cautious (7 or more on both), or very unwilling
+    yet relaxed (3 or less, and risk aversion under 4, which is also where
+    Choi's fitted grid ends).
+    """
+    if not 0 <= willingness <= 10:
+        raise ValueError("willingness is on a scale from 0 to 10")
+    willing, unwilling = willingness >= 7, willingness <= 3
+    cautious, relaxed = gamma >= 7.0, gamma < 4.0
+    return (willing and cautious) or (unwilling and relaxed)

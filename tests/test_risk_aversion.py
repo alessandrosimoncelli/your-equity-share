@@ -243,3 +243,29 @@ def test_a_sixth_choice_is_refused() -> None:
     state, _ = _answer_truthfully(5.0, 100_000.0)
     with pytest.raises(ValueError, match="answered"):
         staircase_offer(state, 100_000.0)
+
+
+# --- the self-assessment, as a check on the choices -------------------------
+
+from your_equity_share.risk_aversion import answers_disagree  # noqa: E402
+
+
+@pytest.mark.parametrize("willingness, gamma, expected", [
+    (9, 8.0, True),    # very willing, very cautious
+    (7, 7.0, True),    # the edges of both outer thirds
+    (2, 1.5, True),    # very unwilling, very relaxed
+    (3, 3.99, True),
+    (9, 2.0, False),   # willing and relaxed: consistent
+    (1, 9.0, False),   # unwilling and cautious: consistent
+    (5, 9.5, False),   # a middle self-assessment never contradicts
+    (5, 1.0, False),
+    (8, 6.9, False),   # cautious only from 7
+    (3, 4.0, False),   # relaxed only below 4
+])
+def test_answers_disagree_only_in_opposite_outer_thirds(willingness, gamma, expected) -> None:
+    assert answers_disagree(willingness, gamma) is expected
+
+
+def test_the_self_assessment_scale_is_zero_to_ten() -> None:
+    with pytest.raises(ValueError, match="0 to 10"):
+        answers_disagree(11, 5.0)

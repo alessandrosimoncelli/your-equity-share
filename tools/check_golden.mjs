@@ -36,6 +36,7 @@ import {
   mertonShare,
   projectEarnings,
   recommend,
+  answersDisagree,
   staircaseAnswer,
   staircaseEstimate,
   staircaseOffer,
@@ -148,6 +149,10 @@ for (const [i, c] of (cases.staircase ?? []).entries()) {
   compare(`staircase[${i}].low`, state.low, c.low);
   compare(`staircase[${i}].high`, state.high, c.high);
   compare(`staircase[${i}].estimate`, staircaseEstimate(state), c.estimate);
+}
+
+for (const [i, c] of (cases.answers_disagree ?? []).entries()) {
+  compare(`answers_disagree[${i}]`, answersDisagree(...c.args), c.expect);
 }
 
 for (const [i, c] of cases.project_earnings.entries()) {
