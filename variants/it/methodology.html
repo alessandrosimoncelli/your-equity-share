@@ -363,9 +363,9 @@ wherever Shiller's workbook is present, which includes every Monday refresh that
 the workbook is not in the repository, so a plain push skips it.</p>
 
 <p>That is deliberate and it is the point of the whole arrangement. <strong>The
-gap between a 21.3% American answer and a 64.1% Italian one, both before tax,
+gap between a 21.3% American answer and a 63.4% Italian one, both before tax,
 is the country and not the method.</strong> The Italian answer itself is after
-Italian tax, 59.5%, which section 8 measures; the comparison uses the figures
+Italian tax, 58.7%, which section 8 measures; the comparison uses the figures
 before tax because the American variant models none. Were the model copied into two folders, the copies
 would be edited on different days and every later comparison would quietly mix
 a country difference with a code difference.</p>
@@ -390,7 +390,7 @@ against</caption>
 <tr><td>Volatility, euro</td><td class="num">13.8942%</td><td>MSCI ACWI in euro, 25 years</td><td class="num">13.99%</td></tr>
 <tr><td>Real safe rate</td><td class="num">1.4401%</td><td>Bund/euro-i 2046 traded real yield</td><td class="num">1.4906%</td></tr>
 <tr><td>Nominal 30-year yield</td><td class="num">3.7617%</td><td>German 30-year Bund, 9 September</td><td class="num">3.886%</td></tr>
-<tr><td>Benefit replacement rate</td><td class="num">79%</td><td>OECD, Pensions at a Glance 2025, Italy country note, future net rate for an average earner</td><td class="num">79%</td></tr>
+<tr><td>Benefit replacement rate</td><td class="num">66%</td><td>Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, private employee retiring in 2050, net</td><td class="num">66.0%</td></tr>
 <tr><td>Tax, government bonds</td><td class="num">12.5%</td><td>Italian law, white-list states</td><td class="num">12.5%</td></tr>
 <tr><td>Tax, other financial income</td><td class="num">26.0%</td><td>Italian law</td><td class="num">26.0%</td></tr>
 <tr><td>Imposta di bollo</td><td class="num">0.20%</td><td>Italian law, annually on value</td><td class="num">0.20%</td></tr>
@@ -402,8 +402,9 @@ against</caption>
 Exhibit 3A, as of 31 December 2025. iShares ACWI and IVV fund pages, 8
 September 2026. MSCI end-of-day index levels. Deutsche Finanzagentur, the
 issuer's own published real yields and break-even rates. ECB Data Portal,
-series YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_30Y. OECD, <em>Pensions at a Glance
-2025</em>, Italy country note.</p>
+series YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_30Y. Ragioneria Generale dello Stato,
+Rapporto n. 26 (2025), chapter 6. OECD, <em>Pensions at a Glance 2025</em>,
+Italy country note.</p>
 
 <p><strong>Nothing in that table is within rounding of its check by accident.
 The largest gap is the expected return</strong>, 0.38 points below AQR's, and
@@ -708,23 +709,28 @@ period.</p>
 
 <h2 id="s7">7. The pension</h2>
 
-<p><strong>79%</strong>, the future net replacement rate for an average earner,
-against an OECD average of 63. From the OECD's <em>Pensions at a Glance
-2025</em>, Italy country note, whose worker starts at 22 in 2024 and retires
-at Italy's future normal retirement age of 70. Statutory retirement is 67
-today and early retirement 64, both linked to life expectancy.</p>
+<p><strong>66%</strong>, the Italian Treasury's projected net replacement rate
+for a private employee who retires in 2050 at 66 years and 2 months with 38
+years of contributions: Ragioneria Generale dello Stato, <em>Le tendenze di
+medio-lungo periodo del sistema pensionistico e socio-sanitario</em>, Rapporto
+n. 26 (2025), Table 6.3.a, base case. Net means after tax and contributions,
+the same basis as the after-tax wage the page asks for.</p>
 
-<p><strong>This figure read 74.0% until 30 September 2026.</strong> That number
-is on the same chart, but it is the top of the retirement-age scale, the
-highest future retirement age in the OECD, not Italy's replacement rate.
-Corrected, it moves the Italian answer by 0.3 points.</p>
+<p><strong>Why that row.</strong> The model retires everyone at 67, because
+Choi fitted his coefficients there and the age cannot be moved from outside
+them, and 2050 is when today's 45-year-old retires. The same table gives 63%
+to 64% for its other cases near 67 and 73% for an old-age retirement at 69,
+so 66% sits where a retirement at 67 falls.</p>
 
-<p><strong>The model pays the 79% from 67, not from 70.</strong> Choi fitted
-his coefficients with retirement at 67, and the age cannot be moved from
-outside them. Three years of pension in place of three years of wages
-understates lifetime income by about 0.6 of a year's wage, three times the
-21% by which the pension falls short of the wage. The approximation therefore
-leans slightly towards less equity, not more.</p>
+<p><strong>Why not the OECD's 79%.</strong> This variant used it until October
+2026: the future net rate for an average earner in <em>Pensions at a Glance
+2025</em>, Italy country note. The figure is right, but it describes a worker
+who contributes for 48 years, from 22 to the future normal retirement age of
+70. Italian pensions are contributory: the pension is the contributions paid,
+revalued, times a conversion coefficient that rises with the age at
+retirement. Retiring at 67 means fewer contributions and a smaller
+coefficient, so paying 79% from 67 overstated the pension. Replacing it with
+66% moves the Italian answer from 59.5% to 58.7%.</p>
 
 <p>It is the only constant in the human capital half that can honestly be made
 Italian, and it is set in <code>ITALY_CALIBRATION</code> rather than in the
@@ -832,8 +838,8 @@ reader does not have to find them.</p>
 Maenhout's earnings profile, their permanent and temporary shock volatilities,
 and United States mortality are all fitted inside Choi's coefficients and
 cannot be changed from a configuration file. Only the benefit replacement rate
-could honestly be made Italian, and it is the OECD's figure for a retirement
-at 70, paid here from 67 (section 7). This is the largest declared deviation of the
+could honestly be made Italian, and it is the Italian Treasury's projection
+for a retirement near 67 (section 7). This is the largest declared deviation of the
 variant, and removing it would mean refitting the coefficients on the Bank of
 Italy's Survey on Household Income and Wealth rather than substituting an
 input.</p>

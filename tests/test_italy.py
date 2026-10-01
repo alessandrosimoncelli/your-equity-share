@@ -2,7 +2,7 @@
 
 Phase one of the Italian tool changes the equity sleeve from the S&P 500 to a
 global index, the safe asset from a 30-year TIPS to a euro inflation-linked
-bond, and the retirement benefit replacement rate from 40% to 79%. It changes
+bond, and the retirement benefit replacement rate from 40% to 66%. It changes
 nothing else in the human capital half, because nothing else in it can be
 changed from outside Choi's fitted coefficients.
 
@@ -57,22 +57,23 @@ def test_only_the_replacement_rate_differs_from_the_american_calibration() -> No
     assert differences == {"benefit_replacement_rate"}
 
 
-def test_the_italian_replacement_rate_is_the_oecd_figure() -> None:
-    """79% net for an average earner, Pensions at a Glance 2025, Italy note.
+def test_the_italian_replacement_rate_is_the_treasury_figure() -> None:
+    """66% net, the Ragioneria Generale dello Stato's projection for a private
+    employee retiring in 2050 at 66 with 38 years of contributions (Rapporto
+    n. 26, 2025, Table 6.3.a). The model retires at 67.
 
-    It read 74% until September 2026, which was the top of the chart's
-    retirement-age scale read as Italy's replacement rate. The OECD's worker
-    retires at 70 and this model at 67; section 7 of the Italian methodology
-    states what paying the 79% from 67 does.
+    It was the OECD's 79% until October 2026, a figure for 48 years of
+    contributions ending at 70. Italian pensions are contributory, so a
+    retirement at 67 earns less, and 79% paid from 67 overstated the pension.
     """
-    assert ITALY_CALIBRATION.benefit_replacement_rate == 0.79
+    assert ITALY_CALIBRATION.benefit_replacement_rate == 0.66
 
 
 def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
     """This is why the swap is legitimate rather than an extrapolation.
 
     Equation (12) takes the replacement rate as a regressor, fitted over 0.4,
-    0.6 and 0.8. Italy's 79% is between the second and third, so the
+    0.6 and 0.8. Italy's 66% is between the second and third, so the
     coefficient is being interpolated rather than used outside its range. The
     American 40% sits on the bottom edge of the same grid.
     """

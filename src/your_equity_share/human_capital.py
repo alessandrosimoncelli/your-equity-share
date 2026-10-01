@@ -73,25 +73,28 @@ CGM_CALIBRATION = Calibration()
 # The Italian variant. One constant differs and only one honestly can.
 #
 # Choi's equation (12) takes the replacement rate as a regressor, fitted over
-# 0.4, 0.6 and 0.8, so Italy's 79% sits inside the grid rather than outside it
-# and the approximation holds there. The OECD's Pensions at a Glance 2025
-# Italy country note puts the future net replacement rate for an average
-# earner at 79%, against an OECD average of 63 and the 40% this project uses
-# for the United States. This constant read 74% until September 2026: 74.0 on
-# that chart is the top of its retirement-age scale, not Italy's rate.
+# 0.4, 0.6 and 0.8, so Italy's 66% sits inside the grid rather than outside it
+# and the approximation holds there.
 #
-# The OECD's worker starts at 22 in 2024 and retires at Italy's future normal
-# age, 70. This model retires at 67, where Choi fitted his coefficients, and
-# cannot move it, so it pays the 79% from 67. That swaps three years of wages
-# for three years of pension, about 0.6 of a year's wage in total, which
-# understates lifetime income slightly rather than overstating it.
+# 66% is the Italian Treasury's projected net replacement rate for a private
+# employee retiring in 2050 at 66 years and 2 months with 38 years of
+# contributions: Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
+# Table 6.3.a, base case. The model retires everyone at 67, where Choi fitted
+# his coefficients, and 2050 is when today's 45-year-old retires; the table's
+# other cases near 67 give 63% to 64%, and its old-age case at 69 gives 73%.
+#
+# It replaced the OECD's 79% (Pensions at a Glance 2025, Italy country note)
+# in October 2026. That figure is real but describes a worker who contributes
+# for 48 years, from 22 to 70. Italian pensions are contributory, so retiring
+# at 67 means fewer contributions and a smaller conversion coefficient, and
+# paying 79% from 67 overstated the pension rather than understating it.
 #
 # The earnings profile and the two shock volatilities stay American. They are
 # Cocco, Gomes and Maenhout's estimates on United States households, and the
 # profile is not a regressor at all: it is inside the numerical solution Choi
 # fitted to. So is United States mortality. Making those Italian means
 # re-solving his model, not editing a constant here.
-ITALY_CALIBRATION = Calibration(benefit_replacement_rate=0.79)
+ITALY_CALIBRATION = Calibration(benefit_replacement_rate=0.66)
 
 
 def _log_excess_drift(

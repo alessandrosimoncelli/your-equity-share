@@ -34,9 +34,10 @@
 # the safe one: 12.5% on government bonds against 26% on everything else. The
 # rates and the reasoning are in src/your_equity_share/taxes.py.
 #
-# The REPLACEMENT RATE is 79% rather than 40%, from the OECD. It is the only
-# constant in the human capital half that can honestly be made Italian, and it
-# is set in ITALY_CALIBRATION rather than here.
+# The REPLACEMENT RATE is 66% rather than 40%, the Italian Treasury's
+# projection for a private employee retiring near 67 (RGS 2025, Table 6.3.a).
+# It is the only constant in the human capital half that can honestly be made
+# Italian, and it is set in ITALY_CALIBRATION rather than here.
 #
 # The HUMAN CAPITAL CALIBRATION is otherwise still American: Cocco, Gomes and
 # Maenhout's earnings profile and shock volatilities, and United States
@@ -233,6 +234,6 @@ real_risk_free_source = "ECB AAA euro area central government bond curve, 30-yea
 volatility_source = "Yahoo daily closes of VWCE.DE, 5 years, dividend adjusted"
 volatility_currency = "EUR, unhedged"
 volatility_observations = 1254
-replacement_rate_source = "OECD, Pensions at a Glance 2025, Italy country note: a future net replacement rate of 79% for an average earner who starts work at 22 in 2024 and retires at the future normal retirement age of 70, against an OECD average of 63. The model retires at 67, where Choi fitted his coefficients, so it pays the 79% from 67"
+replacement_rate_source = "Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, base case: a projected net replacement rate of 66.0% for a private employee retiring in 2050 at 66 years and 2 months with 38 years of contributions. The model retires at 67, where Choi fitted his coefficients; the table's other cases near 67 give 63% to 64%, and its old-age case at 69 gives 73%. It replaced the OECD's 79%, which assumes 48 years of contributions and retirement at 70"
 retirement_age_source = "OECD, Pensions at a Glance 2025: statutory 67 and early 64 today, both linked to life expectancy; future normal retirement age 70 for a career starting at 22 in 2024"
 human_capital_calibration = "American apart from the replacement rate. Cocco, Gomes and Maenhout's earnings profile and shock volatilities, and United States mortality, are inside Choi's fitted coefficients and cannot be set from here."
