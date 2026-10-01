@@ -50,10 +50,10 @@ RETIREMENT_AGE = 67
 class Calibration:
     """Values fixed inside the fitted approximation.
 
-    These are not user inputs. They come from the Cocco, Gomes and Maenhout
-    calibration to United States household earnings, for the average **college
-    graduate**. The paper solves separately for other education levels; the
-    spreadsheet this follows uses these.
+    These are not user inputs. The defaults are the Cocco, Gomes and Maenhout
+    calibration to United States household earnings for the average **college
+    graduate**, which Choi's spreadsheet uses. The paper solves separately for
+    other education levels.
     """
 
     stock_volatility: float = 0.185
@@ -66,35 +66,58 @@ class Calibration:
     # Table 1 row is the retirement income replacement rate, and its
     # worked example reads 0.010 x 0.40 with 0.40 the replacement rate.
     benefit_replacement_rate: float = 0.40
+    # The earnings profile: the coefficients on age, age squared and age
+    # cubed in log earnings, which project a career from one salary. It is
+    # not a regressor in equation (12); it only sets the expected wages that
+    # the fitted rates discount.
+    age_profile: tuple[float, float, float] = (0.3194, -0.00577, 0.000033)
 
 
 CGM_CALIBRATION = Calibration()
 
-# The Italian variant. One constant differs and only one honestly can.
+# The Italian variant: an Italian private-sector employee's career and pension.
 #
-# Choi's equation (12) takes the replacement rate as a regressor, fitted over
-# 0.4, 0.6 and 0.8, so Italy's 66% sits inside the grid rather than outside it
-# and the approximation holds there.
+# THE PENSION. Choi's equation (12) takes the replacement rate as a regressor,
+# fitted over 0.4, 0.6 and 0.8, so Italy's 66% sits inside the grid. It is the
+# Italian Treasury's projected net replacement rate for a private employee
+# retiring in 2050 at 66 years and 2 months with 38 years of contributions:
+# Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, base
+# case. The model retires everyone at 67, where Choi fitted his coefficients,
+# and 2050 is when today's 45-year-old retires; the table's other cases near
+# 67 give 63% to 64%, and its old-age case at 69 gives 73%. It replaced the
+# OECD's 79% in October 2026, a figure for 48 years of contributions ending at
+# 70: Italian pensions are contributory, so retiring at 67 pays less.
 #
-# 66% is the Italian Treasury's projected net replacement rate for a private
-# employee retiring in 2050 at 66 years and 2 months with 38 years of
-# contributions: Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
-# Table 6.3.a, base case. The model retires everyone at 67, where Choi fitted
-# his coefficients, and 2050 is when today's 45-year-old retires; the table's
-# other cases near 67 give 63% to 64%, and its old-age case at 69 gives 73%.
+# THE CAREER. Daminato and Padula (2024, Journal of the European Economic
+# Association), Table 7 of the working paper, CSEF 585: the earnings process
+# of Italian private-sector employees, estimated on the Bank of Italy's Survey
+# on Household Income and Wealth, 1986 to 2008, in Cocco, Gomes and Maenhout's
+# own form, a cubic in age plus permanent and transitory shocks, for a
+# life-cycle model of saving and portfolio choice of the same family as
+# Choi's. Earnings are after income tax, the definition of Jappelli and
+# Pistaferri (2010), as the page's wage is. The sample is married household
+# heads employed in the private or public sector, aged about 25 to 60.
 #
-# It replaced the OECD's 79% (Pensions at a Glance 2025, Italy country note)
-# in October 2026. That figure is real but describes a worker who contributes
-# for 48 years, from 22 to 70. Italian pensions are contributory, so retiring
-# at 67 means fewer contributions and a smaller conversion coefficient, and
-# paying 79% from 67 overstated the pension rather than understating it.
+# Permanent variance 0.015156, which they report inside the confidence
+# interval of Jappelli and Pistaferri (2010): 12.3%, inside the 10.2% to
+# 13.0% Choi fitted over. Transitory 0.023609: 15.4%, below his 24.2% to
+# 32.5%, but it enters equation (12) through a coefficient of 0.028 and moves
+# the discount rate by a tenth of a point. The age profile is not a regressor,
+# and Choi's own worked example, section 3.3 of the paper, uses an earnings
+# path outside his fitted set and lands within 3 points of the full solution.
 #
-# The earnings profile and the two shock volatilities stay American. They are
-# Cocco, Gomes and Maenhout's estimates on United States households, and the
-# profile is not a regressor at all: it is inside the numerical solution Choi
-# fitted to. So is United States mortality. Making those Italian means
-# re-solving his model, not editing a constant here.
-ITALY_CALIBRATION = Calibration(benefit_replacement_rate=0.66)
+# The age coefficients are imprecise one by one, so the shape was checked
+# against INPS's 2024 Osservatorio on private employees, whose daily pay by
+# age also keeps rising into the early sixties, by 10% from 45-49 to 60-64
+# for men. The American graduate's profile instead peaks at 45 and falls.
+#
+# Mortality stays American: it is inside the fitted discount rates.
+ITALY_CALIBRATION = Calibration(
+    permanent_shock_volatility=math.sqrt(0.015156),
+    temporary_shock_volatility=math.sqrt(0.023609),
+    benefit_replacement_rate=0.66,
+    age_profile=(-0.001022, 0.000613, -0.000006),
+)
 
 
 def _log_excess_drift(
@@ -190,8 +213,10 @@ def imputed_wage(
 ) -> float:
     """Expected wage at `age`, projected from one salary today.
 
-    The cubic in age is the Cocco, Gomes and Maenhout earnings profile: rising
-    steeply through the thirties, peaking near fifty, then flattening.
+    The cubic in age is the calibration's earnings profile. Cocco, Gomes and
+    Maenhout's for an American graduate rises steeply through the thirties,
+    peaks in the mid forties and then falls; the Italian one keeps rising,
+    slowly, to retirement.
 
     The leading term is a statistical correction rather than a feature of
     careers. Wage shocks are multiplicative, so projected wages are lognormal,
@@ -203,15 +228,16 @@ def imputed_wage(
     if age >= RETIREMENT_AGE:
         return 0.0
     elapsed = age - current_age
+    linear, square, cube = calibration.age_profile
     return current_wage * math.exp(
         0.5
         * (
             elapsed * calibration.permanent_shock_volatility**2
             + calibration.temporary_shock_volatility**2
         )
-        + 0.3194 * elapsed
-        - 0.00577 * (age**2 - current_age**2)
-        + 0.000033 * (age**3 - current_age**3)
+        + linear * elapsed
+        + square * (age**2 - current_age**2)
+        + cube * (age**3 - current_age**3)
     )
 
 

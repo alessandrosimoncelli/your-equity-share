@@ -1,20 +1,22 @@
-"""The Italian variant, and the one honest change it can make.
+"""The Italian variant, and what it can honestly make Italian.
 
-Phase one of the Italian tool changes the equity sleeve from the S&P 500 to a
-global index, the safe asset from a 30-year TIPS to a euro inflation-linked
-bond, and the retirement benefit replacement rate from 40% to 66%. It changes
-nothing else in the human capital half, because nothing else in it can be
-changed from outside Choi's fitted coefficients.
+The Italian tool changes the equity sleeve from the S&P 500 to a global
+index, the safe asset from a 30-year TIPS to a euro inflation-linked bond, and
+the household from an American college graduate to an Italian private-sector
+employee: Daminato and Padula's earnings process, estimated on the Bank of
+Italy's household survey, and the Italian Treasury's 66% pension. Mortality
+stays American, because it is inside Choi's fitted discount rates.
 
-These tests exist to keep that honest in both directions: that the one Italian
-constant really is Italian and sits inside the grid Choi solved over, and that
-the rest is still American and still says so. They also refuse to let a
-number nobody has measured be presented as though somebody had.
+These tests keep that honest in both directions: that the Italian constants
+are the published ones and sit where Choi's coefficients can take them, and
+that what is still American says so. They also refuse to let a number nobody
+has measured be presented as though somebody had.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import math
 import sys
 from pathlib import Path
 
@@ -30,6 +32,7 @@ from your_equity_share import (  # noqa: E402
     Person,
     recommend,
 )
+from your_equity_share.human_capital import imputed_wage  # noqa: E402
 from your_equity_share.market_data import load_market_data  # noqa: E402
 
 IT_CONFIG = ROOT / "variants" / "it" / "market_data.toml"
@@ -42,19 +45,36 @@ def italy():
 
 # --- the one constant that can be Italian -----------------------------------
 
-def test_only_the_replacement_rate_differs_from_the_american_calibration() -> None:
-    """Everything else is inside the fitted coefficients, not beside them.
+def test_the_italian_calibration_changes_the_career_and_the_pension() -> None:
+    """An Italian private-sector employee in place of an American graduate.
 
-    The earnings profile and the two shock volatilities are Cocco, Gomes and
-    Maenhout's estimates on United States households, and the profile is not
-    even a regressor: it is inside the numerical solution Choi fitted to, as
-    is United States mortality. Changing them means re-solving his model.
+    The 18.5% stays: it is the volatility Choi's coefficients were fitted
+    with, a property of the regression rather than of the household.
     """
     differences = {
         f.name for f in dataclasses.fields(CGM_CALIBRATION)
         if getattr(CGM_CALIBRATION, f.name) != getattr(ITALY_CALIBRATION, f.name)
     }
-    assert differences == {"benefit_replacement_rate"}
+    assert differences == {"benefit_replacement_rate", "permanent_shock_volatility",
+                           "temporary_shock_volatility", "age_profile"}
+
+
+def test_the_italian_career_is_daminato_and_padula_s() -> None:
+    """Table 7 of their working paper (CSEF 585), private employees, Bank of
+    Italy household survey 1986 to 2008: permanent variance 0.015156,
+    transitory 0.023609, and the cubic in age."""
+    assert ITALY_CALIBRATION.permanent_shock_volatility == pytest.approx(math.sqrt(0.015156))
+    assert ITALY_CALIBRATION.temporary_shock_volatility == pytest.approx(math.sqrt(0.023609))
+    assert ITALY_CALIBRATION.age_profile == (-0.001022, 0.000613, -0.000006)
+
+
+def test_the_italian_career_keeps_rising_where_the_american_one_falls() -> None:
+    """The reason for the change. From 45 to 60 the expected Italian wage
+    rises by more than a fifth; the American graduate's does not rise at all."""
+    italian = imputed_wage(60, 45, 1.0, ITALY_CALIBRATION)
+    american = imputed_wage(60, 45, 1.0, CGM_CALIBRATION)
+    assert italian > 1.2
+    assert american < 1.0
 
 
 def test_the_italian_replacement_rate_is_the_treasury_figure() -> None:
@@ -80,6 +100,8 @@ def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
     low, high = 0.4, 0.8
     assert low <= ITALY_CALIBRATION.benefit_replacement_rate <= high
     assert low <= CGM_CALIBRATION.benefit_replacement_rate <= high
+    # The permanent shock is a regressor too, fitted over 10.2% to 13.0%.
+    assert 0.102 <= ITALY_CALIBRATION.permanent_shock_volatility <= 0.130
 
 
 # --- the market data --------------------------------------------------------

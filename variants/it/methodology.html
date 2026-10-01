@@ -363,9 +363,9 @@ wherever Shiller's workbook is present, which includes every Monday refresh that
 the workbook is not in the repository, so a plain push skips it.</p>
 
 <p>That is deliberate and it is the point of the whole arrangement. <strong>The
-gap between a 21.3% American answer and a 63.4% Italian one, both before tax,
+gap between a 21.3% American answer and a 75.2% Italian one, both before tax,
 is the country and not the method.</strong> The Italian answer itself is after
-Italian tax, 58.7%, which section 8 measures; the comparison uses the figures
+Italian tax, 70.7%, which section 8 measures; the comparison uses the figures
 before tax because the American variant models none. Were the model copied into two folders, the copies
 would be edited on different days and every later comparison would quietly mix
 a country difference with a code difference.</p>
@@ -390,6 +390,7 @@ against</caption>
 <tr><td>Volatility, euro</td><td class="num">13.8942%</td><td>MSCI ACWI in euro, 25 years</td><td class="num">13.99%</td></tr>
 <tr><td>Real safe rate</td><td class="num">1.4401%</td><td>Bund/euro-i 2046 traded real yield</td><td class="num">1.4906%</td></tr>
 <tr><td>Nominal 30-year yield</td><td class="num">3.7617%</td><td>German 30-year Bund, 9 September</td><td class="num">3.886%</td></tr>
+<tr><td>Permanent pay shocks, standard deviation</td><td class="num">12.3%</td><td>Daminato and Padula (2024), Italian private employees, Bank of Italy survey 1986 to 2008</td><td class="num">inside the 95% band of Jappelli and Pistaferri (2010)</td></tr>
 <tr><td>Benefit replacement rate</td><td class="num">66%</td><td>Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, private employee retiring in 2050, net</td><td class="num">66.0%</td></tr>
 <tr><td>Tax, government bonds</td><td class="num">12.5%</td><td>Italian law, white-list states</td><td class="num">12.5%</td></tr>
 <tr><td>Tax, other financial income</td><td class="num">26.0%</td><td>Italian law</td><td class="num">26.0%</td></tr>
@@ -404,14 +405,19 @@ September 2026. MSCI end-of-day index levels. Deutsche Finanzagentur, the
 issuer's own published real yields and break-even rates. ECB Data Portal,
 series YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_30Y. Ragioneria Generale dello Stato,
 Rapporto n. 26 (2025), chapter 6. OECD, <em>Pensions at a Glance 2025</em>,
-Italy country note.</p>
+Italy country note. Daminato and Padula (2024), <em>Journal of the European
+Economic Association</em>, with the estimates in Table 7 of working paper CSEF
+585. INPS, Osservatorio sui lavoratori dipendenti del settore privato,
+2024.</p>
 
 <p><strong>Nothing in that table is within rounding of its check by accident.
 The largest gap is the expected return</strong>, 0.38 points below AQR's, and
 0.31 of it is the growth term: theirs is a five to ten year figure and this one
 carries no horizon (section 4.3). Every other row is within 0.12 points of its
 check. The safe rate sits 0.05 points below the traded bond because the bond
-is nineteen years from maturity and this is a thirty-year point (section 5).</p>
+is nineteen years from maturity and this is a thirty-year point (section 5).
+The permanent pay shock is checked against a band rather than a point, because
+Jappelli and Pistaferri publish theirs as a chart.</p>
 
 <h2 id="s3">3. The equity sleeve</h2>
 
@@ -707,7 +713,70 @@ twenty-five-year monthly estimate on the index.</p>
 twenty years and five. So the figure is not an artefact of a calm recent
 period.</p>
 
-<h2 id="s7">7. The pension</h2>
+<h2 id="s7">7. The career and the pension</h2>
+
+<p><strong>The household is an Italian private-sector employee.</strong>
+Valuing future earnings takes three things: how pay moves with age, how much it
+can move by surprise, and the pension at the end. All three are Italian
+estimates of that one person, set in <code>ITALY_CALIBRATION</code> rather than
+in the market data because they belong to the household and the state, not to
+the market. With the American graduate's career and the OECD's 79%, the
+reference household of section 1 held 59.5% after tax; with these, 70.7%. More
+bond-like wealth leaves room for more equity in the financial portfolio, the
+direction Bodie, Merton and Samuelson (1992) predict.</p>
+
+<h3 id="s7-1">7.1 The career</h3>
+
+<p><strong>From Daminato and Padula (2024)</strong>, in the <em>Journal of the
+European Economic Association</em>: the earnings process of Italian
+private-sector employees, estimated on the Bank of Italy's Survey on Household
+Income and Wealth from 1986 to 2008, for a life-cycle model of saving and
+portfolio choice of the same family as Choi's. They estimate it in Cocco, Gomes
+and Maenhout's own form, a cubic in age plus permanent and transitory shocks,
+which is the form this model takes. Earnings are after income tax, the
+definition of Jappelli and Pistaferri (2010), the same basis as the after-tax
+wage the page asks for.</p>
+
+<div class="tablewrap">
+<table>
+<caption>Table 6. The career, Italian against American</caption>
+<thead><tr><th></th><th class="num">Italian private employee</th><th class="num">American college graduate</th></tr></thead>
+<tbody>
+<tr><td>Permanent pay shocks, standard deviation</td><td class="num">12.3%</td><td class="num">13.0%</td></tr>
+<tr><td>Temporary pay shocks, standard deviation</td><td class="num">15.4%</td><td class="num">24.2%</td></tr>
+<tr><td>Typical pay from 45 to 60</td><td class="num">+22%</td><td class="num">&minus;16%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">Sources: Daminato and Padula (2024), Table 7 of working paper
+CSEF 585, private employees; Cocco, Gomes and Maenhout (2005), college
+graduates.</p>
+
+<p><strong>Why it fits this model.</strong> The permanent shock enters Choi's
+discount rate as a regressor, and 12.3% sits inside the 10.2% to 13.0% he
+fitted over. The temporary shock is below his range, but its coefficient is
+0.028 and it moves the rate by a tenth of a point. The age profile is not a
+regressor at all: it only sets the wages being discounted, and Choi's own
+worked example, section 3.3 of the paper, uses an earnings path outside his
+fitted set and lands within 3 points of the full solution.</p>
+
+<p><strong>The checks.</strong> Daminato and Padula report that their
+permanent variance falls inside the confidence interval of Jappelli and
+Pistaferri (2010), estimated on the same survey with the same definition of
+earnings. Their age coefficients are imprecise one by one, so the shape was
+checked against the INPS Osservatorio on private employees for 2024, which
+counts contributions rather than surveying households: daily pay keeps rising
+into the early sixties, by 10% from 45-49 to 60-64 for men. Both sources rise
+where the American graduate's pay falls.</p>
+
+<p><strong>Whom it describes.</strong> Married household heads employed in the
+private or public sector, aged about 25 to 60, of every education level; this
+variant uses the private-sector estimates, the larger group. The
+self-employed, whose income is riskier, are outside it, and so is any split by
+education.</p>
+
+<h3 id="s7-2">7.2 The pension</h3>
 
 <p><strong>66%</strong>, the Italian Treasury's projected net replacement rate
 for a private employee who retires in 2050 at 66 years and 2 months with 38
@@ -729,15 +798,7 @@ who contributes for 48 years, from 22 to the future normal retirement age of
 70. Italian pensions are contributory: the pension is the contributions paid,
 revalued, times a conversion coefficient that rises with the age at
 retirement. Retiring at 67 means fewer contributions and a smaller
-coefficient, so paying 79% from 67 overstated the pension. Replacing it with
-66% moves the Italian answer from 59.5% to 58.7%.</p>
-
-<p>It is the only constant in the human capital half that can honestly be made
-Italian, and it is set in <code>ITALY_CALIBRATION</code> rather than in the
-market data, because it is a feature of the state rather than of the market. A
-larger state pension is more bond-like wealth, which leaves room for more
-equity in the financial portfolio, and the direction is what Bodie, Merton and
-Samuelson (1992) predict.</p>
+coefficient, so paying 79% from 67 overstated the pension.</p>
 
 <h2 id="s8">8. Tax</h2>
 
@@ -746,7 +807,7 @@ law that falls on exactly the two assets this model chooses between, and
 favours the safe one. So it is modelled rather than left to a footnote.
 <code>src/your_equity_share/taxes.py</code> holds the rates and the reasoning.
 The Italian answer applies it: the model reads the after-tax return and safe
-rate in the last row of Table 6. A comparison with the American variant, which
+rate in the last row of Table 7. A comparison with the American variant, which
 models no tax, uses the figures before tax instead.</p>
 
 <p><strong>12.5%</strong> on interest and capital gains from Italian government
@@ -768,7 +829,7 @@ of it because its coupons are taxed as they arrive.</p>
 
 <div class="tablewrap" id="t6">
 <table>
-<caption>Table 6. What the tax code does, and which part of it. Equity is
+<caption>Table 7. What the tax code does, and which part of it. Equity is
 the arithmetic mean the model takes, at a thirty-year deferral.</caption>
 <thead><tr><th>Regime</th><th class="num">Equity</th><th class="num">Safe rate</th><th class="num">Drift</th></tr></thead>
 <tbody>
@@ -834,15 +895,14 @@ as the measured persistence, not as an endorsement that parity holds quickly.</p
 a validated number. They are declared deviations, and they are listed here so a
 reader does not have to find them.</p>
 
-<p><strong>The human capital calibration is American.</strong> Cocco, Gomes and
-Maenhout's earnings profile, their permanent and temporary shock volatilities,
-and United States mortality are all fitted inside Choi's coefficients and
-cannot be changed from a configuration file. Only the benefit replacement rate
-could honestly be made Italian, and it is the Italian Treasury's projection
-for a retirement near 67 (section 7). This is the largest declared deviation of the
-variant, and removing it would mean refitting the coefficients on the Bank of
-Italy's Survey on Household Income and Wealth rather than substituting an
-input.</p>
+<p><strong>Choi's coefficients were fitted on American careers and American
+mortality.</strong> The career and the pension are Italian (section 7), but the
+discount rates that value them are Choi's, fitted on Cocco, Gomes and
+Maenhout's three American earnings processes and the 2019 United States life
+table. Mortality cannot be made Italian from outside them, and the Italian
+earnings process sits beside his fitted set rather than inside it, as the flat
+path of his own worked example does. Removing that would mean refitting the
+coefficients on Italian data rather than substituting inputs.</p>
 
 <p><strong>The tax deferral horizon is a choice.</strong> An accumulating fund
 is taxed once, on sale, and how much that is worth depends on when. The model

@@ -22,8 +22,8 @@
 // --- calibration ------------------------------------------------------------
 
 /**
- * Values fixed inside the fitted approximation. Not user inputs. They come from
- * the Cocco, Gomes and Maenhout calibration to United States household
+ * Values fixed inside the fitted approximation. Not user inputs. The defaults
+ * are the Cocco, Gomes and Maenhout calibration to United States household
  * earnings, for the average college graduate.
  */
 export const CGM_CALIBRATION = Object.freeze({
@@ -35,6 +35,21 @@ export const CGM_CALIBRATION = Object.freeze({
   // copy called wageEquityBeta described a labour income to equity beta
   // the paper does not have; its Table 1 row is the replacement rate.
   benefitReplacementRate: 0.4,
+  // The earnings profile: age, age squared and age cubed in log earnings.
+  ageProfile: Object.freeze([0.3194, -0.00577, 0.000033]),
+});
+
+/**
+ * An Italian private-sector employee, as human_capital.py documents: the
+ * earnings process Daminato and Padula (2024) estimate on the Bank of Italy's
+ * household survey, and the Italian Treasury's 66% pension.
+ */
+export const ITALY_CALIBRATION = Object.freeze({
+  stockVolatility: 0.185,
+  permanentShockVolatility: Math.sqrt(0.015156),
+  temporaryShockVolatility: Math.sqrt(0.023609),
+  benefitReplacementRate: 0.66,
+  ageProfile: Object.freeze([-0.001022, 0.000613, -0.000006]),
 });
 
 const FINAL_AGE = 100;
@@ -173,8 +188,10 @@ export function benefitDiscountRate(
 /**
  * Expected wage at `age`, projected from one salary today.
  *
- * The cubic in age is the Cocco, Gomes and Maenhout earnings profile: rising
- * steeply through the thirties, peaking near fifty, then flattening.
+ * The cubic in age is the calibration's earnings profile. Cocco, Gomes and
+ * Maenhout's for an American graduate rises steeply through the thirties,
+ * peaks in the mid forties and then falls; the Italian one keeps rising,
+ * slowly, to retirement.
  *
  * The leading term is a statistical correction rather than a feature of
  * careers. Wage shocks are multiplicative, so projected wages are lognormal,
@@ -185,15 +202,16 @@ export function benefitDiscountRate(
 export function imputedWage(age, currentAge, currentWage, calibration = CGM_CALIBRATION) {
   if (age >= RETIREMENT_AGE) return 0.0;
   const elapsed = age - currentAge;
+  const [linear, square, cube] = calibration.ageProfile;
   return (
     currentWage *
     Math.exp(
       0.5 *
         (elapsed * calibration.permanentShockVolatility ** 2 +
           calibration.temporaryShockVolatility ** 2) +
-        0.3194 * elapsed -
-        0.00577 * (age ** 2 - currentAge ** 2) +
-        0.000033 * (age ** 3 - currentAge ** 3),
+        linear * elapsed +
+        square * (age ** 2 - currentAge ** 2) +
+        cube * (age ** 3 - currentAge ** 3),
     )
   );
 }

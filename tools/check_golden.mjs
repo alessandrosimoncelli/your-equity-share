@@ -26,6 +26,8 @@ import {
   certaintyEquivalent,
   coinIncome,
   compoundFromArithmetic,
+  ITALY_CALIBRATION,
+  CGM_CALIBRATION,
   logPremium,
   logRiskFree,
   gammaFromCertaintyEquivalent,
@@ -89,6 +91,20 @@ const cases = fixture.cases;
   compare("calibration.permanent_shock_volatility", 0.13, c.permanent_shock_volatility);
   compare("calibration.temporary_shock_volatility", 0.242, c.temporary_shock_volatility);
   compare("calibration.benefit_replacement_rate", 0.4, c.benefit_replacement_rate);
+  (c.age_profile ?? []).forEach((v, k) =>
+    compare(`calibration.age_profile[${k}]`, CGM_CALIBRATION.ageProfile[k], v));
+  const it = fixture.italy_calibration;
+  if (it) {
+    compare("italy.stock_volatility", ITALY_CALIBRATION.stockVolatility, it.stock_volatility);
+    compare("italy.permanent_shock_volatility", ITALY_CALIBRATION.permanentShockVolatility,
+            it.permanent_shock_volatility);
+    compare("italy.temporary_shock_volatility", ITALY_CALIBRATION.temporaryShockVolatility,
+            it.temporary_shock_volatility);
+    compare("italy.benefit_replacement_rate", ITALY_CALIBRATION.benefitReplacementRate,
+            it.benefit_replacement_rate);
+    it.age_profile.forEach((v, k) =>
+      compare(`italy.age_profile[${k}]`, ITALY_CALIBRATION.ageProfile[k], v));
+  }
 }
 
 // The conversions the page runs around the model. Not part of the model
@@ -203,6 +219,22 @@ for (const [i, c] of cases.recommend.entries()) {
       want.per_adult_human_capital[a],
     );
   }
+}
+
+for (const [i, c] of (cases.human_capital_italy ?? []).entries()) {
+  const [gamma, mu, rf] = c.args;
+  compare(`human_capital_italy[${i}]`,
+          humanCapital(person(c.person), gamma, mu, rf, ITALY_CALIBRATION), c.expect);
+}
+
+for (const [i, c] of (cases.recommend_italy ?? []).entries()) {
+  const [mu, rf, sigma] = c.args;
+  const household = makeHousehold(c.household.investable_net_worth,
+                                  c.household.adults.map(person), c.household.risk_aversion);
+  const got = recommend(household, mu, rf, sigma, ITALY_CALIBRATION);
+  compare(`recommend_italy[${i}].equity_share`, got.equityShare, c.expect.equity_share);
+  compare(`recommend_italy[${i}].human_capital`, got.humanCapital, c.expect.human_capital);
+  compare(`recommend_italy[${i}].uncapped_share`, got.uncappedShare, c.expect.uncapped_share);
 }
 
 // --- inputs the port must refuse --------------------------------------------

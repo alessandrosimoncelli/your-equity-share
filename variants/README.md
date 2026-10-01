@@ -60,6 +60,7 @@ them would silently mix a country difference with a code difference.
 | real growth | 100-year Shiller trend | the same number, and `us_vs_global.py` measures what that substitution costs |
 | safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30 | ECB AAA 30-year curve less the market break-even |
 | volatility | SPY, five years daily | VWCE, five years daily |
+| earnings | an American college graduate, Cocco, Gomes and Maenhout | an Italian private-sector employee, Daminato and Padula (2024) |
 | pension | 40% replacement | 66%, the Italian Treasury's projection for retiring near 67 |
 | tax | not modelled | applied to the answer by default, `src/your_equity_share/taxes.py` |
 

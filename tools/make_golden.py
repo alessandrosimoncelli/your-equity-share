@@ -30,6 +30,7 @@ from your_equity_share.allocation import (  # noqa: E402
 )
 from your_equity_share.human_capital import (  # noqa: E402
     CGM_CALIBRATION,
+    ITALY_CALIBRATION,
     Person,
     benefit_discount_rate,
     human_capital,
@@ -222,6 +223,40 @@ def human_capital_cases() -> list[dict]:
     return cases
 
 
+def italy_cases() -> tuple[list[dict], list[dict]]:
+    """The Italian calibration through the same functions.
+
+    It differs in the earnings profile, both shock sizes and the pension, so
+    these cases check that the port reads every calibration field, not only
+    that it reproduces the American defaults it was written against.
+    """
+    mu, rf, sigma = 0.0378, 0.0085, 0.1381
+    capital, advice = [], []
+    for current_age in AGES:
+        for wage in WAGES:
+            for current_benefit in [0.0, 18_000.0]:
+                person = Person(current_age, wage, current_benefit)
+                capital.append({
+                    "person": _person_payload(person),
+                    "args": [5.0, mu, rf],
+                    "expect": human_capital(person, 5.0, mu, rf, ITALY_CALIBRATION),
+                })
+        for wage in WAGES[1:]:
+            for wealth in WEALTHS:
+                household = Household(wealth, [Person(current_age, wage)], 5.0)
+                r = recommend(household, mu, rf, sigma, ITALY_CALIBRATION)
+                advice.append({
+                    "household": {"investable_net_worth": wealth,
+                                  "adults": [_person_payload(a) for a in household.adults],
+                                  "risk_aversion": 5.0},
+                    "args": [mu, rf, sigma],
+                    "expect": {"equity_share": r.equity_share,
+                               "human_capital": r.human_capital,
+                               "uncapped_share": r.uncapped_share},
+                })
+    return capital, advice
+
+
 def recommend_cases() -> list[dict]:
     cases = []
     for current_age in AGES:
@@ -366,6 +401,7 @@ def conversion_cases() -> list[dict]:
 
 def main() -> int:
     wage_rates, benefit_rates = discount_rate_cases()
+    italy_capital, italy_advice = italy_cases()
     forward_ce, inverse_ce = risk_aversion_cases()
 
     cases = {
@@ -381,6 +417,8 @@ def main() -> int:
         "project_earnings": earnings_cases(),
         "human_capital": human_capital_cases(),
         "recommend": recommend_cases(),
+        "human_capital_italy": italy_capital,
+        "recommend_italy": italy_advice,
         "conversions": conversion_cases(),
         "must_reject": rejection_cases(),
     }
@@ -397,6 +435,14 @@ def main() -> int:
             "permanent_shock_volatility": CGM_CALIBRATION.permanent_shock_volatility,
             "temporary_shock_volatility": CGM_CALIBRATION.temporary_shock_volatility,
             "benefit_replacement_rate": CGM_CALIBRATION.benefit_replacement_rate,
+            "age_profile": list(CGM_CALIBRATION.age_profile),
+        },
+        "italy_calibration": {
+            "stock_volatility": ITALY_CALIBRATION.stock_volatility,
+            "permanent_shock_volatility": ITALY_CALIBRATION.permanent_shock_volatility,
+            "temporary_shock_volatility": ITALY_CALIBRATION.temporary_shock_volatility,
+            "benefit_replacement_rate": ITALY_CALIBRATION.benefit_replacement_rate,
+            "age_profile": list(ITALY_CALIBRATION.age_profile),
         },
         "cases": cases,
     }
