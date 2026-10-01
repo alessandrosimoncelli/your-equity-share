@@ -25,6 +25,9 @@ en = '''content="How much of your portfolio belongs in equities. Merton (1969) w
 it = '''content="Quanto del tuo portafoglio va in azioni. Merton (1969) con la correzione per il capitale umano di Choi, Liu e Liu (2025). Funziona interamente nel tuo browser."'''
 
 # --- masthead and inputs ----------------------------------------------------
+#
+# Two entries change a default rather than a word: the Italian page opens on
+# a salary near the Italian average, 30,000 net, and 50,000 of savings.
 
 [[t]]
 en = '''How much of your portfolio belongs in equities. Merton (1969),
@@ -60,13 +63,22 @@ it = '''for="wage">Stipendio annuo netto</label>'''
 en = '''In today's money. The model assumes it does not move
         with the market, so it overstates the answer if a meaningful part of
         your pay is company stock.'''
-it = '''In euro di oggi. Il modello assume che non segua il
-        mercato, quindi sovrastima la risposta se una parte importante della
-        tua retribuzione è in azioni dell'azienda.'''
+it = '''In euro di oggi, tredicesima e quattordicesima comprese.
+        Il modello assume che non segua il mercato, quindi sovrastima la
+        risposta se una parte importante della tua retribuzione è in azioni
+        dell'azienda.'''
+
+[[t]]
+en = '''id="wage" value="100000">'''
+it = '''id="wage" value="30000">'''
 
 [[t]]
 en = '''for="wealth">Investable net worth</label>'''
 it = '''for="wealth">Patrimonio investibile</label>'''
+
+[[t]]
+en = '''id="wealth" value="500000">'''
+it = '''id="wealth" value="50000">'''
 
 [[t]]
 en = '''Non-housing assets less non-mortgage debt, after tax
@@ -79,8 +91,8 @@ en = '''for="benefit">Pension already received</label>'''
 it = '''for="benefit">Pensione già percepita</label>'''
 
 [[t]]
-en = '''Zero if you are still working.'''
-it = '''Zero se lavori ancora.'''
+en = '''A year's pension after tax. Zero if you are still working.'''
+it = '''La pensione di un anno, netta, tredicesima compresa. Zero se lavori ancora.'''
 
 [[t]]
 en = '''id="risk-label">How much you dislike risk</span>'''
@@ -189,8 +201,8 @@ en = '''for="partner-age">Their age</label>'''
 it = '''for="partner-age">La sua età</label>'''
 
 [[t]]
-en = '''for="partner-wage">Their after-tax wage</label>'''
-it = '''for="partner-wage">Il suo stipendio netto</label>'''
+en = '''for="partner-wage">Their after-tax annual wage</label>'''
+it = '''for="partner-wage">Il suo stipendio annuo netto</label>'''
 
 [[t]]
 en = '''One line per year, under the headings
@@ -424,12 +436,12 @@ it = '''? "Rispondi invece alle domande" : "Inserisco io il numero";'''
 # --- the script: reading the controls ---------------------------------------
 
 [[t]]
-en = '''`<b>${parsed.used}</b> years read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`'''
-it = '''`<b>${parsed.used}</b> anni letti. Non ho potuto leggere ${parsed.bad.length > 1 ? "le righe" : "la riga"} ${parsed.bad.join(", ")}; quegli anni mantengono il valore proiettato.`'''
+en = '''`<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`'''
+it = '''`<b>${parsed.used}</b> ann${parsed.used === 1 ? "o letto" : "i letti"}. Non ho potuto leggere ${parsed.bad.length > 1 ? "le righe" : "la riga"} ${parsed.bad.join(", ")}; quegli anni mantengono il valore proiettato.`'''
 
 [[t]]
-en = '''`<b>${parsed.used}</b> years read from what you typed.`'''
-it = '''`<b>${parsed.used}</b> anni letti da quello che hai scritto.`'''
+en = '''`<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed.`'''
+it = '''`<b>${parsed.used}</b> ann${parsed.used === 1 ? "o letto" : "i letti"} da quello che hai scritto.`'''
 
 # --- the script: the answer and its working ---------------------------------
 

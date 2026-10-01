@@ -621,7 +621,7 @@ td.why { min-width: 15rem; }
       <div class="field">
         <label class="lbl" for="benefit">Pension already received</label>
         <input type="text" inputmode="numeric" id="benefit" value="0">
-        <span class="hint">Zero if you are still working.</span>
+        <span class="hint">A year's pension after tax. Zero if you are still working.</span>
       </div>
 
       <div class="field span-2">
@@ -719,7 +719,7 @@ td.why { min-width: 15rem; }
           <input type="number" id="partner-age" min="20" max="99" step="1" value="42">
         </div>
         <div class="field">
-          <label class="lbl" for="partner-wage">Their after-tax wage</label>
+          <label class="lbl" for="partner-wage">Their after-tax annual wage</label>
           <input type="text" inputmode="numeric" id="partner-wage" value="80000">
         </div>
       </div>
@@ -1299,6 +1299,9 @@ function renderRisk(gamma) {
 
 function readInputs() {
   const clampInt = (el, lo, hi, fallback) => {
+    // Cleared while someone retypes it: Number("") is 0, which would clamp
+    // to 20 and briefly answer for a twenty-year-old.
+    if (String(el.value).trim() === "") return fallback;
     const v = Math.round(Number(el.value));
     return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
   };
@@ -1327,8 +1330,8 @@ function readInputs() {
   for (const [parsed, id] of [[p1, "path-1-note"], [p2, "path-2-note"]]) {
     if (!parsed) continue;
     $(id).innerHTML = parsed.bad.length
-      ? `<b>${parsed.used}</b> years read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`
-      : `<b>${parsed.used}</b> years read from what you typed.`;
+      ? `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`
+      : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed.`;
   }
   const wealth = Math.max(1000, nonNegative($("wealth"), 1000));
   // The slider is a COMPOUND return, because that is how every published
