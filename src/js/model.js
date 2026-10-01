@@ -582,3 +582,28 @@ export function withinFittedRange(expectedRealReturn, realRiskFree, volatility =
   const pi = logPremium(expectedRealReturn, realRiskFree, volatility);
   return low <= pi && pi <= high;
 }
+
+// --- Italian tax ------------------------------------------------------------
+//
+// taxes.py, ported for the Italian page, whose slider takes a return before
+// tax because that is how forecasts are published. An accumulating fund is
+// taxed once, on sale: the gross return compounds for `years` and 26% of the
+// nominal gain goes at the end. The 0.2% stamp duty is charged every year on
+// the value, so it is a drag on growth rather than a share of the gain.
+
+export const ITALY_TAX = Object.freeze({
+  governmentBondRate: 0.125,
+  otherFinancialIncomeRate: 0.26,
+  wealthTaxRate: 0.002,
+});
+
+/** The real compound return left after tax on sale and the stamp duty. */
+export function afterTaxEquityCompound(compoundReal, expectedInflation, years, regime = ITALY_TAX) {
+  if (!(years > 0)) throw new RangeError(`years must be positive, got ${years}`);
+  const nominal = (1.0 + compoundReal) * (1.0 + expectedInflation) - 1.0;
+  const afterLevy = (1.0 + nominal) * (1.0 - regime.wealthTaxRate) - 1.0;
+  const grossMultiple = (1.0 + afterLevy) ** years;
+  const taxedMultiple = 1.0 + (1.0 - regime.otherFinancialIncomeRate) * (grossMultiple - 1.0);
+  const realMultiple = taxedMultiple / (1.0 + expectedInflation) ** years;
+  return realMultiple ** (1.0 / years) - 1.0;
+}

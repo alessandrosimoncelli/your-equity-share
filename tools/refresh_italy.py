@@ -128,6 +128,7 @@ sys.path.insert(0, str(ROOT))
 from update import estimate_volatility  # noqa: E402
 from your_equity_share.taxes import (  # noqa: E402
     ITALY_TAX,
+    TAX_DEFERRAL_YEARS,
     TaxRegime,
     after_tax_equity_compound,
     after_tax_safe_rate,
@@ -167,9 +168,9 @@ VOLATILITY_YEARS = 5
 # the one the jump check cannot see.
 VOLATILITY_EARLIEST = "2020-01-01"
 
-# The horizon the equity tax is deferred over. Thirty years, to match the
-# maturity of the safe asset, so both sides are quoted at one horizon.
-TAX_HORIZON_YEARS = 30.0
+# The horizon the equity tax is deferred over, shared with the build and the
+# Italian page through taxes.py.
+TAX_HORIZON_YEARS = TAX_DEFERRAL_YEARS
 
 ECB = "https://data-api.ecb.europa.eu/service/data/{}?lastNObservations=1&format=csvdata"
 

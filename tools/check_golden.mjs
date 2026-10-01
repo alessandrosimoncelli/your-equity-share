@@ -26,6 +26,7 @@ import {
   certaintyEquivalent,
   coinIncome,
   compoundFromArithmetic,
+  afterTaxEquityCompound,
   ITALY_CALIBRATION,
   CGM_CALIBRATION,
   logPremium,
@@ -221,6 +222,10 @@ for (const [i, c] of cases.recommend.entries()) {
   }
 }
 
+for (const [i, c] of (cases.after_tax_equity_compound ?? []).entries()) {
+  compare(`after_tax_equity_compound[${i}]`, afterTaxEquityCompound(...c.args), c.expect);
+}
+
 for (const [i, c] of (cases.human_capital_italy ?? []).entries()) {
   const [gamma, mu, rf] = c.args;
   compare(`human_capital_italy[${i}]`,
@@ -252,6 +257,8 @@ for (const [i, c] of cases.must_reject.entries()) {
       makePerson(...c.args);
     } else if (c.fn === "gamma_from_certainty_equivalent") {
       gammaFromCertaintyEquivalent(...c.args);
+    } else if (c.fn === "after_tax_equity_compound") {
+      afterTaxEquityCompound(...c.args);
     } else if (c.fn === "coin_income") {
       coinIncome(...c.args);
     } else {

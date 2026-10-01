@@ -23,7 +23,8 @@ ZIP = ROOT / "your-equity-share-site.zip"
 # Both countries' documents are published beside the tool, the Italian one
 # in its own folder. Still an exact set: a stray file is still a failure.
 EXPECTED = {"index.html", "model.js", "market.json", "methodology.html",
-            "it/methodology.html", "further-work.html"}
+            "it/index.html", "it/market.json", "it/methodology.html",
+            "further-work.html"}
 
 
 @pytest.fixture(scope="module")
@@ -90,6 +91,61 @@ def test_the_page_says_who_it_is_calibrated_for(built: Path) -> None:
     assert "calibrated for a college-educated household" in page
 
 
+def test_the_italian_page_is_written_from_the_english_one(built: Path) -> None:
+    """One source, two pages: the Italian one carries the Italian variant,
+    loads the shared model from one folder up, and says whom it is for."""
+    page = (built / "it" / "index.html").read_text(encoding="utf-8")
+    assert '<html lang="it">' in page
+    assert 'from "../model.js"' in page
+    assert "calibration: ITALY_CALIBRATION" in page
+    assert "taxed: true" in page
+    assert "dipendente del settore privato" in page
+    assert "Devi spendere tutto e non puoi chiedere prestiti." in page
+
+
+def test_the_italian_page_has_no_english_left(built: Path) -> None:
+    """Every string a visitor can see is translated. Comments stay English;
+    they are for whoever edits the source, which is the English page."""
+    import re
+
+    page = (built / "it" / "index.html").read_text(encoding="utf-8")
+    start = page.index('<script type="module">')
+    script = page[start:page.index("</script>", start)]
+    script = re.sub(r"/\*.*?\*/", "", script, flags=re.S)
+    script = "\n".join(line for line in script.splitlines()
+                       if not line.strip().startswith(("//", "*")))
+    strings = re.findall(r'"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`', script)
+    english = [s for s in strings
+               if re.search(r"\b(the|your|you|and|of|is|are|to|with|for|from)\b", s)]
+    assert not english, english[:5]
+    markup = re.sub(r"<script.*?</script>|<style.*?</style>|<!--.*?-->", "", page, flags=re.S)
+    visible = re.sub(r"<[^>]+>", " ", markup)
+    for phrase in ("Exhibit", "Investable", "Results", "Inputs", "Social Security",
+                   "United States", "coin flip", "safe asset", "Loading"):
+        assert phrase not in visible, phrase
+
+
+def test_the_italian_market_file_is_after_tax(built: Path) -> None:
+    """The model reads the after-tax pair; the slider taxes a typed return
+    with the same inflation and horizon, and lands on the same number."""
+    import tomllib
+
+    from your_equity_share.expected_return import arithmetic_from_compound
+    from your_equity_share.taxes import TAX_DEFERRAL_YEARS, after_tax_equity_compound
+
+    data = json.loads((built / "it" / "market.json").read_text(encoding="utf-8"))
+    raw = tomllib.loads((ROOT / "variants" / "it" / "market_data.toml").read_text(encoding="utf-8"))
+    assert data["expected_stock_real_return"] == raw["market"]["after_tax_expected_return"]
+    assert data["real_risk_free"] == raw["market"]["after_tax_real_risk_free"]
+    assert data["tax_deferral_years"] == TAX_DEFERRAL_YEARS
+    retaxed = arithmetic_from_compound(
+        after_tax_equity_compound(data["expected_stock_real_return_compound"],
+                                  data["expected_inflation"], data["tax_deferral_years"]),
+        data["stock_volatility"])
+    assert retaxed == pytest.approx(data["expected_stock_real_return"], abs=5e-7)
+    assert data["provenance"]["volatility_window_years"] == 5
+
+
 def test_the_coin_question_keeps_the_guide_s_conditions(built: Path) -> None:
     """The guide's question says the whole amount is spent and nothing can be
     borrowed. The page dropped the second half once, and without it a bad year
@@ -108,7 +164,8 @@ def test_the_page_reaches_the_methodology(built: Path) -> None:
 def test_the_page_reaches_every_document(built: Path) -> None:
     """A published document nothing links to is one no visitor finds."""
     tool = (built / "index.html").read_text(encoding="utf-8")
-    for name in ("methodology.html", "it/methodology.html", "further-work.html"):
+    for name in ("methodology.html", "it/index.html", "it/methodology.html",
+                 "further-work.html"):
         assert f'href="./{name}"' in tool, name
 
 
@@ -121,8 +178,8 @@ def test_every_link_works_below_a_subfolder(built: Path) -> None:
     """
     import re
 
-    for name in ("index.html", "methodology.html", "it/methodology.html",
-                 "further-work.html"):
+    for name in ("index.html", "methodology.html", "it/index.html",
+                 "it/methodology.html", "further-work.html"):
         body = (built / name).read_text(encoding="utf-8")
         here = (built / name).parent
         # Links, fetches, and the module import that loads the model.

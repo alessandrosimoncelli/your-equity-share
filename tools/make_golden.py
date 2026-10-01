@@ -223,6 +223,18 @@ def human_capital_cases() -> list[dict]:
     return cases
 
 
+def italian_tax_cases() -> list[dict]:
+    """After-tax compound returns, as the Italian page's slider computes them."""
+    from your_equity_share.taxes import after_tax_equity_compound
+
+    return [
+        {"args": [c, i, y], "expect": after_tax_equity_compound(c, i, y)}
+        for c in (-0.01, 0.0, 0.02, 0.038198, 0.06, 0.09)
+        for i in (0.0, 0.015, 0.022981, 0.03)
+        for y in (1.0, 10.0, 30.0, 40.0)
+    ]
+
+
 def italy_cases() -> tuple[list[dict], list[dict]]:
     """The Italian calibration through the same functions.
 
@@ -356,6 +368,7 @@ def rejection_cases() -> list[dict]:
         {"fn": "gamma_from_certainty_equivalent", "args": [75_000.0]},
         {"fn": "gamma_from_certainty_equivalent", "args": [50_000.0]},
         {"fn": "gamma_from_certainty_equivalent", "args": [49_000.0]},
+        {"fn": "after_tax_equity_compound", "args": [0.03, 0.02, 0.0]},
         {"fn": "coin_income", "args": [-1.0, 0.0, 0.0]},
         {"fn": "coin_income", "args": [100_000.0, -1.0, 0.0]},
         {"fn": "coin_income", "args": [100_000.0, 0.0, -1.0]},
@@ -418,6 +431,7 @@ def main() -> int:
         "human_capital": human_capital_cases(),
         "recommend": recommend_cases(),
         "human_capital_italy": italy_capital,
+        "after_tax_equity_compound": italian_tax_cases(),
         "recommend_italy": italy_advice,
         "conversions": conversion_cases(),
         "must_reject": rejection_cases(),

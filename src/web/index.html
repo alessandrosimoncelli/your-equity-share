@@ -850,8 +850,11 @@ td.why { min-width: 15rem; }
 
 <script type="module">
 import {
+  afterTaxEquityCompound,
   answersDisagree,
   arithmeticFromCompound,
+  CGM_CALIBRATION,
+  ITALY_CALIBRATION,
   certaintyEquivalent,
   coinIncome,
   gammaFromCertaintyEquivalent,
@@ -871,14 +874,32 @@ import {
 
 const $ = (id) => document.getElementById(id);
 
-const pct0 = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 0 });
-const pct1 = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const pct2 = new Intl.NumberFormat("en-US", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+// --- the variant ------------------------------------------------------------
+// One page, two countries. tools/build_web.py writes the Italian page from
+// this source: it swaps this block for the Italian one and translates the
+// words with src/web/it/translation.toml, and it fails if any English it
+// translates has changed. Whatever differs by country and is not words is
+// here, so a fix to the page reaches both.
+const VARIANT = {
+  locale: "en-US",
+  currency: "USD",
+  // Money as people type it: the thousands separator and the decimal mark.
+  group: ",",
+  decimal: ".",
+  calibration: CGM_CALIBRATION,
+  // Whether the market file's returns are after tax, as Italy's are, so a
+  // return typed on the slider has to be taxed the same way.
+  taxed: false,
+};
+
+const pct0 = new Intl.NumberFormat(VARIANT.locale, { style: "percent", maximumFractionDigits: 0 });
+const pct1 = new Intl.NumberFormat(VARIANT.locale, { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const pct2 = new Intl.NumberFormat(VARIANT.locale, { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = new Intl.NumberFormat(VARIANT.locale, { style: "currency", currency: VARIANT.currency, maximumFractionDigits: 0 });
 // Compact form for axis ticks that span three orders of magnitude.
-const usd0 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 0 });
-const num1 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const num2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money0 = new Intl.NumberFormat(VARIANT.locale, { style: "currency", currency: VARIANT.currency, notation: "compact", maximumFractionDigits: 0 });
+const num1 = new Intl.NumberFormat(VARIANT.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const num2 = new Intl.NumberFormat(VARIANT.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 let market = null;
 
@@ -1001,8 +1022,8 @@ function drawSplit(svg, key, r) {
     `<rect x="0" y="0" width="${wEq}" height="${H}" fill="var(--green)"/>` +
     `<rect x="${wEq + gap}" y="0" width="${wSf}" height="${H}" fill="var(--tint-2)"/>`;
   key.innerHTML =
-    `<i style="background:var(--green)"></i><span>Equities</span><span class="v">${pct0.format(eq)} &middot; ${usd.format(r.equityDollars)}</span>` +
-    `<i style="background:var(--tint-2)"></i><span>Safe asset</span><span class="v">${pct0.format(1 - eq)} &middot; ${usd.format(r.financialWealth - r.equityDollars)}</span>`;
+    `<i style="background:var(--green)"></i><span>Equities</span><span class="v">${pct0.format(eq)} &middot; ${money.format(r.equityDollars)}</span>` +
+    `<i style="background:var(--tint-2)"></i><span>Safe asset</span><span class="v">${pct0.format(1 - eq)} &middot; ${money.format(r.financialWealth - r.equityDollars)}</span>`;
 }
 
 /**
@@ -1065,7 +1086,10 @@ function parsePath(text, currentAge) {
   let used = 0;
   const bad = [];
   text.split(/\r?\n/).forEach((raw, i) => {
-    const line = raw.replace(/[$,\s]*$|[$,]/g, "").trim();
+    // Thousands separators and currency symbols go, the decimal mark becomes
+    // a point, and what is left is split on spaces or semicolons.
+    const line = raw.split(VARIANT.group).join("").replace(/[$€]/g, "")
+      .split(VARIANT.decimal).join(".").trim();
     if (!line || line.startsWith("#")) return;
     const bits = line.split(/[\s,;]+/).filter(Boolean).map(Number);
     if (bits.length < 2 || bits.some((v) => !Number.isFinite(v))) {
@@ -1095,14 +1119,15 @@ function parsePath(text, currentAge) {
   while somebody is typing and shows a formatted figure the rest of the time.
 */
 function readMoney(el, fallback) {
-  const digits = String(el.value).replace(/[^0-9.]/g, "");
+  const digits = String(el.value).split(VARIANT.group).join("")
+    .replace(VARIANT.decimal, ".").replace(/[^0-9.]/g, "");
   const v = Number(digits);
   return digits !== "" && Number.isFinite(v) && v >= 0 ? v : fallback;
 }
 
 function showMoney(el) {
   const v = readMoney(el, null);
-  el.value = v === null ? "" : usd.format(v);
+  el.value = v === null ? "" : money.format(v);
 }
 
 /*
@@ -1111,11 +1136,11 @@ function showMoney(el) {
   formatting here costs nothing on the way back in.
 */
 function pathText(person) {
-  return projectEarnings(person)
+  return projectEarnings(person, VARIANT.calibration)
     .map((y) =>
       String(y.age).padStart(3) +
-      usd.format(Math.round(y.wage)).padStart(12) +
-      usd.format(Math.round(y.benefit)).padStart(13))
+      money.format(Math.round(y.wage)).padStart(12) +
+      money.format(Math.round(y.benefit)).padStart(13))
     .join("\n");
 }
 
@@ -1193,7 +1218,7 @@ function showAmountNote() {
   const gamma = typedGamma();
   if (gamma === null) {
     $("risk-amount-note").textContent =
-      `Enter an amount between ${usd.format(income / 2)} and ${usd.format(0.75 * income)}.`;
+      `Enter an amount between ${money.format(income / 2)} and ${money.format(0.75 * income)}.`;
   } else {
     $("risk-amount-note").innerHTML =
       `That puts your risk aversion at <b>${num1.format(gamma)}</b> out of 10.`;
@@ -1236,18 +1261,18 @@ function renderRisk(gamma) {
 
   if (phase === "choices") {
     $("risk-question").innerHTML =
-      `A coin flip decides what you live on next year: <b>${usd.format(income)}</b> ` +
-      `or <b>${usd.format(income / 2)}</b>. You must spend it all and cannot borrow. ` +
+      `A coin flip decides what you live on next year: <b>${money.format(income)}</b> ` +
+      `or <b>${money.format(income / 2)}</b>. You must spend it all and cannot borrow. ` +
       `Which would you rather have?`;
-    $("risk-sure").textContent = `${usd.format(staircaseOffer(risk.state, income))} for sure`;
+    $("risk-sure").textContent = `${money.format(staircaseOffer(risk.state, income))} for sure`;
   }
   // Left alone while the amount is being adjusted, so the sentence does not
   // change under the person typing.
   if (phase === "check" && $("risk-amount-field").hidden) {
     $("risk-check-q").innerHTML =
-      `Your choices mean that <b>${usd.format(impliedAmount(income))}</b> for sure is ` +
-      `worth about the same to you as the coin flip between <b>${usd.format(income)}</b> ` +
-      `and <b>${usd.format(income / 2)}</b>. Does that sound right?`;
+      `Your choices mean that <b>${money.format(impliedAmount(income))}</b> for sure is ` +
+      `worth about the same to you as the coin flip between <b>${money.format(income)}</b> ` +
+      `and <b>${money.format(income / 2)}</b>. Does that sound right?`;
   }
 
   // Choi solved his model at 4 to 10; below 4 the answer is extrapolated, on
@@ -1296,8 +1321,8 @@ function readInputs() {
                            p2 && Object.keys(p2.benefits).length ? p2.benefits : null));
   }
   if (custom) {
-    drawPath($("path-1-chart"), projectEarnings(adults[0]));
-    if (adults[1]) drawPath($("path-2-chart"), projectEarnings(adults[1]));
+    drawPath($("path-1-chart"), projectEarnings(adults[0], VARIANT.calibration));
+    if (adults[1]) drawPath($("path-2-chart"), projectEarnings(adults[1], VARIANT.calibration));
   }
   for (const [parsed, id] of [[p1, "path-1-note"], [p2, "path-2-note"]]) {
     if (!parsed) continue;
@@ -1311,10 +1336,22 @@ function readInputs() {
   // arithmetic mean, so convert here rather than letting someone hand over a
   // number 1.5 points lower than the one they meant.
   const expected = $("override").checked
-    ? arithmeticFromCompound(Number($("mu").value), market.stock_volatility)
+    ? modelReturn(Number($("mu").value))
     : market.expected_stock_real_return;
 
   return { household: makeHousehold(wealth, adults, gamma), gamma, expected, wealth };
+}
+
+/**
+ * The return the model reads, from a compound return as forecasts publish it.
+ * Where the variant is taxed it first becomes what a saver keeps after tax,
+ * as taxes.py computes it, at the market file's inflation and horizon.
+ */
+function modelReturn(compound) {
+  const kept = VARIANT.taxed
+    ? afterTaxEquityCompound(compound, market.expected_inflation, market.tax_deferral_years)
+    : compound;
+  return arithmeticFromCompound(kept, market.stock_volatility);
 }
 
 /**
@@ -1341,7 +1378,7 @@ function render() {
   const { household, gamma, expected } = readInputs();
   const rf = market.real_risk_free;
   const sigma = market.stock_volatility;
-  const r = recommend(household, expected, rf, sigma);
+  const r = recommend(household, expected, rf, sigma, VARIANT.calibration);
 
   renderRisk(gamma);
   $("mu-value").textContent = pct2.format(Number($("mu").value)) + " compound";
@@ -1357,7 +1394,7 @@ function render() {
   // that reads a low equity share as pessimism about stocks.
   $("verdict-figure").textContent = pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
-    `of your ${usd.format(r.financialWealth)} portfolio belongs in equities, or <b>${usd.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`;
+    `of your ${money.format(r.financialWealth)} portfolio belongs in equities, or <b>${money.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`;
 
   drawSplit($("split-chart"), $("split-key"), r);
 
@@ -1367,9 +1404,9 @@ function render() {
 
   const total = r.financialWealth + r.humanCapital;
   $("wealth-rows").innerHTML =
-    row([["Investable today", "k"], [usd.format(r.financialWealth), "n"], [pct0.format(r.financialWealth / total), "n"]]) +
-    row([["Future earnings", "k"], [usd.format(r.humanCapital), "n"], [pct0.format(r.humanCapital / total), "n"]]) +
-    row([["<b>Total wealth</b>", "k"], [`<b>${usd.format(total)}</b>`, "n"], ["", "n"]]);
+    row([["Investable today", "k"], [money.format(r.financialWealth), "n"], [pct0.format(r.financialWealth / total), "n"]]) +
+    row([["Future earnings", "k"], [money.format(r.humanCapital), "n"], [pct0.format(r.humanCapital / total), "n"]]) +
+    row([["<b>Total wealth</b>", "k"], [`<b>${money.format(total)}</b>`, "n"], ["", "n"]]);
 
   // Terse rows, with the reasoning as numbered notes beneath. A sentence of
   // justification beside every row reads as an explainer rather than a table.
@@ -1383,9 +1420,9 @@ function render() {
   ];
   const notes = [
     "Merton (1969). The reward for risk, divided by risk and by how much you dislike it. " +
-      `It applies to everything you own, all ${usd.format(total)} of it.`,
+      `It applies to everything you own, all ${money.format(total)} of it.`,
     r.humanCapital > 0
-      ? `Only ${usd.format(r.financialWealth)} of that ${usd.format(total)} can be ` +
+      ? `Only ${money.format(r.financialWealth)} of that ${money.format(total)} can be ` +
         `bought and sold. Future earnings cannot be sold or borrowed against, so ` +
         `the tradeable part has to carry the whole equity position, and its share ` +
         `rises by the ratio between the two figures, ${num2.format(multiple)}.`
@@ -1415,9 +1452,9 @@ function render() {
   // mean, one conversion later.
   const sens = [];
   for (let g = 0.0; g <= 0.0801; g += 0.001) {
-    const mu = arithmeticFromCompound(g, sigma);
+    const mu = modelReturn(g);
     if (mu <= rf) continue;
-    sens.push({ x: g, y: recommend(household, mu, rf, sigma).equityShare });
+    sens.push({ x: g, y: recommend(household, mu, rf, sigma, VARIANT.calibration).equityShare });
   }
   drawChart($("sensitivity"), $("sensitivity-tip"), {
     points: sens,
@@ -1448,7 +1485,7 @@ function render() {
   for (let i = 0; i <= 120; i += 1) {
     const w = LO * Math.pow(HI / LO, i / 120);
     const trial = makeHousehold(w, household.adults, gamma);
-    savings.push({ x: w, y: recommend(trial, expected, rf, sigma).equityShare });
+    savings.push({ x: w, y: recommend(trial, expected, rf, sigma, VARIANT.calibration).equityShare });
   }
   const here = Math.min(HI, Math.max(LO, r.financialWealth));
   drawChart($("glide"), $("glide-tip"), {
@@ -1457,19 +1494,19 @@ function render() {
     xScale: "log",
     xTicks: [10_000, 100_000, 1_000_000, 10_000_000],
     yDomain: [0, 1],
-    xFormat: (v) => usd0.format(v),
+    xFormat: (v) => money0.format(v),
     yFormat: (v) => pct0.format(v),
     xTitle: "Investable net worth",
     markerX: here,
-    markerY: recommend(makeHousehold(here, household.adults, gamma), expected, rf, sigma).equityShare,
-    tipLabel: (p) => `${usd.format(p.x)} saved  ->  ${pct0.format(p.y)} in equities`,
+    markerY: recommend(makeHousehold(here, household.adults, gamma), expected, rf, sigma, VARIANT.calibration).equityShare,
+    tipLabel: (p) => `${money.format(p.x)} saved  ->  ${pct0.format(p.y)} in equities`,
     height: 300,
   });
   $("glide-note").innerHTML =
     `Your household, its ages and salaries unchanged, at every level of savings. `
-    + `At ${usd.format(r.financialWealth)} the answer is ${pct0.format(r.equityShare)}; `
+    + `At ${money.format(r.financialWealth)} the answer is ${pct0.format(r.equityShare)}; `
     + `the same household with ten times that would be told `
-    + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma).equityShare)}. `
+    + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma, VARIANT.calibration).equityShare)}. `
     + `Nothing about the people changed.`;
 
   // The same construction, run on a global index, printed beside the American
@@ -1501,7 +1538,8 @@ function render() {
   const label = { "building blocks": "dividend yield plus long-run growth",
                   consensus: "median of three estimators",
                   implied: "market implied",
-                  fixed: "set by hand" }[prov.expected_return_method] || "set by hand";
+                  fixed: "set by hand" }[(prov.expected_return_method || "").split(",")[0].trim()]
+                || "set by hand";
 
   $("inputs-rows").innerHTML =
     row([["Expected real return, compound", "k"], [pct2.format(shownCompound), "n"],
@@ -1576,7 +1614,8 @@ async function boot() {
     `${fresh ? "" : ", past the 90 day limit"}.` + histNote + " " +
     `Everything on this page is computed in your browser; nothing you enter is sent anywhere. ` +
     `Read the <a href="./methodology.html">methodology</a>, the ` +
-    `<a href="./it/methodology.html">Italian variant</a> and the ` +
+    `<a href="./it/index.html">Italian version</a> with ` +
+    `<a href="./it/methodology.html">its methodology</a>, and the ` +
     `<a href="./further-work.html">further work</a>. ` +
     `Not investment advice.`;
 
@@ -1616,7 +1655,7 @@ async function boot() {
     confirmRisk();
   });
   $("risk-adjust").addEventListener("click", () => {
-    $("risk-amount").value = usd.format(impliedAmount(questionIncome()));
+    $("risk-amount").value = money.format(impliedAmount(questionIncome()));
     $("risk-amount-note").textContent = "";
     $("risk-amount-field").hidden = false;
     $("risk-amount").focus();
@@ -1671,7 +1710,9 @@ async function boot() {
     const wage = which === 1
       ? readMoney($("wage"), 0)
       : readMoney($("partner-wage"), 0);
-    const benefit = which === 1 ? Math.max(0, Number($("benefit").value) || 0) : 0;
+    // readMoney, not Number: the field shows a formatted amount once focus
+    // has left it, and Number("$30,000") is not a number.
+    const benefit = which === 1 ? readMoney($("benefit"), 0) : 0;
     $(`path-${which}`).value = pathText(makePerson(age, wage, benefit));
   }
 

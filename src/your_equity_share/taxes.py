@@ -66,6 +66,7 @@ __all__ = [
     "TaxRegime",
     "ITALY_TAX",
     "NO_TAX",
+    "TAX_DEFERRAL_YEARS",
     "after_tax_safe_rate",
     "after_tax_equity_compound",
 ]
@@ -101,6 +102,11 @@ ITALY_TAX = TaxRegime(
     wealth_tax_rate=0.002,
     label="Italy",
 )
+
+# The horizon the equity tax is deferred over: thirty years, to match the
+# maturity of the safe asset, so both sides are quoted at one horizon. The
+# Italian refresh, the build and the Italian page all read it from here.
+TAX_DEFERRAL_YEARS = 30.0
 
 # The comparison case. Not "an American household", which pays plenty of tax,
 # but the pre-tax figures the market data actually contains.

@@ -13,7 +13,7 @@ Samuelson, 1992), using the approximation of Choi, Liu and Liu (2025).
 w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 ```
 
-- **The tool:** [alessandrosimoncelli.github.io/your-equity-share](https://alessandrosimoncelli.github.io/your-equity-share/), market data refreshed every Monday
+- **The tool:** [alessandrosimoncelli.github.io/your-equity-share](https://alessandrosimoncelli.github.io/your-equity-share/), and in Italian at [/it/](https://alessandrosimoncelli.github.io/your-equity-share/it/), market data refreshed every Monday
 - **What each input means:** [docs/inputs.md](docs/inputs.md)
 - **Full derivation and sources:** [United States](https://alessandrosimoncelli.github.io/your-equity-share/methodology.html) and [Italy](https://alessandrosimoncelli.github.io/your-equity-share/it/methodology.html), from `variants/us/` and `variants/it/`
 - **What is not done yet:** [further work](https://alessandrosimoncelli.github.io/your-equity-share/further-work.html)
@@ -22,18 +22,18 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 to last the rest of a life. Two variants share one model. The **United
 States** variant holds the S&P 500 against 30-year TIPS. The **Italian**
 variant holds a global equity fund against the euro real safe rate, after
-Italian tax, with the Italian pension replacement rate. What neither variant
-changes is the earnings profile and the mortality table, which are American in
-both, because they sit inside the numerical solution Choi fitted his
-coefficients to; making them Italian means re-solving his model. Section 10 of
-the Italian methodology lists this as the variant's largest declared
-deviation.
+Italian tax, for an Italian private-sector employee: Daminato and Padula's
+(2024) earnings process, estimated on the Bank of Italy's household survey,
+and the Italian Treasury's 66% pension. What neither variant changes is the
+mortality table, American in both, because it sits inside the numerical
+solution Choi fitted his coefficients to. Section 10 of the Italian
+methodology lists what that leaves American.
 
-Following Choi, the earnings risk is the average for **college graduates**;
-his spreadsheet declares the same assumption and this one does not vary it,
-because the estimates behind it are a cross-section of the 1970s to 1990s and
-there is no reason to think the relationship between education and earnings
-risk is stable.
+In the American variant, following Choi, the earnings risk is the average for
+**college graduates**; his spreadsheet declares the same assumption and this
+one does not vary it, because the estimates behind it are a cross-section of
+the 1970s to 1990s and there is no reason to think the relationship between
+education and earnings risk is stable.
 
 **Not for** money with a date on it, a house, or a business. Horizon does not
 appear in the Merton share at all, which is a result rather than a
@@ -193,7 +193,13 @@ Python and the verifier have all passed first.
 
 `python tools/build_web.py` writes the same thing locally to `web/`: the tool,
 its model and its market data, about 75 KB, plus the three documents, about
-300 KB in all. It opens in well under a second and needs no backend, so nothing
+300 KB in all. The Italian page in `web/it/` is not a second copy of the tool.
+The build writes it from `src/web/index.html`, swapping the page's VARIANT
+block (currency, number format, calibration, tax) for the Italian one and
+translating the words with `src/web/it/translation.toml`. Every English
+fragment the table translates must still be on the page, exactly once, or the
+build stops, so a fix to the page reaches both versions and no edit to the
+English can leave the Italian page half translated. It opens in well under a second and needs no backend, so nothing
 a visitor enters is transmitted anywhere. Every link in it is relative, and a
 test holds it so, because the site lives in a subfolder of the domain rather
 than at its root.

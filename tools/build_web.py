@@ -10,6 +10,8 @@ opens immediately.
     model.js          the model, ported from Python
     market.json       the three numbers, from variants/us/market_data.toml
     methodology.html  the technical document the footer links to
+    it/               the Italian page and its market file, written from the
+                      same index.html: see build_italian_page
 
 The earlier build shipped Streamlit compiled to WebAssembly, which ran the
 Python itself in the browser. It was faithful, and it took about thirty seconds
@@ -30,6 +32,7 @@ to. That is a property of the architecture rather than a promise.
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tomllib
 import zipfile
@@ -66,6 +69,25 @@ CONFIG = ROOT / "variants" / "us" / "market_data.toml"
 # construction produces for a global index. Optional on purpose: a checkout
 # without the Italian file still builds.
 CONFIG_GLOBAL = ROOT / "variants" / "it" / "market_data.toml"
+
+# The Italian page is not a second copy of the tool. It is written from
+# src/web/index.html at build time: the VARIANT block is swapped for the one
+# below and the words are translated with the table in TRANSLATION. A fix to
+# the page therefore reaches both, and an edit to its English that the table
+# does not carry stops the build rather than leaving English on the page.
+PAGE = ROOT / "src" / "web" / "index.html"
+TRANSLATION = ROOT / "src" / "web" / "it" / "translation.toml"
+ITALIAN_VARIANT = """const VARIANT = {
+  locale: "it-IT",
+  currency: "EUR",
+  // Money as people type it: the thousands separator and the decimal mark.
+  group: ".",
+  decimal: ",",
+  calibration: ITALY_CALIBRATION,
+  // The market file's returns are after Italian tax, so a return typed on
+  // the slider is taxed the same way before the model sees it.
+  taxed: true,
+};"""
 
 
 def as_document(body: str, title_override: str | None = None) -> str:
@@ -144,6 +166,75 @@ def build_global_block() -> dict | None:
     }
 
 
+def _flexible(text: str) -> re.Pattern:
+    """A pattern for `text` that ignores how its words are wrapped."""
+    return re.compile(r"\s+".join(re.escape(word) for word in text.split()))
+
+
+def build_italian_page() -> str:
+    """The Italian page: the English one with the Italian variant and words.
+
+    Every entry of the table must match exactly once, and no two may overlap,
+    so the translation can neither miss its target nor land twice.
+    """
+    page = PAGE.read_text(encoding="utf-8")
+    block = re.compile(r"const VARIANT = \{.*?\n\};", re.S)
+    if len(block.findall(page)) != 1:
+        raise SystemExit(f"{PAGE}: expected one VARIANT block")
+    page = block.sub(lambda _m: ITALIAN_VARIANT, page)
+
+    with TRANSLATION.open("rb") as handle:
+        entries = tomllib.load(handle).get("t", [])
+    spans = []
+    for entry in entries:
+        hits = list(_flexible(entry["en"]).finditer(page))
+        if len(hits) != 1:
+            raise SystemExit(
+                f"{TRANSLATION.name}: {len(hits)} matches for {entry['en'][:70]!r}; "
+                "the English page changed, so update the table")
+        spans.append((hits[0].start(), hits[0].end(), entry["it"]))
+    spans.sort()
+    for (_, end, _), (start, _, _) in zip(spans, spans[1:]):
+        if start < end:
+            raise SystemExit(f"{TRANSLATION.name}: two entries overlap at {start}")
+    for start, end, italian in reversed(spans):
+        page = page[:start] + italian + page[end:]
+    return page
+
+
+def build_italian_market_json() -> str:
+    """The Italian market file, with the returns after Italian tax.
+
+    The model reads the after-tax pair. The slider and the sensitivity chart
+    take a compound return before tax, the way forecasts are published, and
+    the page taxes it with the same inflation and horizon the refresh used.
+    """
+    from your_equity_share.taxes import TAX_DEFERRAL_YEARS
+
+    with CONFIG_GLOBAL.open("rb") as handle:
+        raw = tomllib.load(handle)
+    market, provenance = raw["market"], raw.get("provenance", {})
+    window = re.search(r"(\d+) years", str(provenance.get("volatility_source", "")))
+    payload = {
+        "expected_stock_real_return": float(market["after_tax_expected_return"]),
+        "expected_stock_real_return_compound": float(provenance["expected_return_compound"]),
+        "real_risk_free": float(market["after_tax_real_risk_free"]),
+        "stock_volatility": float(market["stock_volatility"]),
+        "before_tax_expected_return": float(market["expected_stock_real_return"]),
+        "before_tax_real_risk_free": float(market["real_risk_free"]),
+        "expected_inflation": float(provenance["expected_inflation"]),
+        "tax_deferral_years": TAX_DEFERRAL_YEARS,
+        "market_ticker": str(market.get("market_ticker", provenance.get("market_ticker", ""))),
+        "as_of": str(market["as_of"]),
+        "provenance": {
+            **{k: str(v) if not isinstance(v, (int, float, bool)) else v
+               for k, v in provenance.items()},
+            "volatility_window_years": int(window.group(1)) if window else None,
+        },
+    }
+    return json.dumps(payload, indent=1)
+
+
 def build_market_json() -> str:
     """Convert the TOML the model reads into the JSON the page fetches.
 
@@ -217,6 +308,14 @@ def main() -> int:
 
     (OUT / "market.json").write_text(build_market_json(), encoding="utf-8")
     written.append("market.json")
+
+    (OUT / "it").mkdir(parents=True, exist_ok=True)
+    (OUT / "it" / "index.html").write_text(as_document(build_italian_page()),
+                                           encoding="utf-8")
+    written.append("it/index.html")
+    (OUT / "it" / "market.json").write_text(build_italian_market_json(),
+                                            encoding="utf-8")
+    written.append("it/market.json")
 
     # Remove anything left from an earlier build, so the folder that gets
     # uploaded contains only what this build put there. The WebAssembly build
