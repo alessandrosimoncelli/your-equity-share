@@ -84,9 +84,6 @@ ITALIAN_VARIANT = """const VARIANT = {
   group: ".",
   decimal: ",",
   calibration: ITALY_CALIBRATION,
-  // Whether the returns are taxed, as Italy's are. The market file states
-  // them before tax, and the page taxes them at the household's horizon.
-  taxed: true,
 };"""
 
 
@@ -203,13 +200,10 @@ def build_italian_page() -> str:
 
 
 def build_italian_market_json() -> str:
-    """The Italian market file: the returns before tax, and what taxes them.
+    """The Italian market file, before tax like the American one.
 
-    What a household keeps after Italian tax depends on how long its funds
-    stay unsold, the sooner of thirty years and its expected remaining
-    lifetime, so the page works it out per household with model.js, from the
-    pair before tax, the inflation the tax is levied through and the regime.
-    Nothing after tax is stored, here or in the configuration.
+    The model reads market figures as they are in both variants; section 8 of
+    the Italian methodology says why Italian tax is left out.
     """
     with CONFIG_GLOBAL.open("rb") as handle:
         raw = tomllib.load(handle)
@@ -220,8 +214,6 @@ def build_italian_market_json() -> str:
         "expected_stock_real_return_compound": float(provenance["expected_return_compound"]),
         "real_risk_free": float(market["real_risk_free"]),
         "stock_volatility": float(market["stock_volatility"]),
-        "tax_regime": str(market["tax_regime"]),
-        "expected_inflation": float(market["expected_inflation"]),
         "market_ticker": str(market.get("market_ticker", provenance.get("market_ticker", ""))),
         "as_of": str(market["as_of"]),
         "provenance": {

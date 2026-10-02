@@ -98,7 +98,7 @@ def test_the_italian_page_is_written_from_the_english_one(built: Path) -> None:
     assert '<html lang="it">' in page
     assert 'from "../model.js"' in page
     assert "calibration: ITALY_CALIBRATION" in page
-    assert "taxed: true" in page
+    assert "taxed" not in page
     assert "dipendente del settore privato" in page
     assert "Devi spendere tutto e non puoi chiedere prestiti." in page
 
@@ -140,26 +140,18 @@ def test_the_italian_page_has_no_english_left(built: Path) -> None:
         assert phrase not in visible, phrase
 
 
-def test_the_italian_market_file_is_taxed_by_the_page(built: Path) -> None:
-    """The file states the returns before tax, with what taxes them.
-
-    What a household keeps depends on its horizon, so the page taxes the pair
-    itself, through model.js, and the file must carry no after-tax figure for
-    it to read by mistake. The page and the Python model then agree, which the
-    golden cases check function by function.
-    """
+def test_the_italian_market_file_is_before_tax(built: Path) -> None:
+    """The page reads the Italian market figures as they are, like the
+    American ones: no after-tax figure, no regime, no horizon."""
     import tomllib
 
     data = json.loads((built / "it" / "market.json").read_text(encoding="utf-8"))
     raw = tomllib.loads((ROOT / "variants" / "it" / "market_data.toml").read_text(encoding="utf-8"))
-    market = raw["market"]
-    assert data["expected_stock_real_return"] == market["expected_stock_real_return"]
-    assert data["real_risk_free"] == market["real_risk_free"]
-    assert data["expected_inflation"] == market["expected_inflation"]
-    assert data["tax_regime"] == "Italy"
-    assert not [k for k in data if "after_tax" in k or "deferral" in k]
+    assert data["expected_stock_real_return"] == raw["market"]["expected_stock_real_return"]
+    assert data["real_risk_free"] == raw["market"]["real_risk_free"]
+    assert not [k for k in data if "tax" in k or "deferral" in k]
     page = (built / "it" / "index.html").read_text(encoding="utf-8")
-    assert "deferralYears(adults.map((p) => p.currentAge))" in page
+    assert "afterTax" not in page and "deferralYears" not in page
     assert data["provenance"]["volatility_window_years"] == 5
 
 

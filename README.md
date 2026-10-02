@@ -21,8 +21,8 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 **For** money you have invested and do not need on any particular date, meant
 to last the rest of a life. Two variants share one model. The **United
 States** variant holds the S&P 500 against 30-year TIPS. The **Italian**
-variant holds a global equity fund against the euro real safe rate, after
-Italian tax, for an Italian private-sector employee: Daminato and Padula's
+variant holds a global equity fund against the euro real safe rate, for an
+Italian private-sector employee: Daminato and Padula's
 (2024) earnings process, estimated on the Bank of Italy's household survey,
 and the Italian Treasury's 66% pension. What neither variant changes is the
 mortality table, American in both, because it sits inside the numerical
@@ -176,7 +176,7 @@ asserted.
 | 5. Browser front end | **done** |
 | 6. Published as a static site, model ported to JavaScript | **done** |
 | 7. Validated against ten published forecasts, and swept for properties | **done** |
-| 8. Italian variant: global equity, euro real safe rate, Italian tax and pension | **done** |
+| 8. Italian variant: global equity, euro real safe rate, Italian career and pension; tax measured and left out | **done** |
 | 9. Weekly refresh and publication, unattended | **done** |
 | 10. Portfolio analytics and factor exposure | planned |
 
@@ -296,20 +296,17 @@ result.uncapped_share        # before the no-leverage cap
 result.human_capital         # present value of future earnings
 ```
 
-The Italian variant runs the same way, except that its returns are taxed per
-household. The market file states them before tax; `returns_for` taxes both
-funds on sale at this household's horizon, the sooner of thirty years and its
-expected remaining lifetime:
+The Italian variant runs the same way, before tax like the American one
+(the Italian methodology, section 8, measures why):
 
 ```python
 from your_equity_share import ITALY_CALIBRATION
 
 italy = load_market_data("variants/it/market_data.toml")
-mu, rf = italy.returns_for([45])      # the adults' ages; before tax: the fields
 result = recommend(
     Household(500_000, [Person(45, 100_000)], risk_aversion=5),
-    mu,
-    rf,
+    italy.expected_stock_real_return,
+    italy.real_risk_free_rate,
     italy.stock_volatility,
     ITALY_CALIBRATION,
 )

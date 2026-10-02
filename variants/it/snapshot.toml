@@ -29,10 +29,12 @@
 # It clears three bars at once: constant maturity, no survey, and the same kind
 # of object as FRED's DFII30. The field argues each of them.
 #
-# TAX IS MODELLED, because in Italy it is not a household's circumstance but a
-# fixed feature of the law that falls on exactly these two assets and favours
-# the safe one: 12.5% on government bonds against 26% on everything else. The
-# rates and the reasoning are in src/your_equity_share/taxes.py.
+# TAX IS NOT APPLIED, as in Choi, Liu and Liu, whose variables are "implicitly
+# after-tax where relevant". Italian law taxes the two funds differently, 26%
+# against 12.5% on the gain at sale, but a fund held for years is almost always
+# in gain when sold, so the tax takes a share of the risk as well as of the
+# return, and measured sale by sale it moves the right equity share little.
+# Italian methodology, section 8; tools/tax_check.py.
 #
 # The REPLACEMENT RATE is 66% rather than 40%, the Italian Treasury's
 # projection for a private employee retiring near 67 (RGS 2025, Table 6.3.a).
@@ -202,16 +204,6 @@ real_risk_free = 0.014401
 stock_volatility = 0.138942
 market_ticker = "VWCE.DE"
 
-# Italian tax, worked out per household rather than stored, because what a
-# household keeps depends on how long its funds stay unsold: the sooner of 30
-# years and its expected remaining lifetime. Both funds accumulate, the world
-# equity fund taxed at 26% and the government bond fund at 12.5%, on sale, plus
-# 0.2% a year of stamp duty on each. The rates live in
-# src/your_equity_share/taxes.py. The tax falls on nominal gains, so it is
-# levied through the market break-even the safe rate is deflated by.
-tax_regime = "Italy"
-expected_inflation = 0.022886
-
 as_of = 2026-09-08
 
 [provenance]
@@ -225,9 +217,9 @@ dividend_yield = 0.015339
 real_growth = 0.022860
 dividend_yield_measured = 0.015339
 dividend_yield_withheld = 0.003422
+expected_inflation = 0.022886
 expected_inflation_survey = 0.020369
 nominal_safe_yield = 0.037617
-after_tax_source = "Both funds accumulate and are taxed once, on sale: the world equity fund at 26% and the government bond fund at 12.5%, because a fund is taxed at 12.5% on its share in government bonds of Italy and of white-list states and this one holds nothing else (Agenzia delle Entrate, Circolare 19/E of 2014). Both on nominal gains, so inflation is taxed, plus 0.2% a year of imposta di bollo on the value of each. The sale comes at the sooner of 30 years and the household's expected remaining lifetime, because Italian law treats death as a sale for funds (Circolare 19/E of 2013); for two adults, the average of their two. So nothing after tax is stored here: the model works it out per household. At 30 years tax costs 1.05 points of expected return and 0.49 points of safe rate, so 0.52 points of the drift. The volatility is NOT reduced, because Italian law does not let fund losses offset fund gains. See src/your_equity_share/taxes.py."
 growth_source = "AQR's, as part of their published decomposition. Cross-checked on every refresh against the American variant's own 100-year trend through Shiller, which is a legitimate comparison because AQR themselves publish 2.7% for United States large cap against 2.6% for Global All Country, a tenth of a point apart: long-run real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic."
 growth_cross_check = "The alternative was tried and it failed, which is why the growth term is the American one. tools/global_growth.py rebuilds global real dividend growth from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The answer depends on the weighting scheme far more than on the data: weights pinned at today give 0.89% to 1.52%, weights pinned at the start of the window give 1.86% to 3.04%, and GDP shares each year give 2.77% to 5.43%, an envelope 4.5 points wide against 0.25 points for the American estimator, and keeping the war years rather than dropping them widens it further. The reason is structural. A fixed basket of countries is not an index, because an index reconstitutes and drops what stops paying, and JST publishes country index returns rather than the world index's constituents, so reconstitution cannot be reproduced. An earlier version of this file quoted a single scheme's 1.33% to 3.16% as the uncertainty, which was too flattering by a factor of four. Both this variant's 2.286% and AQR's 2.6% fall inside the envelope, which is corroboration too weak to lean on and is reported as such."
 currency_basis = "EUR. The dividend yield is measured on a euro-priced global index, the volatility is measured on a euro-priced series, and the safe rate is a euro government bond's traded real yield. Those three are euro figures by construction. The growth term is real growth in United States earnings per share, used as the global real rate, and that is the one place a cross-currency assumption still lives: it holds if relative purchasing power is preserved over a lifetime, which is AQR's own stated assumption for reading local real returns as any-currency real returns. It applies to one term of three rather than to the whole estimate, which is narrower than the previous version of this file, where the entire expected return was a local real figure read as a euro one."

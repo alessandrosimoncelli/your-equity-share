@@ -34,17 +34,7 @@ from your_equity_share.human_capital import (
     project_earnings,
     wage_discount_rate,
 )
-from your_equity_share.mortality import remaining_life_expectancy
-from your_equity_share.taxes import (
-    ITALY_TAX,
-    NO_TAX,
-    TAX_DEFERRAL_YEARS,
-    TaxRegime,
-    after_tax_bond_fund,
-    after_tax_equity_compound,
-    after_tax_returns,
-    deferral_years,
-)
+from your_equity_share.taxes import ITALY_TAX, NO_TAX, TaxRegime
 from your_equity_share.legacy import LegacyInputs, LegacySleeve, bull_formula_share
 from your_equity_share.legacy import merton_share as legacy_merton_share
 from your_equity_share.risk_aversion import (
@@ -59,12 +49,6 @@ __all__ = [
     "ITALY_TAX",
     "NO_TAX",
     "TaxRegime",
-    "TAX_DEFERRAL_YEARS",
-    "after_tax_bond_fund",
-    "after_tax_equity_compound",
-    "after_tax_returns",
-    "deferral_years",
-    "remaining_life_expectancy",
     "Calibration",
     "Household",
     "LegacyInputs",

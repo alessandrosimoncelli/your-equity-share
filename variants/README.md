@@ -62,7 +62,7 @@ them would silently mix a country difference with a code difference.
 | volatility | SPY, five years daily | VWCE, five years daily |
 | earnings | an American college graduate, Cocco, Gomes and Maenhout | an Italian private-sector employee, Daminato and Padula (2024) |
 | pension | 40% replacement | 66%, the Italian Treasury's projection for retiring near 67 |
-| tax | not modelled | both funds taxed on sale, at the sooner of 30 years and the household's expected lifetime, `src/your_equity_share/taxes.py` |
+| tax | not modelled, as in Choi | not modelled either: measured in section 8 of the Italian methodology, `tools/tax_check.py` |
 
 ## Refreshing
 

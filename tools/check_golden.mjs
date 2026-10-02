@@ -26,11 +26,6 @@ import {
   certaintyEquivalent,
   coinIncome,
   compoundFromArithmetic,
-  afterTaxEquityCompound,
-  afterTaxBondFund,
-  afterTaxReturns,
-  deferralYears,
-  remainingLifeExpectancy,
   ITALY_CALIBRATION,
   CGM_CALIBRATION,
   logPremium,
@@ -226,28 +221,6 @@ for (const [i, c] of cases.recommend.entries()) {
   }
 }
 
-for (const [i, c] of (cases.after_tax_equity_compound ?? []).entries()) {
-  compare(`after_tax_equity_compound[${i}]`, afterTaxEquityCompound(...c.args), c.expect);
-}
-
-for (const [i, c] of (cases.remaining_life_expectancy ?? []).entries()) {
-  compare(`remaining_life_expectancy[${i}]`, remainingLifeExpectancy(...c.args), c.expect);
-}
-
-for (const [i, c] of (cases.deferral_years ?? []).entries()) {
-  compare(`deferral_years[${i}]`, deferralYears(...c.args), c.expect);
-}
-
-for (const [i, c] of (cases.after_tax_bond_fund ?? []).entries()) {
-  compare(`after_tax_bond_fund[${i}]`, afterTaxBondFund(...c.args), c.expect);
-}
-
-for (const [i, c] of (cases.after_tax_returns ?? []).entries()) {
-  const [mu, rf] = afterTaxReturns(...c.args);
-  compare(`after_tax_returns[${i}].expected`, mu, c.expect[0]);
-  compare(`after_tax_returns[${i}].safe`, rf, c.expect[1]);
-}
-
 for (const [i, c] of (cases.human_capital_italy ?? []).entries()) {
   const [gamma, mu, rf] = c.args;
   compare(`human_capital_italy[${i}]`,
@@ -279,14 +252,6 @@ for (const [i, c] of cases.must_reject.entries()) {
       makePerson(...c.args);
     } else if (c.fn === "gamma_from_certainty_equivalent") {
       gammaFromCertaintyEquivalent(...c.args);
-    } else if (c.fn === "after_tax_equity_compound") {
-      afterTaxEquityCompound(...c.args);
-    } else if (c.fn === "after_tax_bond_fund") {
-      afterTaxBondFund(...c.args);
-    } else if (c.fn === "remaining_life_expectancy") {
-      remainingLifeExpectancy(...c.args);
-    } else if (c.fn === "deferral_years") {
-      deferralYears(...c.args);
     } else if (c.fn === "coin_income") {
       coinIncome(...c.args);
     } else {

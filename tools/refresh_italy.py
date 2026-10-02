@@ -1,4 +1,4 @@
-"""Refresh the euro safe rate, check AQR's return, and price the tax code.
+"""Refresh the euro safe rate and the expected return, and check AQR's.
 
     python tools/refresh_italy.py            report only
     python tools/refresh_italy.py --write    update variants/it/market_data.toml
@@ -88,11 +88,8 @@ AQR's two halves are still fetched and compared on every run. If either drifts
 more than a third of a point from ours, the report says so, which is the signal
 that one of the two has moved and their current report is worth reading.
 
-THE TAX SECTION prices what Italy does to the two assets: 12.5% on government
-bonds against 26% on everything else, both on nominal income so inflation is
-taxed, plus 0.2% a year of imposta di bollo on each. The rates and the
-reasoning live in src/your_equity_share/taxes.py, including why the volatility
-is not reduced.
+Tax is not applied: the model reads the figures before tax, as Choi does, and
+src/your_equity_share/taxes.py says why.
 """
 
 
@@ -100,7 +97,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import re
 import ssl
 import sys
@@ -126,13 +122,6 @@ from your_equity_share.providers import (  # noqa: E402
 # same way. update.py is safe to import: its work is behind a main guard.
 sys.path.insert(0, str(ROOT))
 from update import estimate_volatility  # noqa: E402
-from your_equity_share.taxes import (  # noqa: E402
-    ITALY_TAX,
-    TAX_DEFERRAL_YEARS,
-    TaxRegime,
-    after_tax_returns,
-    deferral_years,
-)
 
 # The window the American variant fits its growth trend over. Kept equal to
 # update.py's constant on purpose: the two variants share one estimator, and a
@@ -560,53 +549,6 @@ def main(argv: list[str]) -> int:
         print("  the check passing: a firm that builds this for a living, on")
         print("  their own data, gets the same two numbers we measure.")
 
-    print()
-    print("What the Italian tax code does to both")
-    print("=" * 68)
-    # Deflated by the same market break-even as the pre-tax safe rate above.
-    # Deflating by the survey instead mixed two inflation rates in one
-    # comparison and overstated the after-tax safe rate by the inflation risk
-    # premium, about a quarter of a point.
-    #
-    # Nothing here is written to the file. Both funds accumulate and are taxed
-    # once, on sale, so what a household keeps depends on how long it holds:
-    # the sooner of thirty years and its expected remaining lifetime. The page
-    # and the model work it out per household from the before-tax pair, the
-    # inflation and taxes.py; this only reports what it comes to.
-    def drift(pair):
-        return math.log(1 + pair[0]) - math.log(1 + pair[1])
-
-    at_cap = after_tax_returns(arithmetic, real, volatility, breakeven,
-                               TAX_DEFERRAL_YEARS, ITALY_TAX)
-    print("  Both funds accumulate: 26% on the equity fund and 12.5% on the")
-    print("  government bond fund, on nominal gains, at sale; 0.2% a year of")
-    print("  imposta di bollo on each. Sold at the sooner of %.0f years and the"
-          % TAX_DEFERRAL_YEARS)
-    print("  household's expected remaining lifetime (2019 life table).")
-    print(f"    before tax           equity {arithmetic:>8.4%}  safe {real:>8.4%}"
-          f"  drift {drift((arithmetic, real)):>8.4%}")
-    for age in (45, 60, 70, 80, 90):
-        years = deferral_years([age])
-        pair = after_tax_returns(arithmetic, real, volatility, breakeven,
-                                 years, ITALY_TAX)
-        print(f"    aged {age}, {years:4.1f} years   equity {pair[0]:>8.4%}  "
-              f"safe {pair[1]:>8.4%}  drift {drift(pair):>8.4%}")
-
-    print()
-    print("  IT IS NOT THE 26% THAT HURTS EQUITIES. What tilts an Italian")
-    print("  household towards bonds is the PREFERENCE the state gives")
-    print("  government paper. At the thirty-year horizon:")
-    symmetric = TaxRegime(ITALY_TAX.other_financial_income_rate,
-                          ITALY_TAX.other_financial_income_rate,
-                          ITALY_TAX.wealth_tax_rate, "symmetric")
-    flat = after_tax_returns(arithmetic, real, volatility, breakeven,
-                             TAX_DEFERRAL_YEARS, symmetric)
-    for label, pair in (("pre-tax", (arithmetic, real)),
-                        ("26% on both", flat),
-                        ("12.5% and 26%, the law", at_cap)):
-        print("    %-24s equity %7.4f%%  safe %7.4f%%  drift %7.4f%%"
-              % (label, pair[0] * 100, pair[1] * 100, drift(pair) * 100))
-
     if not args.write:
         print("\n  Report only. Pass --write to update the configuration.")
         return 0
@@ -696,43 +638,10 @@ def main(argv: list[str]) -> int:
                      AQR_YIELD * 100, (AQR_YIELD - gross) * 100,
                      AQR_GROWTH * 100, (AQR_GROWTH - growth) * 100),
                   text, count=1, flags=re.M)
-    text = re.sub(r'^after_tax_source = ".*"$',
-                  'after_tax_source = "%s"' % after_tax_description(
-                      arithmetic, real, volatility, breakeven),
-                  text, count=1, flags=re.M)
     CONFIG.write_text(text, encoding="utf-8")
     print(f"\n  Written to {CONFIG.relative_to(ROOT)}: the safe rate and the "
           f"expected return.")
     return 0
-
-
-def after_tax_description(arithmetic: float, real: float, volatility: float,
-                          inflation: float) -> str:
-    """What the provenance says about tax, with the cost at thirty years."""
-    net = after_tax_returns(arithmetic, real, volatility, inflation,
-                            TAX_DEFERRAL_YEARS, ITALY_TAX)
-    drift_before = math.log(1 + arithmetic) - math.log(1 + real)
-    drift_after = math.log(1 + net[0]) - math.log(1 + net[1])
-    return (
-        "Both funds accumulate and are taxed once, on sale: the world equity "
-        "fund at %.0f%% and the government bond fund at %.1f%%, because a fund "
-        "is taxed at 12.5%% on its share in government bonds of Italy and of "
-        "white-list states and this one holds nothing else (Agenzia delle "
-        "Entrate, Circolare 19/E of 2014). Both on nominal gains, so inflation "
-        "is taxed, plus %.1f%% a year of imposta di bollo on the value of each. "
-        "The sale comes at the sooner of %.0f years and the household's "
-        "expected remaining lifetime, because Italian law treats death as a "
-        "sale for funds (Circolare 19/E of 2013); for two adults, the average "
-        "of their two. So nothing after tax is stored here: the model works it "
-        "out per household. At %.0f years tax costs %.2f points of expected "
-        "return and %.2f points of safe rate, so %.2f points of the drift. The "
-        "volatility is NOT reduced, because Italian law does not let fund "
-        "losses offset fund gains. See src/your_equity_share/taxes.py."
-        % (ITALY_TAX.other_financial_income_rate * 100,
-           ITALY_TAX.government_bond_rate * 100,
-           ITALY_TAX.wealth_tax_rate * 100, TAX_DEFERRAL_YEARS,
-           TAX_DEFERRAL_YEARS, (arithmetic - net[0]) * 100,
-           (real - net[1]) * 100, (drift_before - drift_after) * 100))
 
 
 if __name__ == "__main__":

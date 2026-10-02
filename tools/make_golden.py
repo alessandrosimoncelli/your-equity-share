@@ -223,55 +223,6 @@ def human_capital_cases() -> list[dict]:
     return cases
 
 
-def italian_tax_cases() -> list[dict]:
-    """After-tax compound returns, as the Italian page's slider computes them."""
-    from your_equity_share.taxes import after_tax_equity_compound
-
-    return [
-        {"args": [c, i, y], "expect": after_tax_equity_compound(c, i, y)}
-        for c in (-0.01, 0.0, 0.02, 0.038198, 0.06, 0.09)
-        for i in (0.0, 0.015, 0.022981, 0.03)
-        for y in (1.0, 10.0, 30.0, 40.0)
-    ]
-
-
-def italian_horizon_cases() -> dict:
-    """The lifetime rule, the bond fund and the pair the Italian page reads."""
-    from your_equity_share.mortality import remaining_life_expectancy
-    from your_equity_share.taxes import (
-        after_tax_bond_fund,
-        after_tax_returns,
-        deferral_years,
-    )
-
-    ages = [20, 25, 40, 45, 49, 50, 51, 52, 60, 67, 75, 80, 90, 99]
-    return {
-        "remaining_life_expectancy": [
-            {"args": [a], "expect": remaining_life_expectancy(a)}
-            for a in list(range(0, 101)) + [101, 120]
-        ],
-        "deferral_years": [
-            {"args": [pair], "expect": deferral_years(pair)}
-            for pair in [[a] for a in ages] + [[45, 42], [52, 49], [60, 57],
-                                               [75, 72], [85, 80], [20, 99]]
-        ],
-        "after_tax_bond_fund": [
-            {"args": [r, i, y], "expect": after_tax_bond_fund(r, i, y)}
-            for r in (-0.005, 0.0, 0.007849, 0.015102, 0.03)
-            for i in (0.0, 0.022886, 0.03)
-            for y in (2.2, 12.4, 23.5, 30.0)
-        ],
-        "after_tax_returns": [
-            {"args": [mu, rf, s, i, y], "expect": list(after_tax_returns(mu, rf, s, i, y))}
-            for mu, rf, s in ((0.048148, 0.015102, 0.138119),
-                              (0.048268, 0.014401, 0.138942),
-                              (0.07, 0.0, 0.2))
-            for i in (0.0, 0.022981)
-            for y in (2.2, 6.7, 12.4, 18.1, 30.0)
-        ],
-    }
-
-
 def italy_cases() -> tuple[list[dict], list[dict]]:
     """The Italian calibration through the same functions.
 
@@ -405,10 +356,6 @@ def rejection_cases() -> list[dict]:
         {"fn": "gamma_from_certainty_equivalent", "args": [75_000.0]},
         {"fn": "gamma_from_certainty_equivalent", "args": [50_000.0]},
         {"fn": "gamma_from_certainty_equivalent", "args": [49_000.0]},
-        {"fn": "after_tax_equity_compound", "args": [0.03, 0.02, 0.0]},
-        {"fn": "after_tax_bond_fund", "args": [0.015, 0.02, 0.0]},
-        {"fn": "remaining_life_expectancy", "args": [-1]},
-        {"fn": "deferral_years", "args": [[]]},
         {"fn": "coin_income", "args": [-1.0, 0.0, 0.0]},
         {"fn": "coin_income", "args": [100_000.0, -1.0, 0.0]},
         {"fn": "coin_income", "args": [100_000.0, 0.0, -1.0]},
@@ -471,8 +418,6 @@ def main() -> int:
         "human_capital": human_capital_cases(),
         "recommend": recommend_cases(),
         "human_capital_italy": italy_capital,
-        "after_tax_equity_compound": italian_tax_cases(),
-        **italian_horizon_cases(),
         "recommend_italy": italy_advice,
         "conversions": conversion_cases(),
         "must_reject": rejection_cases(),

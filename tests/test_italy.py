@@ -318,7 +318,7 @@ def test_the_safe_rate_deflator_is_a_price_not_a_forecast(italy) -> None:
     """
     source = italy.provenance["real_risk_free_source"]
     assert "break-even" in source.lower()
-    breakeven = italy.expected_inflation
+    breakeven = float(italy.provenance["expected_inflation"])
     survey = float(italy.provenance["expected_inflation_survey"])
     assert breakeven > survey
     assert 0.0 < breakeven - survey < 0.01
@@ -333,7 +333,7 @@ def test_the_survey_would_have_flattered_the_safe_asset(italy) -> None:
     to be able to see which deflator produced the number.
     """
     nominal = float(italy.provenance["nominal_safe_yield"])
-    breakeven = italy.expected_inflation
+    breakeven = float(italy.provenance["expected_inflation"])
     survey = float(italy.provenance["expected_inflation_survey"])
     used = (1 + nominal) / (1 + breakeven) - 1
     flattered = (1 + nominal) / (1 + survey) - 1
@@ -523,7 +523,7 @@ def test_the_italian_methodology_quotes_the_configuration() -> None:
         "safe rate": "%.4f%%" % (italy.real_risk_free_rate * 100),
         "volatility": "%.4f%%" % (italy.stock_volatility * 100),
         "nominal yield": "%.4f%%" % (float(p["nominal_safe_yield"]) * 100),
-        "break-even": "%.4f%%" % (italy.expected_inflation * 100),
+        "break-even": "%.4f%%" % (float(p["expected_inflation"]) * 100),
         "survey": "%.4f%%" % (float(p["expected_inflation_survey"]) * 100),
     }
     missing = [name for name, figure in expected.items() if figure not in doc]
@@ -540,7 +540,7 @@ def test_the_italian_methodology_declares_what_it_cannot_check(italy) -> None:
     doc = _doc()
     assert "What is not validated" in doc
     assert "Cocco, Gomes and Maenhout" in doc
-    assert "deferral horizon" in doc
+    assert "Leaving tax out" in doc
 
 
 def test_the_italian_methodology_names_a_source_for_each_number(italy) -> None:
@@ -596,31 +596,13 @@ def _fields(name: str) -> dict:
 
 
 @pytest.mark.parametrize("name", ["snapshot.toml", "market_data.toml"])
-def test_tax_is_levied_through_the_safe_rate_s_own_deflator(name) -> None:
-    """Tax is levied on nominal gains and deflated back to real.
-
-    The pre-tax safe rate is the nominal AAA yield deflated by the market
-    break-even, so the tax must be levied through that same break-even. It was
-    once levied through the survey instead, which is an inflation risk premium
-    lower, and the after-tax safe rate came out a quarter of a point too high.
-    The file now carries one inflation figure, in [market], used for both.
-    """
+def test_the_files_state_the_market_before_tax(name) -> None:
+    """The model reads market figures as they are (Italian methodology,
+    section 8), so the files carry no after-tax figure and no regime."""
     f = _fields(name)
-    assert f["tax_regime"] == "Italy"
+    assert not [k for k in f if "after_tax" in k or k == "tax_regime"]
     assert f["real_risk_free"] == pytest.approx(
         (1 + f["nominal_safe_yield"]) / (1 + f["expected_inflation"]) - 1, abs=5e-7)
-
-
-@pytest.mark.parametrize("name", ["snapshot.toml", "market_data.toml"])
-def test_no_after_tax_figure_is_stored(name) -> None:
-    """What a household keeps depends on its horizon, so it is never stored.
-
-    The file once carried one after-tax pair at a fixed thirty years, which
-    gave every saver the tax deferral of a forty-year-old.
-    """
-    f = _fields(name)
-    assert "after_tax_expected_return" not in f
-    assert "after_tax_real_risk_free" not in f
 
 
 @pytest.mark.parametrize("name", ["snapshot.toml", "market_data.toml"])
@@ -642,41 +624,16 @@ def test_the_yield_window_is_written_as_two_dates(name) -> None:
 
 # --- the Italian answer is after tax ------------------------------------------
 
-def test_the_italian_answer_is_after_tax_at_the_household_s_horizon(italy) -> None:
-    """Italian tax is the law, not the household's choice, so it is applied.
+def test_the_italian_answer_is_before_tax_like_the_american() -> None:
+    """One way of reading the market in both variants: the figures as stated."""
+    import tomllib
 
-    The loader keeps the file's figures, before tax, and taxes them per
-    household: both funds sold at the sooner of thirty years and the expected
-    remaining lifetime, averaged over the adults.
-    """
-    from your_equity_share.taxes import ITALY_TAX, after_tax_returns
-
-    assert italy.tax_regime is ITALY_TAX
-    pair = (italy.expected_stock_real_return, italy.real_risk_free_rate,
-            italy.stock_volatility, italy.expected_inflation)
-    assert italy.returns_for([45]) == after_tax_returns(*pair, 30.0)
-    assert italy.returns_for([75]) == after_tax_returns(*pair, 12.4)
-    assert italy.returns_for([75, 72]) == after_tax_returns(*pair, 13.45)
-    young, old = italy.returns_for([45]), italy.returns_for([85])
-    assert young[0] > old[0] and young[1] > old[1]
-
-
-def test_a_file_from_before_the_household_horizon_is_refused(tmp_path) -> None:
-    """A stored after-tax pair would otherwise be read as an untaxed file."""
-    text = IT_CONFIG.read_text(encoding="utf-8").replace(
-        'tax_regime = "Italy"', "after_tax_expected_return = 0.037\nafter_tax_real_risk_free = 0.008")
-    old = tmp_path / "old.toml"
-    old.write_text(text, encoding="utf-8")
-    with pytest.raises(ValueError, match="no longer stored"):
-        load_market_data(old)
-
-
-def test_the_american_file_has_no_tax_to_apply() -> None:
-    american = load_market_data()
-    assert american.tax_regime is None
-    assert american.returns_for([45]) == (american.expected_stock_real_return,
-                                          american.real_risk_free_rate)
-    assert american.returns_for([85]) == american.returns_for([45])
+    for variant in ("us", "it"):
+        path = ROOT / "variants" / variant / "market_data.toml"
+        market = tomllib.loads(path.read_text(encoding="utf-8"))["market"]
+        loaded = load_market_data(path)
+        assert loaded.expected_stock_real_return == market["expected_stock_real_return"]
+        assert loaded.real_risk_free_rate == market["real_risk_free"]
 
 
 def test_the_document_states_the_pension_the_code_uses() -> None:
@@ -693,12 +650,20 @@ def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
     """
     household = Household(1_500_000.0, [Person(45, 100_000.0)], 5.0)
     market = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
+    american = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
     doc = _doc()
-    for mu, rf in (market.returns_for([45]),
-                   (market.expected_stock_real_return, market.real_risk_free_rate)):
-        share = recommend(household, mu, rf, market.stock_volatility,
-                          ITALY_CALIBRATION).equity_share
-        assert f"{share:.1%}" in doc, f"{share:.1%}"
+    share = recommend(household, market.expected_stock_real_return,
+                      market.real_risk_free_rate, market.stock_volatility,
+                      ITALY_CALIBRATION).equity_share
+    us = recommend(household, american.expected_stock_real_return,
+                   american.real_risk_free_rate, american.stock_volatility,
+                   CGM_CALIBRATION).equity_share
+    assert f"between a {us:.1%} American answer and a {share:.1%} Italian one" in doc
+    graduate = dataclasses.replace(CGM_CALIBRATION, benefit_replacement_rate=0.79)
+    with_79 = recommend(household, market.expected_stock_real_return,
+                        market.real_risk_free_rate, market.stock_volatility,
+                        graduate).equity_share
+    assert f"held {with_79:.1%}; with these, {share:.1%}" in doc
 
 
 # --- section 10, why the answer is so often 100% ----------------------------
@@ -714,10 +679,13 @@ IT_TABLE = ROOT / "src" / "web" / "it" / "translation.toml"
 
 def _snapshots() -> dict:
     """The two snapshots, as functions from a household's ages to the
-    (expected return, safe rate, volatility) its model reads."""
+    (expected return, safe rate, volatility) its model reads. The ages do not
+    change it, since neither variant applies tax; the shape is kept so each
+    test reads one way."""
     loaded = {"it": load_market_data(ROOT / "variants" / "it" / "snapshot.toml"),
               "us": load_market_data(ROOT / "variants" / "us" / "snapshot.toml")}
-    return {name: (lambda ages, m=m: (*m.returns_for(ages), m.stock_volatility))
+    return {name: (lambda ages, m=m: (m.expected_stock_real_return,
+                                      m.real_risk_free_rate, m.stock_volatility))
             for name, m in loaded.items()}
 
 
@@ -832,10 +800,10 @@ def test_the_three_reasons_quote_the_model() -> None:
     _, it_pay, it_savings, _ = _opening("it")
     _, us_pay, us_savings, _ = _opening("us")
     for stated in (
-        f"drift of {drift(it) * 100:.2f} points a year after Italian tax",
+        f"drift of {drift(it) * 100:.2f} points a year in euro",
         f"against {drift(us) * 100:.2f} in the United States",
         f"{us[1]:.2%} real on 30-year TIPS",
-        f"low, {it[1]:.2%} after tax",
+        f"low, {it[1]:.2%}.",
         f"{it[2]:.2%} a year against {us[2]:.2%} for the S&amp;P 500",
         f"the share is {merton(it):.1%} in Italy against {merton(us):.1%}",
         f"human capital at 45 from {years(us, CGM_CALIBRATION):.1f} years of pay "
@@ -881,7 +849,7 @@ def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
     rows = (
         ("American answer", f"{opening(frozenset()):.1%}",
          f"{reference(frozenset()):.1%}"),
-        ("1. The euro market, after tax", f"{first['market'] * 100:+.1f}",
+        ("1. The euro market", f"{first['market'] * 100:+.1f}",
          f"{second['market'] * 100:+.1f}"),
         ("2. The Italian career and pension", f"{first['career'] * 100:+.1f}",
          f"{second['career'] * 100:+.1f}"),
@@ -905,61 +873,34 @@ def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
         assert abs(shown - (round(end * 100, 1) - round(start * 100, 1))) < 0.1 + 1e-9
 
 
-# --- section 8, tax at the household's horizon -------------------------------
+# --- section 8, why tax is left out ------------------------------------------
 
-def test_the_tax_table_is_the_model_s() -> None:
-    """Table 7 and the two claims beside it, recomputed at thirty years.
+def test_the_tax_table_is_the_check_s_output() -> None:
+    """Table 7 is tools/tax_check.py on this document's snapshot, row by row,
+    and the sentences beside it say what the table says."""
+    import sys as _sys
 
-    The last column is the reference household of section 1 (45, 100,000 of
-    pay, 1,500,000 saved, risk 5). Section 7's comparison with the American
-    career and the OECD's 79% is the same household after tax.
-    """
-    import math
+    _sys.path.insert(0, str(ROOT / "tools"))
+    import tax_check
 
-    from your_equity_share.taxes import TaxRegime, after_tax_returns
-
-    m = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
-    before = (m.expected_stock_real_return, m.real_risk_free_rate)
-    args = (*before, m.stock_volatility, m.expected_inflation, 30.0)
-    both = after_tax_returns(*args, TaxRegime(0.26, 0.26, 0.002, "26% on both"))
-    law = after_tax_returns(*args)
     doc = _doc()
-
-    def share(pair, calibration=ITALY_CALIBRATION):
-        return recommend(Household(1_500_000.0, [Person(45, 100_000.0)], 5.0),
-                         *pair, m.stock_volatility, calibration).equity_share
-
-    for label, pair in (("Before tax", before), ("26% on both funds", both),
-                        ("12.5% and 26%, the law", law)):
-        drift = math.log(1 + pair[0]) - math.log(1 + pair[1])
-        row = (f'<tr><td>{label}</td><td class="num">{pair[0]:.4%}</td>'
-               f'<td class="num">{pair[1]:.4%}</td><td class="num">{drift:.4%}</td>'
-               f'<td class="num">{share(pair):.1%}</td></tr>')
+    laws, means, costs = [], [], []
+    for years in tax_check.YEARS:
+        law = tax_check.law_ratio(years)
+        mean_only = tax_check.mean_only_ratio(years)
+        cost = tax_check.cost_of_ignoring(years)
+        loss = tax_check.loss_probability(years)
+        laws.append(law)
+        means.append(mean_only)
+        costs.append(cost)
+        row = (f'<tr><td class="num">{years}</td><td class="num">{law:.3f}</td>'
+               f'<td class="num">{mean_only:.3f}</td><td class="num">{cost:.2f}</td>'
+               f'<td class="num">{loss:.1%}</td></tr>')
         assert row in doc, row
-    assert f"{share(both):.1%} against {share(before):.1%} before tax" in doc
-    assert f"{(share(both) - share(law)) * 100:.1f} points of equity share on its own" in doc
-    assert f"the {(share(before) - share(law)) * 100:.1f} the tax system costs" in doc
-    american = dataclasses.replace(CGM_CALIBRATION, benefit_replacement_rate=0.79)
-    assert f"held {share(law, american):.1%} after tax; with these, {share(law):.1%}" in doc
-
-
-def test_the_retiree_example_is_the_model_s() -> None:
-    """A retiree of 75, sold at 12.4 years rather than 30."""
-    from your_equity_share.mortality import remaining_life_expectancy
-    from your_equity_share.taxes import after_tax_returns
-
-    m = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
-    household = Household(200_000.0, [Person(75, 0.0, 20_000.0)], 5.0)
-
-    def share(pair):
-        return recommend(household, *pair, m.stock_volatility,
-                         ITALY_CALIBRATION).equity_share
-
-    thirty = after_tax_returns(m.expected_stock_real_return, m.real_risk_free_rate,
-                               m.stock_volatility, m.expected_inflation, 30.0)
-    years = remaining_life_expectancy(75)
-    stated = (f"expects {years} more years: selling then rather than after thirty "
-              f"years takes the answer from {share(thirty):.1%} to "
-              f"{share(m.returns_for([75])):.1%}")
-    assert stated in _doc(), stated
-    assert f"<td class=\"num\">{years} years</td>" in _doc()
+    assert round(1 - laws[0], 1) == 0.2                       # "by a fifth"
+    assert all(1 - law < 0.1 for law in laws[1:])            # "under a tenth"
+    assert max(costs) < 1.5 and max(costs[1:]) < 0.25        # "a basis point and a half"
+    assert f"by {round((1 - max(means)) * 100)}% to {round((1 - min(means)) * 100)}%" in doc
+    for gamma in (3.0, 8.0):                                 # "within a hundredth"
+        for years, law in zip(tax_check.YEARS, laws):
+            assert abs(tax_check.law_ratio(years, gamma) - law) < 0.01

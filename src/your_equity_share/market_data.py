@@ -31,16 +31,6 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from your_equity_share.statistics import covariance_matrix
-from your_equity_share.taxes import (
-    ITALY_TAX,
-    TaxRegime,
-    after_tax_returns,
-    deferral_years,
-)
-
-# The regimes a market file can name. Tax is the law, not market data, so the
-# file only says which one applies; the rates live in taxes.py.
-TAX_REGIMES = {"Italy": ITALY_TAX}
 
 __all__ = [
     "DEFAULT_CONFIG_PATH",
@@ -100,27 +90,6 @@ class MarketData:
     correlation: tuple[tuple[float, ...], ...] = ()
     covariance_as_of: date | None = None
     covariance_observations: int = 0
-
-    # Where the returns are taxed, the regime and the inflation the tax is
-    # levied through. The two returns above are always BEFORE tax: what a
-    # household keeps depends on how long it holds, so it is worked out per
-    # household by `returns_for`, never stored.
-    tax_regime: TaxRegime | None = None
-    expected_inflation: float | None = None
-
-    def returns_for(self, ages) -> tuple[float, float]:
-        """The expected return and safe rate this household's model reads.
-
-        Untaxed variants hand back the two figures as stated. A taxed one
-        taxes both funds on sale at the household's horizon: the sooner of
-        thirty years and its expected remaining lifetime (taxes.py).
-        """
-        if self.tax_regime is None:
-            return self.expected_stock_real_return, self.real_risk_free_rate
-        return after_tax_returns(
-            self.expected_stock_real_return, self.real_risk_free_rate,
-            self.stock_volatility, self.expected_inflation,
-            deferral_years(ages), self.tax_regime)
 
     @property
     def provisional_fields(self) -> tuple[str, ...]:
@@ -287,10 +256,8 @@ def _load_optional_sleeves(
 def load_market_data(path: Path | str | None = None) -> MarketData:
     """Load and validate the market data file.
 
-    The returns come back as the file states them, before tax. A file whose
-    [market] names a tax_regime, as the Italian one does, also carries the
-    inflation that tax is levied through, and `MarketData.returns_for` turns
-    the pair into what a given household keeps.
+    The returns come back as the file states them, before tax, which is what
+    the model reads in both variants (taxes.py says why).
 
     Raises ValueError on anything structurally wrong. Staleness is not an error,
     since a deliberately frozen file is a legitimate way to run the tool; call
@@ -318,29 +285,6 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
     except KeyError as exc:
         raise ValueError(f"{path}: [market] is missing {exc.args[0]!r}") from exc
 
-    # A file from before tax depended on the household stored one after-tax
-    # pair, at a fixed thirty years. Reading it now would apply no tax at all,
-    # silently, so it is refused instead.
-    if "after_tax_expected_return" in market or "after_tax_real_risk_free" in market:
-        raise ValueError(
-            f"{path}: after-tax returns are no longer stored, because they depend "
-            f"on the household's horizon. Name the regime with tax_regime and "
-            f"give expected_inflation; tools/refresh_italy.py writes both."
-        )
-    regime_name = market.get("tax_regime")
-    regime = None
-    inflation = None
-    if regime_name is not None:
-        if regime_name not in TAX_REGIMES:
-            raise ValueError(f"{path}: unknown tax_regime {regime_name!r}")
-        regime = TAX_REGIMES[regime_name]
-        if "expected_inflation" not in market:
-            raise ValueError(
-                f"{path}: tax_regime needs expected_inflation in [market], "
-                f"because the tax falls on nominal gains"
-            )
-        inflation = float(market["expected_inflation"])
-
     if volatility <= 0:
         raise ValueError(f"{path}: stock_volatility must be positive")
     if expected <= real_rf:
@@ -363,6 +307,4 @@ def load_market_data(path: Path | str | None = None) -> MarketData:
         correlation=correlation,
         covariance_as_of=cov_as_of,
         covariance_observations=observations,
-        tax_regime=regime,
-        expected_inflation=inflation,
     )
