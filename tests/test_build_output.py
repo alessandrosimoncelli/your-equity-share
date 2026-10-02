@@ -140,24 +140,26 @@ def test_the_italian_page_has_no_english_left(built: Path) -> None:
         assert phrase not in visible, phrase
 
 
-def test_the_italian_market_file_is_after_tax(built: Path) -> None:
-    """The model reads the after-tax pair; the slider taxes a typed return
-    with the same inflation and horizon, and lands on the same number."""
-    import tomllib
+def test_the_italian_market_file_is_taxed_by_the_page(built: Path) -> None:
+    """The file states the returns before tax, with what taxes them.
 
-    from your_equity_share.expected_return import arithmetic_from_compound
-    from your_equity_share.taxes import TAX_DEFERRAL_YEARS, after_tax_equity_compound
+    What a household keeps depends on its horizon, so the page taxes the pair
+    itself, through model.js, and the file must carry no after-tax figure for
+    it to read by mistake. The page and the Python model then agree, which the
+    golden cases check function by function.
+    """
+    import tomllib
 
     data = json.loads((built / "it" / "market.json").read_text(encoding="utf-8"))
     raw = tomllib.loads((ROOT / "variants" / "it" / "market_data.toml").read_text(encoding="utf-8"))
-    assert data["expected_stock_real_return"] == raw["market"]["after_tax_expected_return"]
-    assert data["real_risk_free"] == raw["market"]["after_tax_real_risk_free"]
-    assert data["tax_deferral_years"] == TAX_DEFERRAL_YEARS
-    retaxed = arithmetic_from_compound(
-        after_tax_equity_compound(data["expected_stock_real_return_compound"],
-                                  data["expected_inflation"], data["tax_deferral_years"]),
-        data["stock_volatility"])
-    assert retaxed == pytest.approx(data["expected_stock_real_return"], abs=5e-7)
+    market = raw["market"]
+    assert data["expected_stock_real_return"] == market["expected_stock_real_return"]
+    assert data["real_risk_free"] == market["real_risk_free"]
+    assert data["expected_inflation"] == market["expected_inflation"]
+    assert data["tax_regime"] == "Italy"
+    assert not [k for k in data if "after_tax" in k or "deferral" in k]
+    page = (built / "it" / "index.html").read_text(encoding="utf-8")
+    assert "deferralYears(adults.map((p) => p.currentAge))" in page
     assert data["provenance"]["volatility_window_years"] == 5
 
 

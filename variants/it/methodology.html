@@ -369,7 +369,7 @@ the workbook is not in the repository, so a plain push skips it.</p>
 <p>That is deliberate and it is the point of the whole arrangement. <strong>The
 gap between a 21.3% American answer and a 75.2% Italian one, both before tax,
 is the country and not the method.</strong> The Italian answer itself is after
-Italian tax, 70.7%, which section 8 measures; the comparison uses the figures
+Italian tax, 65.4%, which section 8 measures; the comparison uses the figures
 before tax because the American variant models none. Were the model copied into two folders, the copies
 would be edited on different days and every later comparison would quietly mix
 a country difference with a code difference.</p>
@@ -404,6 +404,7 @@ against</caption>
 <tr><td>Tax, government bonds</td><td class="num">12.5%</td><td>Italian law, white-list states</td><td class="num">12.5%</td></tr>
 <tr><td>Tax, other financial income</td><td class="num">26.0%</td><td>Italian law</td><td class="num">26.0%</td></tr>
 <tr><td>Imposta di bollo</td><td class="num">0.20%</td><td>Italian law, annually on value</td><td class="num">0.20%</td></tr>
+<tr><td>Expected remaining lifetime at 75</td><td class="num">12.4 years</td><td>NCHS, United States Life Tables 2019, Table 1, the table inside Choi's coefficients</td><td class="num">12.4 years</td></tr>
 </tbody>
 </table>
 </div>
@@ -730,7 +731,7 @@ can move by surprise, and the pension at the end. All three are Italian
 estimates of that one person, set in <code>ITALY_CALIBRATION</code> rather than
 in the market data because they belong to the household and the state, not to
 the market. With the American graduate's career and the OECD's 79%, the
-reference household of section 1 held 59.5% after tax; with these, 70.7%. More
+reference household of section 1 held 55.3% after tax; with these, 65.4%. More
 bond-like wealth leaves room for more equity in the financial portfolio, the
 direction Bodie, Merton and Samuelson (1992) predict.</p>
 
@@ -813,48 +814,67 @@ coefficient, so paying 79% from 67 overstated the pension.</p>
 
 <p>In Italy tax is not a household's circumstance but a fixed feature of the
 law that falls on exactly the two assets this model chooses between, and
-favours the safe one. So it is modelled rather than left to a footnote.
-<code>src/your_equity_share/taxes.py</code> holds the rates and the reasoning.
-The Italian answer applies it: the model reads the after-tax return and safe
-rate in the last row of Table 7. A comparison with the American variant, which
-models no tax, uses the figures before tax instead.</p>
+favours the safe one. So it is modelled rather than left to a footnote, as
+Choi, Liu and Liu ask: their model has no tax in it, "so all variables are
+implicitly after-tax where relevant". <code>src/your_equity_share/taxes.py</code>
+holds the rates and the reasoning. A comparison with the American variant,
+which models no tax, uses the figures before tax instead.</p>
 
-<p><strong>12.5%</strong> on interest and capital gains from Italian government
-bonds and those of white-list states, which includes Germany, so the safe asset
-here gets the low rate. <strong>26%</strong> on everything else, including every
-equity fund. <strong>0.2%</strong> a year of imposta di bollo on the value of
-each, charged whether or not anything was earned.</p>
+<p><strong>Both assets are accumulating funds</strong>, which is how an Italian
+household holds them: a world equity ETF and a euro government bond ETF that
+reinvest what they earn. <strong>26%</strong> on the equity fund.
+<strong>12.5%</strong> on the bond fund, because a fund is taxed at 12.5% in
+proportion to what it holds in government bonds of Italy and of white-list
+states, measured from its last two half-yearly reports (Agenzia delle Entrate,
+Circolare 19/E of 2014, section 5), and the safe asset here is AAA euro area
+government bonds, all of them white-listed. <strong>0.2%</strong> a year of
+imposta di bollo on the value of each, charged whether or not anything was
+earned.</p>
 
-<p><strong>Tax falls on nominal income, so inflation is taxed.</strong> This
-matters more than the rate difference at low real yields: 12.5% of a 3.76%
-coupon is 0.47 points, taken out of a 1.44% real yield. Both sides are
-therefore grossed up to nominal, taxed, and deflated back, rather than having a
-rate applied to a real return.</p>
+<p><strong>Tax falls on nominal gains, so inflation is taxed.</strong> Both
+funds are grossed up to nominal, taxed, and deflated back by the market
+break-even the safe rate is deflated by, rather than having a rate applied to a
+real return.</p>
 
-<p><strong>Deferral pulls the other way.</strong> An accumulating fund
-distributes nothing, so nothing is taxed until the units are sold. Over thirty
-years that recovers more than half a point a year, and the safe asset gets none
-of it because its coupons are taxed as they arrive.</p>
+<p><strong>Tax is paid on sale, so when the sale comes matters.</strong> An
+accumulating fund distributes nothing, so nothing is taxed until the units are
+sold, and the untaxed compounding is worth more the longer the sale is put off;
+the formula is the accrual-equivalent return of the CFA Institute's
+curriculum. Italian law treats death as a sale for funds: the gain is taxed
+when the units pass to the heirs (Agenzia delle Entrate, Circolare 19/E of
+2013, section 2.4). So both funds are sold at <strong>the sooner of thirty
+years and the household's expected remaining lifetime</strong>, read off the
+2019 United States life table inside Choi's coefficients, and for two adults
+at the average of their two, because each adult's units are taxed at that
+adult's death. Thirty is the maturity of the safe asset Choi's guide asks for.</p>
 
 <div class="tablewrap" id="t6">
 <table>
-<caption>Table 7. What the tax code does, and which part of it. Equity is
-the arithmetic mean the model takes, at a thirty-year deferral.</caption>
-<thead><tr><th>Regime</th><th class="num">Equity</th><th class="num">Safe rate</th><th class="num">Drift</th></tr></thead>
+<caption>Table 7. What the tax code does, and which part of it, for funds sold
+after thirty years. Equity is the arithmetic mean the model takes; the last
+column is the reference household of section 1.</caption>
+<thead><tr><th>Regime</th><th class="num">Equity</th><th class="num">Safe rate</th><th class="num">Drift</th><th class="num">Equity share</th></tr></thead>
 <tbody>
-<tr><td>Before tax</td><td class="num">4.8268%</td><td class="num">1.4401%</td><td class="num">3.2841%</td></tr>
-<tr><td>26% on both sides</td><td class="num">3.7785%</td><td class="num">0.2885%</td><td class="num">3.4208%</td></tr>
-<tr><td>12.5% and 26%, the law</td><td class="num">3.7785%</td><td class="num">0.7849%</td><td class="num">2.9270%</td></tr>
+<tr><td>Before tax</td><td class="num">4.8268%</td><td class="num">1.4401%</td><td class="num">3.2841%</td><td class="num">75.2%</td></tr>
+<tr><td>26% on both funds</td><td class="num">3.7785%</td><td class="num">0.6152%</td><td class="num">3.0956%</td><td class="num">76.4%</td></tr>
+<tr><td>12.5% and 26%, the law</td><td class="num">3.7785%</td><td class="num">0.9520%</td><td class="num">2.7614%</td><td class="num">65.4%</td></tr>
 </tbody>
 </table>
 </div>
 
 <p><strong>It is not the 26% that discourages equities.</strong> Levy the same
-26% on both sides and the drift <em>widens</em>, because the safe asset is
-taxed every year on its whole nominal coupon while equities defer to sale. What
-tilts an Italian household towards bonds is the preference given to government
-paper, and that preference is worth 13.6 points of equity share on its own
-against 4.6 for the tax system as a whole.</p>
+26% on both funds and the reference household's answer barely moves, 76.4%
+against 75.2% before tax, because a lower safe rate also values its future pay
+more highly. What tilts an Italian household towards bonds is the preference
+given to government paper: 11.0 points of equity share on its own, more than
+the 9.8 the tax system costs as a whole.</p>
+
+<p><strong>The sale date matters from about fifty-two</strong>, when the
+expected remaining lifetime falls below thirty years. A retiree of 75 with a
+20,000 euro pension and 200,000 saved expects 12.4 more years: selling then
+rather than after thirty years takes the answer from 77.7% to 70.2%, because a
+shorter wait leaves less of the deferral, and the 26% fund loses more of it
+than the 12.5% one.</p>
 
 <p><strong>One thing is deliberately not modelled, and it is the interesting
 one.</strong> A tax on investment returns normally makes a risky asset more
@@ -901,7 +921,7 @@ as the measured persistence, not as an endorsement that parity holds quickly.</p
 <h2 id="s10">10. Why the answer is so often 100%</h2>
 
 <p><strong>With the default risk answer, the Italian page puts all of the
-savings in stocks until they reach 6.4 to 9.9 years of after-tax pay</strong>,
+savings in stocks until they reach 5.3 to 8.7 years of after-tax pay</strong>,
 depending on age, against 1.0 to 2.8 years on the American page (Table 8).
 That is the model's answer and not a fault, and this section shows where it
 comes from.</p>
@@ -916,9 +936,9 @@ because it does not borrow.</p>
 
 <p><strong>The household the Italian page opens with</strong> is 45 years old,
 earns 30,000 euro a year after tax, has 50,000 saved and answers 5 for risk.
-Its future pay and pension are worth 599,103 euro, 20.0 years of pay. Merton's
-share of the two together is 30.3%, which is 196,836 euro of stocks against
-50,000 to invest. Unconstrained, the model would hold 394% of the savings in
+Its future pay and pension are worth 578,278 euro, 19.3 years of pay. Merton's
+share of the two together is 28.6%, which is 179,738 euro of stocks against
+50,000 to invest. Unconstrained, the model would hold 359% of the savings in
 stocks, borrowing the rest.</p>
 
 <div class="tablewrap" id="t8">
@@ -927,38 +947,39 @@ stocks, borrowing the rest.</p>
 falls below 100%</caption>
 <thead><tr><th>Age</th><th class="num">Risk 3</th><th class="num">Risk 5, the default</th><th class="num">Risk 8</th><th class="num">American page, risk 5</th></tr></thead>
 <tbody>
-<tr><td>25</td><td class="num">32.4</td><td class="num">9.9</td><td class="num">3.5</td><td class="num">2.8</td></tr>
-<tr><td>35</td><td class="num">30.0</td><td class="num">9.6</td><td class="num">3.6</td><td class="num">1.8</td></tr>
-<tr><td>45</td><td class="num">25.4</td><td class="num">8.7</td><td class="num">3.5</td><td class="num">1.5</td></tr>
-<tr><td>55</td><td class="num">20.2</td><td class="num">7.5</td><td class="num">3.3</td><td class="num">1.3</td></tr>
-<tr><td>65</td><td class="num">15.3</td><td class="num">6.4</td><td class="num">3.4</td><td class="num">1.0</td></tr>
+<tr><td>25</td><td class="num">27.4</td><td class="num">8.7</td><td class="num">3.2</td><td class="num">2.8</td></tr>
+<tr><td>35</td><td class="num">25.6</td><td class="num">8.5</td><td class="num">3.3</td><td class="num">1.8</td></tr>
+<tr><td>45</td><td class="num">21.8</td><td class="num">7.7</td><td class="num">3.1</td><td class="num">1.5</td></tr>
+<tr><td>55</td><td class="num">17.1</td><td class="num">6.6</td><td class="num">2.9</td><td class="num">1.3</td></tr>
+<tr><td>65</td><td class="num">12.0</td><td class="num">5.3</td><td class="num">2.9</td><td class="num">1.0</td></tr>
 </tbody>
 </table>
 </div>
 
 <p class="src">Below these savings the page shows 100%. Each figure is
 Merton's share times future pay and pension, divided by one minus Merton's
-share and by a year's pay. The Italian columns are on this document's
-snapshot, the American one on the American methodology's of 3 September.</p>
+share and by a year's pay, with both funds sold at each age's horizon (section
+8). The Italian columns are on this document's snapshot, the American one on
+the American methodology's of 3 September.</p>
 
 <p><strong>Three things put the Italian page there far more often than the
 American one.</strong></p>
 
-<p><strong>1. The euro market, after tax.</strong> Equities beat the safe
-asset by a drift of 2.93 points a year after Italian tax, at the thirty-year
-deferral of section 8, against 1.89 in the United States, because the American
-safe rate is high, 2.96% real on 30-year TIPS, and the euro one is low, 0.78%
-after tax. The world fund also swings less, 13.89% a year against 17.18% for
+<p><strong>1. The euro market, after tax.</strong> For a 45-year-old, whose
+funds are sold after thirty years (section 8), equities beat the safe asset by
+a drift of 2.76 points a year after Italian tax, against 1.89 in the United
+States, because the American safe rate is high, 2.96% real on 30-year TIPS, and
+the euro one is low, 0.95% after tax. The world fund also swings less, 13.89% a year against 17.18% for
 the S&amp;P 500, and Merton's share falls with the square of volatility. At
-risk 5 the share is 30.3% in Italy against 12.8%. The same low rates value
+risk 5 the share is 28.6% in Italy against 12.8%. The same low rates value
 future pay more highly through Choi's discount rates: on its own, the euro
-market takes human capital at 45 from 10.0 years of pay to 13.1.</p>
+market takes human capital at 45 from 10.0 years of pay to 12.8.</p>
 
 <p><strong>2. The Italian career and pension.</strong> Italian private-sector
 pay keeps rising into the sixties, by 22% from 45 to 60, where the American
 graduate's falls by 16% (Table 6), and the pension replaces 66% of final pay
 rather than 40%. On its own this takes human capital at 45 from 10.0 years of
-pay to 13.9, and with the euro market as well, to 20.0.</p>
+pay to 13.9, and with the euro market as well, to 19.3.</p>
 
 <p><strong>3. The household each page opens with.</strong> The Italian page
 opens on savings of 1.7 years of pay, 50,000 euro against 30,000 of salary;
@@ -973,10 +994,10 @@ share</caption>
 <thead><tr><th></th><th class="num">The two pages' opening households</th><th class="num">One household, 15 years of pay saved</th></tr></thead>
 <tbody>
 <tr><td>American answer</td><td class="num">38.3%</td><td class="num">21.3%</td></tr>
-<tr><td>1. The euro market, after tax</td><td class="num">+31.0</td><td class="num">+40.8</td></tr>
-<tr><td>2. The Italian career and pension</td><td class="num">+5.1</td><td class="num">+8.6</td></tr>
+<tr><td>1. The euro market, after tax</td><td class="num">+31.0</td><td class="num">+36.2</td></tr>
+<tr><td>2. The Italian career and pension</td><td class="num">+5.1</td><td class="num">+7.8</td></tr>
 <tr><td>3. Savings of 1.7 years of pay rather than 5</td><td class="num">+25.6</td><td class="num">none</td></tr>
-<tr><td>Italian answer</td><td class="num">100.0%</td><td class="num">70.7%</td></tr>
+<tr><td>Italian answer</td><td class="num">100.0%</td><td class="num">65.4%</td></tr>
 </tbody>
 </table>
 </div>
@@ -985,7 +1006,8 @@ share</caption>
 which the changes can be made, six orders for three reasons and two for two:
 the Shapley (1953) value, in the form Shorrocks (2013) sets out for dividing a
 total among causes that interact. Both columns are at age 45 and risk 5; the
-second is the reference household of section 1.</p>
+second is the reference household of section 1. Figures are rounded, so a
+column can be 0.1 off its total.</p>
 
 <p><strong>For one household, four fifths of the extra equity is the market
 and one fifth is the career and pension.</strong> Between the two opening
@@ -1018,13 +1040,16 @@ earnings process sits beside his fitted set rather than inside it, as the flat
 path of his own worked example does. Removing that would mean refitting the
 coefficients on Italian data rather than substituting inputs.</p>
 
-<p><strong>The tax deferral horizon is a choice.</strong> An accumulating fund
-is taxed once, on sale, and how much that is worth depends on when. The model
-fixes it at thirty years to match the maturity of the safe asset. Across ten to
-forty years it is worth 11.7 points of equity share, which makes it the largest
-free parameter in the variant. The household object already carries ages, so it
-can be removed rather than tuned, and <code>docs/further-work.html</code>
-records it as outstanding.</p>
+<p><strong>The tax deferral horizon is an approximation, and its one free
+number is the thirty-year cap.</strong> Selling everything at the expected date
+of death leaves out two things that pull in opposite directions: households
+spend their savings gradually, which brings sales forward and lowers the right
+answer, and the date of death is uncertain, which raises the expected value of
+deferral. Thirty years binds only below about fifty-two, where most answers
+are already 100%, and is cautious there, since a young saver's money stays
+invested for longer. The lifetime is read off the American table for the same
+reason the discount rates are, and Italians live slightly longer, which makes
+the rule cautious again.</p>
 
 <p>Everything else in this document is measured against something outside this
 project, and section 2 is the list.</p>

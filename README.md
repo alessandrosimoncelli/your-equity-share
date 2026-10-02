@@ -296,17 +296,20 @@ result.uncapped_share        # before the no-leverage cap
 result.human_capital         # present value of future earnings
 ```
 
-The Italian variant runs the same way. Its answer is after Italian tax unless
-you ask for the figures before it:
+The Italian variant runs the same way, except that its returns are taxed per
+household. The market file states them before tax; `returns_for` taxes both
+funds on sale at this household's horizon, the sooner of thirty years and its
+expected remaining lifetime:
 
 ```python
 from your_equity_share import ITALY_CALIBRATION
 
-italy = load_market_data("variants/it/market_data.toml")  # apply_tax=False: before tax
+italy = load_market_data("variants/it/market_data.toml")
+mu, rf = italy.returns_for([45])      # the adults' ages; before tax: the fields
 result = recommend(
     Household(500_000, [Person(45, 100_000)], risk_aversion=5),
-    italy.expected_stock_real_return,
-    italy.real_risk_free_rate,
+    mu,
+    rf,
     italy.stock_volatility,
     ITALY_CALIBRATION,
 )

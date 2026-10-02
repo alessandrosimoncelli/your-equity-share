@@ -602,13 +602,19 @@ en = '''row([["&nbsp;&nbsp;the same, as an arithmetic mean", "k"],
           `points for the volatility drag`, "why"]]) +'''
 it = '''row([["&nbsp;&nbsp;lo stesso, dopo le tasse e come media aritmetica", "k"],
          [pct2.format(expected), "n"],
-         ["quello che usa il modello: dopo il 26% sul guadagno alla vendita e lo 0,2% di bollo, più la correzione per la volatilità", "why"]]) +'''
+         [`quello che usa il modello: dopo il 26% sul guadagno, pagato alla vendita tra ${num1.format(years)} anni, e lo 0,2% di bollo l'anno, più la correzione per la volatilità`, "why"]]) +'''
 
 [[t]]
 en = '''row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
          ["30-year TIPS yield, from the Treasury's real yield curve (FRED's DFII30), which is what Choi's guide asks for", "why"]]) +'''
 it = '''row([["Tasso reale privo di rischio, dopo le tasse", "k"], [pct2.format(rf), "n"],
-         ["curva AAA dell'area euro a 30 anni della BCE, deflazionata con l'inflazione di pareggio del Bund€i, dopo il 12,5% sulle cedole e lo 0,2% di bollo", "why"]]) +'''
+         [`curva AAA dell'area euro a 30 anni della BCE, deflazionata con l'inflazione di pareggio del Bund€i, tenuta in un ETF di titoli di Stato ad accumulazione: 12,5% sul guadagno alla vendita tra ${num1.format(years)} anni e 0,2% di bollo l'anno`, "why"]]) +'''
+
+[[t]]
+en = '''      ? row([["Years until the funds are sold", "k"], [num1.format(years), "n"],
+             ["the sooner of 30 years and your expected remaining lifetime (for two adults, the average of the two), from the 2019 United States life table inside Choi's model; Italian law taxes a fund on sale and treats death as a sale", "why"]])'''
+it = '''      ? row([["Anni prima della vendita dei fondi", "k"], [num1.format(years), "n"],
+             ["il minore tra 30 anni e la tua speranza di vita residua (con due adulti, la media delle due), dalla tavola di mortalità statunitense del 2019 dentro il modello di Choi; la legge italiana tassa un fondo alla vendita e considera vendita anche la successione", "why"]])'''
 
 [[t]]
 en = '''row([["Stock volatility", "k"], [pct2.format(sigma), "n"],

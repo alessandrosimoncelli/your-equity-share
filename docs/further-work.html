@@ -353,7 +353,7 @@ methodology, which describes what the model <em>does</em> do.</p>
 recomputed by the tools named beside it. Equity shares are for the default
 household of the methodology: age 45, 1,500,000 of financial wealth, 100,000
 of salary, risk aversion 5, on the Italian configuration, which recommends
-<strong>59.5%</strong> after Italian tax, 64.1% before it.</p>
+<strong>65.4%</strong> after Italian tax, 75.2% before it.</p>
 <hr class="titlerule">
 
 <p>This is the list of things the model deliberately does not do. It exists so
@@ -372,10 +372,8 @@ absent it is because measuring it is itself part of the work.</p>
 points of equity share unless the row says otherwise</caption>
 <thead><tr><th>Item</th><th>Variant</th><th class="num">What it moves</th></tr></thead>
 <tbody>
-<tr><td>Deferral horizon from the household's age</td><td>Italy</td><td class="num">11.7 points</td></tr>
 <tr><td>Pension wrappers, fondi pensione</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Shares rather than funds, loss offset</td><td>Italy</td><td class="num">not yet measured</td></tr>
-<tr><td>Italian human capital calibration</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Italian inflation rather than euro area</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Currency hedging</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Withholding tax leakage</td><td>Italy</td><td class="num">0.34 points of yield</td></tr>
@@ -386,48 +384,47 @@ points of equity share unless the row says otherwise</caption>
 </table>
 </div>
 
-<p class="src">Computed on the current configuration. The two largest are both
-in the tax work, which is the newest part of the model and the least settled.
-Two items left this list in September 2026: showing both expected returns on
-screen, which is now done, and putting both variants on one growth estimator,
-which the horizon change did.</p>
+<p class="src">Computed on the current configuration. Four items have left
+this list: showing both expected returns on screen and putting both variants
+on one growth estimator, in September 2026; the Italian career and pension, on
+1 October; and the tax deferral horizon taken from the household, on 2
+October.</p>
 
 <h2 id="s1">1. The Italian variant</h2>
 
 <h3 id="s1-1">1.1 The tax asymmetry, now applied</h3>
 
-<p><strong>Done on 30 September 2026.</strong> The Italian answer is after tax
-by default: the loader reads the after-tax return and safe rate that
-<code>tools/refresh_italy.py</code> writes into the configuration's market
-section. It moves the default household from 64.1% to 59.5%, 4.6 points, at a
-thirty-year deferral.</p>
+<p><strong>Done on 30 September 2026.</strong> The Italian answer is after tax:
+both funds, the world equity fund at 26% and the government bond fund at 12.5%,
+taxed on sale, worked out per household by
+<code>MarketData.returns_for</code>. It moves the default household from
+75.2% to 65.4%, 9.8 points.</p>
 
-<p>It had been left before tax so that the two variants would differ by country
-and not by method, since United States tax depends on the account a household
-holds the asset in. That concern is kept rather than dropped: a comparison
-between the variants loads the Italian figures with <code>apply_tax=False</code>,
-so the like-for-like number still exists.</p>
+<p>The United States variant stays before tax, because there tax depends on the
+account a household holds the asset in. The market files state the returns
+before tax in both countries, so the like-for-like comparison still exists.</p>
 
 <p><strong>The finding underneath it is worth keeping in view, because it is the
 opposite of what the rates suggest.</strong> It is not the 26% that discourages
-equities. Levy the same 26% on both sides and the recommendation <em>rises</em>
-to 73.1%, because the safe asset is taxed every year on its whole nominal coupon
-while equities defer to sale. What tilts an Italian household towards bonds is
-the <strong>preference given to government paper</strong>, and that preference
-is worth 13.6 points on its own.</p>
+equities. Levy the same 26% on both funds and the recommendation barely moves,
+76.4% against 75.2% before tax. What tilts an Italian household towards bonds
+is the <strong>preference given to government paper</strong>, and that
+preference is worth 11.0 points on its own.</p>
 
 <h3 id="s1-2">1.2 The deferral horizon, taken from the household</h3>
 
-<p>An accumulating fund pays no tax until it is sold, so the equity tax is
-deferred, and how much that is worth depends on for how long. The model fixes it
-at thirty years to match the maturity of the safe asset.</p>
+<p><strong>Done on 2 October 2026.</strong> Both funds are sold at the sooner
+of thirty years and the household's expected remaining lifetime, from the 2019
+United States life table that sits inside Choi's coefficients, now carried in
+<code>mortality.py</code>; for two adults, the average of their two. Italian
+law treats death as a sale for funds, so a household cannot defer the tax for
+longer than it lives. The fixed thirty years it replaced gave a retiree of 75
+the deferral of a forty-year-old, worth 7.5 points of equity share for the
+methodology's example retiree.</p>
 
-<p>That is the one genuinely free parameter the tax work introduced, and it is
-large: <strong>11.7 points across ten to forty years</strong>. The household
-object already carries ages and the model knows its retirement age, so the
-parameter can be removed rather than tuned. Mortality exists only inside
-Choi's fitted coefficients, so a horizon that allows for death would need a
-life table added first.</p>
+<p>What remains is the thirty-year cap and the approximation itself: real
+households spend gradually, which brings sales forward, and do not know their
+date of death, which pushes the other way. Italian methodology, section 11.</p>
 
 <h3 id="s1-3">1.3 Pension wrappers</h3>
 

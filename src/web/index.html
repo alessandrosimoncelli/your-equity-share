@@ -851,6 +851,7 @@ td.why { min-width: 15rem; }
 <script type="module">
 import {
   afterTaxEquityCompound,
+  afterTaxReturns,
   answersDisagree,
   arithmeticFromCompound,
   CGM_CALIBRATION,
@@ -860,6 +861,7 @@ import {
   gammaFromCertaintyEquivalent,
   offerStep,
   compoundFromArithmetic,
+  deferralYears,
   projectEarnings,
   logPremium,
   makeHousehold,
@@ -887,8 +889,8 @@ const VARIANT = {
   group: ",",
   decimal: ".",
   calibration: CGM_CALIBRATION,
-  // Whether the market file's returns are after tax, as Italy's are, so a
-  // return typed on the slider has to be taxed the same way.
+  // Whether the returns are taxed, as Italy's are. The market file states
+  // them before tax, and the page taxes them at the household's horizon.
   taxed: false,
 };
 
@@ -1334,25 +1336,33 @@ function readInputs() {
       : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed.`;
   }
   const wealth = Math.max(1000, nonNegative($("wealth"), 1000));
+  // Where returns are taxed, both funds are taxed on sale, and the sale comes
+  // at the sooner of thirty years and the household's expected lifetime
+  // (taxes.py), so what it keeps is worked out here, for these adults.
+  const years = VARIANT.taxed ? deferralYears(adults.map((p) => p.currentAge)) : null;
+  const [kept, rf] = VARIANT.taxed
+    ? afterTaxReturns(market.expected_stock_real_return, market.real_risk_free,
+                      market.stock_volatility, market.expected_inflation, years)
+    : [market.expected_stock_real_return, market.real_risk_free];
   // The slider is a COMPOUND return, because that is how every published
   // forecast is quoted and so what a reader will type. The model takes an
   // arithmetic mean, so convert here rather than letting someone hand over a
   // number 1.5 points lower than the one they meant.
   const expected = $("override").checked
-    ? modelReturn(Number($("mu").value))
-    : market.expected_stock_real_return;
+    ? modelReturn(Number($("mu").value), years)
+    : kept;
 
-  return { household: makeHousehold(wealth, adults, gamma), gamma, expected, wealth };
+  return { household: makeHousehold(wealth, adults, gamma), gamma, expected, rf, years, wealth };
 }
 
 /**
  * The return the model reads, from a compound return as forecasts publish it.
  * Where the variant is taxed it first becomes what a saver keeps after tax,
- * as taxes.py computes it, at the market file's inflation and horizon.
+ * as taxes.py computes it, for funds sold after `years`.
  */
-function modelReturn(compound) {
+function modelReturn(compound, years) {
   const kept = VARIANT.taxed
-    ? afterTaxEquityCompound(compound, market.expected_inflation, market.tax_deferral_years)
+    ? afterTaxEquityCompound(compound, market.expected_inflation, years)
     : compound;
   return arithmeticFromCompound(kept, market.stock_volatility);
 }
@@ -1378,8 +1388,7 @@ function row(cells) {
 // --- render -----------------------------------------------------------------
 
 function render() {
-  const { household, gamma, expected } = readInputs();
-  const rf = market.real_risk_free;
+  const { household, gamma, expected, rf, years } = readInputs();
   const sigma = market.stock_volatility;
   const r = recommend(household, expected, rf, sigma, VARIANT.calibration);
 
@@ -1455,7 +1464,7 @@ function render() {
   // mean, one conversion later.
   const sens = [];
   for (let g = 0.0; g <= 0.0801; g += 0.001) {
-    const mu = modelReturn(g);
+    const mu = modelReturn(g, years);
     if (mu <= rf) continue;
     sens.push({ x: g, y: recommend(household, mu, rf, sigma, VARIANT.calibration).equityShare });
   }
@@ -1554,6 +1563,10 @@ function render() {
     globalRow(market) +
     row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
          ["30-year TIPS yield, from the Treasury's real yield curve (FRED's DFII30), which is what Choi's guide asks for", "why"]]) +
+    (VARIANT.taxed
+      ? row([["Years until the funds are sold", "k"], [num1.format(years), "n"],
+             ["the sooner of 30 years and your expected remaining lifetime (for two adults, the average of the two), from the 2019 United States life table inside Choi's model; Italian law taxes a fund on sale and treats death as a sale", "why"]])
+      : "") +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +
     row([["Your risk aversion", "k"], [num1.format(gamma), "n"], [riskSource(), "why"]]) +

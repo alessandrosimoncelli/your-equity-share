@@ -5,39 +5,47 @@ is not a household's circumstance, like an American choosing between a taxable
 account and an IRA. It is a fixed feature of the law that applies to every
 resident, it applies to exactly the two assets this model chooses between, and
 it favours the safe one. So it belongs in the model rather than in a footnote
-telling the reader to adjust the numbers themselves.
+telling the reader to adjust the numbers themselves. Choi, Liu and Liu ask for
+it too: their model has no tax in it, "so all variables are implicitly
+after-tax where relevant".
 
 It lives here rather than in variants/it/market_data.toml for the same reason
 ITALY_CALIBRATION lives in human_capital.py: a tax rate is not market data. It
 does not go stale in days, no provider publishes it, and refreshing the market
 figures must not silently rewrite it.
 
-FOUR THINGS ARE MODELLED, and the fourth is the one that surprises.
+BOTH ASSETS ARE ACCUMULATING FUNDS, which is how an Italian household holds
+them: a world equity ETF and a euro government bond ETF that reinvest what they
+earn. FIVE THINGS ARE MODELLED.
 
-RATES. 12.5% on interest and capital gains from Italian government bonds and
-from the government bonds of white-list states, which includes Germany, so the
-safe asset in this variant gets the low rate. 26% on everything else, which
-includes every equity fund. Both are flat withholding rates, not marginal
-income tax, so they do not depend on the household's income.
+RATES. 26% on the equity fund. 12.5% on the bond fund, because a fund's income
+is taxed at 12.5% in proportion to what it holds in government bonds of Italy
+and of white-list states (Agenzia delle Entrate, Circolare 19/E of 2014,
+section 5), and the safe asset here is AAA euro area government bonds, all of
+them white-listed. Both are flat withholding rates, not marginal income tax,
+so they do not depend on the household's income.
 
-TAX IS ON NOMINAL INCOME, so inflation is taxed. This matters more than the
-rate difference at low real yields. A 3.78% nominal yield against 2.04%
-expected inflation is a 1.71% real yield, but the 12.5% is levied on the whole
-3.78%, which is 0.47 points, and that comes out of the 1.71%. Better than a
-quarter of the real yield is tax on inflation. Both sides are therefore grossed
-up to nominal, taxed, and deflated back, rather than having a rate applied to a
-real return.
+TAX IS ON NOMINAL GAINS, so inflation is taxed. Both sides are grossed up to
+nominal, taxed, and deflated back, rather than having a rate applied to a real
+return.
 
 THE 0.2% STAMP DUTY, imposta di bollo, is charged every year on the market
-value of financial assets, on both sides. It is not an income tax and it is
-levied whether or not anything was earned, so it is a straight annual drag.
+value of both funds. It is not an income tax and it is levied whether or not
+anything was earned, so it is a straight annual drag.
 
-DEFERRAL, which pulls the other way and is the reason the 26% hurts less than
-it looks. An accumulating fund distributes nothing, so nothing is taxed until
-the units are sold. Over a lifetime the untaxed compounding is worth a great
-deal: at these figures over thirty years it recovers roughly three quarters of
-a point a year, so the effective rate on equities is well under 26%. The safe
-asset gets none of this, because its coupons are taxed as they arrive.
+DEFERRAL. An accumulating fund distributes nothing, so nothing is taxed until
+the units are sold, and the untaxed compounding is worth more the longer the
+sale is put off. Both funds get it, at their own rates.
+
+WHEN THE SALE HAPPENS, which is the one thing the model has to assume. Italian
+law treats death as a sale for funds: the gain is taxed when the units pass to
+the heirs (Agenzia delle Entrate, Circolare 19/E of 2013, section 2.4). So the
+tax can be put off at most for the rest of a life, and the model takes the
+sooner of thirty years and the household's expected remaining lifetime, from
+the 2019 life table inside Choi's coefficients; for two adults, the average of
+their two. Thirty is the maturity of the safe asset Choi's guide asks for. It
+binds below about fifty, where most answers are already 100%, and is cautious
+there, since a young saver's money stays invested for longer.
 
 AND ONE THING IS DELIBERATELY NOT MODELLED, which is the interesting part.
 
@@ -61,14 +69,23 @@ where gains are redditi diversi too and losses do offset.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Iterable
+
+from your_equity_share.expected_return import (
+    arithmetic_from_compound,
+    compound_from_arithmetic,
+)
+from your_equity_share.mortality import remaining_life_expectancy
 
 __all__ = [
     "TaxRegime",
     "ITALY_TAX",
     "NO_TAX",
     "TAX_DEFERRAL_YEARS",
-    "after_tax_safe_rate",
+    "deferral_years",
     "after_tax_equity_compound",
+    "after_tax_bond_fund",
+    "after_tax_returns",
 ]
 
 
@@ -103,9 +120,9 @@ ITALY_TAX = TaxRegime(
     label="Italy",
 )
 
-# The horizon the equity tax is deferred over: thirty years, to match the
-# maturity of the safe asset, so both sides are quoted at one horizon. The
-# Italian refresh, the build and the Italian page all read it from here.
+# The longest the tax is put off: thirty years, the maturity of the safe asset
+# Choi's guide asks for. A household with less life expected than that sells
+# sooner; see deferral_years.
 TAX_DEFERRAL_YEARS = 30.0
 
 # The comparison case. Not "an American household", which pays plenty of tax,
@@ -113,46 +130,74 @@ TAX_DEFERRAL_YEARS = 30.0
 NO_TAX = TaxRegime(0.0, 0.0, 0.0, "none")
 
 
-def after_tax_safe_rate(nominal_yield: float, expected_inflation: float,
-                        regime: TaxRegime = ITALY_TAX) -> float:
-    """The real yield left after tax on the coupon and the stamp duty.
+def deferral_years(ages: Iterable[int]) -> float:
+    """How long the household's funds stay unsold: the sooner of thirty years
+    and the expected remaining lifetime, averaged over the adults.
 
-    Coupons are taxed as they arrive, so there is no deferral on this side.
-    The tax falls on the nominal coupon, which is why the answer is not simply
-    the real yield times one minus the rate: the part of the coupon that only
-    compensates for inflation is taxed as though it were income.
+    Averaged because Italian law taxes each adult's units at that adult's own
+    death, so a couple's savings are sold in two halves.
     """
-    after_tax_nominal = nominal_yield * (1.0 - regime.government_bond_rate)
-    after_levy = after_tax_nominal - regime.wealth_tax_rate
-    return (1.0 + after_levy) / (1.0 + expected_inflation) - 1.0
+    lifetimes = [remaining_life_expectancy(age) for age in ages]
+    if not lifetimes:
+        raise ValueError("a household needs at least one adult")
+    return min(TAX_DEFERRAL_YEARS, sum(lifetimes) / len(lifetimes))
+
+
+def _deferred(compound_real: float, expected_inflation: float, years: float,
+              rate: float, levy: float) -> float:
+    """The real compound return of a fund taxed once, on sale after `years`.
+
+    The gross return compounds untaxed and the state takes its share of the
+    whole nominal gain at the end, which is worth far more than the same rate
+    applied every year. The stamp duty is charged annually on the value, so it
+    is a drag on the growth rate rather than a share of the final gain.
+    """
+    if years <= 0:
+        raise ValueError(f"years must be positive, got {years}")
+    nominal = (1.0 + compound_real) * (1.0 + expected_inflation) - 1.0
+    after_levy = (1.0 + nominal) * (1.0 - levy) - 1.0
+    gross_multiple = (1.0 + after_levy) ** years
+    taxed_multiple = 1.0 + (1.0 - rate) * (gross_multiple - 1.0)
+    real_multiple = taxed_multiple / (1.0 + expected_inflation) ** years
+    return real_multiple ** (1.0 / years) - 1.0
 
 
 def after_tax_equity_compound(compound_real: float, expected_inflation: float,
                               years: float,
                               regime: TaxRegime = ITALY_TAX) -> float:
-    """The real compound return left after tax on sale and the stamp duty.
-
-    An accumulating fund is taxed once, on the whole nominal gain, when it is
-    sold. So the gross return compounds untaxed for `years` and the state takes
-    its share at the end, which is worth far more than a lower rate applied
-    every year would be.
-
-    The stamp duty is not deferred: it is charged annually on the value, so it
-    is taken as a drag on the growth rate rather than out of the final gain.
+    """The real compound return the equity fund keeps after tax and stamp duty.
 
     Returns a compound rate. The model takes an arithmetic mean, so callers
     convert with expected_return.arithmetic_from_compound afterwards, at the
     same volatility as before: see the module docstring for why tax does not
     reduce the volatility under Italian rules.
     """
-    if years <= 0:
-        raise ValueError(f"years must be positive, got {years}")
+    return _deferred(compound_real, expected_inflation, years,
+                     regime.other_financial_income_rate, regime.wealth_tax_rate)
 
-    nominal = (1.0 + compound_real) * (1.0 + expected_inflation) - 1.0
-    after_levy = (1.0 + nominal) * (1.0 - regime.wealth_tax_rate) - 1.0
 
-    gross_multiple = (1.0 + after_levy) ** years
-    taxed_multiple = 1.0 + (1.0 - regime.other_financial_income_rate) * (
-        gross_multiple - 1.0)
-    real_multiple = taxed_multiple / (1.0 + expected_inflation) ** years
-    return real_multiple ** (1.0 / years) - 1.0
+def after_tax_bond_fund(real_yield: float, expected_inflation: float,
+                        years: float, regime: TaxRegime = ITALY_TAX) -> float:
+    """The real return the government bond fund keeps after tax and stamp duty.
+
+    The safe asset has no volatility in this model, so its compound and
+    arithmetic returns are the same number and no conversion follows.
+    """
+    return _deferred(real_yield, expected_inflation, years,
+                     regime.government_bond_rate, regime.wealth_tax_rate)
+
+
+def after_tax_returns(expected_return: float, real_risk_free: float,
+                      volatility: float, expected_inflation: float,
+                      years: float,
+                      regime: TaxRegime = ITALY_TAX) -> tuple[float, float]:
+    """The pair the model reads, after tax, for funds sold after `years`.
+
+    `expected_return` is the arithmetic mean before tax, as the market file
+    states it. It is taxed as a compound return, because tax falls on what the
+    money actually grows to, and converted back at the same volatility.
+    """
+    compound = compound_from_arithmetic(expected_return, volatility)
+    kept = after_tax_equity_compound(compound, expected_inflation, years, regime)
+    return (arithmetic_from_compound(kept, volatility),
+            after_tax_bond_fund(real_risk_free, expected_inflation, years, regime))
