@@ -631,7 +631,7 @@ def main(argv: list[str]) -> int:
     print("  are quoted at one horizon. Deriving it from the household's own")
     print("  age instead would remove the choice, and is the obvious next")
     print("  improvement: across ten to forty years it moves the drift by")
-    print(f"  {(drifts[40.0] - drifts[10.0]) * 100:.2f} points. Section 10 of the "
+    print(f"  {(drifts[40.0] - drifts[10.0]) * 100:.2f} points. Section 11 of the "
           f"Italian methodology gives")
     print("  what that is worth in equity share for its example household.")
 

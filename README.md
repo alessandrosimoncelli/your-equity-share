@@ -26,7 +26,7 @@ Italian tax, for an Italian private-sector employee: Daminato and Padula's
 (2024) earnings process, estimated on the Bank of Italy's household survey,
 and the Italian Treasury's 66% pension. What neither variant changes is the
 mortality table, American in both, because it sits inside the numerical
-solution Choi fitted his coefficients to. Section 10 of the Italian
+solution Choi fitted his coefficients to. Section 11 of the Italian
 methodology lists what that leaves American.
 
 In the American variant, following Choi, the earnings risk is the average for

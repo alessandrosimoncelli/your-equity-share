@@ -103,6 +103,21 @@ def test_the_italian_page_is_written_from_the_english_one(built: Path) -> None:
     assert "Devi spendere tutto e non puoi chiedere prestiti." in page
 
 
+def test_the_italian_partner_opens_on_the_first_adult_s_salary(built: Path) -> None:
+    """A second adult ticked on the Italian page earns what the first one does.
+
+    The English page's 80,000 sits beside a first adult on 100,000. Carried
+    unchanged into a page that opens on 30,000, it gave the partner nearly
+    three times the first adult's pay.
+    """
+    import re
+
+    page = (built / "it" / "index.html").read_text(encoding="utf-8")
+    first = re.search(r'id="wage" value="(\d+)"', page).group(1)
+    partner = re.search(r'id="partner-wage" value="(\d+)"', page).group(1)
+    assert partner == first
+
+
 def test_the_italian_page_has_no_english_left(built: Path) -> None:
     """Every string a visitor can see is translated. Comments stay English;
     they are for whoever edits the source, which is the English page."""

@@ -312,7 +312,7 @@ h4 {
 
 <style>
 /* Two columns. The American document needs a table index because it has
-   thirty tables; this one has seven. */
+   thirty tables; this one has nine. */
 @media (min-width: 88rem) {
   .doc { grid-template-columns: 15rem minmax(0, 46rem); }
 }
@@ -333,10 +333,13 @@ h4 {
   <li><a href="#s4-4"><span class="tno">4.4</span>Is the pairing sound</a></li>
   <li><a href="#s5"><span class="tno">5</span>The safe asset</a></li>
   <li><a href="#s6"><span class="tno">6</span>Volatility</a></li>
-  <li><a href="#s7"><span class="tno">7</span>The pension</a></li>
+  <li><a href="#s7"><span class="tno">7</span>The career and the pension</a></li>
+  <li><a href="#s7-1"><span class="tno">7.1</span>The career</a></li>
+  <li><a href="#s7-2"><span class="tno">7.2</span>The pension</a></li>
   <li><a href="#s8"><span class="tno">8</span>Tax</a></li>
   <li><a href="#s9"><span class="tno">9</span>Currency</a></li>
-  <li><a href="#s10"><span class="tno">10</span>What is not validated</a></li>
+  <li><a href="#s10"><span class="tno">10</span>Why the answer is so often 100%</a></li>
+  <li><a href="#s11"><span class="tno">11</span>What is not validated</a></li>
 </ol>
 </nav>
 
@@ -348,8 +351,9 @@ Merton (1969), Choi, Liu and Liu (2025), the human capital layer or the
 derivation of the equity share. Those are shared between the two variants and
 are argued there.</p>
 <p class="docmeta"><strong>Every market figure here is as of 8 September
-2026</strong> and will have moved. The Python tool recomputes them from the
-market data it ships with; the web page runs the American variant only.</p>
+2026</strong> and will have moved. The Python tool and the Italian page
+recompute them from the market data they ship with, refreshed every
+Monday.</p>
 <hr class="titlerule">
 
 <h2 id="s1">1. What this document is</h2>
@@ -377,7 +381,7 @@ fix to the page reaches both.</p>
 
 <p><strong>Every number below is checked against something outside this
 project</strong>, and section 2 is that list in one table. Where a figure
-cannot be checked, section 10 says so rather than dressing it up.</p>
+cannot be checked, section 11 says so rather than dressing it up.</p>
 
 <h2 id="s2">2. Every number, and what checks it</h2>
 
@@ -894,7 +898,112 @@ currency losses for long stretches that nothing in this model represents.</p>
 explained by sticky prices, which is the puzzle in the title. It is cited here
 as the measured persistence, not as an endorsement that parity holds quickly.</p>
 
-<h2 id="s10">10. What is not validated</h2>
+<h2 id="s10">10. Why the answer is so often 100%</h2>
+
+<p><strong>With the default risk answer, the Italian page puts all of the
+savings in stocks until they reach 6.4 to 9.9 years of after-tax pay</strong>,
+depending on age, against 1.0 to 2.8 years on the American page (Table 8).
+That is the model's answer and not a fault, and this section shows where it
+comes from.</p>
+
+<p><strong>How the answer is formed.</strong> The model counts two kinds of
+wealth: the savings typed in, and future pay and pension valued today, which
+Choi, Liu and Liu describe as "akin to a fixed income holding". It sets the
+share of the two together to hold in stocks, Merton's share, and then asks how
+much of the savings must be in stocks to reach it. When future pay is large and
+savings are small, all of the savings is not enough, and the page stops at 100%
+because it does not borrow.</p>
+
+<p><strong>The household the Italian page opens with</strong> is 45 years old,
+earns 30,000 euro a year after tax, has 50,000 saved and answers 5 for risk.
+Its future pay and pension are worth 599,103 euro, 20.0 years of pay. Merton's
+share of the two together is 30.3%, which is 196,836 euro of stocks against
+50,000 to invest. Unconstrained, the model would hold 394% of the savings in
+stocks, borrowing the rest.</p>
+
+<div class="tablewrap" id="t8">
+<table>
+<caption>Table 8. Savings, in years of after-tax pay, at which the answer
+falls below 100%</caption>
+<thead><tr><th>Age</th><th class="num">Risk 3</th><th class="num">Risk 5, the default</th><th class="num">Risk 8</th><th class="num">American page, risk 5</th></tr></thead>
+<tbody>
+<tr><td>25</td><td class="num">32.4</td><td class="num">9.9</td><td class="num">3.5</td><td class="num">2.8</td></tr>
+<tr><td>35</td><td class="num">30.0</td><td class="num">9.6</td><td class="num">3.6</td><td class="num">1.8</td></tr>
+<tr><td>45</td><td class="num">25.4</td><td class="num">8.7</td><td class="num">3.5</td><td class="num">1.5</td></tr>
+<tr><td>55</td><td class="num">20.2</td><td class="num">7.5</td><td class="num">3.3</td><td class="num">1.3</td></tr>
+<tr><td>65</td><td class="num">15.3</td><td class="num">6.4</td><td class="num">3.4</td><td class="num">1.0</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">Below these savings the page shows 100%. Each figure is
+Merton's share times future pay and pension, divided by one minus Merton's
+share and by a year's pay. The Italian columns are on this document's
+snapshot, the American one on the American methodology's of 3 September.</p>
+
+<p><strong>Three things put the Italian page there far more often than the
+American one.</strong></p>
+
+<p><strong>1. The euro market, after tax.</strong> Equities beat the safe
+asset by a drift of 2.93 points a year after Italian tax, at the thirty-year
+deferral of section 8, against 1.89 in the United States, because the American
+safe rate is high, 2.96% real on 30-year TIPS, and the euro one is low, 0.78%
+after tax. The world fund also swings less, 13.89% a year against 17.18% for
+the S&amp;P 500, and Merton's share falls with the square of volatility. At
+risk 5 the share is 30.3% in Italy against 12.8%. The same low rates value
+future pay more highly through Choi's discount rates: on its own, the euro
+market takes human capital at 45 from 10.0 years of pay to 13.1.</p>
+
+<p><strong>2. The Italian career and pension.</strong> Italian private-sector
+pay keeps rising into the sixties, by 22% from 45 to 60, where the American
+graduate's falls by 16% (Table 6), and the pension replaces 66% of final pay
+rather than 40%. On its own this takes human capital at 45 from 10.0 years of
+pay to 13.9, and with the euro market as well, to 20.0.</p>
+
+<p><strong>3. The household each page opens with.</strong> The Italian page
+opens on savings of 1.7 years of pay, 50,000 euro against 30,000 of salary;
+the American page on 5 years, 500,000 dollars against 100,000. This changes
+nothing in the model, only where in Table 8 the first answer a visitor sees
+falls.</p>
+
+<div class="tablewrap" id="t9">
+<table>
+<caption>Table 9. Where the extra equity comes from, in points of equity
+share</caption>
+<thead><tr><th></th><th class="num">The two pages' opening households</th><th class="num">One household, 15 years of pay saved</th></tr></thead>
+<tbody>
+<tr><td>American answer</td><td class="num">38.3%</td><td class="num">21.3%</td></tr>
+<tr><td>1. The euro market, after tax</td><td class="num">+31.0</td><td class="num">+40.8</td></tr>
+<tr><td>2. The Italian career and pension</td><td class="num">+5.1</td><td class="num">+8.6</td></tr>
+<tr><td>3. Savings of 1.7 years of pay rather than 5</td><td class="num">+25.6</td><td class="num">none</td></tr>
+<tr><td>Italian answer</td><td class="num">100.0%</td><td class="num">70.7%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="src">Each reason's figure is its average effect over every order in
+which the changes can be made, six orders for three reasons and two for two:
+the Shapley (1953) value, in the form Shorrocks (2013) sets out for dividing a
+total among causes that interact. Both columns are at age 45 and risk 5; the
+second is the reference household of section 1.</p>
+
+<p><strong>For one household, four fifths of the extra equity is the market
+and one fifth is the career and pension.</strong> Between the two opening
+households the market is still the largest part, but the cap hides some of
+every effect: the euro market alone already takes the American opening
+household to 100%, so whatever comes after it shows nothing.</p>
+
+<p><strong>It is the answer the literature gives.</strong> Cocco, Gomes and
+Maenhout (2005) find the optimal equity share highest early in working life,
+because labour income stands in for safe assets, and falling towards Merton's
+share as savings grow. Choi, Liu and Liu's own worked example, an American
+graduate with risk aversion 7 and a log equity premium of 2%, holds 100% at
+45 until savings reach 1.6 times permanent income, and is not down to 55%
+until 3.8 times (section 1.3 of their paper). The Italian page has the same
+shape further out because its premium is wider and its future pay larger,
+reasons 1 and 2, not because it does anything differently.</p>
+
+<h2 id="s11">11. What is not validated</h2>
 
 <p>Two things in this variant have no external check, and neither is claimed as
 a validated number. They are declared deviations, and they are listed here so a

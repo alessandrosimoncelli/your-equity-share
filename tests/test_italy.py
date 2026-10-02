@@ -693,3 +693,205 @@ def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
                           market.real_risk_free_rate, market.stock_volatility,
                           ITALY_CALIBRATION).equity_share
         assert f"{share:.1%}" in doc, f"{share:.1%}"
+
+
+# --- section 10, why the answer is so often 100% ----------------------------
+#
+# Every figure in the section is recomputed from the two snapshots the
+# documents are written against, and the households the pages open with are
+# read from the pages' own source. A change to a default, a calibration or the
+# market data that is not carried into the prose fails here.
+
+US_PAGE = ROOT / "src" / "web" / "index.html"
+IT_TABLE = ROOT / "src" / "web" / "it" / "translation.toml"
+
+
+def _snapshots() -> dict:
+    it = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
+    us = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
+    return {name: (m.expected_stock_real_return, m.real_risk_free_rate,
+                   m.stock_volatility) for name, m in (("it", it), ("us", us))}
+
+
+def _opening(page: str) -> tuple[int, float, float, float]:
+    """Age, salary, savings and risk answer a page opens with.
+
+    The Italian salary and savings are whatever the translation table swaps
+    in, because that is where the build takes them from; everything else is
+    the English page's.
+    """
+    import re
+
+    source = US_PAGE.read_text(encoding="utf-8")
+    age = int(re.search(r'id="age"[^>]*value="(\d+)"', source).group(1))
+    gamma = float(re.search(r"const DEFAULT_GAMMA = ([\d.]+);", source).group(1))
+    if page == "it":
+        table = IT_TABLE.read_text(encoding="utf-8")
+        pay = re.search(r"it = '''id=\"wage\" value=\"(\d+)\">'''", table)
+        savings = re.search(r"it = '''id=\"wealth\" value=\"(\d+)\">'''", table)
+    else:
+        pay = re.search(r'id="wage" value="(\d+)"', source)
+        savings = re.search(r'id="wealth" value="(\d+)"', source)
+    return age, float(pay.group(1)), float(savings.group(1)), gamma
+
+
+def _share(market, calibration, age, pay, savings, gamma) -> float:
+    return recommend(Household(savings, [Person(age, pay)], gamma), *market,
+                     calibration).equity_share
+
+
+def _shapley(players, value) -> dict:
+    """Each player's average marginal contribution over every order."""
+    import itertools
+
+    totals = dict.fromkeys(players, 0.0)
+    orders = list(itertools.permutations(players))
+    for order in orders:
+        have: frozenset = frozenset()
+        for player in order:
+            totals[player] += value(have | {player}) - value(have)
+            have = have | {player}
+    return {player: total / len(orders) for player, total in totals.items()}
+
+
+def test_the_100_percent_table_is_the_model_s() -> None:
+    """Table 8: the savings, in years of pay, below which the answer is 100%.
+
+    Merton's share b of total wealth needs b * (H + W) of stocks, which all
+    of W covers only once W reaches b * H / (1 - b).
+    """
+    doc = _doc()
+    markets = _snapshots()
+
+    def threshold(market, calibration, age, gamma):
+        r = recommend(Household(1.0, [Person(age, 1.0)], gamma), *market,
+                      calibration)
+        b = r.merton_share
+        return b * r.human_capital / (1.0 - b)
+
+    default_column, american_column = [], []
+    for age in (25, 35, 45, 55, 65):
+        cells = [threshold(markets["it"], ITALY_CALIBRATION, age, g)
+                 for g in (3.0, 5.0, 8.0)]
+        american = threshold(markets["us"], CGM_CALIBRATION, age, 5.0)
+        default_column.append(cells[1])
+        american_column.append(american)
+        row = (f'<tr><td>{age}</td>'
+               + "".join(f'<td class="num">{c:.1f}</td>' for c in cells)
+               + f'<td class="num">{american:.1f}</td></tr>')
+        assert row in doc, row
+    for column in (default_column, american_column):
+        stated = f"{min(column):.1f} to {max(column):.1f} years"
+        assert stated in doc, stated
+
+
+def test_the_opening_household_is_the_model_s() -> None:
+    """The household the Italian page opens with, figure by figure."""
+    doc = _doc()
+    age, pay, savings, gamma = _opening("it")
+    r = recommend(Household(savings, [Person(age, pay)], gamma),
+                  *_snapshots()["it"], ITALY_CALIBRATION)
+    assert r.equity_share == 1.0, "the section explains a 100% answer"
+    stocks = r.merton_share * (r.human_capital + savings)
+    for stated in (
+        f"is {age} years old, earns {pay:,.0f} euro a year after tax, has "
+        f"{savings:,.0f} saved and answers {gamma:.0f} for risk",
+        f"worth {r.human_capital:,.0f} euro, {r.human_capital / pay:.1f} years of pay",
+        f"together is {r.merton_share:.1%}, which is {stocks:,.0f} euro of stocks "
+        f"against {savings:,.0f} to invest",
+        f"would hold {r.uncapped_share:.0%} of the savings",
+    ):
+        assert stated in doc, stated
+
+
+def test_the_three_reasons_quote_the_model() -> None:
+    """The market, career and savings figures the three reasons cite."""
+    doc = _doc()
+    markets = _snapshots()
+    it, us = markets["it"], markets["us"]
+
+    def drift(m):
+        return math.log(1 + m[0]) - math.log(1 + m[1])
+
+    def merton(m):
+        return recommend(Household(1.0, [Person(45, 1.0)], 5.0), *m,
+                         ITALY_CALIBRATION).merton_share
+
+    def years(m, calibration):
+        return recommend(Household(1.0, [Person(45, 1.0)], 5.0), *m,
+                         calibration).human_capital
+
+    _, it_pay, it_savings, _ = _opening("it")
+    _, us_pay, us_savings, _ = _opening("us")
+    for stated in (
+        f"drift of {drift(it) * 100:.2f} points a year after Italian tax",
+        f"against {drift(us) * 100:.2f} in the United States",
+        f"{us[1]:.2%} real on 30-year TIPS",
+        f"low, {it[1]:.2%} after tax",
+        f"{it[2]:.2%} a year against {us[2]:.2%} for the S&amp;P 500",
+        f"the share is {merton(it):.1%} in Italy against {merton(us):.1%}",
+        f"human capital at 45 from {years(us, CGM_CALIBRATION):.1f} years of pay "
+        f"to {years(it, CGM_CALIBRATION):.1f}",
+        f"human capital at 45 from {years(us, CGM_CALIBRATION):.1f} years of pay "
+        f"to {years(us, ITALY_CALIBRATION):.1f}, and with the euro market as "
+        f"well, to {years(it, ITALY_CALIBRATION):.1f}",
+        f"opens on savings of {it_savings / it_pay:.1f} years of pay, "
+        f"{it_savings:,.0f} euro against {it_pay:,.0f} of salary",
+        f"the American page on {us_savings / us_pay:.0f} years, "
+        f"{us_savings:,.0f} dollars against {us_pay:,.0f}",
+    ):
+        assert stated in doc, stated
+
+
+def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
+    """Table 9, by the Shapley value, for both columns.
+
+    The first column moves the American opening household to the Italian one
+    in three steps; the second moves the reference household of section 1,
+    which saves the same in both countries, in two.
+    """
+    doc = _doc()
+    markets = _snapshots()
+    age, us_pay, us_savings, gamma = _opening("us")
+    _, it_pay, it_savings, _ = _opening("it")
+
+    def opening(have):
+        savings = it_savings / it_pay if "savings" in have else us_savings / us_pay
+        return _share(markets["it" if "market" in have else "us"],
+                      ITALY_CALIBRATION if "career" in have else CGM_CALIBRATION,
+                      age, 1.0, savings, gamma)
+
+    def reference(have):
+        return _share(markets["it" if "market" in have else "us"],
+                      ITALY_CALIBRATION if "career" in have else CGM_CALIBRATION,
+                      45, 100_000.0, 1_500_000.0, 5.0)
+
+    everything = frozenset({"market", "career", "savings"})
+    italian = frozenset({"market", "career"})
+    first = _shapley(("market", "career", "savings"), opening)
+    second = _shapley(("market", "career"), reference)
+    rows = (
+        ("American answer", f"{opening(frozenset()):.1%}",
+         f"{reference(frozenset()):.1%}"),
+        ("1. The euro market, after tax", f"{first['market'] * 100:+.1f}",
+         f"{second['market'] * 100:+.1f}"),
+        ("2. The Italian career and pension", f"{first['career'] * 100:+.1f}",
+         f"{second['career'] * 100:+.1f}"),
+        (f"3. Savings of {it_savings / it_pay:.1f} years of pay rather than "
+         f"{us_savings / us_pay:.0f}", f"{first['savings'] * 100:+.1f}", "none"),
+        ("Italian answer", f"{opening(everything):.1%}",
+         f"{reference(italian):.1%}"),
+    )
+    for label, a, b in rows:
+        row = (f'<tr><td>{label}</td><td class="num">{a}</td>'
+               f'<td class="num">{b}</td></tr>')
+        assert row in doc, row
+
+    # What the prose says about them.
+    assert opening(frozenset({"market"})) == 1.0
+    assert round(5 * second["market"] / sum(second.values())) == 4
+    # The rounded rows add up to the rounded totals, so a reader's sum works.
+    for split, start, end in ((first, opening(frozenset()), opening(everything)),
+                              (second, reference(frozenset()), reference(italian))):
+        shown = sum(round(v * 100, 1) for v in split.values())
+        assert abs(shown - (round(end * 100, 1) - round(start * 100, 1))) < 0.05

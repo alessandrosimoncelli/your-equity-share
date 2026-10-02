@@ -205,6 +205,10 @@ en = '''for="partner-wage">Their after-tax annual wage</label>'''
 it = '''for="partner-wage">Il suo stipendio annuo netto</label>'''
 
 [[t]]
+en = '''id="partner-wage" value="80000">'''
+it = '''id="partner-wage" value="30000">'''
+
+[[t]]
 en = '''One line per year, under the headings
           below. Edit the years that differ and leave the rest; a year you delete
           keeps its projected value. Commas, dollar signs and spaces are all
