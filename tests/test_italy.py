@@ -56,7 +56,7 @@ def test_the_italian_calibration_changes_the_career_and_the_pension() -> None:
         if getattr(CGM_CALIBRATION, f.name) != getattr(ITALY_CALIBRATION, f.name)
     }
     assert differences == {"benefit_replacement_rate", "permanent_shock_volatility",
-                           "temporary_shock_volatility", "age_profile"}
+                           "temporary_shock_volatility", "age_profile", "benefit_cap"}
 
 
 def test_the_italian_career_is_daminato_and_padula_s() -> None:
@@ -193,31 +193,56 @@ def test_the_growth_source_says_what_checks_it(italy) -> None:
     assert "2.7%" in source and "2.6%" in source
 
 
-def test_our_measured_yield_agrees_with_the_one_being_used(italy) -> None:
-    """AQR quote 1.6% for this index, and our measurement has to land near it.
+def test_our_measured_yield_agrees_with_aqr_s() -> None:
+    """AQR quote 1.6% gross for this index at the end of 2025, and our gross
+    measurement at the snapshot has to land near it.
 
     Not a tolerance picked to pass: a global dividend yield is a slow and
     heavily reported quantity, so a measurement a third of a point from the
-    published figure would mean either that the gross-minus-price construction
-    is wrong or that the market has moved away from the number in use. Both
-    are worth knowing and neither is quiet.
+    published figure at nearly the same date would mean the gross-minus-price
+    construction is wrong. Checked on the snapshot, not the weekly data: a
+    20% fall in world equities lifts the yield past the band, which is the
+    market moving, not the construction failing, and the refresh prints the
+    distance from AQR every week.
     """
-    measured = float(italy.provenance["dividend_yield_measured"])
-    assert measured == pytest.approx(float(italy.provenance["dividend_yield"]))
+    snapshot = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
+    measured = float(snapshot.provenance["dividend_yield_measured"])
     assert measured == pytest.approx(0.016, abs=0.0033)
 
 
-def test_the_withholding_tax_is_recorded_rather_than_netted_off(italy) -> None:
-    """The yield is gross, so the tax a euro investor pays has to stay visible.
+def test_the_weekly_yield_is_plausible(italy) -> None:
+    """Only a wide band on the weekly figure: since 2001 the same construction
+    on the saved MSCI series has run between about 1.5% and 3.3%."""
+    measured = float(italy.provenance["dividend_yield_measured"])
+    assert 0.005 < measured < 0.05
 
-    Shiller's dividend column is gross, so the global yield is measured gross
-    too and the two variants compare. That leaves a real cost of a global
-    sleeve out of the model, and a cost left out without being written down is
-    a cost hidden.
-    """
-    withheld = float(italy.provenance["dividend_yield_withheld"])
+
+def test_the_yield_used_is_net_of_withholding(italy) -> None:
+    """The fund loses the withholding at source and no holder gets it back, so
+    the yield the model uses is the net one, and the expected return is built
+    on it: net yield plus growth, converted at the fixed volatility."""
+    from your_equity_share.expected_return import arithmetic_from_compound
+
+    p = italy.provenance
+    measured, withheld = float(p["dividend_yield_measured"]), float(p["dividend_yield_withheld"])
     assert 0.001 < withheld < 0.010
-    assert "withholding tax" in IT_CONFIG.read_text(encoding="utf-8").lower()
+    assert float(p["dividend_yield"]) == pytest.approx(measured - withheld, abs=5e-6)
+    compound = float(p["dividend_yield"]) + float(p["real_growth"])
+    assert float(p["expected_return_compound"]) == pytest.approx(compound, abs=5e-6)
+    assert italy.expected_stock_real_return == pytest.approx(
+        arithmetic_from_compound(compound, italy.stock_volatility), abs=5e-6)
+    assert "net of withholding" in IT_CONFIG.read_text(encoding="utf-8").lower()
+
+
+def test_the_volatility_is_fixed_not_measured_each_week(italy) -> None:
+    """The fixed long-run figure in refresh_italy.py, and nothing that the
+    weekly refresh rewrites."""
+    import sys as _sys
+    _sys.path.insert(0, str(ROOT / "tools"))
+    import refresh_italy
+
+    assert italy.stock_volatility == refresh_italy.ITALY_VOLATILITY
+    assert "volatility_observations" not in IT_CONFIG.read_text(encoding="utf-8")
 
 
 def test_the_expected_return_is_the_arithmetic_mean_the_model_takes(italy) -> None:
@@ -257,7 +282,7 @@ def test_every_provisional_field_names_a_real_input(italy) -> None:
 
 # --- what the variant currently produces ------------------------------------
 
-def test_the_answer_discriminates_rather_than_saturating(italy) -> None:
+def test_the_answer_discriminates_rather_than_saturating() -> None:
     """With the safe rate measured, the variant is no longer a constant.
 
     It saturated for three of four households when the safe rate was a guess
@@ -265,8 +290,10 @@ def test_the_answer_discriminates_rather_than_saturating(italy) -> None:
     years of salary saved, which is where the American variant saturates too
     and for the same reason: the model wants leverage and the clip refuses it.
     """
-    from your_equity_share.market_data import load_market_data
-
+    # On the snapshot the methodology quotes, not on the weekly data: whether
+    # one of four households is capped is a property of the market, and a
+    # market move must not stop the refresh.
+    italy = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
     args = (italy.expected_stock_real_return, italy.real_risk_free_rate,
             italy.stock_volatility)
     households = [
@@ -281,16 +308,16 @@ def test_the_answer_discriminates_rather_than_saturating(italy) -> None:
     assert sum(1 for s in shares if s == 1.0) <= 1
 
 
-def test_the_euro_safe_rate_is_below_the_american_one(italy) -> None:
+def test_the_euro_safe_rate_is_below_the_american_one() -> None:
     """And that difference goes straight into the drift.
 
-    A euro household is offered a materially lower real rate for the same
-    maturity and better credit, which raises the equity share against the
-    American answer before anything about Italy is considered at all.
+    Checked on the two snapshots the methodologies quote, which is where the
+    claim is made; on the weekly data it is a state of the market, and a test
+    of it would stop the refresh the day it changed.
     """
-    from your_equity_share.market_data import load_market_data
-
-    assert italy.real_risk_free_rate < load_market_data().real_risk_free_rate
+    italy = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
+    american = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
+    assert italy.real_risk_free_rate < american.real_risk_free_rate
 
 
 def test_the_safe_rate_holds_its_maturity_fixed(italy) -> None:
@@ -320,25 +347,23 @@ def test_the_safe_rate_deflator_is_a_price_not_a_forecast(italy) -> None:
     assert "break-even" in source.lower()
     breakeven = float(italy.provenance["expected_inflation"])
     survey = float(italy.provenance["expected_inflation_survey"])
-    assert breakeven > survey
-    assert 0.0 < breakeven - survey < 0.01
+    # Either can be the higher. The band only catches a scraper reading the
+    # real-yield chart instead of the break-even, which is about 0.7 off.
+    assert abs(breakeven - survey) < 0.01
 
 
-def test_the_survey_would_have_flattered_the_safe_asset(italy) -> None:
-    """The gap between break-even and survey is an inflation risk premium.
+def test_the_safe_rate_is_the_annual_nominal_less_the_break_even(italy) -> None:
+    """Two conventions matched, then a subtraction.
 
-    Deflating by the survey books that premium as return, which makes the safe
-    asset look better than any bond a household can actually buy. Recording it
-    is the point: it was worth several points of equity share, so a reader has
-    to be able to see which deflator produced the number.
+    The ECB compounds its curve continuously, so the stored nominal is the
+    annualised rate; the Finanzagentur defines the break-even as a simple yield
+    difference, so it comes off by subtraction. The note says both.
     """
     nominal = float(italy.provenance["nominal_safe_yield"])
     breakeven = float(italy.provenance["expected_inflation"])
-    survey = float(italy.provenance["expected_inflation_survey"])
-    used = (1 + nominal) / (1 + breakeven) - 1
-    flattered = (1 + nominal) / (1 + survey) - 1
-    assert italy.real_risk_free_rate == pytest.approx(used, abs=5e-6)
-    assert flattered > used
+    assert italy.real_risk_free_rate == pytest.approx(nominal - breakeven, abs=5e-6)
+    note = italy.provenance["real_risk_free_source"]
+    assert "continuously compounded" in note and "simple yield difference" in note
 
 
 def test_the_safe_rate_reproduces_a_bond_that_exists(italy) -> None:
@@ -602,7 +627,7 @@ def test_the_files_state_the_market_before_tax(name) -> None:
     f = _fields(name)
     assert not [k for k in f if "after_tax" in k or k == "tax_regime"]
     assert f["real_risk_free"] == pytest.approx(
-        (1 + f["nominal_safe_yield"]) / (1 + f["expected_inflation"]) - 1, abs=5e-7)
+        f["nominal_safe_yield"] - f["expected_inflation"], abs=5e-7)
 
 
 @pytest.mark.parametrize("name", ["snapshot.toml", "market_data.toml"])
@@ -659,7 +684,10 @@ def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
                    american.real_risk_free_rate, american.stock_volatility,
                    CGM_CALIBRATION).equity_share
     assert f"between a {us:.1%} American answer and a {share:.1%} Italian one" in doc
-    graduate = dataclasses.replace(CGM_CALIBRATION, benefit_replacement_rate=0.79)
+    # The American career with the OECD's Italian 79%, as the variant had it:
+    # Social Security's maximum is no part of that counterfactual.
+    graduate = dataclasses.replace(CGM_CALIBRATION, benefit_replacement_rate=0.79,
+                                   benefit_cap=None)
     with_79 = recommend(household, market.expected_stock_real_return,
                         market.real_risk_free_rate, market.stock_volatility,
                         graduate).equity_share
@@ -897,9 +925,14 @@ def test_the_tax_table_is_the_check_s_output() -> None:
                f'<td class="num">{mean_only:.3f}</td><td class="num">{cost:.2f}</td>'
                f'<td class="num">{loss:.1%}</td></tr>')
         assert row in doc, row
-    assert round(1 - laws[0], 1) == 0.2                       # "by a fifth"
-    assert all(1 - law < 0.1 for law in laws[1:])            # "under a tenth"
-    assert max(costs) < 1.5 and max(costs[1:]) < 0.25        # "a basis point and a half"
+    assert round(1 - laws[0], 2) == 0.25                      # "about a quarter"
+    assert abs((1 - laws[1]) - 0.125) < 0.01                 # "about an eighth"
+    assert all(1 - law < 0.1 for law in laws[2:])            # "under a tenth beyond"
+    assert costs[0] < 2 and max(costs[1:]) < 0.5             # "under 2", "under half"
+    # "about a third against the law's quarter ... nearer to it than leaving
+    # tax out", and "two to four times what the law does" from seven years.
+    assert round(1 - means[0], 1) == 0.3 and laws[0] - means[0] < 1 - laws[0]
+    assert all(2 <= (1 - m) / (1 - l) <= 4 for m, l in zip(means[1:], laws[1:]))
     assert f"by {round((1 - max(means)) * 100)}% to {round((1 - min(means)) * 100)}%" in doc
     for gamma in (3.0, 8.0):                                 # "within a hundredth"
         for years, law in zip(tax_check.YEARS, laws):

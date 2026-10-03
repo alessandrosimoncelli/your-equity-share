@@ -46,7 +46,6 @@ from your_equity_share.providers import (  # noqa: E402
     parse_fred_csv,
     parse_price_json,
 )
-from update import trim_to_window  # noqa: E402
 
 
 # --- statistics ------------------------------------------------------------
@@ -392,14 +391,6 @@ def test_both_failing_names_both(monkeypatch) -> None:
         "fred.stlouisfed.org": DataUnavailable("timed out after 40s: fred")})
     with pytest.raises(DataUnavailable, match="Treasury failed.*FRED"):
         update.fetch_real_risk_free(date(2026, 9, 30))
-
-
-def test_trim_to_window_keeps_the_most_recent() -> None:
-    closes = {f"2026-01-{d:02d}": float(d) for d in range(1, 29)}
-    trimmed = trim_to_window(closes, years=0)
-    assert trimmed == {}
-    kept = trim_to_window(closes, years=1)
-    assert len(kept) == 28
 
 
 # --- the live config: structure only ---------------------------------------

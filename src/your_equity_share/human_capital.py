@@ -15,12 +15,16 @@ term uses `(a-1)/100`. Present value at any age therefore divides by the
 running product of every one-year rate between here and there, not by a single
 rate raised to a power.
 
-A household follows one discount path, not two. While wages are being earned it
-is the wage rate; once benefits begin it drops to the benefit rate, which is far
+A household follows one discount path, not two. Through the last year with a
+wage it is the wage rate; after that it drops to the benefit rate, which is far
 lower because an inflation-indexed government benefit is close to risk free.
 Both kinds of income in a given year are discounted by that same running
-product. This is how Choi's spreadsheet does it and it is what equation (1) of
-the paper describes.
+product, as equation (1) of the paper describes. The switch comes once, at the
+end of work, the paper's retirement threshold; Choi's spreadsheet switches in
+the first year with a benefit, which is the same thing on every ordinary path
+and differs only when a pension is typed in a year with wages or a gap year.
+The one stream outside this rule is a pension already being paid: it is
+riskless, so it is divided by the benefit rates from today.
 """
 
 from __future__ import annotations
@@ -71,9 +75,22 @@ class Calibration:
     # not a regressor in equation (12); it only sets the expected wages that
     # the fitted rates discount.
     age_profile: tuple[float, float, float] = (0.3194, -0.00577, 0.000033)
+    # The largest pension the model imputes, a year of it after tax, or None
+    # for no limit. Only the imputed pension: one the person types is used as
+    # typed.
+    benefit_cap: float | None = None
 
 
-CGM_CALIBRATION = Calibration()
+# Social Security's largest benefit at full retirement age in 2026, $4,152 a
+# month (SSA, 2026 cost-of-living adjustment), after tax at the guide's 0.8:
+# up to 85% of benefits are taxable, so a high earner keeps about 80% of it.
+# Choi's spreadsheet has no limit, and its 40% of the final wage would give a
+# household earning $200,000 after tax a pension of about $76,000 a year,
+# which Social Security cannot pay. The limit binds from a final wage of about
+# $100,000 after tax.
+SOCIAL_SECURITY_MAXIMUM = 0.8 * 4152.0 * 12
+
+CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 
 # The Italian variant: an Italian private-sector employee's career and pension.
 #
@@ -83,7 +100,7 @@ CGM_CALIBRATION = Calibration()
 # retiring in 2050 at 66 years and 2 months with 38 years of contributions:
 # Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, base
 # case. The model retires everyone at 67, where Choi fitted his coefficients,
-# and 2050 is when today's 45-year-old retires; the table's other cases near
+# and today's 45-year-old reaches 67 in 2048, close to that row; the table's other cases near
 # 67 give 63% to 64%, and its old-age case at 69 gives 73%. It replaced the
 # OECD's 79% in October 2026, a figure for 48 years of contributions ending at
 # 70: Italian pensions are contributory, so retiring at 67 pays less.
@@ -124,16 +141,23 @@ def _log_excess_drift(
     expected_stock_real_return: float,
     real_risk_free: float,
     calibration: Calibration,
+    volatility: float | None = None,
 ) -> float:
-    """The regressor Choi writes as pi: the log excess drift of equities.
+    """The regressor Choi writes as pi: the log risk premium of the risky asset.
 
-    Note this uses the calibration's 18.5% volatility, not the user's. The
-    coefficients were fitted with that value in place and have no standing
-    away from it. See section 7.2 of the methodology.
+    Choi defines it as the asset's expected log return over the safe rate. The
+    arithmetic mean the model is handed was converted from a compound return
+    at the held asset's volatility, so undoing it at that same volatility
+    recovers ln(1 + compound) - ln(1 + safe rate). Undoing it at the
+    calibration's 18.5% instead, for an asset with another volatility, would
+    feed the regression a premium the asset does not have. When the held
+    volatility is 18.5%, as in Choi's spreadsheet and the American variant,
+    the two are the same number.
     """
+    sigma = calibration.stock_volatility if volatility is None else volatility
     return (
         math.log(1.0 + expected_stock_real_return)
-        - 0.5 * calibration.stock_volatility**2
+        - 0.5 * sigma**2
         - math.log(1.0 + real_risk_free)
     )
 
@@ -144,6 +168,7 @@ def wage_discount_rate(
     expected_stock_real_return: float,
     real_risk_free: float,
     calibration: Calibration = CGM_CALIBRATION,
+    volatility: float | None = None,
 ) -> float:
     """One-year-ahead discount rate applied to a wage received at `age`.
 
@@ -152,7 +177,8 @@ def wage_discount_rate(
     price of a claim that cannot be diversified, sold, or borrowed against.
     """
     x = (age - 1) / 100.0
-    pi = _log_excess_drift(expected_stock_real_return, real_risk_free, calibration)
+    pi = _log_excess_drift(expected_stock_real_return, real_risk_free,
+                           calibration, volatility)
     return (
         -0.020
         + 0.087 * (risk_aversion / 10.0)
@@ -172,6 +198,7 @@ def benefit_discount_rate(
     expected_stock_real_return: float,
     real_risk_free: float,
     calibration: Calibration = CGM_CALIBRATION,
+    volatility: float | None = None,
 ) -> float:
     """One-year-ahead discount rate applied to a retirement benefit at `age`.
 
@@ -181,7 +208,8 @@ def benefit_discount_rate(
     down a risky salary sharply and a government annuity not at all.
     """
     x = (age - 1) / 100.0
-    pi = _log_excess_drift(expected_stock_real_return, real_risk_free, calibration)
+    pi = _log_excess_drift(expected_stock_real_return, real_risk_free,
+                           calibration, volatility)
     rate = (
         -0.166
         + 0.0003 * (risk_aversion / 10.0)
@@ -258,9 +286,11 @@ class EarningsYear:
 class Person:
     """One adult in the household.
 
-    `current_benefit` covers someone already drawing a retirement income. Leave
-    it at zero for anyone still working, and the benefit is imputed from the
-    final wage instead.
+    `current_benefit` is a pension already being paid, a year of it after tax:
+    a retiree's, or one drawn while still working (an earlier career's, a
+    survivor's, a disability pension). It is paid every year from now. The
+    retirement benefit for the person's own wages is imputed from the final
+    wage and added once the wages stop.
     """
 
     current_age: int
@@ -284,14 +314,16 @@ def project_earnings(
 ) -> list[EarningsYear]:
     """Wages and benefits for every year from next year to age 100.
 
-    Uses whatever the person supplied year by year, and imputes the rest. The
-    benefit, where not given, is a fixed share of the final wage earned, paid
-    from the first year without wages onward. That matches the guide's rule of
-    thumb of 40% of the last after-tax wage.
+    Uses whatever the person supplied year by year, and imputes the rest. A
+    pension already being paid continues every year. The retirement benefit
+    for the person's own career is a fixed share of the final wage, paid from
+    the first year without wages onward, which matches the guide's rule of
+    thumb of 40% of the last after-tax wage; someone with no wages ahead has
+    no career benefit to impute.
     """
     years: list[EarningsYear] = []
     final_wage = 0.0
-    running_benefit = person.current_benefit
+    career_benefit = 0.0
 
     for age in range(person.current_age + 1, FINAL_AGE + 1):
         if person.wages is not None and age in person.wages:
@@ -301,17 +333,25 @@ def project_earnings(
 
         if person.benefits is not None and age in person.benefits:
             benefit = person.benefits[age]
-        elif person.current_benefit > 0:
-            benefit = person.current_benefit
         elif wage > 0:
-            benefit = 0.0
+            benefit = person.current_benefit
         else:
-            # First year without wages: fix the benefit off the last wage
-            # earned, then hold it for life.
-            if running_benefit == 0.0:
-                base = final_wage if final_wage > 0 else person.current_wage
-                running_benefit = base * calibration.benefit_replacement_rate
-            benefit = running_benefit
+            # First year without wages: fix the career benefit off the last
+            # wage earned, then hold it for life, on top of any pension
+            # already being paid. With no wage left to project (someone of 66
+            # or more still earning) today's wage is the last one, unless a
+            # pension is already being paid, which then is that career's.
+            if career_benefit == 0.0:
+                if final_wage > 0:
+                    base = final_wage
+                elif person.current_benefit == 0:
+                    base = person.current_wage
+                else:
+                    base = 0.0
+                career_benefit = base * calibration.benefit_replacement_rate
+                if calibration.benefit_cap is not None:
+                    career_benefit = min(career_benefit, calibration.benefit_cap)
+            benefit = person.current_benefit + career_benefit
 
         if wage > 0:
             final_wage = wage
@@ -326,26 +366,43 @@ def human_capital(
     expected_stock_real_return: float,
     real_risk_free: float,
     calibration: Calibration = CGM_CALIBRATION,
+    volatility: float | None = None,
 ) -> float:
     """Present value today of one person's future wages and benefits.
 
-    One discount path, switching from the wage rate to the benefit rate in the
-    first year a benefit is drawn, and both income types divided by the same
-    running product.
+    One discount path, as in Choi: the wage rate through the last year with
+    wages, the benefit rate after it, both income types divided by the same
+    running product. The switch comes once, at the end of work, which is
+    Choi's retirement threshold; a year without wages before work ends (a
+    break typed year by year) stays on the wage rate.
+
+    A pension already being paid while the person still works is the one
+    stream Choi's model does not have. It is riskless, so it is divided by the
+    benefit rates from today rather than carried on the wage chain. For a
+    retiree, whose whole path is on the benefit rate, the two are the same.
     """
+    years = project_earnings(person, calibration)
+    last_work = max((y.age for y in years if y.wage > 0), default=0)
     total = 0.0
-    cumulative = 1.0
-    for year in project_earnings(person, calibration):
-        if year.benefit > 0:
-            rate = benefit_discount_rate(
-                year.age, risk_aversion, expected_stock_real_return,
-                real_risk_free, calibration,
-            )
-        else:
+    chain = 1.0
+    safe_chain = 1.0
+    for year in years:
+        benefit_rate = benefit_discount_rate(
+            year.age, risk_aversion, expected_stock_real_return,
+            real_risk_free, calibration, volatility,
+        )
+        if year.age <= last_work:
             rate = wage_discount_rate(
                 year.age, risk_aversion, expected_stock_real_return,
-                real_risk_free, calibration,
+                real_risk_free, calibration, volatility,
             )
-        cumulative *= 1.0 + rate
-        total += year.income / cumulative
+        else:
+            rate = benefit_rate
+        chain *= 1.0 + rate
+        safe_chain *= 1.0 + benefit_rate
+        # Whether or not the year was typed: the page passes its prefilled
+        # path as typed as soon as the year-by-year box is ticked, and a
+        # pension already being paid is riskless either way.
+        pension = min(person.current_benefit, year.benefit)
+        total += (year.income - pension) / chain + pension / safe_chain
     return total

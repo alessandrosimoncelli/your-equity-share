@@ -37,6 +37,10 @@ export const CGM_CALIBRATION = Object.freeze({
   benefitReplacementRate: 0.4,
   // The earnings profile: age, age squared and age cubed in log earnings.
   ageProfile: Object.freeze([0.3194, -0.00577, 0.000033]),
+  // Social Security's largest benefit at full retirement age in 2026, $4,152
+  // a month, after tax at the guide's 0.8. Applied to the imputed pension
+  // only; human_capital.py says why.
+  benefitCap: 0.8 * 4152.0 * 12,
 });
 
 /**
@@ -50,6 +54,7 @@ export const ITALY_CALIBRATION = Object.freeze({
   temporaryShockVolatility: Math.sqrt(0.023609),
   benefitReplacementRate: 0.66,
   ageProfile: Object.freeze([-0.001022, 0.000613, -0.000006]),
+  benefitCap: null,
 });
 
 const FINAL_AGE = 100;
@@ -111,15 +116,18 @@ export function mertonShare(expectedStockRealReturn, realRiskFree, riskAversion,
 // --- layer two: human capital -----------------------------------------------
 
 /**
- * The regressor Choi writes as pi: the log excess drift of equities.
+ * The regressor Choi writes as pi: the log risk premium of the risky asset.
  *
- * Uses the calibration's 18.5% volatility, not the user's. The coefficients
- * were fitted with that value in place and have no standing away from it.
+ * The arithmetic mean was converted from a compound return at the held
+ * asset's volatility, so it is undone at that same volatility, which recovers
+ * ln(1 + compound) - ln(1 + safe rate). At Choi's 18.5% the two readings are
+ * the same number. See _log_excess_drift in human_capital.py.
  */
-function logExcessDrift(expectedStockRealReturn, realRiskFree, calibration) {
+function logExcessDrift(expectedStockRealReturn, realRiskFree, calibration, volatility = null) {
+  const sigma = volatility == null ? calibration.stockVolatility : volatility;
   return (
     Math.log(1.0 + expectedStockRealReturn) -
-    0.5 * calibration.stockVolatility ** 2 -
+    0.5 * sigma ** 2 -
     Math.log(1.0 + realRiskFree)
   );
 }
@@ -137,9 +145,10 @@ export function wageDiscountRate(
   expectedStockRealReturn,
   realRiskFree,
   calibration = CGM_CALIBRATION,
+  volatility = null,
 ) {
   const x = (age - 1) / 100.0;
-  const pi = logExcessDrift(expectedStockRealReturn, realRiskFree, calibration);
+  const pi = logExcessDrift(expectedStockRealReturn, realRiskFree, calibration, volatility);
   return (
     -0.02 +
     0.087 * (riskAversion / 10.0) -
@@ -167,9 +176,10 @@ export function benefitDiscountRate(
   expectedStockRealReturn,
   realRiskFree,
   calibration = CGM_CALIBRATION,
+  volatility = null,
 ) {
   const x = (age - 1) / 100.0;
-  const pi = logExcessDrift(expectedStockRealReturn, realRiskFree, calibration);
+  const pi = logExcessDrift(expectedStockRealReturn, realRiskFree, calibration, volatility);
   const rate =
     -0.166 +
     0.0003 * (riskAversion / 10.0) -
@@ -236,14 +246,15 @@ export function makePerson(currentAge, currentWage, currentBenefit = 0.0, wages 
 /**
  * Wages and benefits for every year from next year to age 100.
  *
- * Uses whatever the person supplied year by year and imputes the rest. The
- * benefit, where not given, is a fixed share of the final wage earned, paid from
- * the first year without wages onward.
+ * Uses whatever the person supplied year by year and imputes the rest. A
+ * pension already being paid continues every year. The retirement benefit for
+ * the person's own career is a fixed share of the final wage, paid from the
+ * first year without wages onward, on top of it.
  */
 export function projectEarnings(person, calibration = CGM_CALIBRATION) {
   const years = [];
   let finalWage = 0.0;
-  let runningBenefit = person.currentBenefit;
+  let careerBenefit = 0.0;
 
   for (let age = person.currentAge + 1; age <= FINAL_AGE; age += 1) {
     let wage;
@@ -256,18 +267,22 @@ export function projectEarnings(person, calibration = CGM_CALIBRATION) {
     let benefit;
     if (person.benefits != null && Object.prototype.hasOwnProperty.call(person.benefits, age)) {
       benefit = person.benefits[age];
-    } else if (person.currentBenefit > 0) {
-      benefit = person.currentBenefit;
     } else if (wage > 0) {
-      benefit = 0.0;
+      benefit = person.currentBenefit;
     } else {
-      // First year without wages: fix the benefit off the last wage earned,
-      // then hold it for life.
-      if (runningBenefit === 0.0) {
-        const base = finalWage > 0 ? finalWage : person.currentWage;
-        runningBenefit = base * calibration.benefitReplacementRate;
+      // First year without wages: fix the career benefit off the last wage
+      // earned, then hold it for life, on top of any pension already paid.
+      if (careerBenefit === 0.0) {
+        // With no wage left to project, today's wage is the last one, unless
+        // a pension is already being paid, which then is that career's.
+        const base = finalWage > 0 ? finalWage
+          : person.currentBenefit === 0 ? person.currentWage : 0.0;
+        careerBenefit = base * calibration.benefitReplacementRate;
+        if (calibration.benefitCap != null) {
+          careerBenefit = Math.min(careerBenefit, calibration.benefitCap);
+        }
       }
-      benefit = runningBenefit;
+      benefit = person.currentBenefit + careerBenefit;
     }
 
     if (wage > 0) finalWage = wage;
@@ -279,9 +294,10 @@ export function projectEarnings(person, calibration = CGM_CALIBRATION) {
 /**
  * Present value today of one person's future wages and benefits.
  *
- * One discount path, switching from the wage rate to the benefit rate in the
- * first year a benefit is drawn, and both income types divided by the same
- * running product.
+ * One discount path, as in Choi: the wage rate through the last year with
+ * wages, the benefit rate after it. A pension already being paid while the
+ * person still works is riskless, so it is divided by the benefit rates from
+ * today instead. See human_capital in human_capital.py.
  */
 export function humanCapital(
   person,
@@ -289,16 +305,26 @@ export function humanCapital(
   expectedStockRealReturn,
   realRiskFree,
   calibration = CGM_CALIBRATION,
+  volatility = null,
 ) {
+  const years = projectEarnings(person, calibration);
+  let lastWork = 0;
+  for (const year of years) if (year.wage > 0) lastWork = year.age;
   let total = 0.0;
-  let cumulative = 1.0;
-  for (const year of projectEarnings(person, calibration)) {
-    const rate =
-      year.benefit > 0
-        ? benefitDiscountRate(year.age, riskAversion, expectedStockRealReturn, realRiskFree, calibration)
-        : wageDiscountRate(year.age, riskAversion, expectedStockRealReturn, realRiskFree, calibration);
-    cumulative *= 1.0 + rate;
-    total += (year.wage + year.benefit) / cumulative;
+  let chain = 1.0;
+  let safeChain = 1.0;
+  for (const year of years) {
+    const benefitRate = benefitDiscountRate(
+      year.age, riskAversion, expectedStockRealReturn, realRiskFree, calibration, volatility);
+    const rate = year.age <= lastWork
+      ? wageDiscountRate(year.age, riskAversion, expectedStockRealReturn, realRiskFree, calibration, volatility)
+      : benefitRate;
+    chain *= 1.0 + rate;
+    safeChain *= 1.0 + benefitRate;
+    // Typed or not, as in human_capital.py: the page passes its prefilled
+    // path as typed once the year-by-year box is ticked.
+    const pension = Math.min(person.currentBenefit, year.benefit);
+    total += (year.wage + year.benefit - pension) / chain + pension / safeChain;
   }
   return total;
 }
@@ -514,7 +540,8 @@ export function recommend(
   );
 
   const perAdult = household.adults.map((adult) =>
-    humanCapital(adult, household.riskAversion, expectedStockRealReturn, realRiskFree, calibration),
+    humanCapital(adult, household.riskAversion, expectedStockRealReturn, realRiskFree, calibration,
+                 stockVolatility),
   );
   // Summed in the same order as Python's sum() over the tuple, because floating
   // point addition is not associative and the fixture pins the result.

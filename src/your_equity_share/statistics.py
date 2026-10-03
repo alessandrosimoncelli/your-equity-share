@@ -1,16 +1,14 @@
 """Return statistics over a price series.
 
-Pure functions. No network, no file access, no dependencies, so the refresh
-tool and the model both use the same estimator and the tests run offline.
+Pure functions. No network, no file access, no dependencies, so the tests run
+offline.
 
-Volatility is estimated from **dividend-adjusted** closes, so successive ratios
-are total returns. `parse_price_json` prefers Yahoo's `adjclose` for exactly
-that reason: a split-only series leaves a small downward step on every
-ex-dividend day, which on five years of SPY overstates annual volatility by
-about four basis points.
-
-The expected return is not estimated here and never from this series. It is
-built three independent ways in `expected_return`, and the median is taken.
+Neither variant measures its volatility any more: the American one holds
+Choi, Liu and Liu's 18.5% and the Italian one a fixed 25-year euro figure,
+because a trailing window moved the answer whenever a crash entered or left
+it. These helpers remain for the analysis tools and the optional sleeve
+breakdown a market file may carry. The expected return is not estimated here:
+`expected_return` builds it from a dividend yield and long-run growth.
 """
 
 from __future__ import annotations
@@ -63,8 +61,7 @@ def annualised_volatility(
     """Sample standard deviation of `returns`, scaled to one year.
 
     Uses the n-1 denominator. Scaling by the square root of the period count
-    assumes returns are independent across days, which is the same assumption
-    the allocation model makes.
+    assumes returns are independent from one period to the next.
     """
     n = len(returns)
     if n < 2:

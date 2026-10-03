@@ -93,6 +93,7 @@ const cases = fixture.cases;
   compare("calibration.benefit_replacement_rate", 0.4, c.benefit_replacement_rate);
   (c.age_profile ?? []).forEach((v, k) =>
     compare(`calibration.age_profile[${k}]`, CGM_CALIBRATION.ageProfile[k], v));
+  compare("calibration.benefit_cap", CGM_CALIBRATION.benefitCap, c.benefit_cap);
   const it = fixture.italy_calibration;
   if (it) {
     compare("italy.stock_volatility", ITALY_CALIBRATION.stockVolatility, it.stock_volatility);
@@ -104,6 +105,10 @@ const cases = fixture.cases;
             it.benefit_replacement_rate);
     it.age_profile.forEach((v, k) =>
       compare(`italy.age_profile[${k}]`, ITALY_CALIBRATION.ageProfile[k], v));
+    checks += 1;
+    if ((ITALY_CALIBRATION.benefitCap ?? null) !== (it.benefit_cap ?? null)) {
+      failures.push(`italy.benefit_cap: got ${ITALY_CALIBRATION.benefitCap}, expected ${it.benefit_cap}`);
+    }
   }
 }
 
@@ -192,6 +197,15 @@ for (const [i, c] of cases.project_earnings.entries()) {
 for (const [i, c] of cases.human_capital.entries()) {
   const [gamma, mu, rf] = c.args;
   compare(`human_capital[${i}]`, humanCapital(person(c.person), gamma, mu, rf), c.expect);
+}
+
+for (const [i, c] of (cases.human_capital_paths ?? []).entries()) {
+  const p = c.person;
+  const made = makePerson(p.current_age, p.current_wage, p.current_benefit, p.wages, p.benefits);
+  const [gamma, mu, rf, volatility] = c.args;
+  const calibration = c.calibration === "it" ? ITALY_CALIBRATION : CGM_CALIBRATION;
+  compare(`human_capital_paths[${i}]`,
+          humanCapital(made, gamma, mu, rf, calibration, volatility), c.expect);
 }
 
 for (const [i, c] of cases.recommend.entries()) {

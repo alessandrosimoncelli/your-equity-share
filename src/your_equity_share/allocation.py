@@ -144,11 +144,10 @@ def recommend(
 ) -> Recommendation:
     """Run both layers and return the recommendation with its working.
 
-    `stock_volatility` is the volatility of the portfolio actually held, used in
-    the Merton term. The discount rates inside layer two keep the calibration's
-    18.5% regardless, because their coefficients were fitted with that value in
-    place. Section 7.2 of the methodology explains why the two are not forced
-    to agree.
+    `stock_volatility` is the volatility of the asset held, a fixed long-run
+    figure (18.5% for the American variant, Choi's own). It sets the Merton
+    term, and it is also what turns the arithmetic return back into the log
+    risk premium the discount rates take, so both layers read one asset.
     """
     beta = merton_share(
         expected_stock_real_return,
@@ -164,6 +163,7 @@ def recommend(
             expected_stock_real_return,
             real_risk_free,
             calibration,
+            stock_volatility,
         )
         for adult in household.adults
     )

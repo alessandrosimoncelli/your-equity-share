@@ -26,10 +26,12 @@
 #
 # TAX IS NOT APPLIED, as in Choi, Liu and Liu, whose variables are "implicitly
 # after-tax where relevant". Italian law taxes the two funds differently, 26%
-# against 12.5% on the gain at sale, but a fund held for years is almost always
-# in gain when sold, so the tax takes a share of the risk as well as of the
-# return, and measured sale by sale it moves the right equity share little.
-# Italian methodology, section 8; tools/tax_check.py.
+# against 12.5% on the gain at sale, and a fund held for years is usually in
+# gain when sold, so the tax takes a share of the risk as well as of the
+# return. Measured sale by sale it lowers the right equity share by about a
+# quarter for money sold at three years and by a tenth or less from seven, and
+# ignoring it costs under two basis points a year. Italian methodology,
+# section 8; tools/tax_check.py.
 #
 # The REPLACEMENT RATE is 66% rather than 40%, the Italian Treasury's
 # projection for a private employee retiring near 67 (RGS 2025, Table 6.3.a).
@@ -41,7 +43,7 @@
 # Italy's household survey, with the 66% pension. Mortality stays American,
 # because it is inside Choi's fitted coefficients.
 #
-# EVERY NUMBER HERE IS NOW MEASURED. The file shipped with a safe rate and a
+# EVERY NUMBER HERE IS MEASURED. The file shipped with a safe rate and a
 # volatility somebody had reasoned about; both have since been measured, and
 # provisional_fields below is empty. It exists so that if a guess is ever
 # added back it has to declare itself, and tests/test_italy.py checks that the
@@ -50,7 +52,7 @@
 # EVERYTHING IS IN EURO, and one term of one input needs an argument for it
 # rather than an assertion.
 #
-# The volatility is measured on a euro-priced series, so it carries the
+# The volatility is measured on a euro-priced index, so it carries the
 # currency risk an unhedged global fund gives a euro investor without anything
 # further being done to it. The safe rate is a euro curve deflated by a euro
 # market break-even. Neither is in question, and neither contains an opinion.
@@ -81,12 +83,10 @@ generated_by = "tools/refresh_italy.py"
 
 # BUILT HERE, by the construction variants/us/market_data.toml uses, because that
 # construction carries no horizon and this model prices a lifetime.
-#   dividend yield         0.015339   MSCI ACWI, euro, trailing over today's price
-#   real growth per share  0.022860   100 year OLS trend through Shiller
-#   repricing              0.000000   ratios held constant, stated
-#   compound               0.038198
-#   volatility             0.138942
-#   arithmetic             0.048268   + volatility drag
+#   the dividend yield of MSCI ACWI in euro, net of withholding, trailing
+#   over today's price, plus the 100-year OLS trend of real growth in
+#   earnings per share through Shiller, plus zero repricing, converted
+#   to an arithmetic mean at the fixed volatility below.
 #
 # WHY NOT AQR'S PUBLISHED FIGURE, which this file used until September 2026 and
 # which is still fetched and reported as the cross-check. Because they say what
@@ -125,11 +125,12 @@ generated_by = "tools/refresh_italy.py"
 # Shiller's column already has and therefore the one the American variant
 # divides by: the three plausible denominators differ by a third of a point.
 #
-# GROSS of withholding tax, for that same reason. Withholding costs 0.34
-# points, recorded below as dividend_yield_withheld, and an American holding
-# domestic stock pays none of it. It is a real cost of a global sleeve that
-# this model does not represent, written down rather than netted off, because
-# netting it into a market return would hide a tax inside a price.
+# NET of withholding tax. Withholding is taken at source before the dividend
+# reaches the fund, so no Italian holder ever receives it: it is a property
+# of the fund, like its price, not the household's own tax, which the model
+# leaves out. The amount is recorded below as dividend_yield_withheld; an
+# American holding domestic stock pays none, so the gross Shiller column is
+# the same measurement there.
 #
 # THE GROWTH TERM IS THE AMERICAN ONE, unchanged, and that is the deviation
 # this line has to argue for. AQR publish both halves themselves, 2.7% real EPS
@@ -144,7 +145,7 @@ generated_by = "tools/refresh_italy.py"
 # refresh and both currently sit within a third of a point, which is a firm
 # that does this for a living arriving at the same two numbers from their own
 # data. tools/estimators_it.py sets the whole family side by side.
-expected_stock_real_return = 0.048148
+expected_stock_real_return = 0.044947
 
 # The ECB's AAA euro area government curve at thirty years, deflated by the
 # MARKET break-even inflation rate of the longest euro inflation-linked bond.
@@ -169,17 +170,13 @@ expected_stock_real_return = 0.048148
 # holding a nominal bond pay the same, so it is a PRICE rather than a forecast,
 # and subtracting it from a nominal curve recovers a real yield.
 #
-# THE CONSTRUCTION CHECKS AGAINST ITSELF AND PASSES. The break-even is derived
-# from the 2046, so deflating a nominal yield by it should reproduce that bond's
-# own traded real yield of 1.4906%. It lands at 1.4401%, four hundredths of a
-# point away, and the residue is the maturity mismatch between a 30-year
-# nominal leg and a 19.6-year inflation leg.
-#
-# THE SURVEY IS STILL FETCHED, as the cross-check, and sits 0.25 points ABOVE
-# at 1.6903%. That gap is an inflation risk premium, which is what a holder
-# pays to be rid of inflation risk. Deflating by the survey books that premium
-# as return and makes the safe asset look better than any bond anyone can buy.
-# It was worth 5.9 points of equity share, so it was not a rounding decision.
+# TWO CONVENTIONS ARE MATCHED FIRST. The ECB compounds its curve
+# continuously, so the spot rate is annualised; the Finanzagentur defines
+# the break-even as a simple yield difference, so it is subtracted. The
+# result lands within about a tenth of a point of the 2046's own traded
+# real yield, the rest being a 30-year nominal leg against a 19.6-year
+# inflation leg. The survey is still fetched, as the cross-check; the
+# safe rate rests on the break-even because it is a price.
 #
 # AAA rather than all euro area government bonds, which yield 0.61 points more
 # at the same maturity. That spread is compensation for a government not
@@ -189,16 +186,15 @@ expected_stock_real_return = 0.048148
 #
 # It is euro area HICP, not Italian. An Italian household's cost of living is
 # Italian, and only BTP Italia tracks that, at five years and retail.
-real_risk_free = 0.015102
+real_risk_free = 0.016197
 
-# Measured: five years of daily dividend-adjusted closes of VWCE.DE,
-# annualised, refreshed weekly; volatility_source below says to when. It sits
-# within a tenth of a point of MSCI ACWI in euro over twenty-five years, which
-# is the check the Italian methodology runs. Lower than the S&P 500 sleeve,
-# which is what diversifying across a world index is supposed to do, and it
-# already carries the currency exposure a euro investor takes on an unhedged
-# global fund, because the series is priced in euro.
-stock_volatility = 0.138119
+# FIXED, not re-measured: the annualised standard deviation of monthly log
+# returns of MSCI All Country World in euro, December 2000 to August 2026,
+# the convention Choi uses for his 18.5% on CRSP. A trailing five-year
+# window moved the answer about nine points in five weeks when the 2020
+# crash left it, with no change in long-run risk. Priced in euro, so it carries
+# the currency exposure of an unhedged world fund.
+stock_volatility = 0.139860
 market_ticker = "VWCE.DE"
 
 as_of = 2026-09-28
@@ -208,23 +204,22 @@ variant = "it"
 provisional_fields = ""
 expected_return_method = "building blocks, global"
 expected_return_basis = "arithmetic mean, converted from compound"
-expected_return_compound = 0.038198
-expected_return_source = "Built here, by the construction the American variant uses, because that construction carries no horizon and this model prices a lifetime: a 1.5339% trailing dividend yield of MSCI All Country World in euro over 20250829 to 20260831, measured from the gap between MSCI gross and price index levels and divided by the price at the end, plus 2.2860% real growth in earnings per share, the 100-year OLS trend through Shiller to 2026-06-01, plus zero repricing. Cross-checked against AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 2025-12-31: their dividend yield of 1.6% is +0.07 points from ours and their real EPS growth of 2.6% is +0.31 points from ours. Theirs is the check and not the estimate because they state it is for a horizon of 5 to 10 years, while Table 7 of the American methodology shows this construction is the one that wins at 30."
-dividend_yield = 0.015339
+expected_return_compound = 0.034777
+expected_return_source = "Built here, by the construction the American variant uses, because that construction carries no horizon and this model prices a lifetime: a 1.1917% trailing dividend yield of MSCI All Country World in euro over 20250829 to 20260831, NET of the withholding tax the fund suffers at source (1.5339% gross), measured from the gap between MSCI net and price index levels and divided by the price at the end, plus 2.2860% real growth in earnings per share, the 100-year OLS trend through Shiller to 2026-06-01, plus zero repricing. Cross-checked against AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 2025-12-31, who quote gross: their dividend yield of 1.6% is +0.07 points from our gross figure and their real EPS growth of 2.6% is +0.31 points from ours. Theirs is the check and not the estimate because they state it is for a horizon of 5 to 10 years, while Table 7 of the American methodology shows this construction is the one that wins at 30."
+dividend_yield = 0.011917
 real_growth = 0.022860
 dividend_yield_measured = 0.015339
 dividend_yield_withheld = 0.003422
 expected_inflation = 0.022981
 expected_inflation_survey = 0.020369
-nominal_safe_yield = 0.038430
+nominal_safe_yield = 0.039178
 growth_source = "AQR's, as part of their published decomposition. Cross-checked on every refresh against the American variant's own 100-year trend through Shiller, which is a legitimate comparison because AQR themselves publish 2.7% for United States large cap against 2.6% for Global All Country, a tenth of a point apart: long-run real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic."
 growth_cross_check = "The alternative was tried and it failed, which is why the growth term is the American one. tools/global_growth.py rebuilds global real dividend growth from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The answer depends on the weighting scheme far more than on the data: weights pinned at today give 0.89% to 1.52%, weights pinned at the start of the window give 1.86% to 3.04%, and GDP shares each year give 2.77% to 5.43%, an envelope 4.5 points wide against 0.25 points for the American estimator, and keeping the war years rather than dropping them widens it further. The reason is structural. A fixed basket of countries is not an index, because an index reconstitutes and drops what stops paying, and JST publishes country index returns rather than the world index's constituents, so reconstitution cannot be reproduced. An earlier version of this file quoted a single scheme's 1.33% to 3.16% as the uncertainty, which was too flattering by a factor of four. Both this variant's 2.286% and AQR's 2.6% fall inside the envelope, which is corroboration too weak to lean on and is reported as such."
 currency_basis = "EUR. The dividend yield is measured on a euro-priced global index, the volatility is measured on a euro-priced series, and the safe rate is a euro government bond's traded real yield. Those three are euro figures by construction. The growth term is real growth in United States earnings per share, used as the global real rate, and that is the one place a cross-currency assumption still lives: it holds if relative purchasing power is preserved over a lifetime, which is AQR's own stated assumption for reading local real returns as any-currency real returns. It applies to one term of three rather than to the whole estimate, which is narrower than the previous version of this file, where the entire expected return was a local real figure read as a euro one."
 equity_index = "FTSE All-World"
-real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.8430% on 2026-09-28, deflated by the MARKET break-even inflation rate of 2.2981% on DE0001030575, the longest euro inflation-linked government bond at 19.6 years, which gives 1.5102%. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should reproduce its traded real yield of 1.6389%, and it lands 0.129 points away. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3, which would give 1.7701%, 0.26 points higher; that gap is an inflation risk premium and deflating by the survey books it as return."
-volatility_source = "Yahoo daily closes of VWCE.DE, 5 years to 2026-09-28, dividend adjusted"
+real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.8430% continuously compounded on 2026-09-28, which is 3.9178% a year, less the MARKET break-even inflation rate of 2.2981% on DE0001030575, the longest euro inflation-linked government bond at 19.6 years, which gives 1.6197%. Subtracted because the Finanzagentur defines the break-even as a simple yield difference; annualised first because the ECB compounds continuously and the model reads annual rates. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should come close to its traded real yield of 1.6389%, and it lands 0.019 points away, the rest being a thirty-year nominal leg against a shorter inflation leg. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3; deflated by that instead the rate would be 1.8434%, +0.22 points away."
+volatility_source = "MSCI All Country World in euro, gross, monthly log returns from December 2000 to August 2026, annualised: 13.9860%. Held fixed, as Choi holds his 18.5%, rather than re-measured each week: a trailing window moved the answer whenever a crash entered or left it."
 volatility_currency = "EUR, unhedged"
-volatility_observations = 1259
 replacement_rate_source = "Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, base case: a projected net replacement rate of 66.0% for a private employee retiring in 2050 at 66 years and 2 months with 38 years of contributions. The model retires at 67, where Choi fitted his coefficients; the table's other cases near 67 give 63% to 64%, and its old-age case at 69 gives 73%. It replaced the OECD's 79%, which assumes 48 years of contributions and retirement at 70"
 retirement_age_source = "OECD, Pensions at a Glance 2025: statutory 67 and early 64 today, both linked to life expectancy; future normal retirement age 70 for a career starting at 22 in 2024"
 human_capital_calibration = "An Italian private-sector employee: the earnings process of Daminato and Padula (2024), Table 7 of CSEF working paper 585, estimated on the Bank of Italy's Survey on Household Income and Wealth 1986 to 2008 (permanent variance 0.015156, transitory 0.023609, a cubic in age), and the 66% replacement rate of the Ragioneria Generale dello Stato. United States mortality stays, because it is inside Choi's fitted coefficients. Set in ITALY_CALIBRATION, not here."

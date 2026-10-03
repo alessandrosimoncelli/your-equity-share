@@ -208,7 +208,6 @@ def build_italian_market_json() -> str:
     with CONFIG_GLOBAL.open("rb") as handle:
         raw = tomllib.load(handle)
     market, provenance = raw["market"], raw.get("provenance", {})
-    window = re.search(r"(\d+) years", str(provenance.get("volatility_source", "")))
     payload = {
         "expected_stock_real_return": float(market["expected_stock_real_return"]),
         "expected_stock_real_return_compound": float(provenance["expected_return_compound"]),
@@ -216,11 +215,8 @@ def build_italian_market_json() -> str:
         "stock_volatility": float(market["stock_volatility"]),
         "market_ticker": str(market.get("market_ticker", provenance.get("market_ticker", ""))),
         "as_of": str(market["as_of"]),
-        "provenance": {
-            **{k: str(v) if not isinstance(v, (int, float, bool)) else v
-               for k, v in provenance.items()},
-            "volatility_window_years": int(window.group(1)) if window else None,
-        },
+        "provenance": {k: str(v) if not isinstance(v, (int, float, bool)) else v
+                       for k, v in provenance.items()},
     }
     return json.dumps(payload, indent=1)
 

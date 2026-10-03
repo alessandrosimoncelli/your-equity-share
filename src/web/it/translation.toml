@@ -36,10 +36,10 @@ it = '''Quanto del tuo portafoglio va in azioni. Merton (1969),
   con la correzione per il capitale umano di Choi, Liu e Liu (2025).'''
 
 [[t]]
-en = '''Invested money with no planned use or withdrawal date.
-  United States only, calibrated for a college-educated household whose
+en = '''Money meant to last the rest of your life, with no fixed date
+  to spend it. United States only, calibrated for a college-educated household whose
   Social Security will replace about 40% of final pay.'''
-it = '''Denaro investito senza un uso né una data di prelievo previsti.
+it = '''Denaro che deve durare tutta la vita, senza una data fissa in cui spenderlo.
   Solo per l'Italia, calibrato per un dipendente del settore privato con una
   pensione pubblica di circa il 66% dell'ultimo stipendio netto.'''
 
@@ -60,11 +60,13 @@ en = '''for="wage">After-tax annual wage</label>'''
 it = '''for="wage">Stipendio annuo netto</label>'''
 
 [[t]]
-en = '''In today's money. The model assumes it does not move
-        with the market, so it overstates the answer if a meaningful part of
-        your pay is company stock.'''
-it = '''In euro di oggi, tredicesima e quattordicesima comprese.
-        Il modello assume che non segua il mercato, quindi sovrastima la
+en = '''In today's money, with any employer retirement
+        contribution, counted at 0.8 if it goes in before tax. The model assumes
+        it does not move with the market, so it overstates the answer if a
+        meaningful part of your pay is company stock.'''
+it = '''In euro di oggi, tredicesima e quattordicesima comprese,
+        più il TFR che maturi ogni anno al netto della sua tassa, circa il 7,5%
+        dello stipendio netto. Il modello assume che non segua il mercato, quindi sovrastima la
         risposta se una parte importante della tua retribuzione è in azioni
         dell'azienda.'''
 
@@ -82,17 +84,34 @@ it = '''id="wealth" value="50000">'''
 
 [[t]]
 en = '''Non-housing assets less non-mortgage debt, after tax
-        on withdrawal.'''
+        on withdrawal. Retired? Include what you will draw down over the years;
+        leave out only this year's spending and money for a dated goal. With
+        savings under about two years of your pension, read the answer as an
+        upper bound.'''
 it = '''Attività finanziarie, case escluse, meno i debiti diversi
-        dal mutuo, al netto delle tasse sul prelievo.'''
+        dal mutuo, al netto delle tasse sul prelievo. Comprendi fondi pensione e
+        TFR già maturato, contandone circa tre quarti: il resto è la sua tassa. Il
+        TFR lasciato in azienda è parte della quota sicura, quindi applica la
+        percentuale al totale e metti tutta la parte in azioni nel resto. In
+        pensione? Includi anche quello che preleverai negli anni; lascia fuori
+        solo le spese di quest'anno e il denaro per un obiettivo con una data.'''
 
 [[t]]
-en = '''for="benefit">Pension already received</label>'''
-it = '''for="benefit">Pensione già percepita</label>'''
+en = '''for="benefit">Pension already paid to you</label>'''
+it = '''for="benefit">Pensione che già ricevi</label>'''
 
 [[t]]
-en = '''A year's pension after tax. Zero if you are still working.'''
-it = '''La pensione di un anno, netta, tredicesima compresa. Zero se lavori ancora.'''
+en = '''A year of it after tax, even if you still work: a
+        retirement, survivor's or disability pension. The pension your current
+        job will pay is added on its own when your wage stops. If you have
+        stopped work and your pension starts later, enter it year by year.'''
+it = '''Un anno, netta e con la tredicesima, anche se lavori ancora: di
+        vecchiaia, di reversibilità o di invalidità. La pensione che maturi con
+        il lavoro attuale si aggiunge da sola quando lo stipendio finisce. Se
+        hai smesso di lavorare e la pensione arriva più avanti, inseriscila anno
+        per anno. Se ti mancano meno di dieci anni alla pensione, la stima di
+        INPS (La mia pensione futura), convertita al netto, è più precisa del
+        66%: inseriscila anno per anno.'''
 
 [[t]]
 en = '''id="risk-label">How much you dislike risk</span>'''
@@ -166,7 +185,9 @@ it = '''<span>Imposto io il rendimento atteso</span>'''
 en = '''The expected <b>real</b> return on <b>United States</b>
         equities, above inflation, over a lifetime. Enter it the way forecasts
         are published: as a <b>compound</b> rate. The figure below is a dividend
-        yield plus long-run growth in earnings per share.'''
+        yield plus long-run growth in earnings per share. If your equities are a
+        world index fund, Exhibit 5 shows the same construction on a world index,
+        and you can enter that instead.'''
 it = '''Il rendimento <b>reale</b> atteso delle azioni <b>globali</b>,
         oltre l'inflazione, sull'arco di una vita, <b>prima delle tasse</b>, come
         lo legge il modello (la metodologia italiana, sezione 8, spiega perché).
@@ -207,6 +228,16 @@ it = '''for="partner-wage">Il suo stipendio annuo netto</label>'''
 [[t]]
 en = '''id="partner-wage" value="80000">'''
 it = '''id="partner-wage" value="30000">'''
+
+[[t]]
+en = '''for="partner-benefit">Their pension already paid</label>'''
+it = '''for="partner-benefit">La sua pensione già percepita</label>'''
+
+[[t]]
+en = '''A pension of theirs that starts later, such as the
+          spousal benefit (half of yours), goes in their year-by-year box.'''
+it = '''Una sua pensione che inizierà più tardi va scritta
+          anno per anno, nel suo riquadro.'''
 
 [[t]]
 en = '''One line per year, under the headings
@@ -319,13 +350,14 @@ en = '''aria-label="Recommended equity share against investable net worth, age a
 it = '''aria-label="Quota in azioni raccomandata rispetto al patrimonio investibile, a età e stipendio fissi"'''
 
 [[t]]
-en = '''Age is not an input. It enters only by changing what future
-        earnings are worth, so two households of different ages holding the same
-        ratio of earnings to savings receive the same answer exactly.'''
-it = '''L'età non è un dato del modello. Conta solo perché cambia
-        quanto valgono i redditi futuri, quindi due famiglie di età diverse con
-        lo stesso rapporto tra redditi e risparmi ricevono esattamente la stessa
-        risposta.'''
+en = '''Age and salary are held fixed here. Both enter only through what
+        your future earnings are worth (Future earnings, in Exhibit 1), so two
+        households of different ages whose future earnings are worth the same
+        multiple of their savings receive the same answer exactly.'''
+it = '''Età e stipendio qui restano fissi. Contano solo attraverso quanto
+        valgono i tuoi redditi futuri (Redditi futuri, nel Prospetto 1), quindi
+        due famiglie di età diverse i cui redditi futuri valgono lo stesso
+        multiplo dei risparmi ricevono esattamente la stessa risposta.'''
 
 [[t]]
 en = '''Exhibit 5. Inputs, and where each comes from'''
@@ -380,8 +412,8 @@ en = '''return "your choices about the coin flip";'''
 it = '''return "le tue scelte sul lancio della moneta";'''
 
 [[t]]
-en = '''return "the middle of the scale, until you answer the questions";'''
-it = '''return "il centro della scala, finché non rispondi alle domande";'''
+en = '''return "the value Choi's spreadsheet comes set to, until you answer the questions";'''
+it = '''return "il valore preimpostato nel foglio di calcolo americano di Choi, finché non rispondi alle domande";'''
 
 [[t]]
 en = '''`A coin flip decides what you live on next year: <b>${money.format(income)}</b> ` +
@@ -430,12 +462,18 @@ en = '''`Your choices put your risk aversion at <b>${num1.format(gamma)}</b> out
 it = '''`Le tue scelte mettono la tua avversione al rischio a <b>${num1.format(gamma)}</b> su 10.`'''
 
 [[t]]
-en = '''`Until you answer, the model uses <b>5</b>, the middle of the scale.`'''
-it = '''`Finché non rispondi, il modello usa <b>5</b>, il centro della scala.`'''
+en = '''`Until you answer, the model uses <b>5</b>, the value Choi's spreadsheet comes set to.`'''
+it = '''`Finché non rispondi, il modello usa <b>5</b>, il valore preimpostato nel foglio di calcolo americano di Choi.`'''
 
 [[t]]
 en = '''? "Answer the questions instead" : "Enter my own number";'''
 it = '''? "Rispondi invece alle domande" : "Inserisco io il numero";'''
+
+[[t]]
+en = '''This is today's answer. Run it again once a year and
+        rebalance to the new figure, using new savings first.'''
+it = '''Questa è la risposta di oggi. Rifalla una volta l'anno e
+        ribilancia verso il nuovo valore, usando prima i nuovi risparmi.'''
 
 # --- the script: reading the controls ---------------------------------------
 
@@ -444,8 +482,12 @@ en = '''`<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. Could n
 it = '''`<b>${parsed.used}</b> ann${parsed.used === 1 ? "o letto" : "i letti"}. Non ho potuto leggere ${parsed.bad.length > 1 ? "le righe" : "la riga"} ${parsed.bad.join(", ")}; quegli anni mantengono il valore proiettato.`'''
 
 [[t]]
-en = '''`<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed.`'''
-it = '''`<b>${parsed.used}</b> ann${parsed.used === 1 ? "o letto" : "i letti"} da quello che hai scritto.`'''
+en = '''`<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed. They replace the wage and pension above; Reset to projection brings those back.`'''
+it = '''`<b>${parsed.used}</b> ann${parsed.used === 1 ? "o letto" : "i letti"} da quello che hai scritto. Sostituiscono stipendio e pensione indicati sopra; Torna alla proiezione li ripristina.`'''
+
+[[t]]
+en = '''`Projected from the fields above, and it follows them until you change a year.`'''
+it = '''`Proiettato dai campi qui sopra: li segue finché non cambi un anno.`'''
 
 # --- the script: the answer and its working ---------------------------------
 
@@ -462,12 +504,12 @@ it = '''`Come media aritmetica, che è ciò che usa il modello, è <b>${pct2.for
     `Il valore scaricato è ${pct2.format(compoundShown())} composto.`'''
 
 [[t]]
-en = '''`of your ${money.format(r.financialWealth)} portfolio belongs in equities, or <b>${money.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset.`'''
-it = '''`del tuo portafoglio di ${money.format(r.financialWealth)} va in azioni, cioè <b>${money.format(r.equityDollars)}</b>. Il resto, ${pct0.format(r.bondShare)}, va nell'attività sicura.`'''
+en = '''`of your ${money.format(r.financialWealth)} portfolio belongs in equities, or <b>${money.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset: long-dated inflation-linked government bonds, at the rate in Exhibit 5.`'''
+it = '''`del tuo portafoglio di ${money.format(r.financialWealth)} va in azioni, cioè <b>${money.format(r.equityDollars)}</b>. Il resto, ${pct0.format(r.bondShare)}, va nell'attività sicura: titoli di Stato a lungo termine indicizzati all'inflazione, al tasso del Prospetto 5.`'''
 
 [[t]]
-en = '''`<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The cap at 100% is imposed from outside; the model did not produce it.`'''
-it = '''`<b>Il modello chiede il ${pct0.format(r.uncappedShare)}</b>, cioè si indebiterebbe per investire. Il limite al 100% è imposto dall'esterno; non è il modello a produrlo.`'''
+en = '''`<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The 100% cap is the no-borrowing rule of the model the formula approximates; the formula alone goes above it.`'''
+it = '''`<b>Il modello chiede il ${pct0.format(r.uncappedShare)}</b>, cioè si indebiterebbe per investire. Il limite al 100% è il divieto di indebitarsi del modello che la formula approssima; la formula da sola va oltre.`'''
 
 [[t]]
 en = '''row([["Investable today", "k"],'''
@@ -613,9 +655,9 @@ it = '''row([["Tasso reale privo di rischio", "k"], [pct2.format(rf), "n"],
 
 [[t]]
 en = '''row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
-         [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} years of dividend-adjusted closes`, "why"]]) +'''
+         ["Choi's 18.5%, monthly CRSP returns 1926 to 2024, held fixed rather than re-measured each week", "why"]]) +'''
 it = '''row([["Volatilità delle azioni", "k"], [pct2.format(sigma), "n"],
-         [`${market.market_ticker}, ${prov.volatility_window_years ?? "?"} anni di chiusure rettificate per i dividendi`, "why"]]) +'''
+         ["MSCI All Country World in euro, rendimenti mensili dal 2000 al 2026, tenuta fissa invece di essere rimisurata ogni settimana", "why"]]) +'''
 
 [[t]]
 en = '''row([["Your risk aversion", "k"],'''
@@ -624,10 +666,10 @@ it = '''row([["La tua avversione al rischio", "k"],'''
 [[t]]
 en = '''row([["Log excess drift", "k"], [pct2.format(pi), "n"],
          ["the return and the safe rate above, in logs, less half the " +
-          "variance of Choi's 18.5% calibration", "why"]]);'''
+          "variance of the volatility above", "why"]]);'''
 it = '''row([["Drift logaritmico in eccesso", "k"], [pct2.format(pi), "n"],
          ["il rendimento e il tasso sicuro qui sopra, in logaritmi, meno metà della " +
-          "varianza della calibrazione di Choi al 18,5%", "why"]]);'''
+          "varianza della volatilità qui sopra", "why"]]);'''
 
 # --- the script: loading and the footer -------------------------------------
 

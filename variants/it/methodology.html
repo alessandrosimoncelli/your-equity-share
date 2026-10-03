@@ -353,23 +353,27 @@ are argued there.</p>
 <p class="docmeta"><strong>Every market figure here is as of 8 September
 2026</strong> and will have moved. The Python tool and the Italian page
 recompute them from the market data they ship with, refreshed every
-Monday.</p>
+Monday, except the volatility, which is fixed (section 6).</p>
 <hr class="titlerule">
 
 <h2 id="s1">1. What this document is</h2>
 
 <p>One model, two countries. <code>src/your_equity_share</code> is shared and
 is not duplicated, so both variants take their dividend yield from their own
-index, both take real growth in earnings per share from the same hundred-year
-trend through Shiller, both assume no repricing, and a test asserts the growth
+index, net of whatever a fund loses to withholding tax at source, both take
+real growth in earnings per share from the same hundred-year trend through
+Shiller, both assume no repricing, and a test asserts the growth
 term is identical to five decimal places rather than merely close. It runs
 wherever Shiller's workbook is present, which includes every Monday refresh that succeeds;
 the workbook is not in the repository, so a plain push skips it.</p>
 
 <p>That is deliberate and it is the point of the whole arrangement. <strong>The
-gap between a 21.3% American answer and a 75.2% Italian one is the country and
-not the method.</strong> Neither variant applies tax, as Choi does not, and for
-Italy section 8 measures why that is right. Were the model copied into two folders, the copies
+gap between a 20.7% American answer and a 64.6% Italian one is the country and
+not the method.</strong> That is the reference household used throughout: 45
+years old, 100,000 a year after tax, 1,500,000 saved, risk aversion 5. Neither
+variant applies tax, which Choi's model does not contain, and for Italy section
+8 measures why that is right and why the one tax rule in Choi's guide is not
+applied either. Were the model copied into two folders, the copies
 would be edited on different days and every later comparison would quietly mix
 a country difference with a code difference.</p>
 
@@ -390,14 +394,14 @@ cannot be checked, section 11 says so rather than dressing it up.</p>
 against</caption>
 <thead><tr><th>Input</th><th class="num">Used</th><th>Checked against</th><th class="num">Their figure</th></tr></thead>
 <tbody>
-<tr><td>Dividend yield, MSCI ACWI in euro</td><td class="num">1.5339%</td><td>AQR, Global All Country</td><td class="num">1.60%</td></tr>
+<tr><td>Dividend yield, MSCI ACWI in euro, net of withholding</td><td class="num">1.1917%</td><td>AQR, Global All Country, who quote it gross; ours gross is 1.5339%</td><td class="num">1.60%</td></tr>
 <tr><td>Real growth in earnings per share</td><td class="num">2.2860%</td><td>AQR, Global All Country</td><td class="num">2.60%</td></tr>
 <tr><td>Repricing</td><td class="num">0.0000%</td><td>AQR, stated assumption</td><td class="num">0.00%</td></tr>
-<tr><td>Expected real return, compound</td><td class="num">3.8198%</td><td>AQR, Global All Country</td><td class="num">4.20%</td></tr>
-<tr><td>The same, against a payout-neutral measure</td><td class="num">3.8198%</td><td>iShares ACWI earnings yield</td><td class="num">3.915%</td></tr>
-<tr><td>Volatility, euro</td><td class="num">13.8942%</td><td>MSCI ACWI in euro, 25 years</td><td class="num">13.99%</td></tr>
-<tr><td>Real safe rate</td><td class="num">1.4401%</td><td>Bund/euro-i 2046 traded real yield</td><td class="num">1.4906%</td></tr>
-<tr><td>Nominal 30-year yield</td><td class="num">3.7617%</td><td>German 30-year Bund, 9 September</td><td class="num">3.886%</td></tr>
+<tr><td>Expected real return, compound</td><td class="num">3.4777%</td><td>AQR, Global All Country, gross of withholding</td><td class="num">4.20%</td></tr>
+<tr><td>The same, against a payout-neutral measure</td><td class="num">3.4777%</td><td>iShares ACWI earnings yield, less the same withholding</td><td class="num">3.573%</td></tr>
+<tr><td>Volatility, euro, fixed</td><td class="num">13.9860%</td><td>The same index over the last 20 and 5 years (Table 5)</td><td class="num">13.37%, 12.92%</td></tr>
+<tr><td>Real safe rate</td><td class="num">1.5447%</td><td>Bund/euro-i 2046 traded real yield</td><td class="num">1.4906%</td></tr>
+<tr><td>Nominal 30-year yield, annualised</td><td class="num">3.8333%</td><td>German 30-year Bund, 9 September</td><td class="num">3.886%</td></tr>
 <tr><td>Permanent pay shocks, standard deviation</td><td class="num">12.3%</td><td>Daminato and Padula (2024), Italian private employees, Bank of Italy survey 1986 to 2008</td><td class="num">inside the 95% band of Jappelli and Pistaferri (2010)</td></tr>
 <tr><td>Benefit replacement rate</td><td class="num">66%</td><td>Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, private employee retiring in 2050, net</td><td class="num">66.0%</td></tr>
 </tbody>
@@ -408,21 +412,30 @@ against</caption>
 Exhibit 3A, as of 31 December 2025. iShares ACWI and IVV fund pages, 8
 September 2026. MSCI end-of-day index levels. Deutsche Finanzagentur, the
 issuer's own published real yields and break-even rates. ECB Data Portal,
-series YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_30Y. Ragioneria Generale dello Stato,
-Rapporto n. 26 (2025), chapter 6. OECD, <em>Pensions at a Glance 2025</em>,
+series YC.B.U2.EUR.4F.G_N_A.SV_C_YM.SR_30Y, and the ECB's technical notes on
+its yield curves. Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
+chapter 6. OECD, <em>Pensions at a Glance 2025</em>,
 Italy country note. Daminato and Padula (2024), <em>Journal of the European
 Economic Association</em>, with the estimates in Table 7 of working paper CSEF
 585. INPS, Osservatorio sui lavoratori dipendenti del settore privato,
 2024.</p>
 
 <p><strong>Nothing in that table is within rounding of its check by accident.
-The largest gap is the expected return</strong>, 0.38 points below AQR's, and
-0.31 of it is the growth term: theirs is a five to ten year figure and this one
-carries no horizon (section 4.3). Every other row is within 0.12 points of its
-check. The safe rate sits 0.05 points below the traded bond because the bond
-is nineteen years from maturity and this is a thirty-year point (section 5).
-The permanent pay shock is checked against a band rather than a point, because
-Jappelli and Pistaferri publish theirs as a chart.</p>
+The largest gap is the expected return</strong>, 0.72 points below AQR's, and
+it has three parts. Withholding is 0.34 of it: AQR quote gross, and this
+variant uses the yield net of it, which if anything is below what the fund
+keeps (section 4.1). The growth term is
+0.31: theirs is a five to ten year figure and this one carries no horizon
+(section 4.3). The yield itself is the last 0.07. Measured gross, as theirs
+is, the estimate is 0.38 below.</p>
+
+<p>The volatility is the twenty-five-year figure itself, so its check is the
+same index over shorter windows, which come out 0.62 and 1.07 points lower
+(section 6). Every row not discussed above is
+within a tenth of a point of its check. The safe rate sits 0.05 points above
+the traded bond, for reasons section 5 sets out, and the nominal yield 0.05
+below the German 30-year Bund. The permanent pay shock is checked against a band rather than a point,
+because Jappelli and Pistaferri publish theirs as a chart.</p>
 
 <h2 id="s3">3. The equity sleeve</h2>
 
@@ -453,8 +466,10 @@ below.</p>
 </div>
 
 <p>The same three terms the American variant uses, which is what makes the two
-answers comparable. Today: <strong>1.5339% + 2.2860% + 0 = 3.8198%
-compound</strong>, which is 4.8268% as an arithmetic mean at this volatility.</p>
+answers comparable. Today: <strong>1.1917% + 2.2860% + 0 = 3.4777%
+compound</strong>, which is 4.4947% as an arithmetic mean at this volatility.
+The yield is net of the withholding tax the fund suffers at source; gross it
+is 1.5339% (section 4.1).</p>
 
 <h3 id="s4-1">4.1 The dividend yield</h3>
 
@@ -466,22 +481,35 @@ those over the price at the end are a trailing yield.</p>
 <p><strong>Over the price at the end, and the denominator is worth a third of a
 point.</strong> Three constructions all sound like a trailing twelve-month
 yield and this year they disagree badly, because the index rose 22% across the
-window: dividends over the price a year ago give 1.87%, each month's dividend
-over that month's own starting price gives 1.70%, and dividends over today's
-price give 1.53%. Shiller's dividend column is a trailing annual rate divided
-by his last price, so the third is the object the two variants must share.</p>
+window. Measured gross: dividends over the price a year ago give 1.87%, each
+month's dividend over that month's own starting price gives 1.70%, and
+dividends over today's price give 1.53%. Shiller's dividend column is a
+trailing annual rate divided by his last price, so the third is the object the
+two variants must share.</p>
 
-<p><strong>The check.</strong> AQR quote 1.6% for this index. The measurement
-gives 1.5339%, <strong>0.07 points apart</strong>. Correcting the denominator
-improved that agreement rather than worsening it, which is the sign that the
-correction was right.</p>
+<p><strong>The check.</strong> AQR quote 1.6% for this index, gross. The gross
+measurement gives 1.5339%, <strong>0.07 points apart</strong>. Correcting the
+denominator improved that agreement rather than worsening it, which is the sign
+that the correction was right.</p>
 
-<p><strong>Gross of withholding tax</strong>, because Shiller's column is gross
-and the two variants have to measure one thing one way. Withholding costs
-<strong>0.342 points</strong>, measured as the gap between MSCI's gross and net
-variants, and an American holding domestic stock pays none of it. It is
-recorded rather than netted off, because netting a tax into a market return
-hides it inside a price.</p>
+<p><strong>Net of withholding tax, 1.1917%, and that is the figure
+used.</strong> The country a company is based in taxes the dividend it pays
+abroad before the money leaves, so a world fund receives its dividends already
+reduced. MSCI's net index reinvests them after that withholding, and over the
+same twelve months it takes <strong>0.3422 points</strong> off the gross yield.
+No holder of the fund ever receives that money: VWCE's net asset value is
+already net of it. It is a property of the fund, like its price, and not the
+household's own tax, which the model leaves out (section 8). An American
+holding American stock suffers none, which is why the American variant's gross
+Shiller column is the same measurement there. Until October 2026 this variant
+used the gross yield and recorded the withholding beside it, which credited the
+household with dividends the fund never receives.</p>
+
+<p><strong>If anything the deduction is too large.</strong> MSCI deducts
+withholding at the rate a non-resident institution pays without the benefit of
+a tax treaty, the most a fund can suffer. A fund domiciled where treaties
+apply, as VWCE is in Ireland, can suffer less, so the net yield used here errs
+low. By how much has not been measured.</p>
 
 <h3 id="s4-2">4.2 The growth term</h3>
 
@@ -543,9 +571,10 @@ oversight.</strong> Scaling by AQR's ratio looks principled and is not: they
 publish to one decimal place, and propagating that rounding through the 64%
 weight puts the implied gap anywhere between 0.10 and 0.59 points. An
 adjustment less reliable than the thing it adjusts is not an improvement. One
-consolation is real: the estimate this produces is already 0.38 points below
-AQR's own published figure for the same index, so even at the top of the bias
-range it lands under the number the firms publish.</p>
+consolation is real: measured gross, as AQR measure theirs, the estimate this
+produces is already 0.38 points below their published figure for the same
+index, so even at the top of the bias range it lands under the number the firms
+publish.</p>
 
 <h3 id="s4-3">4.3 Why not AQR's own figure</h3>
 
@@ -594,7 +623,10 @@ one market over instead of one term over.</p>
 
 <p><strong>The earnings yield settles it, because E/P does not care how
 earnings are split</strong> between dividends, buybacks and retention. iShares,
-same provider and same methodology on both sides, 8 September 2026:</p>
+same provider and same methodology on both sides, 8 September 2026. The global
+earnings yield is taken net of the same 0.342 points of withholding as the
+estimate, so the two compare like with like; an American holder suffers none,
+so nothing comes off the American side:</p>
 
 <div class="tablewrap" id="t3">
 <table>
@@ -602,8 +634,9 @@ same provider and same methodology on both sides, 8 September 2026:</p>
 <thead><tr><th></th><th class="num">Global, ACWI</th><th class="num">United States, IVV</th><th class="num">Gap</th></tr></thead>
 <tbody>
 <tr><td>Earnings yield, E/P</td><td class="num">3.915%</td><td class="num">3.278%</td><td class="num">+0.638</td></tr>
-<tr><td>This model's estimate</td><td class="num">3.820%</td><td class="num">3.383%</td><td class="num">+0.437</td></tr>
-<tr><td>Ours minus E/P</td><td class="num">&minus;0.096</td><td class="num">+0.105</td><td class="num"></td></tr>
+<tr><td>The same, net of withholding</td><td class="num">3.573%</td><td class="num">3.278%</td><td class="num">+0.296</td></tr>
+<tr><td>This model's estimate, net</td><td class="num">3.478%</td><td class="num">3.383%</td><td class="num">+0.095</td></tr>
+<tr><td>Ours minus E/P, both net</td><td class="num">&minus;0.096</td><td class="num">+0.105</td><td class="num"></td></tr>
 <tr><td>Dividend payout ratio</td><td class="num">36.5%</td><td class="num">33.3%</td><td class="num"></td></tr>
 </tbody>
 </table>
@@ -612,19 +645,22 @@ same provider and same methodology on both sides, 8 September 2026:</p>
 <p><strong>The concern is real and it is small, and it runs the other
 way.</strong> Global does pay out more of its earnings as dividends, 36.5%
 against 33.3%, so part of its yield advantage is policy rather than value:
-splitting the 0.340 point yield gap gives 0.212 to valuation and 0.128 to
-payout policy. But on the payout-neutral measure global is 0.638 points cheaper
-than the United States and this estimate credits it only 0.437, so <strong>the
-construction understates the global advantage by 0.20 points rather than
-inflating it</strong>. Each variant also lands within about a tenth of a point
-of its own market's earnings yield, which is what soundness looks like:
-equation (5) and E/P coincide when retained earnings earn the cost of equity.</p>
+splitting the 0.340 point gap between the two funds' quoted yields, 1.43% and
+1.09%, gives 0.212 to valuation and 0.128 to payout policy. But on the payout-neutral measure, net of withholding, global
+offers 0.296 points more than the United States and this estimate credits it
+only 0.095, so <strong>the construction understates the global advantage by
+0.20 points rather than inflating it</strong>. Before withholding the two gaps
+are 0.638 and 0.437, and the difference is the same 0.20, because the same
+0.342 comes off both global figures. Each variant also lands within about a
+tenth of a point of its own market's earnings yield, which is what soundness
+looks like: equation (5) and E/P coincide when retained earnings earn the cost
+of equity.</p>
 
 <h2 id="s5">5. The safe asset</h2>
 
-<p>The ECB's AAA euro area government curve at thirty years, deflated by the
-market break-even inflation rate of the longest euro linker.
-<strong>1.4401%</strong>.</p>
+<p>The ECB's AAA euro area government curve at thirty years, less the market
+break-even inflation rate of the longest euro linker.
+<strong>1.5447%</strong>.</p>
 
 <p>It took three attempts and each failed a different test, which is worth
 recording because each looked right at the time.</p>
@@ -635,15 +671,29 @@ recording because each looked right at the time.</p>
 <thead><tr><th>Construction</th><th class="num">Rate</th><th>Constant 30 years</th><th>Free of forecasts</th></tr></thead>
 <tbody>
 <tr><td>Bund/euro-i 2046, traded real yield</td><td class="num">1.4906%</td><td>no, 19.6 years</td><td>yes</td></tr>
-<tr><td>ECB curve less the SPF survey</td><td class="num">1.6904%</td><td>yes</td><td>no</td></tr>
-<tr><td colspan="4" class="sub">The two deflators, on the same 3.7617% nominal
-curve: market break-even <strong>2.2886%</strong>, ECB Survey of Professional
-Forecasters <strong>2.0369%</strong>. The 0.25 points between them is the
-inflation risk premium.</td></tr>
-<tr><td><strong>ECB curve less the market break-even</strong></td><td class="num"><strong>1.4401%</strong></td><td>yes</td><td>yes</td></tr>
+<tr><td>ECB curve deflated by the SPF survey</td><td class="num">1.7606%</td><td>yes</td><td>no</td></tr>
+<tr><td colspan="4" class="sub">The two deflators, on the same nominal curve,
+3.7617% continuously compounded and 3.8333% a year: market break-even
+<strong>2.2886%</strong>, ECB Survey of Professional Forecasters
+<strong>2.0369%</strong>. Today the break-even is the higher, by 0.25 points.
+That order is a state of the market and not a rule: the gap is an inflation
+risk premium less a discount for the linker's thinner trading, and either can
+be the larger.</td></tr>
+<tr><td><strong>ECB curve less the market break-even</strong></td><td class="num"><strong>1.5447%</strong></td><td>yes</td><td>yes</td></tr>
 </tbody>
 </table>
 </div>
+
+<p><strong>Two conventions are matched before anything is subtracted.</strong>
+The ECB publishes its curve continuously compounded. Its technical notes say
+so: "The continuous method is used to compound interest rates." The model
+reads annual rates, so the thirty-year spot of 3.7617% is first annualised, to
+3.8333%. The Deutsche Finanzagentur defines its break-even as a simple yield
+difference between the linker and a conventional Bund, so it comes off by
+subtraction rather than being divided out: 3.8333% less 2.2886% is 1.5447%.
+Until October 2026 this variant read the continuous rate as an annual one and
+divided the break-even out, which gave 1.4401%, about a tenth of a point low
+and worth 3.1 points of equity share for the reference household.</p>
 
 <p><strong>Constant maturity is the property that matters</strong>, and it is
 the property FRED's DFII30 has. DFII30 is not a bond: it is the thirty-year
@@ -654,18 +704,26 @@ label.</p>
 
 <p><strong>A break-even is a price, not a forecast.</strong> It is the rate at
 which holding the linker and holding a nominal bond pay the same. The Survey of
-Professional Forecasters is an opinion, and deflating by it books an inflation
-risk premium as return: it sits 0.25 points above the break-even, and using it
-made the safe asset look better than any bond a household can actually buy.
-That choice was worth 5.9 points of equity share.</p>
+Professional Forecasters is an opinion, and deflating by it puts an opinion
+inside a market rate. Divided out, the way a forecast of inflation is, it would
+give 1.7606% today, 0.22 points above the rate used and above the 2046's
+traded real yield, and it would lower the reference household's answer by 6.1
+points. On another day the survey could sit above the
+break-even and the error would run the other way; the reason to refuse it is
+the same either way.</p>
 
-<p><strong>The construction checks against itself.</strong> The break-even is
-derived from the 2046, so deflating a nominal yield by it should reproduce that
-bond's own traded real yield of 1.4906%. It gives 1.4401%, five hundredths of a
-point away, and the residue is the mismatch between a thirty-year nominal leg
-and a 19.6-year inflation leg. <strong>The check is external</strong>: the
-1.4906% is the issuer's own published figure, from the Deutsche Finanzagentur,
-not a number this project computed.</p>
+<p><strong>The construction checks against itself, and comes close.</strong>
+The break-even is derived from the 2046, so subtracting it from a nominal yield
+should land near that bond's own traded real yield of 1.4906%. It gives
+1.5447%, about five hundredths of a point above. Because the break-even is a
+conventional Bund's yield less the 2046's real yield, what is left is the gap
+between the curve's thirty-year point and that Bund's yield, and that gap is
+not one thing: a thirty-year nominal leg against a 19.6-year inflation leg, a
+composite of AAA issuers against Germany alone, and a zero-coupon rate against
+a coupon bond's yield. Nothing here separates the three, and nothing is fitted
+to close the gap. <strong>The check is external</strong>: the 1.4906% is the
+issuer's own published figure, from the Deutsche Finanzagentur, not a number
+this project computed.</p>
 
 <p><strong>AAA rather than every euro area government</strong>, which yields
 0.61 points more at the same maturity. That spread is compensation for a
@@ -681,13 +739,30 @@ at five years and retail.</p>
 
 <h2 id="s6">6. Volatility</h2>
 
-<p>Five years of daily euro-priced closes of the fund itself, annualised:
-<strong>13.8942%</strong>. Measured on a euro-priced series, so it already
+<p><strong>13.9860%, fixed.</strong> The annualised standard deviation of
+monthly log returns of MSCI All Country World in euro, gross, from December
+2000 to August 2026. That is the convention Choi, Liu and Liu use for their
+18.5%, monthly CRSP value-weighted log returns from July 1926 to July 2024;
+theirs are in excess of the one-month Treasury bill and this one is on total
+rather than excess returns. Like theirs it is one number for a whole life,
+which is how they and Cocco, Gomes and Maenhout treat volatility. It is priced in euro, so it already
 carries the currency risk an unhedged global fund gives a euro investor without
-anything further being done to it.</p>
+anything further being done to it. It is written into the code once and
+changed only by hand.</p>
 
-<p><strong>It looks low against published assumptions and it is not.</strong>
-Horizon Actuarial's 2024 survey of 41 advisors gives 16.5% for United States
+<p><strong>Why fixed.</strong> Until October 2026 it was measured again every
+Monday from five years of the fund's daily closes, and a trailing window turns
+volatility into something that jumps when a crash enters or leaves it. In
+February and March 2025 the crash of February and March 2020 left the window:
+the five-year figure fell from 16.7% to 14.5% in five weeks, with no change in
+long-run risk.
+On this document's market figures that alone moves the answer for an uncapped
+household (45 years old, 30,000 euro of pay, 500,000 saved, risk 5) by nine
+points, from 49% to 58%, and on the figures in use before this revision it
+moved it by more.</p>
+
+<p><strong>It looks low against published assumptions, and much of the
+difference is the currency.</strong> Horizon Actuarial's 2024 survey of 41 advisors gives 16.5% for United States
 large cap and 18.1% for non-US developed, both in dollars. That gap needed
 explaining before this figure could be used, so it was measured on one index
 over one window:</p>
@@ -709,14 +784,22 @@ currency and window</caption>
 <p><strong>Two things follow and both are measurements.</strong> The currency
 is worth 1.73 points on the same index over the same window, because the dollar
 tends to rise when equities fall, so for a euro holder the currency gain offsets
-part of the equity loss. And the 13.8942% used here sits <strong>0.10 points
-from the same index measured over twenty-five years in the same
-currency</strong>, which is a five-year daily estimate on one fund reproducing a
-twenty-five-year monthly estimate on the index.</p>
+part of the equity loss. And the long window is the one to use: twenty and
+twenty-five years give 13.37% and 13.99%, while the last five, which were calm,
+give 12.92%, a point lower.</p>
 
-<p>The window barely matters in euro: 13.99%, 13.37% and 12.92% across full,
-twenty years and five. So the figure is not an artefact of a calm recent
-period.</p>
+<p><strong>A correction.</strong> An earlier version of this section said the
+five-year daily figure then in use, 13.8942%, reproduced the twenty-five-year
+monthly one to a tenth of a point. It did not confirm anything: two gaps of
+opposite sign largely cancelled. The calm window takes 1.07 points off the
+twenty-five-year figure (Table 5), and on the fund over those same five years
+daily returns give about 1.3 points more than monthly ones. Most of that second
+gap is the fund's own closing prices in Frankfurt rather than daily sampling as
+such: on the index over the same five years daily returns add only 0.2 to 0.4
+points. Neither gap says
+anything about long-run risk. How much rests on the level itself, and why it
+is a judgement rather than a measurement anyone can check, is in section
+11.</p>
 
 <h2 id="s7">7. The career and the pension</h2>
 
@@ -726,7 +809,7 @@ can move by surprise, and the pension at the end. All three are Italian
 estimates of that one person, set in <code>ITALY_CALIBRATION</code> rather than
 in the market data because they belong to the household and the state, not to
 the market. With the American graduate's career and the OECD's 79%, the
-reference household of section 1 held 64.1%; with these, 75.2%. More
+reference household of section 1 held 55.1%; with these, 64.6%. More
 bond-like wealth leaves room for more equity in the financial portfolio, the
 direction Bodie, Merton and Samuelson (1992) predict.</p>
 
@@ -769,11 +852,21 @@ fitted set and lands within 3 points of the full solution.</p>
 <p><strong>The checks.</strong> Daminato and Padula report that their
 permanent variance falls inside the confidence interval of Jappelli and
 Pistaferri (2010), estimated on the same survey with the same definition of
-earnings. Their age coefficients are imprecise one by one, so the shape was
-checked against the INPS Osservatorio on private employees for 2024, which
-counts contributions rather than surveying households: daily pay keeps rising
-into the early sixties, by 10% from 45-49 to 60-64 for men. Both sources rise
-where the American graduate's pay falls.</p>
+earnings.</p>
+
+<p><strong>The age profile is the weaker part.</strong> Their age coefficients
+are imprecise one by one, and the cube is printed to one significant digit,
+&minus;0.000006. Checked against the INPS Osservatorio on private employees for
+2024, which counts contributions rather than surveying households, it rises
+about twice as fast: <strong>+19.7%</strong> from 47 to 62 on their profile,
+against <strong>+10.2%</strong> in men's daily gross pay from 45-49 to 60-64.
+The two are not the same object, since INPS is one year's cross-section of
+gross pay rather than one generation's pay after tax, but both rise where the
+American graduate's pay falls. So the direction is settled and the slope is
+less certain. It matters most to the young: at risk 5 a profile half as steep
+lowers the answer by up to about 10 points at 25 and 4 points at 49, the most
+for savings near where the answer leaves 100%, about 7 to 8 times pay, and less
+above that. Below about 6.7 times pay the answer is 100% either way.</p>
 
 <p><strong>Whom it describes.</strong> Married household heads employed in the
 private or public sector, aged about 25 to 60, of every education level; this
@@ -792,9 +885,18 @@ the same basis as the after-tax wage the page asks for.</p>
 
 <p><strong>Why that row.</strong> The model retires everyone at 67, because
 Choi fitted his coefficients there and the age cannot be moved from outside
-them, and 2050 is when today's 45-year-old retires. The same table gives 63%
-to 64% for its other cases near 67 and 73% for an old-age retirement at 69,
-so 66% sits where a retirement at 67 falls.</p>
+them, and 2050 is within two years of when today's 45-year-old reaches 67. The
+same table gives 63% to 64% for its other cases near 67 and 73% for an old-age
+retirement at 69, so 66% sits where a retirement at 67 falls.</p>
+
+<p><strong>Whom it understates.</strong> The same row of Table 6.3.a gives
+77.0% for a retirement in 2030 and 67.4% for one in 2040. The model uses 66%
+for everyone, so it understates the pension of anyone retiring before about
+2040. For an uncapped household at risk 5 that understates the answer by up to
+about 8 points for a retirement in 2030, falling to under a point by 2040.
+Someone close to retirement can do better than any table: INPS's own estimate,
+"La mia pensione futura", can be typed into the page's year-by-year box, a
+year of it after tax in each year it will be paid.</p>
 
 <p><strong>Why not the OECD's 79%.</strong> This variant used it until October
 2026: the future net rate for an average earner in <em>Pensions at a Glance
@@ -807,21 +909,33 @@ coefficient, so paying 79% from 67 overstated the pension.</p>
 
 <h2 id="s8">8. Tax</h2>
 
-<p><strong>The Italian answer is before tax, as Choi's is, and this section
-says why.</strong> Choi, Liu and Liu do not model tax: their variables are
-"implicitly after-tax where relevant". For an American saving in a 401(k) or an
-IRA the market figures are close to that. For Italy it had to be measured,
-because the law taxes the two funds differently: <strong>26%</strong> on the
-gain of an equity fund, <strong>12.5%</strong> on a fund of government bonds
-of Italy and white-list states, in proportion to what it holds in them
-(Agenzia delle Entrate, Circolare 19/E of 2014, section 5), and
-<strong>0.2%</strong> a year of imposta di bollo on the value of each. Both
-rates fall on the nominal gain and only when units are sold, death counts as a
-sale (Circolare 19/E of 2013, section 2.4), and a loss on one fund cannot be
-set against a gain on another.</p>
+<p><strong>The Italian answer reads the market figures as they are, and this
+section says why.</strong> Choi, Liu and Liu do not model tax: their variables
+are "implicitly after-tax where relevant". The guide to their spreadsheet has
+one tax rule, to cut the safe rate by the marginal tax rate when bonds are held
+in a taxable account. For an American saving in a 401(k) or an IRA the market
+figures are close to after-tax ones and the rule does not apply. For Italy the
+rule is not applied, because it does not describe Italian law. The law taxes
+both funds, not only the bonds, and at sale rather than every year:
+<strong>26%</strong> on the gain of an equity fund, <strong>12.5%</strong> on
+a fund of government bonds of Italy and white-list states, in proportion to
+what it holds in them (Agenzia delle Entrate, Circolare 19/E of 2014, section
+5), and <strong>0.2%</strong> a year of imposta di bollo on the value of each.
+Both rates fall on the nominal gain and only when units are sold, death counts
+as a sale (Circolare 19/E of 2013, section 2.4), and a loss on one fund cannot
+be set against a gain on another.</p>
+
+<p><strong>The guide's rule would move the answer the wrong way.</strong>
+Cutting only the safe rate, by the 12.5% a government bond fund pays, takes it
+from 1.5447% to 1.3516% and <em>raises</em> the answer. For an uncapped
+household aged 45 to 65 at risk 5 it adds up to about 8 or 9 points just above
+the savings where the answer leaves 100%, and less as savings grow, about 3
+points at fifty times pay (5.8 for the reference household), and slightly more
+for younger households. Taxing the equity fund as well, which
+is what the law does, lowers it, as the rest of this section measures.</p>
 
 <p><strong>Tax takes a share of the risk as well as of the return.</strong> A
-fund held for years is almost always in gain when it is sold, so the state
+fund held for many years is usually in gain when it is sold, so the state
 takes about a quarter of the gain whether markets did well or badly: it shares
 the swings, not only the average. That is the effect Domar and Musgrave (1944)
 described. Taking tax off the expected return and leaving the volatility as it
@@ -841,11 +955,11 @@ and without it, exactly rather than by simulation.</p>
 best without it, by how long the money is held. Risk aversion 5.</caption>
 <thead><tr><th class="num">Years held</th><th class="num">The law, as it works</th><th class="num">Tax on the expected return only</th><th class="num">Cost of ignoring tax, basis points a year</th><th class="num">Chance the fund is sold at a loss</th></tr></thead>
 <tbody>
-<tr><td class="num">3</td><td class="num">0.807</td><td class="num">0.696</td><td class="num">1.41</td><td class="num">23.4%</td></tr>
-<tr><td class="num">7</td><td class="num">0.920</td><td class="num">0.724</td><td class="num">0.23</td><td class="num">13.4%</td></tr>
-<tr><td class="num">12</td><td class="num">0.959</td><td class="num">0.756</td><td class="num">0.05</td><td class="num">7.4%</td></tr>
-<tr><td class="num">18</td><td class="num">0.970</td><td class="num">0.789</td><td class="num">0.03</td><td class="num">3.8%</td></tr>
-<tr><td class="num">30</td><td class="num">0.964</td><td class="num">0.841</td><td class="num">0.03</td><td class="num">1.1%</td></tr>
+<tr><td class="num">3</td><td class="num">0.745</td><td class="num">0.682</td><td class="num">1.84</td><td class="num">24.9%</td></tr>
+<tr><td class="num">7</td><td class="num">0.877</td><td class="num">0.709</td><td class="num">0.40</td><td class="num">15.0%</td></tr>
+<tr><td class="num">12</td><td class="num">0.923</td><td class="num">0.741</td><td class="num">0.15</td><td class="num">8.7%</td></tr>
+<tr><td class="num">18</td><td class="num">0.938</td><td class="num">0.774</td><td class="num">0.09</td><td class="num">4.8%</td></tr>
+<tr><td class="num">30</td><td class="num">0.938</td><td class="num">0.826</td><td class="num">0.08</td><td class="num">1.6%</td></tr>
 </tbody>
 </table>
 </div>
@@ -854,25 +968,27 @@ best without it, by how long the money is held. Risk aversion 5.</caption>
 snapshot. Risk aversion 3 and 8 give the same column within a hundredth.</p>
 
 <p><strong>So the model reads the market figures as they are.</strong> The tax
-lowers the right equity share by a fifth for money sold within three years and
-by under a tenth for money held seven years or more, and a household that
-ignores it gives up at most a basis point and a half a year of return, under a
-quarter of one beyond seven years. Taking tax off the expected return alone cut
-the share by 16% to 30%, several times more than the law does, so it made the
-answer worse while making the model more complicated. Choi's way is the simpler
-of the two and the closer one.</p>
+lowers the right equity share by about a quarter for money sold within three
+years, by about an eighth at seven years and by under a tenth beyond, and a
+household that ignores it gives up under 2 basis points a year of return at
+three years and under half a basis point from seven years on. Taking tax off
+the expected return alone cut the share by 17% to 32%. At three years that is
+about a third against the law's quarter, so there it is close to the law and
+nearer to it than leaving tax out. From seven years it cuts two to four times
+what the law does, and leaving tax out is both the simpler and the closer.</p>
 
 <p><strong>The missing loss credit matters less than it looks.</strong> Losses
 on funds cannot offset gains, which is why this document once argued that the
-state shares only the upside. It does share only the upside, but after seven
-years a fund is below cost when sold about one time in eight, and after twelve
-one time in fourteen, so the upside is nearly all there is.</p>
+state shares only the upside. It does share only the upside, but after three
+years a fund is below cost when sold about one time in four, after seven about
+one time in seven, and after twelve under one time in ten, so the upside is
+most of what there is for money held long.</p>
 
 <h2 id="s9">9. Currency</h2>
 
 <p>Three of the four inputs are euro figures by construction. The dividend
 yield is measured on a euro-priced global index, the volatility on a euro-priced
-series, and the safe rate is a euro curve deflated by a euro break-even.</p>
+series, and the safe rate is a euro curve less a euro break-even.</p>
 
 <p><strong>The growth term is the exception</strong>, and it is one term of
 three. It is real growth in United States earnings per share, used as the
@@ -898,8 +1014,8 @@ as the measured persistence, not as an endorsement that parity holds quickly.</p
 <h2 id="s10">10. Why the answer is so often 100%</h2>
 
 <p><strong>With the default risk answer, the Italian page puts all of the
-savings in stocks until they reach 7.1 to 10.4 years of after-tax pay</strong>,
-depending on age, against 1.0 to 2.8 years on the American page (Table 8).
+savings in stocks until they reach 5.6 to 8.3 years of after-tax pay</strong>,
+depending on age, against 1.0 to 2.7 years on the American page (Table 8).
 That is the model's answer and not a fault, and this section shows where it
 comes from.</p>
 
@@ -913,9 +1029,9 @@ because it does not borrow.</p>
 
 <p><strong>The household the Italian page opens with</strong> is 45 years old,
 earns 30,000 euro a year after tax, has 50,000 saved and answers 5 for risk.
-Its future pay and pension are worth 544,648 euro, 18.2 years of pay. Merton's
-share of the two together is 34.0%, which is 202,320 euro of stocks against
-50,000 to invest. Unconstrained, the model would hold 405% of the savings in
+Its future pay and pension are worth 542,085 euro, 18.1 years of pay. Merton's
+share of the two together is 29.3%, which is 173,364 euro of stocks against
+50,000 to invest. Unconstrained, the model would hold 347% of the savings in
 stocks, borrowing the rest.</p>
 
 <div class="tablewrap" id="t8">
@@ -924,11 +1040,11 @@ stocks, borrowing the rest.</p>
 falls below 100%</caption>
 <thead><tr><th>Age</th><th class="num">Risk 3</th><th class="num">Risk 5, the default</th><th class="num">Risk 8</th><th class="num">American page, risk 5</th></tr></thead>
 <tbody>
-<tr><td>25</td><td class="num">36.2</td><td class="num">10.4</td><td class="num">3.8</td><td class="num">2.8</td></tr>
-<tr><td>35</td><td class="num">34.0</td><td class="num">10.3</td><td class="num">3.8</td><td class="num">1.8</td></tr>
-<tr><td>45</td><td class="num">29.3</td><td class="num">9.4</td><td class="num">3.7</td><td class="num">1.5</td></tr>
-<tr><td>55</td><td class="num">23.7</td><td class="num">8.2</td><td class="num">3.5</td><td class="num">1.3</td></tr>
-<tr><td>65</td><td class="num">18.2</td><td class="num">7.1</td><td class="num">3.6</td><td class="num">1.0</td></tr>
+<tr><td>25</td><td class="num">26.1</td><td class="num">8.3</td><td class="num">3.1</td><td class="num">2.7</td></tr>
+<tr><td>35</td><td class="num">24.6</td><td class="num">8.2</td><td class="num">3.2</td><td class="num">1.8</td></tr>
+<tr><td>45</td><td class="num">21.2</td><td class="num">7.5</td><td class="num">3.1</td><td class="num">1.4</td></tr>
+<tr><td>55</td><td class="num">17.2</td><td class="num">6.5</td><td class="num">2.9</td><td class="num">1.3</td></tr>
+<tr><td>65</td><td class="num">13.2</td><td class="num">5.6</td><td class="num">3.0</td><td class="num">1.0</td></tr>
 </tbody>
 </table>
 </div>
@@ -942,19 +1058,22 @@ snapshot, the American one on the American methodology's of 3 September.</p>
 American one.</strong></p>
 
 <p><strong>1. The euro market.</strong> Equities beat the safe asset by a
-drift of 3.28 points a year in euro, against 1.89 in the United States, because
+drift of 2.86 points a year in euro, against 2.12 in the United States, because
 the American safe rate is high, 2.96% real on 30-year TIPS, and the euro one is
-low, 1.44%. The world fund also swings less, 13.89% a year against 17.18% for
-the S&amp;P 500, and Merton's share falls with the square of volatility. At
-risk 5 the share is 34.0% in Italy against 12.8%. The same low rates value
-future pay more highly through Choi's discount rates: on its own, the euro
-market takes human capital at 45 from 10.0 years of pay to 12.2.</p>
+low, 1.54%. Take away the part of each drift that only pays for volatility and
+the gap is wider: the log premium Choi's discount rates read is 1.89 points in
+euro against 0.41. The world fund also swings less, 13.99% a year against
+18.50% for the S&amp;P 500, the long-run figure Choi uses, and Merton's share
+falls with the square of volatility. At risk 5 the share is 29.3% in Italy
+against 12.4%. The same low rates value future pay more highly through Choi's
+discount rates: on its own, the euro market takes human capital at 45 from 10.0
+years of pay to 12.2.</p>
 
 <p><strong>2. The Italian career and pension.</strong> Italian private-sector
 pay keeps rising into the sixties, by 22% from 45 to 60, where the American
 graduate's falls by 16% (Table 6), and the pension replaces 66% of final pay
 rather than 40%. On its own this takes human capital at 45 from 10.0 years of
-pay to 13.9, and with the euro market as well, to 18.2.</p>
+pay to 14.0, and with the euro market as well, to 18.1.</p>
 
 <p><strong>3. The household each page opens with.</strong> The Italian page
 opens on savings of 1.7 years of pay, 50,000 euro against 30,000 of salary;
@@ -968,11 +1087,11 @@ falls.</p>
 share</caption>
 <thead><tr><th></th><th class="num">The two pages' opening households</th><th class="num">One household, 15 years of pay saved</th></tr></thead>
 <tbody>
-<tr><td>American answer</td><td class="num">38.3%</td><td class="num">21.3%</td></tr>
-<tr><td>1. The euro market</td><td class="num">+31.0</td><td class="num">+45.5</td></tr>
-<tr><td>2. The Italian career and pension</td><td class="num">+5.1</td><td class="num">+8.4</td></tr>
-<tr><td>3. Savings of 1.7 years of pay rather than 5</td><td class="num">+25.6</td><td class="num">none</td></tr>
-<tr><td>Italian answer</td><td class="num">100.0%</td><td class="num">75.2%</td></tr>
+<tr><td>American answer</td><td class="num">37.3%</td><td class="num">20.7%</td></tr>
+<tr><td>1. The euro market</td><td class="num">+31.9</td><td class="num">+36.5</td></tr>
+<tr><td>2. The Italian career and pension</td><td class="num">+5.4</td><td class="num">+7.4</td></tr>
+<tr><td>3. Savings of 1.7 years of pay rather than 5</td><td class="num">+25.4</td><td class="num">none</td></tr>
+<tr><td>Italian answer</td><td class="num">100.0%</td><td class="num">64.6%</td></tr>
 </tbody>
 </table>
 </div>
@@ -1002,9 +1121,9 @@ reasons 1 and 2, not because it does anything differently.</p>
 
 <h2 id="s11">11. What is not validated</h2>
 
-<p>Two things in this variant have no external check, and neither is claimed as
-a validated number. They are declared deviations, and they are listed here so a
-reader does not have to find them.</p>
+<p>Three things in this variant have no external check, and none is claimed as
+a validated number. They are declared deviations or judgements, and they are
+listed here so a reader does not have to find them.</p>
 
 <p><strong>Choi's coefficients were fitted on American careers and American
 mortality.</strong> The career and the pension are Italian (section 7), but the
@@ -1012,19 +1131,48 @@ discount rates that value them are Choi's, fitted on Cocco, Gomes and
 Maenhout's three American earnings processes and the 2019 United States life
 table. Mortality cannot be made Italian from outside them, and the Italian
 earnings process sits beside his fitted set rather than inside it, as the flat
-path of his own worked example does. Removing that would mean refitting the
-coefficients on Italian data rather than substituting inputs.</p>
+path of his own worked example does. They were also fitted for a stock market
+with 18.5% volatility, and the euro fund's lower volatility does not reach them
+at all: they read only the log premium, the compound return over the safe rate
+measured in logs, 1.89 points, so they value future pay as though that premium
+came with American risk. That premium is also just below the 2% to 4% they
+were fitted over. Removing any of this would mean refitting the coefficients
+on Italian data rather than substituting inputs. The premium is Choi's own
+definition, the expected log return over the safe rate. His spreadsheet takes a
+shortcut to it, the arithmetic mean in logs less half of 18.5% squared, which
+is the same number when volatility is 18.5% but here would give 1.15 points and
+lower the reference household's answer by 1.0 point.</p>
 
 <p><strong>Leaving tax out rests on a check of one decision, not on the full
 life-cycle model.</strong> Section 8 holds the money to a fixed date without
 rebalancing. A household that rebalances by selling realises gains sooner, and
 one that spends gradually sells some of its funds within a few years, where the
-tax matters most: by a fifth of the equity share at three years. The full
-model with Italian tax, which would settle it, has not been solved. The stakes
-are bounded either way: ignoring the tax costs at most about a basis point and
-a half a year of return.</p>
+tax matters most: by about a quarter of the equity share at three years. The
+full model with Italian tax, which would settle it, has not been solved. The
+stakes are bounded either way: ignoring the tax costs under 2 basis points a
+year of return.</p>
+
+<p><strong>The level of volatility is a judgement.</strong> 13.99% is
+twenty-five years of one world index in euro. It is below Choi's 18.5%, which
+is ninety-eight years of the whole American market, and below century-long
+estimates for world equities, which include the 1930s: a quarter-century that
+holds 2008 and 2020 but no depression may be a calm sample. It is also the low
+end of what the same index gives over the same twenty-five years. MSCI's daily
+levels, checked for this revision and not kept in the repository, give about
+16% from daily returns, and about 15.5% to 18.5% from monthly returns measured
+from any day between the 6th and the 28th of the month rather than the last,
+because the falls of October 2008 and March 2020 were each split across two
+month-end returns. Month-end is the convention, Choi's included, and it is
+kept. On the S&amp;P 500 since 1928 the sampling hardly matters: daily,
+monthly and annual returns give 18.9%, 18.5% and 19.0% (American methodology,
+section 3.2). Here it does matter. For an uncapped household each point of
+volatility near today's figure is worth about 6 points of equity share, and
+less further up: the household of section 6, 45 years old with 30,000 euro of pay,
+500,000 saved and risk 5, holds 61.0% at 13.99%, would hold 51.6% at 16% and
+43.8% at Choi's 18.5%.</p>
 
 <p>Everything else in this document is measured against something outside this
-project, and section 2 is the list.</p>
+project, apart from how much the withholding of section 4.1 overstates what the
+fund loses, and section 2 is the list.</p>
 
 </div>

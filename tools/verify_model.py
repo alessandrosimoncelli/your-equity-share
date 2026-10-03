@@ -190,9 +190,14 @@ def part_one() -> None:
     check("human capital falls monotonically with age",
           all(b < a for a, b in zip(hc, hc[1:])),
           f"${hc[0]:,.0f} at 25 down to ${hc[-1]:,.0f} at 99")
-    check("human capital is linear in the current wage",
-          close(human_capital(Person(45, 200_000.0), 5.0, 0.05, 0.02),
-                2 * human_capital(Person(45, 100_000.0), 5.0, 0.05, 0.02)))
+    # Linear only below the Social Security ceiling on the imputed pension
+    # (methodology section 7.7): at 45 it binds from about $105,000.
+    check("human capital is linear in the current wage below the pension ceiling",
+          close(human_capital(Person(45, 100_000.0), 5.0, 0.05, 0.02),
+                2 * human_capital(Person(45, 50_000.0), 5.0, 0.05, 0.02)))
+    check("and less than linear above it, where the pension stops growing",
+          human_capital(Person(45, 200_000.0), 5.0, 0.05, 0.02)
+          < 2 * human_capital(Person(45, 100_000.0), 5.0, 0.05, 0.02))
     by_gamma = [human_capital(Person(45, 100_000.0), g, 0.05, 0.02)
                 for g in [1.0, 3.0, 5.0, 8.0, 10.0]]
     check("human capital falls as risk aversion rises",
@@ -368,7 +373,7 @@ def part_three() -> None:
 
     # The other two axes of the same grid. Until now nothing read these
     # constants in either language, though the document asserts what they
-    # say: Table 16 prints today's log safe rate, and section 3.6 states the
+    # say: Table 15 prints today's log safe rate, and section 3.6 states the
     # range the coefficients were fitted over.
     r_log = log_risk_free(rf)
     lo_r, hi_r = CHOI_FITTED_LOG_RISK_FREE_RANGE
@@ -378,7 +383,7 @@ def part_three() -> None:
           f"{'inside' if within_fitted_risk_free(rf) else 'OUTSIDE'}")
     doc = (ROOT / "variants" / "us" / "methodology.html").read_text(encoding="utf-8")
     check("the document's figure for today's log safe rate is current",
-          f"{r_log:.2%}" in doc, f"{r_log:.2%}, in Table 16")
+          f"{r_log:.2%}" in doc, f"{r_log:.2%}, in Table 15")
     lo_g, hi_g = CHOI_FITTED_RISK_AVERSION_RANGE
     grid = ", ".join(str(g) for g in range(int(lo_g), int(hi_g) + 1))
     check("the risk aversion grid is the seven values the document prints",
@@ -511,9 +516,9 @@ ANCHORS = [
     (r"college graduate values in Table (\d+)",
      "Values fixed inside the approximation"),
     (r"the figure in Table (\d+), measured from the standpoint",
-     "What each fixed constant is worth"),
+     "Average welfare loss"),
     (r"columns in Table (\d+)",
-     "What each fixed constant is worth"),
+     "Average welfare loss"),
     (r"wage shock volatilities from Table (\d+)",
      "Values fixed inside the approximation"),
 ]
@@ -529,13 +534,10 @@ SECTION_ANCHORS = [
 # Section references that live in source rather than in the document. These are
 # the three that renumbering broke, and a number alone does not catch it: the
 # stale 7.1 still resolved, to a subsection about something else.
+# The comments in allocation.py and human_capital.py that cited section 7.2
+# went when the volatility became one figure for both layers, so only the
+# test's reference is left to pin.
 SOURCE_ANCHORS = [
-    ("src/your_equity_share/allocation.py",
-     r"Section (\d+\.\d+) of the methodology explains why the two are not",
-     "volatility"),
-    ("src/your_equity_share/human_capital.py",
-     r"away from it\. See section (\d+\.\d+) of the methodology",
-     "volatility"),
     ("tests/test_allocation.py",
      r"methodology section (\d+\.\d+)", "volatility"),
 ]

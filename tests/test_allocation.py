@@ -25,9 +25,9 @@ from your_equity_share.human_capital import (
 GAMMA = 5.0
 MU = 0.05
 REAL_RF = 0.02
-# The Merton term in Choi's sheet uses the calibration volatility. This project
-# uses the user's measured figure instead (methodology section 7.2), so the
-# calibration value is passed explicitly wherever his output is the target.
+# The Merton term in Choi's sheet uses the calibration volatility. The tool
+# holds the same 18.5% in both layers (methodology section 7.2), and the
+# value is passed explicitly wherever his output is the target.
 CHOI_SIGMA = 0.185
 
 
@@ -371,7 +371,7 @@ def test_the_answer_depends_on_the_ratio_and_not_on_age() -> None:
     target = 2.0
     shares = []
     for age, wage in ((28, 60_000.0), (40, 90_000.0), (52, 130_000.0), (61, 150_000.0)):
-        capital = human_capital(Person(age, wage), gamma, mu, rf)
+        capital = human_capital(Person(age, wage), gamma, mu, rf, volatility=sigma)
         household = Household(capital / target, [Person(age, wage)], gamma)
         result = recommend(household, mu, rf, sigma)
         assert result.human_capital_ratio == pytest.approx(target, rel=1e-12)
@@ -393,6 +393,24 @@ def test_savings_move_the_answer_at_a_fixed_age() -> None:
 # --- supplied earnings paths ------------------------------------------------
 
 
+def test_the_imputed_american_pension_stops_at_social_security_s_maximum() -> None:
+    """40% of a high final wage is more than Social Security pays anyone, so
+    the imputed pension stops at the maximum, after tax. A pension the person
+    types is used as typed, and the Italian calibration has no such limit."""
+    from your_equity_share.human_capital import ITALY_CALIBRATION, SOCIAL_SECURITY_MAXIMUM
+
+    assert SOCIAL_SECURITY_MAXIMUM == pytest.approx(0.8 * 4152 * 12)
+    high = {y.age: y.benefit for y in project_earnings(Person(60, 200_000.0))}
+    assert high[67] == pytest.approx(SOCIAL_SECURITY_MAXIMUM)
+    low = {y.age: y.benefit for y in project_earnings(Person(60, 60_000.0))}
+    assert low[67] < SOCIAL_SECURITY_MAXIMUM
+    typed = Person(60, 200_000.0, 0.0, benefits={a: 70_000.0 for a in range(67, 101)})
+    assert {y.age: y.benefit for y in project_earnings(typed)}[67] == 70_000.0
+    italian = {y.age: y.benefit
+               for y in project_earnings(Person(60, 200_000.0), ITALY_CALIBRATION)}
+    assert italian[67] > 100_000.0
+
+
 def test_a_typed_zero_benefit_suppresses_the_imputed_one() -> None:
     """The distinction the page's year-by-year box depends on.
 
@@ -402,19 +420,96 @@ def test_a_typed_zero_benefit_suppresses_the_imputed_one() -> None:
     claims nothing until 67 needs the second, and would otherwise be credited
     with twelve years of income they never receive.
     """
-    wages = {**{a: 100_000.0 for a in range(46, 56)},
+    wages = {**{a: 90_000.0 for a in range(46, 56)},
              **{a: 0.0 for a in range(56, 67)}}
     late = {a: 20_000.0 for a in range(67, 101)}
 
-    omitted = Person(45, 100_000.0, 0.0, wages=wages, benefits=late)
-    typed = Person(45, 100_000.0, 0.0, wages=wages,
+    omitted = Person(45, 90_000.0, 0.0, wages=wages, benefits=late)
+    typed = Person(45, 90_000.0, 0.0, wages=wages,
                    benefits={**{a: 0.0 for a in range(56, 67)}, **late})
 
     gap = {y.age: y.benefit for y in project_earnings(omitted)}
-    assert gap[56] == pytest.approx(40_000.0)
+    assert gap[56] == pytest.approx(36_000.0)
 
     gap = {y.age: y.benefit for y in project_earnings(typed)}
     assert gap[56] == 0.0
 
     assert (human_capital(typed, 5.0, 0.0635, 0.0298)
             < human_capital(omitted, 5.0, 0.0635, 0.0298))
+
+
+# --- pensions Choi's model has no state for ----------------------------------
+
+def test_a_small_pension_paid_while_working_moves_the_answer_a_little() -> None:
+    """A pension drawn while still working once switched the whole salary onto
+    the near-riskless pension rate: typing one dollar of pension moved the
+    answer by eleven points. Now it is valued as what it is, a small riskless
+    stream, and the salary stays on the wage rate."""
+    from your_equity_share.human_capital import benefit_discount_rate
+
+    args = (5.0, 0.0491, 0.0329)
+    without = human_capital(Person(45, 100_000.0), *args)
+    with_one = human_capital(Person(45, 100_000.0, 1.0), *args)
+    assert 0.0 < with_one - without < 60.0
+
+
+def test_a_pension_paid_while_working_is_added_to_the_career_one() -> None:
+    """A second-career earner with a military pension keeps it, and still gets
+    the pension the current job will pay once the wage stops."""
+    args = (5.0, 0.0491, 0.0329)
+    worker = human_capital(Person(45, 80_000.0), *args)
+    with_pension = human_capital(Person(45, 80_000.0, 30_000.0), *args)
+    years = project_earnings(Person(45, 80_000.0, 30_000.0))
+    assert years[0].benefit == 30_000.0
+    assert years[-1].benefit == pytest.approx(30_000.0 + 0.40 * max(y.wage for y in years if y.wage > 0), rel=0.2)
+    assert with_pension > worker
+
+
+def test_a_pension_that_starts_later_is_discounted_as_a_pension() -> None:
+    """Someone who has stopped working, with a pension from 67 typed year by
+    year: every year is on the benefit rate, because no wage is left to carry
+    the wage rate's risk premium. It used to take the wage rate until 67."""
+    from your_equity_share.human_capital import benefit_discount_rate
+
+    gamma, mu, rf = 5.0, 0.0491, 0.0329
+    benefits = {age: (18_000.0 if age >= 67 else 0.0) for age in range(61, 101)}
+    person = Person(60, 0.0, 0.0, benefits=benefits)
+    expected, chain = 0.0, 1.0
+    for year in project_earnings(person):
+        chain *= 1.0 + benefit_discount_rate(year.age, gamma, mu, rf)
+        expected += year.income / chain
+    assert human_capital(person, gamma, mu, rf) == pytest.approx(expected, rel=1e-12)
+
+
+def test_someone_of_66_still_earning_retires_on_today_s_wage() -> None:
+    """With no wage left to project, the career pension comes off today's wage,
+    unless a pension is already being paid, which is then that career's."""
+    working = project_earnings(Person(66, 50_000.0))
+    assert working[0].wage == 0.0 and working[0].benefit == pytest.approx(20_000.0)
+    claiming = project_earnings(Person(66, 50_000.0, 24_000.0))
+    assert claiming[0].benefit == pytest.approx(24_000.0)
+
+
+def test_the_partner_s_pension_counts() -> None:
+    """A retired couple who both draw pensions: the second one reaches the
+    answer through the partner's own field."""
+    one = Household(300_000.0, [Person(70, 0.0, 30_000.0), Person(70, 0.0, 0.0)], 5.0)
+    both = Household(300_000.0, [Person(70, 0.0, 30_000.0), Person(70, 0.0, 30_000.0)], 5.0)
+    r1 = recommend(one, 0.0491, 0.0329, 0.185)
+    r2 = recommend(both, 0.0491, 0.0329, 0.185)
+    assert r2.human_capital == pytest.approx(2 * r1.human_capital, rel=1e-12)
+
+
+def test_ticking_the_year_by_year_box_does_not_move_a_pension() -> None:
+    """The page passes its prefilled path as typed as soon as the box is
+    ticked, before anyone edits a year. A pension paid while working must stay
+    on the benefit rates then too: it once moved onto the wage chain, taking
+    the default household with a $20,000 pension from 48.8% to 42.9%."""
+    args = (5.0, 0.05167, 0.0296, CGM_CALIBRATION, 0.185)
+    person = Person(45, 100_000.0, 20_000.0)
+    path = project_earnings(person)
+    ticked = Person(45, 100_000.0, 20_000.0,
+                    wages={y.age: y.wage for y in path},
+                    benefits={y.age: y.benefit for y in path})
+    assert human_capital(ticked, *args) == pytest.approx(
+        human_capital(person, *args), rel=1e-12)

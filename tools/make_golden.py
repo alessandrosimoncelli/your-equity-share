@@ -223,6 +223,40 @@ def human_capital_cases() -> list[dict]:
     return cases
 
 
+def pension_path_cases() -> list[dict]:
+    """Pensions paid while working, pensions that start later, typed paths,
+    and a held volatility other than 18.5%: the cases Choi's model has no
+    state for, which the page must still value exactly as Python does."""
+    from your_equity_share.human_capital import ITALY_CALIBRATION
+
+    retire_early = {age: (60_000.0 if age <= 55 else 0.0) for age in range(46, 101)}
+    later_pension = {age: (25_000.0 if age >= 67 else 0.0) for age in range(46, 101)}
+    people = [
+        Person(45, 80_000.0, 30_000.0),
+        Person(62, 40_000.0, 5_000.0),
+        Person(66, 50_000.0, 20_000.0),
+        Person(45, 0.0, 0.0, wages=retire_early, benefits=later_pension),
+        Person(45, 60_000.0, 0.0, wages=retire_early),
+        Person(60, 0.0, 0.0, benefits={a: 18_000.0 for a in range(67, 101)}),
+        Person(75, 0.0, 20_000.0),
+    ]
+    cases = []
+    for person in people:
+        for calibration_name, calibration in (("us", None), ("it", ITALY_CALIBRATION)):
+            for volatility in (None, 0.1399, 0.185):
+                kwargs = {} if calibration is None else {"calibration": calibration}
+                cases.append({
+                    "person": {**_person_payload(person),
+                               "wages": {str(k): v for k, v in (person.wages or {}).items()} or None,
+                               "benefits": {str(k): v for k, v in (person.benefits or {}).items()} or None},
+                    "calibration": calibration_name,
+                    "args": [5.0, 0.048, 0.015, volatility],
+                    "expect": human_capital(person, 5.0, 0.048, 0.015,
+                                            volatility=volatility, **kwargs),
+                })
+    return cases
+
+
 def italy_cases() -> tuple[list[dict], list[dict]]:
     """The Italian calibration through the same functions.
 
@@ -418,6 +452,7 @@ def main() -> int:
         "human_capital": human_capital_cases(),
         "recommend": recommend_cases(),
         "human_capital_italy": italy_capital,
+        "human_capital_paths": pension_path_cases(),
         "recommend_italy": italy_advice,
         "conversions": conversion_cases(),
         "must_reject": rejection_cases(),
@@ -436,6 +471,7 @@ def main() -> int:
             "temporary_shock_volatility": CGM_CALIBRATION.temporary_shock_volatility,
             "benefit_replacement_rate": CGM_CALIBRATION.benefit_replacement_rate,
             "age_profile": list(CGM_CALIBRATION.age_profile),
+            "benefit_cap": CGM_CALIBRATION.benefit_cap,
         },
         "italy_calibration": {
             "stock_volatility": ITALY_CALIBRATION.stock_volatility,
@@ -443,6 +479,7 @@ def main() -> int:
             "temporary_shock_volatility": ITALY_CALIBRATION.temporary_shock_volatility,
             "benefit_replacement_rate": ITALY_CALIBRATION.benefit_replacement_rate,
             "age_profile": list(ITALY_CALIBRATION.age_profile),
+            "benefit_cap": ITALY_CALIBRATION.benefit_cap,
         },
         "cases": cases,
     }

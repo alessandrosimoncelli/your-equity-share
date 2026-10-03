@@ -43,11 +43,7 @@ SOURCES = [
      update.TREASURY_REAL_YIELD_URL.format(year=TODAY.year), update.USER_AGENT),
     ("US safe rate, FRED fallback",
      update.FRED_URL.format(series=update.FRED_REAL_RISK_FREE), update.USER_AGENT),
-    ("US volatility, Yahoo SPY",
-     update.PRICE_URL.format(ticker="SPY", range="5y"), update.USER_AGENT),
     ("Shiller, page", update.SHILLER_PAGE, update.USER_AGENT),
-    ("Shiller, Yale copy", update.SHILLER_YALE_URL, update.USER_AGENT),
-    ("Shiller, mirror", update.SHILLER_MIRROR_URL, update.USER_AGENT),
     ("Damodaran premium", update.ERP_URL, update.USER_AGENT),
     ("CAPE, multpl", update.CAPE_URL, update.USER_AGENT),
     ("Italian safe rate, ECB",
@@ -57,9 +53,6 @@ SOURCES = [
      italy.MSCI.format(cur="EUR", var="STRD", code=italy.ACWI,
                        start="20250101", end=TODAY.strftime("%Y%m%d")),
      italy.USER_AGENT),
-    ("Italian volatility, Yahoo VWCE",
-     update.PRICE_URL.format(ticker=italy.VOLATILITY_TICKER, range="5y"),
-     update.USER_AGENT),
 ]
 
 

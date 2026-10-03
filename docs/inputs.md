@@ -84,6 +84,17 @@ Then reduce it by tax that will be owed when the assets are sold and spent:
 
 Housing is excluded entirely.
 
+**Retired, or drawing on it?** Include what you will draw down over the years.
+In Choi's model the savings are everything invested after this year's spending
+(the paper's equations 5 to 7), and spending in retirement is the model's own
+consumption. Leave out only this year's spending and money set aside for a
+goal with a date.
+
+**Run it again once a year**, and rebalance to the new figure, using new
+savings first. The rule is meant to be applied at every age (the paper's
+section 4): the share falls as savings grow against future earnings, and a mix
+set once and left alone drifts above it.
+
 ## Wages and retirement benefits
 
 **After tax, and in today's dollars.** Both matter. A gross figure overstates
@@ -93,15 +104,31 @@ Include employer retirement contributions such as a 401(k) match. Where those
 go in before tax, which is usual, multiply them by 0.8 for the same reason as
 above.
 
-Figures run to age 100. That does not assume you live to 100: the underlying
-model applies a probability of dying each year taken from United States
-mortality statistics, so later years are already weighted by the chance of
-being alive to receive them.
+Figures run to age 100. In the guide's words, enter income as if alive in
+each year; the calculations allow for United States mortality. They do so
+inside Choi's fitted discount rates, which were solved with the American life
+table: the income itself is not weighted by the chance of being alive to
+receive it, because the paper's expectations are conditional on surviving.
 
-If you do not know your Social Security benefit, the guide's estimate for a
-college graduate is **40% of the after-tax wage in the year before claiming**,
-then flat for life. Where one spouse earned much less, they will usually claim
-the spousal benefit instead, **50% of the higher earner's**.
+**A pension you already receive** goes in its own field, a year of it after
+tax: a retirement, survivor's or disability pension, even if you still work.
+It is treated as riskless and valued at the benefit rates from today, which
+departs from Choi's spreadsheet (methodology section 7.6). The second adult has the same field. Leave out the pension your
+current job will pay: the tool adds it when your wage stops, at the guide's
+estimate for a college graduate, **40% of the after-tax wage in the year
+before claiming**, then flat for life, up to Social Security's maximum: $4,152
+a month at full retirement age in 2026, counted at 0.8 after tax, or $39,859 a
+year. Above a final wage of about $100,000 after tax, 40% would be more than
+Social Security pays anyone.
+
+A pension that starts later than your last wage, for instance if you stop
+work at 62 and claim at 67, goes in the year-by-year box, from the year it
+starts. So does the spousal benefit: where one spouse earned much less, they
+will usually claim **50% of the higher earner's** benefit instead of their
+own. Choi's spreadsheet has a switch for it; the page does not, so type it in
+the second adult's year-by-year box, from the age they will claim it. For a
+one-earner couple on $100,000 it is worth about 3 to 5 points of equity share,
+on the data of 3 September 2026.
 
 ## Expected stock market real return
 
@@ -121,7 +148,7 @@ was written with; the tool shows the current ones.
 | Real earnings growth | 100-year trend through log real earnings per share, Shiller | 2.29% |
 | Repricing | Set to zero, which is what "ratios stay constant" means | 0.00% |
 | **Expected real return** | | **3.38% compound** |
-| | converted once, at the point the model reads it | **4.92% arithmetic** |
+| | converted once, at the point the model reads it | **5.17% arithmetic** |
 
 **Not the payout yield.** Buybacks return a further 1.53%, and it is tempting to
 add them, since a buyback is cash reaching a shareholder. It would be double
@@ -180,7 +207,7 @@ about **four independent** thirty-year periods. The reported error divides the
 residual spread by the square root of that number, not of 1,387. It is roughly
 0.7 percentage points, and that is generous.
 
-### Compound is not arithmetic, and the gap is 1.5 points
+### Compound is not arithmetic, and the gap is 1.8 points
 
 Every forward-looking estimate of equity returns is naturally a **compound**
 return. A discounted cash flow gives an internal rate of return. Gordon's
@@ -193,11 +220,18 @@ at the point it is handed to the model:
 
     arithmetic = exp( ln(1 + compound) + sigma^2 / 2 ) - 1
 
-At 17.2% volatility that is worth **1.54 percentage points**: 3.38% compound
-becomes 4.92% arithmetic. Feeding the compound figure straight in would
-understate the input by those 1.54 points, which is most of the equity
-premium: over the 2.96% real safe rate the premium is 1.96 points, and it
-would shrink to 0.42.
+At Choi's 18.5% volatility, which the tool holds fixed, that is worth **1.78
+percentage points**: 3.38% compound becomes 5.17% arithmetic. Feeding the
+compound figure straight in would understate the input by those 1.78 points,
+which is most of the equity premium: over the 2.96% real safe rate the premium
+is 2.21 points, and it would shrink to 0.42.
+
+The volatility is not re-measured. It is the 18.5% Choi, Liu and Liu use, the
+annualised standard deviation of monthly CRSP log excess returns from 1926 to
+2024, and over the whole S&P 500 history daily, monthly and annual returns all
+give about that figure (18.9%, 18.5% and 19.0%). A trailing window of a few
+years moves the answer each time a crash enters or leaves it, with no change
+in the long-run risk the model is about.
 
 The intuition: +50% then −50% averages to zero, but leaves you down 25%. The
 arithmetic mean always sits above what money actually grows at, by roughly half

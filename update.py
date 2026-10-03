@@ -7,18 +7,20 @@ saved here. Run both by hand only for a copy that is not on GitHub.
 
     python update.py                     # fetch the latest data and save it
     python update.py --dry-run           # show what would change, save nothing
-    python update.py --years 10          # volatility over ten years, not five
     python update.py --fixed-return 0.05 # set the expected return by hand,
                                          # as an arithmetic mean
 
-All three inputs the model uses are fetched, from free sources that need no
-key or account:
+Two of the three inputs the model uses are fetched, from free sources that
+need no key or account; the third is fixed:
 
     real risk-free rate       the US Treasury's daily real yield curve,
                               30 years, which FRED republishes as DFII30
-    stock market volatility   Yahoo, daily adjusted closes
     expected stock return     Shiller: the dividend yield plus the 100-year
                               trend in real earnings per share, no repricing
+    stock market volatility   Choi, Liu and Liu's 18.5%, fixed: monthly CRSP
+                              log excess returns, 1926 to 2024. A trailing
+                              window moved the answer whenever a crash entered
+                              or left it, with no change in long-run risk
 
 Damodaran's implied premium, an earnings anchor and a valuation regression are
 computed beside it as cross-checks and are not used.
@@ -44,6 +46,7 @@ from your_equity_share.market_data import (  # noqa: E402
     load_market_data,
 )
 from your_equity_share.expected_return import (  # noqa: E402
+    CALIBRATION_VOLATILITY,
     CHOI_FITTED_LOG_PREMIUM_RANGE,
     CHOI_FITTED_LOG_RISK_FREE_RANGE,
     log_risk_free,
@@ -66,44 +69,19 @@ from your_equity_share.providers import (  # noqa: E402
     parse_fred_csv,
     parse_treasury_real_yield_csv,
     parse_multpl_current,
-    parse_price_json,
-    parse_shiller_csv,
     parse_shiller_xls,
     ShillerHistory,
 )
-from your_equity_share.statistics import (  # noqa: E402
-    TRADING_DAYS_PER_YEAR,
-    annualised_volatility,
-    log_returns,
-    validate_prices,
-)
-
-PRICE_URL = (
-    "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
-    "?range={range}&interval=1d"
-)
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
 ERP_URL = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx"
-# The long history, in the order it is tried. Shiller is the source; the rest
-# are what to do when a URL moves, which it already has once.
-#
-#   1  his own site, whose download link is discovered rather than hardcoded,
-#      because the file sits behind a content delivery network and the address
-#      carries a version stamp that changes with every update
-#   2  the same file at Yale, which is where it lived until October 2023 and
-#      is still served, only frozen
-#   3  a community CSV mirror, which is what this project used to use and
-#      which stopped carrying CPI in September 2023, taking every deflated
-#      column with it
-#
-# A tool meant to answer the same question in twenty years cannot rest on one
-# address. Each source is validated the same way, and the run says which one
-# answered and how old its data is.
+# The long history, from Shiller's own site, whose download link is discovered
+# rather than hardcoded, because the file sits behind a content delivery
+# network and the address carries a version stamp that changes with every
+# update. There is deliberately no fallback. The two that existed, Yale's copy
+# and a community mirror, both stopped in 2023, so all they could ever supply
+# was a 2023 valuation written in as today's. If the site fails, the refresh
+# fails, and the weekly job keeps last week's data, which is fresher.
 SHILLER_PAGE = "https://shillerdata.com/"
-SHILLER_YALE_URL = "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
-SHILLER_MIRROR_URL = (
-    "https://raw.githubusercontent.com/datasets/s-and-p-500/main/data/data.csv"
-)
 CAPE_URL = "https://www.multpl.com/shiller-pe"
 
 # Horizon for the valuation regression. The model's own horizon is a lifetime,
@@ -214,51 +192,6 @@ def fetch_real_risk_free(today: date | None = None) -> tuple[date, float, str]:
                             f"Treasury failed: {treasury_error}")
 
 
-def trim_to_window(closes: dict[str, float], years: int) -> dict[str, float]:
-    """Keep roughly the last `years` of observations.
-
-    The guard is not decorative: `sorted(x)[-0:]` is `sorted(x)[0:]`, so without
-    it a window of zero would return the whole history instead of nothing.
-    """
-    wanted = years * TRADING_DAYS_PER_YEAR
-    if wanted <= 0:
-        return {}
-    days = sorted(closes)[-wanted:]
-    return {d: closes[d] for d in days}
-
-
-def estimate_volatility(
-    ticker: str, years: int, force: bool
-) -> tuple[float, date, int, bool]:
-    """Annualised volatility of one instrument, with the series checked first."""
-    series = parse_price_json(
-        _get(PRICE_URL.format(ticker=ticker, range=f"{max(years, 1)}y")).decode(
-            "utf-8", "replace"
-        ),
-        ticker,
-    )
-    closes = trim_to_window(series.closes, years)
-    dates = sorted(closes)
-    prices = [closes[d] for d in dates]
-
-    problems = validate_prices(ticker, dates, prices)
-    if problems:
-        detail = "; ".join(str(p) for p in problems)
-        if not force:
-            raise DataUnavailable(
-                f"{ticker} failed its checks: {detail}. "
-                f"Rerun with --force if the data is genuinely fine."
-            )
-        print(f"  warning, continuing under --force: {detail}")
-
-    return (
-        annualised_volatility(log_returns(prices)),
-        date.fromisoformat(dates[-1]),
-        len(prices) - 1,
-        series.adjusted,
-    )
-
-
 def render_config(**f) -> str:
     nl = chr(10)
     out = [
@@ -307,10 +240,10 @@ def render_config(**f) -> str:
             f"#   compound               {f['compound_return']:.4f}",
             f"#   arithmetic             {f['expected_return']:.4f}   "
             f"+ volatility drag",
-            "# NOT counted as income: buybacks return a further",
-            f"# {f['buyback_yield']:.4f}. Retiring shares is what makes earnings",
-            "# per share grow, so the growth term already carries them and",
-            "# adding them here would count them twice.",
+            "# NOT counted as income: buybacks, which Damodaran's payout yield",
+            "# adds, recorded below when his workbook answered. Retiring shares",
+            "# is what makes earnings per share grow, so the growth term already",
+            "# carries them and adding them here would count them twice.",
         ]
     else:
         out += [
@@ -329,10 +262,10 @@ def render_config(**f) -> str:
         "# Methodology section 3.3.",
         f"real_risk_free = {f['real_risk_free']:.6f}",
         "",
-        f"# {f['window_years']} years of daily "
-        f"{'adjusted' if f['adjusted'] else 'UNADJUSTED'} closes of "
-        f"{f['ticker']},",
-        f"# {f['observations']} returns, annualised.",
+        "# Fixed at Choi, Liu and Liu's 18.5%: the annualised standard",
+        "# deviation of monthly CRSP value-weighted log excess returns, July",
+        "# 1926 to July 2024 (paper, section 1.2). Not re-measured: a trailing",
+        "# window moves the answer whenever a crash enters or leaves it.",
         f"stock_volatility = {f['volatility']:.6f}",
         f'market_ticker = "{f["ticker"]}"',
         "",
@@ -343,9 +276,6 @@ def render_config(**f) -> str:
         f'expected_return_method = "{f["method"]}"',
         f"implied_erp = {f['erp']:.6f}" if f["erp"] is not None else "implied_erp = 0.0",
         f"erp_as_of = {f['erp_as_of']}" if f["erp_as_of"] else "# erp_as_of = none",
-        f"volatility_window_years = {f['window_years']}",
-        f"volatility_observations = {f['observations']}",
-        f"volatility_dividend_adjusted = {'true' if f['adjusted'] else 'false'}",
         *(
             [
                 f"expected_return_spread = {f['spread']:.6f}",
@@ -362,13 +292,15 @@ def render_config(**f) -> str:
         # Prices arrive promptly; the earnings a cyclically adjusted ratio needs
         # do not, and the feed has stopped updating its derived columns before
         # while still appending price rows. Without this the file's as_of date,
-        # which belongs to the TIPS yield and the volatility, would imply the
-        # whole estimate was as fresh as those two.
+        # which belongs to the TIPS yield, would imply the
+        # whole estimate was as fresh as the yield.
         f'history_as_of = "{f["history_as_of"]}"' if f.get("history_as_of")
         else "# history_as_of = none",
         f'history_source = "{f["history_source"]}"' if f.get("history_source")
         else "# history_source = none",
-        f'volatility_source = "Yahoo daily closes"',
+        'volatility_source = "Choi, Liu and Liu (2025), section 1.2: 18.5%, '
+        'monthly CRSP value-weighted log excess returns, July 1926 to July '
+        '2024, held fixed"',
         f'real_risk_free_source = "{f.get("real_risk_free_source", "FRED " + FRED_REAL_RISK_FREE)}"',
         # Not an input. See the constant for what it is for.
         *(
@@ -452,22 +384,6 @@ def fetch_shiller_history() -> tuple[ShillerHistory, str]:
     except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
         problems.append(f"Shiller's own site: {exc}")
 
-    try:
-        raw = _get(SHILLER_YALE_URL)
-        history = parse_shiller_xls(raw)
-        _keep(raw, "shiller.xls")
-        return history, "Yale, no longer updated"
-    except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
-        problems.append(f"Yale: {exc}")
-
-    try:
-        raw = _get(SHILLER_MIRROR_URL)
-        history = parse_shiller_csv(raw.decode("utf-8", "replace"))
-        _keep(raw, "shiller.csv")
-        return history, "community CSV mirror"
-    except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
-        problems.append(f"mirror: {exc}")
-
     raise DataUnavailable(
         "no source for the long history answered. Tried:\n    "
         + "\n    ".join(problems)
@@ -486,9 +402,14 @@ def estimate_expected_return(
     buyback yield, which is reported but deliberately not used, and the two
     terms that are.
     """
-    workbook = _get(ERP_URL)
-    erp_as_of, erp = parse_damodaran_erp(workbook)
-    payout_as_of, payout_yield, _smoothed = parse_damodaran_components(workbook)
+    # Damodaran's workbook feeds a cross-check and the buyback figure, neither
+    # of which the model reads, so an outage there must not stop a refresh.
+    try:
+        workbook = _get(ERP_URL)
+        erp_as_of, erp = parse_damodaran_erp(workbook)
+        _payout_as_of, payout_yield, _smoothed = parse_damodaran_components(workbook)
+    except (DataUnavailable, urllib.error.URLError, OSError, ValueError):
+        erp_as_of = erp = payout_yield = None
 
     shiller, shiller_source = fetch_shiller_history()
     # The trend through the window, not the two months at its ends. See
@@ -501,7 +422,8 @@ def estimate_expected_return(
     # yield is still worth carrying: it is the size of the term this estimate
     # leaves out, and the reason the dividend yield reads so low.
     dividend_yield = shiller.dividend_yield
-    buyback_yield = payout_yield - dividend_yield
+    buyback_yield = (payout_yield - dividend_yield
+                     if payout_yield is not None else None)
 
     # A current cyclically adjusted ratio, falling back to Shiller's own last
     # observation when the scrape fails. The fallback is months stale but the
@@ -522,6 +444,13 @@ def estimate_expected_return(
     )
 
     # Order matters: the first is the estimate, the rest are cross-checks.
+    # AQR's own construction, computed exactly as they publish it. It is the
+    # lower anchor around the estimate as the implied premium is the upper
+    # one, and unlike the regression below it has nothing fitted.
+    anchor = earnings_anchor_estimate(cape)
+    if cape_note != "current":
+        anchor = type(anchor)(**{**anchor.__dict__,
+                                 "detail": anchor.detail + f", {cape_note}"})
     estimates = [
         building_block_estimate(
             dividend_yield,
@@ -529,11 +458,9 @@ def estimate_expected_return(
             as_of=shiller.last_date_as_date(),
             growth_basis=f"{GROWTH_WINDOW_YEARS} year trend",
         ),
-        implied_premium_estimate(erp, real_risk_free, erp_as_of),
-        # AQR's own construction, computed exactly as they publish it. It is
-        # the lower anchor around the estimate as the implied premium is the
-        # upper one, and unlike the regression below it has nothing fitted.
-        earnings_anchor_estimate(cape),
+        *([implied_premium_estimate(erp, real_risk_free, erp_as_of)]
+          if erp is not None else []),
+        anchor,
         valuation_regression_estimate(
             list(shiller.cape),
             index,
@@ -543,10 +470,6 @@ def estimate_expected_return(
         ),
     ]
     history_as_of = shiller.last_date
-    if cape_note != "current":
-        estimates[2] = type(estimates[2])(
-            **{**estimates[2].__dict__, "detail": estimates[2].detail + f", {cape_note}"}
-        )
     return (estimates, history_as_of, shiller_source, buyback_yield,
             dividend_yield, real_growth)
 
@@ -563,8 +486,6 @@ def main(argv: list[str]) -> int:
     )
     parser.add_argument("--dry-run", action="store_true",
                         help="show what would change without saving")
-    parser.add_argument("--years", type=int, default=5,
-                        help="years of history for the volatility estimate")
     parser.add_argument("--fixed-return", type=float, default=None,
                         help="set the expected real return by hand, as an "
                              "arithmetic mean, which is what the model takes; "
@@ -575,8 +496,6 @@ def main(argv: list[str]) -> int:
                         help="save even if a price series fails its checks")
     args = parser.parse_args(argv[1:])
 
-    if args.years < 1:
-        parser.error("--years must be at least 1")
     if args.fixed_return is not None and not -0.05 < args.fixed_return < 0.30:
         parser.error(
             f"--fixed-return {args.fixed_return} is outside any plausible range; "
@@ -636,16 +555,8 @@ def main(argv: list[str]) -> int:
         if rf_source != TREASURY_SOURCE:
             print(f"    from {rf_source}")
 
-        vol, vol_date, observations, adjusted = estimate_volatility(
-            existing.market_ticker, args.years, args.force
-        )
-        label = f"stock volatility ({existing.market_ticker}, {args.years}y)"
-        print(f"  {label:<32.32s} {vol:>8.2%}"
-              f"   was {existing.stock_volatility:>6.2%}"
-              f"   {_change(vol, existing.stock_volatility)}")
-        if not adjusted:
-            print("    note: provider returned unadjusted closes, so this is a")
-            print("    price-return estimate and reads a few basis points high")
+        vol = CALIBRATION_VOLATILITY
+        print(f"  stock volatility, fixed          {vol:>8.2%}   Choi's 18.5%")
 
         if args.fixed_return is not None:
             method = "fixed"
@@ -681,11 +592,12 @@ def main(argv: list[str]) -> int:
             print("      and growth matches its long-run average. It is also")
             print("      the method behind AQR's 1.9%, the figure he anchors")
             print("      his own 2% log premium to.")
-            print(f"      Buybacks return a further {buyback_yield:.2%} that this")
-            print("      does not count as income, because per-share growth")
-            print("      already carries it. Counting it twice would add")
-            print(f"      {buyback_yield:.2%} to the estimate and roughly thirty")
-            print("      points to the default household's equity share.")
+            if buyback_yield is not None:
+                print(f"      Buybacks return a further {buyback_yield:.2%} that this")
+                print("      does not count as income, because per-share growth")
+                print("      already carries it. Counting it twice would add")
+                print(f"      {buyback_yield:.2%} to the estimate and roughly thirty")
+                print("      points to the default household's equity share.")
             print()
             print("  Cross-checks, not used. See section 3 of the methodology")
             print("  for why each is worse for a lifetime horizon.")
@@ -710,8 +622,19 @@ def main(argv: list[str]) -> int:
                     print("      Both terms come from this month of that file.")
                     print("      Growth is the trend through a century, where")
                     print("      three years of lag moves it about a basis")
-                    print("      point. The yield is a ratio of two figures in")
-                    print("      the same row, so the lag largely cancels.")
+                    print("      point. The yield divides that month's dividend")
+                    print("      by that month's price, so it is as old as the")
+                    print("      file: after a sharp market move it is out of")
+                    print("      date by however far prices have moved since.")
+
+                if months > 12:
+                    # The page calls data a year old stale. A dividend yield
+                    # that old saved under today's date would be worse than
+                    # keeping last week's figures, so refuse.
+                    raise DataUnavailable(
+                        f"Shiller's history ends {history_as_of}, {months} "
+                        f"months ago. Refusing to save a yield that old under "
+                        f"today's date.")
 
             print()
             compound = chosen.value
@@ -779,10 +702,7 @@ def main(argv: list[str]) -> int:
         real_risk_free_source=rf_source.replace('"', "'"),
         volatility=vol,
         ticker=existing.market_ticker,
-        as_of=min(rf_date, vol_date),
-        window_years=args.years,
-        observations=observations,
-        adjusted=adjusted,
+        as_of=rf_date,
         erp=erp,
         erp_as_of=erp_as_of.isoformat() if erp_as_of else None,
         spread=spread(estimates) if estimates else 0.0,

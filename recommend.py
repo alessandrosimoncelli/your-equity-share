@@ -138,12 +138,8 @@ def print_report(result, market, household) -> None:
         print(f"      input in the model. See docs/inputs.md.")
     print(f"  real risk-free rate              "
           f"{market.real_risk_free_rate:>13.2%}   30-year TIPS")
-    window = market.provenance.get("volatility_window_years")
-    span = f"{window} years" if window else "history"
-    adjusted = market.provenance.get("volatility_dividend_adjusted", True)
     print(f"  stock volatility                 "
-          f"{market.stock_volatility:>13.2%}   {market.market_ticker}, {span}"
-          + ("" if adjusted else ", unadjusted"))
+          f"{market.stock_volatility:>13.2%}   fixed, long-run")
     print(f"  risk aversion                    "
           f"{household.risk_aversion:>13.1f}   your answer")
     print()

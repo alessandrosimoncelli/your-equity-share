@@ -31,15 +31,25 @@ A break-even clears all three. It is the rate at which holding the linker and
 holding a nominal bond pay the same, so it is a price rather than a forecast,
 and subtracting it from a nominal curve recovers a real yield.
 
-The construction can be checked against itself and it passes. The break-even is
-derived from the 2046, so deflating a nominal yield by it should reproduce that
-bond's own traded real yield, and it lands within four hundredths of a point.
+Two conventions are matched before the subtraction. The ECB publishes its
+curve CONTINUOUSLY COMPOUNDED ("The continuous method is used to compound
+interest rates", ECB technical notes on the euro area yield curves), so the
+spot rate is annualised first, because the model reads annual rates. The
+Finanzagentur defines its break-even as a SIMPLE YIELD DIFFERENCE between the
+linker and the nominal Bund nearest in maturity, so it is subtracted, not
+divided out.
 
-The survey is still fetched and still reported, now as the cross-check, and it
-sits about a quarter of a point ABOVE. That gap is an inflation risk premium,
-which is what a holder pays to be rid of inflation risk. Deflating by the
-survey books that premium as return and makes the safe asset look better than
-any bond anybody can actually buy.
+The construction can be checked against itself. The break-even is derived from
+the 2046, so subtracting it from a nominal yield should come close to that
+bond's own traded real yield. It does, within about a tenth of a point; the
+rest is maturity, a thirty-year nominal leg against a nineteen-year inflation
+leg.
+
+The survey is still fetched and still reported, as the cross-check. When it
+sits below the break-even the gap is an inflation risk premium, which a
+deflation by the survey would book as return; when it sits above, the
+break-even's own liquidity premium is the likelier reason. Either way the
+safe rate rests on the price, not on the forecast.
 
 AAA rather than every euro area government bond. The all-government curve
 yields about sixty basis points more at the same maturity, and that spread is
@@ -74,10 +84,13 @@ methodology shows it is also the one with the lowest error at thirty.
   denominator Shiller's column already has: the three plausible denominators
   differ by a third of a point.
 
-  Gross rather than net of withholding tax, because Shiller's column is gross
-  and the two variants have to measure one thing one way. The net figure is
-  printed beside it, because the gap is a real cost a euro investor pays on a
-  global fund and an American holding domestic stock does not.
+  NET of withholding tax, from MSCI's net index. Withholding is taken at the
+  source before the dividend reaches the fund, so no Italian holder, taxed or
+  exempt, ever receives it: it is a property of the fund, like its price, not
+  the household's own tax (which the model leaves out, taxes.py). An American
+  holding domestic stock pays none, so Shiller's gross column is the same
+  measurement for the American variant. The gross figure is kept for the
+  comparison with AQR, who publish gross.
 
   The GROWTH RATE is the American variant's own hundred-year trend through
   Shiller, used unchanged. tools/us_vs_global.py measures what that
@@ -97,12 +110,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import ssl
 import sys
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,11 +131,6 @@ from your_equity_share.providers import (  # noqa: E402
     parse_shiller_csv,
     parse_shiller_xls,
 )
-# The American variant's own volatility measurement, imported rather than
-# copied, so both variants fetch, validate and annualise a price series the
-# same way. update.py is safe to import: its work is behind a main guard.
-sys.path.insert(0, str(ROOT))
-from update import estimate_volatility  # noqa: E402
 
 # The window the American variant fits its growth trend over. Kept equal to
 # update.py's constant on purpose: the two variants share one estimator, and a
@@ -143,19 +152,16 @@ AQR_COMPOUND = 0.042
 # enough to catch a market that has moved away from the figure being used.
 DRIFT_LIMIT = 0.0033
 
-# The fund whose volatility is measured, and over how long. Five years of
-# daily closes, which is what update.py measures SPY over, so the two
-# variants' volatilities are the same kind of number.
-VOLATILITY_TICKER = "VWCE.DE"
-VOLATILITY_YEARS = 5
-
-# Xetra lines of UCITS ETFs can carry closes recorded in dollars during the
-# fund's first weeks, and a tick at a EUR/USD rate of 1.1 is a 9.5% jump,
-# well under the 25% that validate_prices treats as implausible. VWCE began
-# trading on 23 July 2019. A window that reaches back before this date is
-# refused rather than trusted, because the one failure it would let through is
-# the one the jump check cannot see.
-VOLATILITY_EARLIEST = "2020-01-01"
+# The volatility is FIXED, not re-measured each week. Choi, Liu and Liu treat
+# it as one long-run constant (18.5%, monthly CRSP, 1926 to 2024), and a
+# trailing five-year window turned it into a lumpy regime variable: when the
+# 2020 crash left the window in February and March 2025 the answer for an
+# uncapped household jumped about nine points in five weeks with no change in
+# long-run risk. This is the same convention on the fund's own index: the
+# annualised standard deviation of monthly log returns of MSCI All Country
+# World in euro, gross, December 2000 to August 2026 (Italian methodology,
+# section 6). It is written once and refreshed only by hand.
+ITALY_VOLATILITY = 0.139860
 
 ECB = "https://data-api.ecb.europa.eu/service/data/{}?lastNObservations=1&format=csvdata"
 
@@ -225,7 +231,7 @@ LINKER_PAGE = ("https://www.deutsche-finanzagentur.de/en/federal-securities/"
                "types-of-federal-securities/inflation-linked-federal-securities")
 
 
-def linker_chart(axis_label: str) -> tuple[str, float, float]:
+def linker_chart(axis_label: str) -> tuple[str, float, float, date]:
     """The longest outstanding Bund/euro-i, off whichever chart is asked for.
 
     The page carries two charts in the same shape, real yields and break-even
@@ -262,22 +268,27 @@ def linker_chart(axis_label: str) -> tuple[str, float, float]:
     for match in re.finditer(
             r'"name":"(DE\d+): remaining maturity ([\d,]+) years","data":\[(.*?)\]',
             block):
-        points = re.findall(r'\{"y":(-?[\d.]+),"x":\d+\}', match.group(3))
+        points = re.findall(r'\{"y":(-?[\d.]+),"x":(\d+)\}', match.group(3))
         if points:
+            # x is milliseconds since 1970, stamped at midnight Frankfurt
+            # time, which is late the evening before in UTC; half a day on
+            # lands it on the right date.
+            when = datetime.fromtimestamp(int(points[-1][1]) / 1000 + 43200,
+                                          timezone.utc).date()
             found.append((match.group(1),
                           float(match.group(2).replace(",", ".")),
-                          float(points[-1]) / 100.0))
+                          float(points[-1][0]) / 100.0, when))
     if not found:
         raise SystemExit("no series found on the %r chart" % axis_label)
     return max(found, key=lambda row: row[1])
 
 
-def longest_german_linker() -> tuple[str, float, float]:
+def longest_german_linker() -> tuple[str, float, float, date]:
     """The longest euro linker: ISIN, years left, traded real yield."""
     return linker_chart("Real yield")
 
 
-def breakeven_inflation() -> tuple[str, float, float]:
+def breakeven_inflation() -> tuple[str, float, float, date]:
     """The same bond's break-even inflation, which is a price, not a forecast."""
     return linker_chart("Break-even")
 
@@ -379,6 +390,20 @@ def american_growth_trend() -> tuple[float, str] | tuple[None, None]:
     return None, None
 
 
+# The ECB curve and the break-even are read on different pages. Their dates
+# can differ by a weekend or a holiday, not by weeks.
+BREAKEVEN_MAX_LAG_DAYS = 10
+
+
+def optional(fetch, *args):
+    """A cross-check the model does not read: None when its source fails, so
+    an outage there is reported instead of stopping the refresh."""
+    try:
+        return fetch(*args)
+    except (SystemExit, urllib.error.URLError, OSError, ValueError, KeyError):
+        return None
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--write", action="store_true",
@@ -388,27 +413,42 @@ def main(argv: list[str]) -> int:
     print("Measuring the euro real safe rate")
     print("=" * 68)
 
-    aaa_date, aaa = observe(NOMINAL_30Y)
-    all_date, every = observe(NOMINAL_30Y_ALL)
-    spf_date, survey_inflation = observe(SPF_LONG_RUN)
+    aaa_date, aaa_continuous = observe(NOMINAL_30Y)
+    # The ECB quotes its Svensson curve continuously compounded; the model
+    # reads annual rates, so annualise before anything else touches them.
+    aaa = math.expm1(aaa_continuous)
+    isin, breakeven_years, breakeven, breakeven_date = breakeven_inflation()
+    # A chart that stopped updating would deflate today's nominal yield by an
+    # old break-even under a fresh date, so the two have to be days apart at
+    # most, not weeks.
+    lag = abs((date.fromisoformat(aaa_date) - breakeven_date).days)
+    if lag > BREAKEVEN_MAX_LAG_DAYS:
+        raise SystemExit(
+            "the break-even is dated %s and the ECB curve %s, %d days apart; "
+            "refusing to deflate one by the other" % (breakeven_date, aaa_date, lag))
 
-    isin, years_left, traded = longest_german_linker()
-    _, breakeven_years, breakeven = breakeven_inflation()
+    # Cross-checks only. The model reads none of them, so a source that fails
+    # here is reported and skipped rather than allowed to stop the refresh.
+    every_obs = optional(observe, NOMINAL_30Y_ALL)
+    spf = optional(observe, SPF_LONG_RUN)
+    linker = optional(longest_german_linker)
+    spf_date, survey_inflation = spf if spf else (None, None)
+    traded, years_left = (linker[2], linker[1]) if linker else (None, None)
 
     # The deflator is the MARKET's inflation rate, not a forecaster's. It is
     # the break-even of the longest euro linker: the rate at which holding the
     # linker and holding a nominal bond pay the same. A price, and the only
-    # inflation number here that nobody had to form a view to produce.
-    deflated = (1.0 + aaa) / (1.0 + breakeven) - 1.0
-    surveyed = (1.0 + aaa) / (1.0 + survey_inflation) - 1.0
-    real_all = (1.0 + every) / (1.0 + breakeven) - 1.0
+    # inflation number here that nobody had to form a view to produce. The
+    # Finanzagentur publishes it as a simple yield difference, so it comes off
+    # by subtraction. The survey is a forecast, so it is divided out.
+    deflated = aaa - breakeven
     real = deflated
 
     print(f"  AAA euro area government, 30y, nominal   {aaa:>8.4%}   "
-          f"{aaa_date}")
+          f"{aaa_date}, {aaa_continuous:.4%} continuously compounded")
     print(f"  break-even inflation, {isin}   "
           f"{breakeven:>8.4%}   {breakeven_years:.1f} years")
-    print(f"  deflated                                 {deflated:>8.4%}")
+    print(f"  less the break-even                      {deflated:>8.4%}")
     print("  USED AS THE SAFE RATE, and it clears three bars at once.")
     print()
     print("  CONSTANT MATURITY, which is what FRED's DFII30 is. DFII30 is not")
@@ -423,33 +463,38 @@ def main(argv: list[str]) -> int:
     print("  THE SAME KIND OF OBJECT as DFII30, which is a traded real yield")
     print("  rather than a nominal yield with an opinion subtracted.")
     print()
-    print("  Two cross-checks, and both agree with it:")
-    print(f"  {isin} traded real yield          {traded:>8.4%}   "
-          f"{years_left:.1f} years left")
-    print(f"  ECB SPF longer-term HICP expectation     "
-          f"{survey_inflation:>8.4%}   {spf_date}")
-    print(f"  the same curve deflated by THAT instead   {surveyed:>8.4%}")
+    print("  Cross-checks, not used:")
+    if linker:
+        print(f"  {isin} traded real yield          {traded:>8.4%}   "
+              f"{years_left:.1f} years left")
+        print(f"    {(deflated - traded) * 100:+.3f} points from the safe rate. The "
+              f"break-even comes from that bond,")
+        print("    so the two should be close; the rest is a 30-year nominal leg")
+        print("    against a shorter inflation leg.")
+    else:
+        print("  the traded real yield of the longest linker: unavailable")
+    if spf:
+        surveyed = (1.0 + aaa) / (1.0 + survey_inflation) - 1.0
+        print(f"  ECB SPF longer-term HICP expectation     "
+              f"{survey_inflation:>8.4%}   {spf_date}")
+        print(f"  the same curve deflated by THAT instead   {surveyed:>8.4%}   "
+              f"{(surveyed - deflated) * 100:+.2f} points")
+        print("    The safe rate rests on the break-even because it is a price;")
+        print("    the survey is an opinion.")
+    else:
+        print("  the ECB SPF longer-term expectation: unavailable")
+    if every_obs:
+        all_date, every_continuous = every_obs
+        every = math.expm1(every_continuous)
+        print(f"  every euro area government, 30y, nominal {every:>8.4%}   "
+              f"{all_date}")
+        print(f"  the same, less the break-even            {every - breakeven:>8.4%}")
+        print(f"  credit spread not booked as return       "
+              f"{(every - aaa) * 100:>7.2f} points")
+    else:
+        print("  the all-government 30-year curve: unavailable")
     print()
-    print(f"  The traded bond lands {abs(deflated - traded) * 100:.3f} points "
-          f"away, which is the whole")
-    print("  construction agreeing with itself: the break-even is derived from")
-    print("  that bond, so deflating a nominal yield by it should recover the")
-    print("  bond's own real yield, and it does.")
-    print()
-    print(f"  The survey sits {(surveyed - deflated) * 100:.2f} points above. "
-          f"That gap is an inflation")
-    print("  risk premium, what a holder pays to be rid of inflation risk.")
-    print("  Deflating by the survey books that premium as return and makes")
-    print("  the safe asset look better than any purchasable bond is. This")
-    print("  file did exactly that until September 2026.")
-    print()
-    print(f"  every euro area government, 30y, nominal {every:>8.4%}   "
-          f"{all_date}")
-    print(f"  the same, deflated                       {real_all:>8.4%}")
-    print(f"  credit spread not booked as return       "
-          f"{(every - aaa) * 100:>7.2f} points")
-    print()
-    us_rate = re.search(r"^real_risk_free = ([0-9.]+)$",
+    us_rate = re.search(r"^real_risk_free = (-?[0-9.]+)$",
                         (ROOT / "variants" / "us" / "market_data.toml")
                         .read_text(encoding="utf-8"), re.M)
     print("  For comparison, the American variant's safe asset is the 30-year")
@@ -478,48 +523,23 @@ def main(argv: list[str]) -> int:
             return 1
         return 0
 
-    compound = gross + growth
-    try:
-        volatility, vol_date, vol_obs, adjusted = estimate_volatility(
-            VOLATILITY_TICKER, VOLATILITY_YEARS, force=False)
-    except Exception as exc:  # DataUnavailable, or the network
-        print("  Could not measure the volatility of %s: %s"
-              % (VOLATILITY_TICKER, exc))
-        if args.write:
-            print("\n  Nothing written: a new expected return converted at a")
-            print("  stale volatility would be half an estimate.")
-            return 1
-        volatility = float(re.search(r"^stock_volatility = ([0-9.]+)$",
-                                     CONFIG.read_text(encoding="utf-8"),
-                                     re.M).group(1))
-        vol_date, vol_obs, adjusted = None, 0, False
-    else:
-        # Its own name: this once reused `first`, the start of the
-        # dividend-yield window, and the source note then printed a day count
-        # where a date belonged.
-        vol_start = vol_date.toordinal() - int(365.25 * VOLATILITY_YEARS)
-        from datetime import date as _date
-        if _date.fromordinal(vol_start).isoformat() < VOLATILITY_EARLIEST:
-            print("  The %d-year window reaches back before %s, into the"
-                  % (VOLATILITY_YEARS, VOLATILITY_EARLIEST))
-            print("  weeks when Xetra lines can carry dollar closes. Refusing.")
-            return 1
-        print(f"  volatility, {VOLATILITY_TICKER}, {VOLATILITY_YEARS}y daily   "
-              f"{volatility:>8.4%}   {vol_obs} returns to {vol_date}"
-              f"{'' if adjusted else ', NOT dividend adjusted'}")
+    # Net of the withholding the fund suffers at source, which no holder
+    # receives: see the module docstring.
+    compound = net + growth
+    volatility = ITALY_VOLATILITY
     arithmetic = arithmetic_from_compound(compound, volatility)
 
     print("  Built here, by the American variant's own construction, because")
     print("  that construction carries no horizon and this model prices a")
     print("  lifetime. See the module docstring.")
-    print(f"    dividend yield, MSCI ACWI EUR          {gross:>8.4%}   "
+    print(f"    dividend yield, MSCI ACWI EUR, net     {net:>8.4%}   "
           f"{first} to {last}")
-    print(f"      the same net of withholding tax      {net:>8.4%}")
+    print(f"      the same gross, as AQR quote it      {gross:>8.4%}")
     print(f"    real EPS growth, {GROWTH_WINDOW_YEARS}y Shiller trend  "
           f"{growth:>8.4%}   to {growth_as_of}")
     print(f"    repricing                              {0.0:>8.4%}   stated")
     print(f"    compound                               {compound:>8.4%}")
-    print(f"    arithmetic, at {volatility:.2%} volatility    "
+    print(f"    arithmetic, at the fixed {volatility:.2%} volatility "
           f"{arithmetic:>8.4%}")
     print()
 
@@ -532,9 +552,9 @@ def main(argv: list[str]) -> int:
           f"{drift_yield * 100:>+6.2f} against ours")
     print(f"    their real EPS growth                  {AQR_GROWTH:>8.4%}   "
           f"{drift_growth * 100:>+6.2f} against ours")
-    print(f"    their compound                         "
-          f"{AQR_COMPOUND:>8.4%}   {(AQR_COMPOUND - compound) * 100:>+6.2f} "
-          f"against ours")
+    print(f"    their compound, gross                  "
+          f"{AQR_COMPOUND:>8.4%}   {(AQR_COMPOUND - gross - growth) * 100:>+6.2f} "
+          f"against ours gross")
     stale = [name for name, drift in (("the dividend yield", drift_yield),
                                       ("the growth rate", drift_growth))
              if abs(drift) > DRIFT_LIMIT]
@@ -557,7 +577,6 @@ def main(argv: list[str]) -> int:
     # Stamp the file, or the page reports the date of the last HAND edit
     # forever. The as-of date is the ECB curve's own observation date, which
     # is the newest input and the one the safe rate is read off.
-    from datetime import datetime, timezone
     text = re.sub(r"^as_of = .*$", "as_of = %s" % aaa_date, text,
                   count=1, flags=re.M)
     text = re.sub(r'^generated_at = ".*"$', 'generated_at = "%s"'
@@ -570,78 +589,101 @@ def main(argv: list[str]) -> int:
         ("expected_stock_real_return", arithmetic),
         ("real_risk_free", real),
         ("expected_return_compound", compound),
-        ("dividend_yield", gross),
+        ("dividend_yield", net),
         ("real_growth", growth),
         ("dividend_yield_measured", gross),
         ("dividend_yield_withheld", gross - net),
         ("expected_inflation", breakeven),
+        # A quarterly survey: when it does not answer, last quarter's stays.
         ("expected_inflation_survey", survey_inflation),
         ("nominal_safe_yield", aaa),
-        ("stock_volatility", volatility),
     )
     for field, value in numbers:
-        text = re.sub(r"^%s = [0-9.]+$" % field,
-                      "%s = %.6f" % (field, value), text, count=1, flags=re.M)
-    if vol_obs:
-        text = re.sub(r"^volatility_observations = \d+$",
-                      "volatility_observations = %d" % vol_obs, text,
-                      count=1, flags=re.M)
-        text = re.sub(r'^volatility_source = ".*"$',
-                      'volatility_source = "Yahoo daily closes of %s, %d years '
-                      'to %s, %s"' % (VOLATILITY_TICKER, VOLATILITY_YEARS,
-                                      vol_date, "dividend adjusted" if adjusted
-                                      else "NOT dividend adjusted"),
-                      text, count=1, flags=re.M)
+        if value is None:
+            continue
+        # Signed, and exactly once: a pattern without the minus wrote the
+        # first negative rate and then never matched again.
+        text, hits = re.subn(r"^%s = -?[0-9.]+$" % field,
+                             "%s = %.6f" % (field, value), text, count=1,
+                             flags=re.M)
+        if hits != 1:
+            raise SystemExit(f"{CONFIG.name} has no line for {field}")
     text = text.replace('provisional_fields = "real_risk_free"',
                         'provisional_fields = ""')
     text = re.sub(r'^real_risk_free_source = ".*"$',
-                  'real_risk_free_source = "ECB AAA euro area central '
-                  'government bond curve, 30-year spot rate, %.4f%% on %s, '
-                  'deflated by the MARKET break-even inflation rate of %.4f%% '
-                  'on %s, the longest euro inflation-linked government bond at '
-                  '%.1f years, which gives %.4f%%. It clears three bars at '
-                  'once: constant maturity, which is what FRED\'s DFII30 is '
-                  'and a single bond cannot be; no survey, because a '
-                  'break-even is the rate at which the linker and a nominal '
-                  'bond pay the same and is therefore a price; and the same '
-                  'kind of object as DFII30, a traded real yield rather than a '
-                  'nominal yield with an opinion subtracted. Checked against '
-                  'itself: the break-even comes from that bond, so this should '
-                  'reproduce its traded real yield of %.4f%%, and it lands '
-                  '%.3f points away. The ECB Survey of Professional '
-                  'Forecasters expects %.4f%% for %s, which would give %.4f%%, '
-                  '%.2f points higher; that gap is an inflation risk premium '
-                  'and deflating by the survey books it as return."'
-                  % (aaa * 100, aaa_date, breakeven * 100, isin,
-                     breakeven_years, deflated * 100, traded * 100,
-                     abs(deflated - traded) * 100, survey_inflation * 100,
-                     spf_date, surveyed * 100, (surveyed - deflated) * 100),
+                  lambda _: 'real_risk_free_source = "%s"' % safe_rate_note(
+                      aaa_continuous, aaa_date, breakeven, isin, breakeven_years,
+                      traded, survey_inflation, spf_date),
                   text, count=1, flags=re.M)
     text = re.sub(r'^expected_return_source = ".*"$',
-                  'expected_return_source = "Built here, by the construction '
-                  'the American variant uses, because that construction '
-                  'carries no horizon and this model prices a lifetime: a '
-                  '%.4f%% trailing dividend yield of MSCI All Country World in '
-                  'euro over %d to %d, measured from the gap between MSCI '
-                  'gross and price index levels and divided by the price at '
-                  'the end, plus %.4f%% real growth in earnings per share, the '
-                  '%d-year OLS trend through Shiller to %s, plus zero '
-                  'repricing. Cross-checked against AQR, %s, as of %s: their '
-                  'dividend yield of %.1f%% is %+.2f points from ours and '
-                  'their real EPS growth of %.1f%% is %+.2f points from ours. '
-                  'Theirs is the check and not the estimate because they state '
-                  'it is for a horizon of 5 to 10 years, while Table 7 of the '
-                  'American methodology shows this construction is the one '
-                  'that wins at 30."'
-                  % (gross * 100, first, last, growth * 100,
-                     GROWTH_WINDOW_YEARS, growth_as_of, AQR_REPORT, AQR_AS_OF,
-                     AQR_YIELD * 100, (AQR_YIELD - gross) * 100,
-                     AQR_GROWTH * 100, (AQR_GROWTH - growth) * 100),
+                  lambda _: 'expected_return_source = "%s"' % expected_return_note(
+                      gross, net, first, last, growth, growth_as_of),
                   text, count=1, flags=re.M)
     CONFIG.write_text(text, encoding="utf-8")
     print(f"\n  Written to {CONFIG.relative_to(ROOT)}: the safe rate and the "
           f"expected return.")
     return 0
+
+
+def safe_rate_note(aaa_continuous: float, aaa_date, breakeven: float, isin: str,
+                   breakeven_years: float, traded: float, survey: float,
+                   spf_date) -> str:
+    """The provenance sentence for the safe rate, with its own arithmetic."""
+    aaa = math.expm1(aaa_continuous)
+    real = aaa - breakeven
+    checks = ""
+    if traded is not None:
+        checks += (
+            " Checked against itself: the break-even comes from that bond, so "
+            "this should come close to its traded real yield of %.4f%%, and it "
+            "lands %.3f points away, the rest being a thirty-year nominal leg "
+            "against a shorter inflation leg."
+            % (traded * 100, abs(real - traded) * 100))
+    if survey is not None:
+        surveyed = (1.0 + aaa) / (1.0 + survey) - 1.0
+        checks += (
+            " The ECB Survey of Professional Forecasters expects %.4f%% for %s; "
+            "deflated by that instead the rate would be %.4f%%, %+.2f points away."
+            % (survey * 100, spf_date, surveyed * 100, (surveyed - real) * 100))
+    return (
+        "ECB AAA euro area central government bond curve, 30-year spot rate, "
+        "%.4f%% continuously compounded on %s, which is %.4f%% a year, less the "
+        "MARKET break-even inflation rate of %.4f%% on %s, the longest euro "
+        "inflation-linked government bond at %.1f years, which gives %.4f%%. "
+        "Subtracted because the Finanzagentur defines the break-even as a "
+        "simple yield difference; annualised first because the ECB compounds "
+        "continuously and the model reads annual rates. It clears three bars "
+        "at once: constant maturity, which is what FRED's DFII30 is and a "
+        "single bond cannot be; no survey, because a break-even is the rate at "
+        "which the linker and a nominal bond pay the same and is therefore a "
+        "price; and the same kind of object as DFII30, a traded real yield "
+        "rather than a nominal yield with an opinion subtracted.%s"
+        % (aaa_continuous * 100, aaa_date, aaa * 100, breakeven * 100, isin,
+           breakeven_years, real * 100, checks))
+
+
+def expected_return_note(gross: float, net: float, first, last, growth: float,
+                         growth_as_of) -> str:
+    """The provenance sentence for the expected return."""
+    return (
+        "Built here, by the construction the American variant uses, because "
+        "that construction carries no horizon and this model prices a "
+        "lifetime: a %.4f%% trailing dividend yield of MSCI All Country World "
+        "in euro over %s to %s, NET of the withholding tax the fund suffers at "
+        "source (%.4f%% gross), measured from the gap between MSCI net and "
+        "price index levels and divided by the price at the end, plus %.4f%% "
+        "real growth in earnings per share, the %d-year OLS trend through "
+        "Shiller to %s, plus zero repricing. Cross-checked against AQR, %s, as "
+        "of %s, who quote gross: their dividend yield of %.1f%% is %+.2f "
+        "points from our gross figure and their real EPS growth of %.1f%% is "
+        "%+.2f points from ours. Theirs is the check and not the estimate "
+        "because they state it is for a horizon of 5 to 10 years, while Table "
+        "7 of the American methodology shows this construction is the one that "
+        "wins at 30."
+        % (net * 100, first, last, gross * 100, growth * 100,
+           GROWTH_WINDOW_YEARS, growth_as_of, AQR_REPORT, AQR_AS_OF,
+           AQR_YIELD * 100, (AQR_YIELD - gross) * 100,
+           AQR_GROWTH * 100, (AQR_GROWTH - growth) * 100))
 
 
 if __name__ == "__main__":

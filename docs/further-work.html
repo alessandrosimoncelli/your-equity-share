@@ -377,7 +377,6 @@ points of equity share unless the row says otherwise</caption>
 <tr><td>Shares rather than funds, loss offset</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Italian inflation rather than euro area</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Currency hedging</td><td>Italy</td><td class="num">not yet measured</td></tr>
-<tr><td>Withholding tax leakage</td><td>Italy</td><td class="num">0.34 points of yield</td></tr>
 <tr><td>Horizon audit of the peer table</td><td>both</td><td class="num">about 0.9 points of return</td></tr>
 <tr><td>Growth term inherited from the United States</td><td>Italy</td><td class="num">0.1 to 0.5 points of growth</td></tr>
 <tr><td>American safe rate at a historical extreme</td><td>United States</td><td class="num">context, not a defect</td></tr>
@@ -385,25 +384,26 @@ points of equity share unless the row says otherwise</caption>
 </table>
 </div>
 
-<p class="src">Computed on the current configuration. Four items have left
+<p class="src">Computed on the current configuration. Five items have left
 this list: showing both expected returns on screen and putting both variants
 on one growth estimator, in September 2026; the Italian career and pension, on
-1 October; and Italian tax, measured and left out of the model, on 3
-October.</p>
+1 October; and Italian tax, measured and left out of the model, and the
+withholding tax, now taken off the dividend yield, on 2 October.</p>
 
 <h2 id="s1">1. The Italian variant</h2>
 
 <h3 id="s1-1">1.1 Tax, measured and left out</h3>
 
-<p><strong>Decided on 3 October 2026.</strong> The Italian answer is before tax,
+<p><strong>Decided on 2 October 2026.</strong> The Italian answer is before tax,
 as Choi's is. Italian law taxes the equity fund at 26% and a government bond
 fund at 12.5%, on the gain at sale, but a fund held for years is almost always
 in gain when sold, so the tax takes a share of the risk as well as of the
 return. Taken through the law sale by sale (<code>tools/tax_check.py</code>), it
-lowers the right equity share by a fifth for money sold within three years and
-by under a tenth beyond seven, and ignoring it costs at most about a basis
-point and a half a year. The variant had applied tax to the expected returns
-only, which cut the share by 16% to 30% and was the less accurate of the two.
+lowers the right equity share by about a quarter for money sold within three
+years and by a tenth or less beyond seven, and ignoring it costs under two basis
+points a year at three years and under half a basis point beyond seven. The
+variant had applied tax to the expected returns only, which cut the share by
+17% to 32% and was the less accurate of the two.
 Italian methodology, section 8.</p>
 
 <p>What would settle it beyond a single decision is the full life-cycle model
@@ -418,9 +418,9 @@ With tax left out of the model there is no sale date to choose.</p>
 
 <h3 id="s1-3">1.3 Pension wrappers</h3>
 
-<p>A third tax regime sits alongside the two the model now carries, and for a
-household that uses it, it is probably larger than everything else in this
-document. Italian pension funds are taxed on returns at <strong>20%</strong>
+<p>A tax regime of its own, which the model does not carry any more than it
+carries the ordinary one, and for a household that uses it, it is probably
+larger than everything else in this document. Italian pension funds are taxed on returns at <strong>20%</strong>
 rather than 26%, with <strong>12.5%</strong> on the government bond share;
 contributions are deductible from income up to <strong>5,164.57 euro</strong> a
 year; and the benefit is taxed at <strong>15%</strong>, falling by 0.3 points a
@@ -439,11 +439,13 @@ are <em>minusvalenze</em>, which are <em>redditi diversi</em>, and Italian law
 does not let the two be netted. Gains on individual shares are redditi diversi
 too, so there the losses do offset.</p>
 
-<p>That distinction is why the model does not reduce the volatility for tax.
-With full loss offset the state has taken a stake in the position and shares the
-downside as well as the upside, which is the Domar and Musgrave (1944) result
-and would argue for holding <em>more</em> equity, not less. A household holding
-individual shares is in that regime and this model does not represent it.</p>
+<p>With full loss offset the state has taken a stake in the position and
+shares the downside as well as the upside, the Domar and Musgrave (1944)
+result. Section 8 of the Italian methodology measures the fund case, where
+losses do not offset, and finds the same thing in practice: a fund held for
+years is almost always sold at a gain, so the tax still takes a share of the
+swings. A household holding individual shares is in the offset regime, which
+the model does not represent either; tax is left out in both cases.</p>
 
 <h3 id="s1-5">1.5 The human capital calibration</h3>
 
@@ -479,11 +481,14 @@ way to express the trade.</p>
 
 <h3 id="s1-8">1.8 Withholding tax</h3>
 
-<p>The dividend yield is measured gross, because Shiller's dividend column is
-gross and the two variants have to measure one thing one way. Withholding costs
-<strong>0.34 points</strong> of yield, and an American holding domestic stock
-pays none of it. It is recorded rather than netted off, because netting a tax
-into a market return hides it inside a price.</p>
+<p>Done on 2 October 2026. Withholding costs a world fund <strong>0.34
+points</strong> of dividend yield, taken at source before the dividend reaches
+the fund, so no Italian holder ever receives it. It is a property of the fund,
+like its price, and not the household's own tax: VWCE's net asset value is
+already net of it. So the Italian expected return now uses the yield net of
+withholding, as MSCI's net index measures it. An American holding domestic
+stock suffers none, so the gross Shiller column is the same measurement there.
+Kept here so the numbering of the items after it does not move.</p>
 
 <h3 id="s1-9">1.9 The Italian methodology</h3>
 
@@ -626,8 +631,9 @@ series had a minimum of &minus;0.59%, a median of <strong>1.01%</strong> and a
 maximum of 3.06%, so the day sat at the <strong>99.6th percentile</strong>. On
 28 September it set a new record, 3.28%.</p>
 
-<p>So the American variant recommends 21% equities partly because its safe asset
-is paying close to the most it ever has. The model is right to use the rate the market
+<p>So the American variant recommends 21% equities to a 45-year-old on $100,000
+with $1.5 million saved partly because its safe asset is paying close to the
+most it ever has. The model is right to use the rate the market
 offers today, and section 3.3 argues that case at length. But a reader seeing
 21% should know that the number is being held down by a real risk-free rate at
 or near its record, and that if that rate returns toward its own median the answer rises

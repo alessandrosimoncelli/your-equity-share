@@ -15,14 +15,16 @@ Both rates fall on the nominal gain and only when units are sold, death counts
 as a sale (Circolare 19/E of 2013, section 2.4), and a loss on one fund cannot
 be set against a gain on another.
 
-A fund held for years is almost always in gain when it is sold, so the state
-takes a share of the swings as well as of the average return, which is the
+A fund held for years is usually in gain when it is sold (on the snapshot,
+85% of the time at seven years and 98% at thirty), so the state takes a share
+of the swings as well as of the average return, which is the
 effect Domar and Musgrave (1944) described. Taken through the law sale by sale,
-the tax lowers the equity share a household should choose by about a fifth for
-money sold within three years and by under a tenth beyond seven, and ignoring
-it costs at most about a basis point and a half a year. Lowering only the
-expected return, as this variant did until October 2026, cut the share several
-times more than the tax does. tools/tax_check.py measures it; section 8 of the
+the tax lowers the equity share a household should choose by about a quarter
+for money sold within three years and by a tenth or less beyond seven, and
+ignoring it costs under two basis points a year at three years and under half a
+basis point beyond seven. Lowering only the expected return, as this variant
+did until October 2026, cut the share by a little more than the law at three
+years and by two to four times as much beyond seven. tools/tax_check.py measures it; section 8 of the
 Italian methodology sets it out.
 
 The rates are kept here for the tools that simulate the law: tax_check.py and

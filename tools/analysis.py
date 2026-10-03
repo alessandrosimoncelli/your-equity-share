@@ -367,7 +367,7 @@ def part_three(workbook: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def part_four() -> None:
-    head(4, "Tables 12, 14, 16, 18 and 20, recomputed from the model")
+    head(4, "Tables 12, 13, 15, 17, 19 and 25, recomputed from the model")
     import dataclasses
 
     market = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
@@ -380,27 +380,27 @@ def part_four() -> None:
     # --- Table 12, the conversion at three volatilities -------------------
     for label, at, want in (("a bond held to maturity", 0.0, "2.96%"),
                             ("2% volatility", 0.02, "2.98%"),
-                            ("equities", vol, "4.49%")):
+                            ("equities", vol, "4.74%")):
         got = "%.2f%%" % (arithmetic_from_compound(rf, at) * 100)
         check("Table 12, %s" % label, got == want and in_doc(want),
               "%.2f%% compound becomes %s arithmetic" % (rf * 100, got))
 
-    # --- Table 14, what the safe asset is worth ---------------------------
+    # --- Table 13, what the safe asset is worth ---------------------------
     # The equity estimate is held at its compound value and converted, so only
     # the safe rate moves down the column.
     held = arithmetic_from_compound(compound, vol)
-    for label, rate, want in (("cash", 0.013679, "81.1%"),
-                              ("the 5-year TIPS", 0.0215, "58.3%"),
-                              ("the 10-year TIPS", 0.0242, "51.3%"),
-                              ("the 30-year TIPS, used here", 0.0296, "38.3%")):
+    for label, rate, want in (("cash", 0.013679, "75.1%"),
+                              ("the 5-year TIPS", 0.0215, "54.9%"),
+                              ("the 10-year TIPS", 0.0242, "48.7%"),
+                              ("the 30-year TIPS, used here", 0.0296, "37.3%")):
         share = recommend(default, held, rate, vol).equity_share
         drift = log_premium(held, rate, CALIB_VOL)
-        check("Table 14, %s" % label,
+        check("Table 13, %s" % label,
               "%.1f%%" % (share * 100) == want and in_doc(want),
               "a %.2f%% safe rate gives %.1f%%, drift %.2f%%"
               % (rate * 100, share * 100, drift * 100))
 
-    # --- Table 16, the corners of Choi's grid -----------------------------
+    # --- Table 15, the corners of Choi's grid -----------------------------
     corners = []
     for log_rf in (0.0, 0.01, 0.02):
         for log_prem in (0.02, 0.04):
@@ -410,15 +410,20 @@ def part_four() -> None:
             corners.append((compound_from_arithmetic(corner_mu, vol), share))
     missing = ["%.2f%%" % (c * 100) for c, _ in corners
                if "%.2f%%" % (c * 100) not in doc_text()]
-    check("Table 16, the implied return at each of the six corners", not missing,
+    check("Table 15, the implied return at each of the six corners", not missing,
           ", ".join("%.2f%%" % (c * 100) for c, _ in corners)
           if not missing else "absent: %s" % missing)
+    # Three since the volatility became Choi's 18.5% in both layers: the
+    # three 4% corners saturate, and the 2% corners give 72% to 87%.
     saturated = sum(1 for _, s in corners if s > 0.999)
-    check("Table 16, four of the six corners saturate at 100%", saturated == 4,
+    lowest = min(s for _, s in corners)
+    check("Table 15, three of the six corners saturate at 100%",
+          saturated == 3 and "%.0f%% or more" % (lowest * 100) in doc_text(),
           "everywhere Choi solved, this household would hold far more equity "
-          "than today's market tells it to")
+          "than today's market tells it to: %.1f%% at the lowest corner"
+          % (lowest * 100))
 
-    # --- Table 18, where the 9.7% comes from ------------------------------
+    # --- Table 17, where the 9.7% comes from ------------------------------
     # At the values the document states beside it: gamma 5, mu 5%, r 2%, age
     # 21. Not today's market data, which gives a different number entirely.
     g, ex_mu, ex_rf, age = 5.0, 0.05, 0.02, 21
@@ -439,12 +444,12 @@ def part_four() -> None:
     ]
     wrong = [name for name, value, want in terms
              if "%.2f" % abs(value * 100) != want]
-    check("Table 18, all eight terms of the wage discount rate", not wrong,
+    check("Table 17, all eight terms of the wage discount rate", not wrong,
           "at the values stated beside it, not today's" if not wrong
           else "%s" % wrong)
     total = sum(v for _, v, _ in terms)
     live = wage_discount_rate(age, g, ex_mu, ex_rf)
-    check("Table 18, the terms sum to what the model returns",
+    check("Table 17, the terms sum to what the model returns",
           abs(total - live) < 1e-12 and in_doc("9.75"),
           "%.2f%%, and wage_discount_rate agrees exactly" % (total * 100))
 
@@ -458,22 +463,26 @@ def part_four() -> None:
           "%.2f%% at 21, which is the floor, and %.1f%% at 67"
           % (at_21 * 100, at_67 * 100))
 
-    # --- Table 20, what each fixed constant is worth ----------------------
+    # --- Table 19, what each fixed constant is worth ----------------------
+    # The range is the spread across all three columns, not the two ends: at
+    # an 80% replacement rate the default household's pension reaches the
+    # Social Security ceiling, so that row peaks at the value used.
     for field, low, high, want_low, want_high, want_range in (
-            ("permanent_shock_volatility", 0.08, 0.20, "49.3%", "27.3%", "22.0"),
-            ("benefit_replacement_rate", 0.0, 0.80, "36.7%", "39.6%", "2.9"),
-            ("temporary_shock_volatility", 0.15, 0.35, "38.0%", "38.7%", "0.7")):
+            ("permanent_shock_volatility", 0.08, 0.20, "48.1%", "26.4%", "21.7"),
+            ("benefit_replacement_rate", 0.0, 0.80, "35.7%", "36.6%", "1.6"),
+            ("temporary_shock_volatility", 0.15, 0.35, "37.0%", "37.7%", "0.7")):
         shares = []
         for value in (low, high):
             calibration = dataclasses.replace(CGM_CALIBRATION, **{field: value})
             shares.append(
                 recommend(default, mu, rf, vol, calibration).equity_share)
-        span = abs(shares[0] - shares[1]) * 100
+        used = recommend(default, mu, rf, vol).equity_share
+        span = (max(shares + [used]) - min(shares + [used])) * 100
         ok = ("%.1f%%" % (shares[0] * 100) == want_low
               and "%.1f%%" % (shares[1] * 100) == want_high
               and "%.1f" % span == want_range
-              and in_doc(want_low, want_high))
-        check("Table 20, %s" % field.replace("_", " "), ok,
+              and in_doc(want_low, want_high, "%s points" % want_range))
+        check("Table 19, %s" % field.replace("_", " "), ok,
               "%.1f%% to %.1f%%, a range of %.1f points"
               % (shares[0] * 100, shares[1] * 100, span))
 
@@ -498,7 +507,7 @@ def part_four() -> None:
     stale = [age for age in at_today
              if "%.0f%%" % (at_today[age] * 100) not in doc_text()
              or "%.0f%%" % (at_historical[age] * 100) not in doc_text()]
-    check("Table 26, the glide path at both expected returns", not stale,
+    check("Table 25, the glide path at both expected returns", not stale,
           "flat wage, 15% saved at the real safe rate, retiring at 67 on 40%: "
           + ", ".join("%d:%.0f%%" % (a, at_today[a] * 100) for a in at_today))
     check("the glide path falls with age under both", 
@@ -506,7 +515,7 @@ def part_four() -> None:
               for a, b in zip(sorted(at_today), sorted(at_today)[1:])),
           "which is the shape the comparison is about")
 
-    check("Table 20 lists the replacement rate once",
+    check("Table 19 lists the replacement rate once",
           doc_text().count("replacement rate</td><td class=\"num\">3") <= 1,
           "it appeared twice, measured before and after that rate became a "
           "regressor in equation (12)")

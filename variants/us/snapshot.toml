@@ -27,21 +27,23 @@ generated_by = "update.py"
 #   real growth per share  0.0229   100 year trend
 #   repricing              0.0000   ratios held constant
 #   compound               0.0338
-#   arithmetic             0.0492   + volatility drag
+#   arithmetic             0.0517   + volatility drag
 # NOT counted as income: buybacks return a further
 # 0.0153. Retiring shares is what makes earnings
 # per share grow, so the growth term already carries them and
 # adding them here would count them twice.
-expected_stock_real_return = 0.049198
+expected_stock_real_return = 0.051670
 
 # FRED DFII30, the 30-year TIPS yield. A real yield
 # already, so no inflation adjustment is applied. Reduce it by your
 # marginal income tax rate if your bonds sit in a taxable account.
 real_risk_free = 0.029600
 
-# 5 years of daily adjusted closes of SPY,
-# 1254 returns, annualised.
-stock_volatility = 0.171808
+# Fixed at Choi, Liu and Liu's 18.5%: the annualised standard
+# deviation of monthly CRSP value-weighted log excess returns, July
+# 1926 to July 2024 (paper, section 1.2). Not re-measured: a trailing
+# window moves the answer whenever a crash enters or leaves it.
+stock_volatility = 0.185000
 market_ticker = "SPY"
 
 as_of = 2026-09-03
@@ -51,16 +53,13 @@ as_of = 2026-09-03
 expected_return_method = "building blocks"
 implied_erp = 0.040900
 erp_as_of = 2026-09-01
-volatility_window_years = 5
-volatility_observations = 1254
-volatility_dividend_adjusted = true
 expected_return_spread = 0.039339
 expected_return_basis = "arithmetic mean, converted from compound"
 expected_return_compound = 0.033826
 expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0705; earnings anchor 0.0312; valuation regression, 30y 0.0532"
 history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
-volatility_source = "Yahoo daily closes"
+volatility_source = "Choi, Liu and Liu (2025), section 1.2: 18.5%, monthly CRSP value-weighted log excess returns, July 1926 to July 2024, held fixed"
 real_risk_free_source = "FRED DFII30"
 real_cash = 0.013679
 buyback_yield_not_counted = 0.015292

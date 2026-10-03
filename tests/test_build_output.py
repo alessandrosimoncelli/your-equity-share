@@ -152,7 +152,22 @@ def test_the_italian_market_file_is_before_tax(built: Path) -> None:
     assert not [k for k in data if "tax" in k or "deferral" in k]
     page = (built / "it" / "index.html").read_text(encoding="utf-8")
     assert "afterTax" not in page and "deferralYears" not in page
-    assert data["provenance"]["volatility_window_years"] == 5
+    assert data["stock_volatility"] == raw["market"]["stock_volatility"]
+
+
+def test_every_model_call_on_the_pages_carries_the_variant(built: Path) -> None:
+    """Without VARIANT.calibration a call falls back to the American career,
+    so the Italian page would quietly value an Italian as an American. A
+    string check, because the page glue has no unit tests of its own."""
+    import re
+
+    for name in ("index.html", "it/index.html"):
+        page = (built / name).read_text(encoding="utf-8")
+        script = page[page.index('<script type="module">'):]
+        calls = re.findall(r"\b(?:recommend|projectEarnings|humanCapital)\((.*)", script)
+        assert len(calls) >= 7, name
+        for call in calls:
+            assert "VARIANT.calibration" in call, (name, call[:80])
 
 
 def test_the_coin_question_keeps_the_guide_s_conditions(built: Path) -> None:

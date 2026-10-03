@@ -40,8 +40,9 @@ move with the market while the document stays true to the day it describes.
 
 That is not laziness about copying files. It is the property several rounds of
 work were spent establishing: **both variants use the same estimator, so the
-gap between a 21% American answer and a 75% Italian one, both before tax and on
-the documents' data, is the country rather than the method.** Both take the
+gap between a 21% American answer and a 65% Italian one for the same household
+(45, 100,000 a year after tax, 1.5 million saved, risk aversion 5), both before
+tax and on the documents' data, is the country rather than the method.** Both take the
 dividend yield from their own index, both take real growth in earnings per
 share from the same hundred-year trend through Shiller, both assume no
 repricing, and a test asserts the growth term is identical to five decimal
@@ -59,7 +60,7 @@ them would silently mix a country difference with a code difference.
 | dividend yield | Shiller, trailing over today's price | MSCI ACWI in euro, same construction |
 | real growth | 100-year Shiller trend | the same number, and `us_vs_global.py` measures what that substitution costs |
 | safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30 | ECB AAA 30-year curve less the market break-even |
-| volatility | SPY, five years daily | VWCE, five years daily |
+| volatility | Choi's 18.5%, CRSP monthly 1926 to 2024, fixed | 13.99%, MSCI ACWI in euro monthly 2000 to 2026, fixed |
 | earnings | an American college graduate, Cocco, Gomes and Maenhout | an Italian private-sector employee, Daminato and Padula (2024) |
 | pension | 40% replacement | 66%, the Italian Treasury's projection for retiring near 67 |
 | tax | not modelled, as in Choi | not modelled either: measured in section 8 of the Italian methodology, `tools/tax_check.py` |

@@ -22,12 +22,12 @@ generated_by = "update.py"
 #   real growth per share  0.0229   100 year trend
 #   repricing              0.0000   ratios held constant
 #   compound               0.0338
-#   arithmetic             0.0491   + volatility drag
+#   arithmetic             0.0517   + volatility drag
 # NOT counted as income: buybacks return a further
 # 0.0153. Retiring shares is what makes earnings
 # per share grow, so the growth term already carries them and
 # adding them here would count them twice.
-expected_stock_real_return = 0.049136
+expected_stock_real_return = 0.051670
 
 # The 30-year TIPS yield, from the Treasury's real yield curve, which
 # FRED republishes as DFII30. A real yield
@@ -37,9 +37,11 @@ expected_stock_real_return = 0.049136
 # Methodology section 3.3.
 real_risk_free = 0.032900
 
-# 5 years of daily adjusted closes of SPY,
-# 1253 returns, annualised.
-stock_volatility = 0.171465
+# Fixed at Choi, Liu and Liu's 18.5%: the annualised standard
+# deviation of monthly CRSP value-weighted log excess returns, July
+# 1926 to July 2024 (paper, section 1.2). Not re-measured: a trailing
+# window moves the answer whenever a crash enters or leaves it.
+stock_volatility = 0.185000
 market_ticker = "SPY"
 
 as_of = 2026-09-29
@@ -49,16 +51,13 @@ as_of = 2026-09-29
 expected_return_method = "building blocks"
 implied_erp = 0.040900
 erp_as_of = 2026-09-01
-volatility_window_years = 5
-volatility_observations = 1253
-volatility_dividend_adjusted = true
 expected_return_spread = 0.042533
 expected_return_basis = "arithmetic mean, converted from compound"
 expected_return_compound = 0.033826
 expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0738; earnings anchor 0.0313; valuation regression, 30y 0.0532"
 history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
-volatility_source = "Yahoo daily closes"
+volatility_source = "Choi, Liu and Liu (2025), section 1.2: 18.5%, monthly CRSP value-weighted log excess returns, July 1926 to July 2024, held fixed"
 real_risk_free_source = "US Treasury daily par real yield curve, 30 years"
 buyback_yield_not_counted = 0.015292
 expected_return_source = "dividend yield plus long-run real growth in earnings per share, no repricing; see variants/us/methodology.html section 3"

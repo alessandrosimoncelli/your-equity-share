@@ -81,7 +81,7 @@ Part of a dry run of the American refresh, on 29 September 2026:
 ```
 Fetching...
   real risk-free rate (30y TIPS)      3.28%   was  3.22%   +0.06 points
-  stock volatility (SPY, 5y)         17.15%   was 17.16%   -0.01 points
+  stock volatility, fixed            18.50%   Choi's 18.5%
 
   Expected real return on equities.
     building blocks                3.38%   <- used
@@ -96,20 +96,21 @@ Fetching...
     earnings anchor                3.13%
     valuation regression, 30y      5.32% +/- 0.74%
 
-    as an arithmetic mean          4.91%   +1.53 from the volatility drag
+    as an arithmetic mean          5.17%   +1.78 from the volatility drag
     spread of the cross-checks     4.24%   <- how little is known here
 
 Dry run, nothing saved. Run without --dry-run to apply.
 ```
 
-**All three** numbers the American variant uses are fetched, from free sources
-that need no key or account. The Italian sources are in
+**Two** of the three numbers the American variant uses are fetched, from free
+sources that need no key or account; the third, the volatility, is Choi's
+fixed 18.5%. The Italian sources are in
 [variants/README.md](variants/README.md).
 
 | Input | Source | Note |
 | --- | --- | --- |
 | real risk-free rate | US Treasury daily real yield curve, 30 years | a real yield already; FRED's DFII30 is the same series, used if the Treasury does not answer |
-| stock volatility | Yahoo, daily **adjusted** closes | dividend and split adjusted, so total returns |
+| stock volatility | Choi, Liu and Liu (2025), section 1.2 | 18.5%, monthly CRSP log excess returns 1926 to 2024, held fixed rather than re-measured |
 | expected stock return | Shiller: dividend yield plus 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
 
 The expected return is the number the answer is most sensitive to and the one
@@ -124,7 +125,6 @@ Options:
 
 ```bash
 python update.py --dry-run    # show what would change, save nothing
-python update.py --years 10   # estimate volatility over ten years
 python update.py --fixed-return 0.05   # set the expected return by hand
 python update.py --force      # save even if a price series fails its checks
 ```
@@ -175,7 +175,7 @@ asserted.
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |
 | 5. Browser front end | **done** |
 | 6. Published as a static site, model ported to JavaScript | **done** |
-| 7. Validated against ten published forecasts, and swept for properties | **done** |
+| 7. Validated against nine published forecasts, and swept for properties | **done** |
 | 8. Italian variant: global equity, euro real safe rate, Italian career and pension; tax measured and left out | **done** |
 | 9. Weekly refresh and publication, unattended | **done** |
 | 10. Portfolio analytics and factor exposure | planned |
@@ -195,7 +195,7 @@ Python and the verifier have all passed first.
 its model and its market data, about 75 KB, plus the three documents, about
 300 KB in all. The Italian page in `web/it/` is not a second copy of the tool.
 The build writes it from `src/web/index.html`, swapping the page's VARIANT
-block (currency, number format, calibration, tax) for the Italian one and
+block (currency, number format, calibration) for the Italian one and
 translating the words with `src/web/it/translation.toml`. Every English
 fragment the table translates must still be on the page, exactly once, or the
 build stops, so a fix to the page reaches both versions and no edit to the
