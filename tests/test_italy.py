@@ -108,7 +108,7 @@ def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
 
 def test_the_equity_sleeve_is_global_and_the_configuration_says_so(italy) -> None:
     assert italy.market_ticker != "SPY"
-    assert "All-World" in italy.provenance.get("equity_index", "")
+    assert "All Country World" in italy.provenance.get("equity_index", "")
 
 
 def test_the_expected_return_is_equation_five_with_no_repricing(italy) -> None:
@@ -384,14 +384,14 @@ def test_the_safe_rate_reproduces_a_bond_that_exists(italy) -> None:
 def test_the_safe_rate_is_not_italian_paper(italy) -> None:
     """Equation (4) has no way to represent default risk.
 
-    All euro area government bonds yield about 0.61 points more at the same
+    All euro area government bonds yielded 0.64 points more at the same
     maturity, and that spread is compensation for a government not paying.
     Booking it as a risk-free return would raise the rate and lower the
     recommendation while looking prudent.
     """
     text = Path("variants/it/market_data.toml").read_text(encoding="utf-8")
     assert "NOT holding this asset" in text
-    assert "0.61 points" in text
+    assert "0.64 points" in text
 
 
 def test_the_currency_basis_is_recorded_and_names_its_assumption(italy) -> None:

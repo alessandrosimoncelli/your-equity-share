@@ -396,14 +396,15 @@ withholding tax, now taken off the dividend yield, on 2 October.</p>
 
 <p><strong>Decided on 2 October 2026.</strong> The Italian answer is before tax,
 as Choi's is. Italian law taxes the equity fund at 26% and a government bond
-fund at 12.5%, on the gain at sale, but a fund held for years is almost always
-in gain when sold, so the tax takes a share of the risk as well as of the
-return. Taken through the law sale by sale (<code>tools/tax_check.py</code>), it
-lowers the right equity share by about a quarter for money sold within three
-years and by a tenth or less beyond seven, and ignoring it costs under two basis
-points a year at three years and under half a basis point beyond seven. The
-variant had applied tax to the expected returns only, which cut the share by
-17% to 32% and was the less accurate of the two.
+fund at 12.5%, on the gain at sale, but a fund held for years is usually in
+gain when sold, 85% of the time at seven years and 98% at thirty, so the tax
+takes a share of the risk as well as of the return. Taken through the law sale
+by sale (<code>tools/tax_check.py</code>), it lowers the right equity share by
+about a quarter for money sold at three years, by about an eighth at seven and
+by under a tenth from twelve, and ignoring it costs under two basis points a
+year at three years and under half a basis point from seven. The variant had
+applied tax to the expected returns only, which cut the share by 17% to 32%:
+close to the law at three years, two to four times its cut from seven.
 Italian methodology, section 8.</p>
 
 <p>What would settle it beyond a single decision is the full life-cycle model
@@ -443,8 +444,8 @@ too, so there the losses do offset.</p>
 shares the downside as well as the upside, the Domar and Musgrave (1944)
 result. Section 8 of the Italian methodology measures the fund case, where
 losses do not offset, and finds the same thing in practice: a fund held for
-years is almost always sold at a gain, so the tax still takes a share of the
-swings. A household holding individual shares is in the offset regime, which
+years is usually sold at a gain (85% of the time at seven years, 98% at
+thirty), so the tax still takes a share of the swings. A household holding individual shares is in the offset regime, which
 the model does not represent either; tax is left out in both cases.</p>
 
 <h3 id="s1-5">1.5 The human capital calibration</h3>
@@ -485,7 +486,8 @@ way to express the trade.</p>
 points</strong> of dividend yield, taken at source before the dividend reaches
 the fund, so no Italian holder ever receives it. It is a property of the fund,
 like its price, and not the household's own tax: VWCE's net asset value is
-already net of it. So the Italian expected return now uses the yield net of
+already net of what the fund pays, a little less than MSCI's net index deducts
+(Italian methodology, section 4.1). So the Italian expected return now uses the yield net of
 withholding, as MSCI's net index measures it. An American holding domestic
 stock suffers none, so the gross Shiller column is the same measurement there.
 Kept here so the numbering of the items after it does not move.</p>

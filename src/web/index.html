@@ -1454,8 +1454,8 @@ function render() {
     steps.push(["Capped at 100%<sup>c</sup>", pct1.format(r.equityShare)]);
     notes.push(
       `The model asked for ${pct1.format(r.uncappedShare)}, which would mean ` +
-      `borrowing to buy equities. That is ruled out from outside the model ` +
-      `rather than by it, so the answer is held at 100%.`);
+      `borrowing to buy equities. The model the formula approximates rules ` +
+      `that out, so the answer is held at 100%.`);
   }
   $("steps-rows").innerHTML =
     steps.map(([k, v]) => row([[k, "k"], [v, "n"]])).join("");

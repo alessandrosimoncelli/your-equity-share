@@ -367,7 +367,7 @@ def part_three(workbook: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def part_four() -> None:
-    head(4, "Tables 12, 13, 15, 17, 19 and 25, recomputed from the model")
+    head(4, "Tables 12, 13, 15, 17, 19 and 25, and section 8.4, recomputed from the model")
     import dataclasses
 
     market = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
@@ -504,12 +504,23 @@ def part_four() -> None:
         return out
 
     at_today, at_historical = glide(mu), glide(0.08)
+    # Read cell by cell from the table itself. Looking for each figure
+    # anywhere in the document let a stale 47% at 65 pass, because "46%"
+    # happened to appear in section 2.4.
+    t25 = re.search(r'id="t25">(.*?)</table>', doc_text(), re.S)
+    rows = {int(age): (today, hist) for age, today, hist in re.findall(
+        r'<tr><td class="num">(\d+)</td><td class="num">\d+%</td>'
+        r'<td class="num">(\d+)%</td><td class="num">(\d+)%</td></tr>',
+        t25.group(1) if t25 else "")}
     stale = [age for age in at_today
-             if "%.0f%%" % (at_today[age] * 100) not in doc_text()
-             or "%.0f%%" % (at_historical[age] * 100) not in doc_text()]
+             if rows.get(age) != ("%.0f" % (at_today[age] * 100),
+                                  "%.0f" % (at_historical[age] * 100))]
     check("Table 25, the glide path at both expected returns", not stale,
           "flat wage, 15% saved at the real safe rate, retiring at 67 on 40%: "
-          + ", ".join("%d:%.0f%%" % (a, at_today[a] * 100) for a in at_today))
+          + ", ".join("%d:%.0f%%/%.0f%%" % (a, at_today[a] * 100,
+                                            at_historical[a] * 100)
+                      for a in at_today)
+          + ("" if not stale else "; stale at %s" % stale))
     check("the glide path falls with age under both", 
           all(at_today[a] >= at_today[b] - 1e-9
               for a, b in zip(sorted(at_today), sorted(at_today)[1:])),
@@ -519,6 +530,67 @@ def part_four() -> None:
           doc_text().count("replacement rate</td><td class=\"num\">3") <= 1,
           "it appeared twice, measured before and after that rate became a "
           "regressor in equation (12)")
+
+    # --- where the cap stops binding, sections 4 and 8.4 -------------------
+    # From equation (11) the cap binds while HC/W is above 1/w* - 1. In years
+    # of pay saved the threshold does not depend on the wage while the Social
+    # Security ceiling does not bind, so it is found here with the ceiling
+    # off, by bisection on savings.
+    no_ceiling = dataclasses.replace(CGM_CALIBRATION, benefit_cap=None)
+    w_star = recommend(default, mu, rf, vol).merton_share
+    w_choi = recommend(default, 0.05, 0.02, vol).merton_share
+    hc_w = ("%.1f" % (1 / w_star - 1), "%.1f" % (1 / w_choi - 1))
+    check("section 4, the HC/W above which the cap binds",
+          hc_w == ("7.1", "4.9") and in_doc("above 7.1", "above 4.9"),
+          "1/w* - 1 is %s on the snapshot and %s at Choi's defaults" % hc_w)
+
+    def years_of_pay(age: int) -> float:
+        low, high = 1.0, 1e9
+        for _ in range(200):
+            mid = math.sqrt(low * high)
+            r = recommend(Household(mid, [Person(age, 20_000.0)], 5.0),
+                          mu, rf, vol, no_ceiling)
+            low, high = (mid, high) if r.uncapped_share > 1 else (low, mid)
+        return low / 20_000.0
+
+    years = {age: "%.1f" % years_of_pay(age) for age in (25, 35, 45, 55, 65)}
+    check("sections 4 and 8.4, years of pay below which the cap binds",
+          years == {25: "2.7", 35: "1.8", 45: "1.4", 55: "1.3", 65: "1.0"}
+          and in_doc("2.7 years of salary saved at age 25, 1.8 at 35, 1.4 at "
+                     "45, 1.3 at 55 and 1.0 at 65"),
+          ", ".join("%d: %s" % kv for kv in years.items()))
+
+    # --- section 8.4, the 1,040-household grid ------------------------------
+    # Every combination of thirteen ages, four wages, five savings levels and
+    # four risk aversions, one adult each. Adults of 67 or more retire after
+    # this year on 40% of today's wage, up to the ceiling, as Person does.
+    def grid(expected: float) -> list:
+        return [recommend(Household(saved, [Person(age, wage)], gamma),
+                          expected, rf, vol)
+                for age in range(25, 86, 5)
+                for wage in (40_000.0, 80_000.0, 150_000.0, 250_000.0)
+                for saved in (25_000.0, 100_000.0, 500_000.0, 1_500_000.0,
+                              3_000_000.0)
+                for gamma in (2.0, 4.0, 6.0, 8.0)]
+
+    today = grid(mu)
+    pinned = sorted(r.uncapped_share for r in today if r.uncapped_share > 1)
+    middle = len(pinned) // 2
+    median = (pinned[middle] if len(pinned) % 2
+              else (pinned[middle - 1] + pinned[middle]) / 2)
+    double = grid(arithmetic_from_compound(
+        compound + float(market.provenance["buyback_yield_not_counted"]), vol))
+    got = ("%.1f%%" % (100 * len(pinned) / len(today)),
+           "%.1f%%" % (100 * sum(r.uncapped_share > 1 for r in double)
+                       / len(double)),
+           "%.1f times" % median, "%.0f times" % pinned[-1])
+    zero = sum(r.equity_share <= 0 for r in today)
+    check("section 8.4, the 1,040-household grid",
+          len(today) == 1040 and zero == 0
+          and got == ("33.3%", "43.8%", "2.9 times", "81 times")
+          and in_doc("1,040 single-adult households", *got),
+          "%d households, %s pinned, %s with the double count, median ask "
+          "%s, largest %s, %d at zero" % ((len(today),) + got + (zero,)))
 
 
 if __name__ == "__main__":

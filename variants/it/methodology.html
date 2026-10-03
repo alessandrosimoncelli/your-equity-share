@@ -336,6 +336,7 @@ h4 {
   <li><a href="#s7"><span class="tno">7</span>The career and the pension</a></li>
   <li><a href="#s7-1"><span class="tno">7.1</span>The career</a></li>
   <li><a href="#s7-2"><span class="tno">7.2</span>The pension</a></li>
+  <li><a href="#s7-3"><span class="tno">7.3</span>Retirees</a></li>
   <li><a href="#s8"><span class="tno">8</span>Tax</a></li>
   <li><a href="#s9"><span class="tno">9</span>Currency</a></li>
   <li><a href="#s10"><span class="tno">10</span>Why the answer is so often 100%</a></li>
@@ -360,7 +361,8 @@ Monday, except the volatility, which is fixed (section 6).</p>
 
 <p>One model, two countries. <code>src/your_equity_share</code> is shared and
 is not duplicated, so both variants take their dividend yield from their own
-index, net of whatever a fund loses to withholding tax at source, both take
+index, net of withholding tax at source where a holder suffers any (MSCI's net
+index for the world fund, none for an American holding American stock), both take
 real growth in earnings per share from the same hundred-year trend through
 Shiller, both assume no repricing, and a test asserts the growth
 term is identical to five decimal places rather than merely close. It runs
@@ -423,8 +425,8 @@ Economic Association</em>, with the estimates in Table 7 of working paper CSEF
 <p><strong>Nothing in that table is within rounding of its check by accident.
 The largest gap is the expected return</strong>, 0.72 points below AQR's, and
 it has three parts. Withholding is 0.34 of it: AQR quote gross, and this
-variant uses the yield net of it, which if anything is below what the fund
-keeps (section 4.1). The growth term is
+variant uses the yield net of it, which is what the fund delivers after its
+costs (section 4.1). The growth term is
 0.31: theirs is a five to ten year figure and this one carries no horizon
 (section 4.3). The yield itself is the last 0.07. Measured gross, as theirs
 is, the estimate is 0.38 below.</p>
@@ -497,19 +499,27 @@ used.</strong> The country a company is based in taxes the dividend it pays
 abroad before the money leaves, so a world fund receives its dividends already
 reduced. MSCI's net index reinvests them after that withholding, and over the
 same twelve months it takes <strong>0.3422 points</strong> off the gross yield.
-No holder of the fund ever receives that money: VWCE's net asset value is
-already net of it. It is a property of the fund, like its price, and not the
+No holder of the fund ever receives the money withheld: VWCE's net asset value
+is already net of what the fund pays, which is a little less than MSCI deducts
+(next paragraph). It is a property of the fund, like its price, and not the
 household's own tax, which the model leaves out (section 8). An American
 holding American stock suffers none, which is why the American variant's gross
 Shiller column is the same measurement there. Until October 2026 this variant
 used the gross yield and recorded the withholding beside it, which credited the
 household with dividends the fund never receives.</p>
 
-<p><strong>If anything the deduction is too large.</strong> MSCI deducts
-withholding at the rate a non-resident institution pays without the benefit of
-a tax treaty, the most a fund can suffer. A fund domiciled where treaties
-apply, as VWCE is in Ireland, can suffer less, so the net yield used here errs
-low. By how much has not been measured.</p>
+<p><strong>The net index is the right input because the fund delivers it, not
+because its withholding rates are the fund's.</strong> MSCI deducts withholding
+at the rate a non-resident institution pays without the benefit of a tax
+treaty, the most a fund can suffer. A fund domiciled where treaties apply pays
+less: VWCE, in Ireland, pays 15% on American dividends rather than 30%. It also
+pays its own costs, and the two roughly cancel. Over the five, six and seven
+years to August 2026, VWCE's price on Xetra rose 0.06 to 0.07 points a year
+less than MSCI ACWI in euro net, and about 0.58 points a year less than the
+gross index. VWCE tracks FTSE All-World rather than MSCI ACWI, so part of that
+small gap is the difference between the two indices. Measured for this
+revision on the fund's daily closes and MSCI's month-end levels, which are not
+kept in the repository.</p>
 
 <h3 id="s4-2">4.2 The growth term</h3>
 
@@ -660,7 +670,10 @@ of equity.</p>
 
 <p>The ECB's AAA euro area government curve at thirty years, less the market
 break-even inflation rate of the longest euro linker.
-<strong>1.5447%</strong>.</p>
+<strong>1.5447%</strong>. Under the answer the page names the asset the rest of
+the savings goes to: long-dated inflation-linked government bonds, at the rate
+in its Exhibit 5. That rate is the AAA curve's, so the bonds meant are AAA
+issuers' linkers such as the Bund/euro-i, not BTP (below).</p>
 
 <p>It took three attempts and each failed a different test, which is worth
 recording because each looked right at the time.</p>
@@ -726,7 +739,7 @@ issuer's own published figure, from the Deutsche Finanzagentur, not a number
 this project computed.</p>
 
 <p><strong>AAA rather than every euro area government</strong>, which yields
-0.61 points more at the same maturity. That spread is compensation for a
+0.64 points more at the same maturity. That spread is compensation for a
 government not paying; equation (4) cannot represent default risk, and booking
 a credit premium as a risk-free return would lower the recommendation while
 looking prudent. An Italian household buying BTP is not holding this asset.</p>
@@ -813,6 +826,21 @@ reference household of section 1 held 55.1%; with these, 64.6%. More
 bond-like wealth leaves room for more equity in the financial portfolio, the
 direction Bodie, Merton and Samuelson (1992) predict.</p>
 
+<p><strong>The TFR is in neither estimate, so the page asks for it.</strong>
+Under article 2120 of the codice civile the employer sets aside each year the
+year's pay divided by 13.5, which is 6.91% of gross pay once the 0.5%
+contribution of law 297 of 1982 comes off it, revalues it every year at 1.5%
+plus three quarters of inflation, and pays it when the job ends, when it is
+taxed separately (TUIR, articles 17 and 19). Daminato and Padula measure the wages received in each year and
+the Treasury's 66% is the public pension alone, so both leave it out. The page
+asks for it twice: the year's accrual after its tax goes in the wage, about
+7.5% of net pay, and what has already accrued goes in savings, counted at
+about three quarters for the tax still to come. TFR left with the employer is
+part of the safe share, so the page says to apply the percentage to the total
+and put all the equity in the rest. This is the rule of Choi, Liu and Liu's
+guide for an employer's retirement contributions, which go in the wage,
+applied to Italy.</p>
+
 <h3 id="s7-1">7.1 The career</h3>
 
 <p><strong>From Daminato and Padula (2024)</strong>, in the <em>Journal of the
@@ -894,9 +922,18 @@ retirement at 69, so 66% sits where a retirement at 67 falls.</p>
 for everyone, so it understates the pension of anyone retiring before about
 2040. For an uncapped household at risk 5 that understates the answer by up to
 about 8 points for a retirement in 2030, falling to under a point by 2040.
-Someone close to retirement can do better than any table: INPS's own estimate,
-"La mia pensione futura", can be typed into the page's year-by-year box, a
+Someone within ten years of retirement can do better than any table, and the
+page's pension hint says so: INPS's own estimate, "La mia pensione futura",
+converted to net, is more precise than 66% and goes in the year-by-year box, a
 year of it after tax in each year it will be paid.</p>
+
+<p><strong>Whom it overstates.</strong> The model puts no ceiling on the
+pension. For workers first insured from 1996, or who chose the contributory
+method, INPS counts pay only up to 122,295 euro of gross pay in 2026 (law 335
+of 1995, article 2, paragraph 18; INPS circular 6 of 30 January 2026, section
+6), so for
+someone paid more than that the model overstates the pension, and with it the
+equity share.</p>
 
 <p><strong>Why not the OECD's 79%.</strong> This variant used it until October
 2026: the future net rate for an average earner in <em>Pensions at a Glance
@@ -906,6 +943,87 @@ who contributes for 48 years, from 22 to the future normal retirement age of
 revalued, times a conversion coefficient that rises with the age at
 retirement. Retiring at 67 means fewer contributions and a smaller
 coefficient, so paying 79% from 67 overstated the pension.</p>
+
+<p><strong>What the page asks for.</strong> The pension field is a pension
+already paid to you, a year of it after tax, even while you still work: an
+old-age, survivor's or disability pension. It is paid every year from now and,
+since it does not depend on working, is discounted at the benefit rates from
+today. The pension the current job will pay is not typed: it is imputed at 66%
+of the final wage and added when the wage stops. The exception is someone of
+66 or more still earning: the career pension is 66% of today's wage, and if a
+pension is already being paid it is taken to be that career's and nothing is
+added. A partner has their own field
+for a pension already paid to them, and a pension of either that starts later
+goes in that person's year-by-year box. Every year is entered as Choi, Liu and
+Liu's guide asks, "assuming you are still alive in each future year": the
+calculations already allow for the chance of dying, at United States rates
+(section 11). The box follows the age, wage and pension fields until a year in
+it is edited; from then on a note under it says the typed years replace those
+fields, and a reset brings the projection back.</p>
+
+<h3 id="s7-3">7.3 Retirees</h3>
+
+<p>A retired household's answer carries four known errors, and a fifth the
+page no longer invites. They point different ways and partly offset, and none
+is corrected.</p>
+
+<p><strong>Little saved: too much equity.</strong> In the United States a
+direct solution of the full Cocco, Gomes and Maenhout model run for this
+project (not published) finds the formula 10 to 20 points too high for
+retirees whose savings are about two years of pension or less (6 to 7 points
+at two and a half), and the American
+page tells a retiree with under about two years of pension saved to read the
+answer as an upper bound. Choi's
+retirement discount rates are the same in this variant, but the corner has not
+been measured on Italian inputs, and the Italian page does not carry that
+line.</p>
+
+<p><strong>The thirty-year rate: too little equity.</strong> The riskless
+asset that matches a retiree's spending is a ladder of inflation-linked bonds
+running to about 100. With spending that falls with age, as it does in Cocco,
+Gomes and Maenhout's model, its duration is about 14 years at 67, 11 at 75 and
+7 at 85, and the euro real curve sits lower there than at thirty years. On this
+document's date the construction of section 5, with the break-even read
+between the 2033 and 2046 linkers, gives 1.21% at ten years against 1.5447% at
+thirty, and the Finanzagentur's 2033 linker yields 0.99% real against 1.49%
+for the 2046. At the rate of each age's ladder, the retired households with a
+pension that were tried would hold about 3 to 6 points more equity between 67
+and 75, about 7 more at 80 and 9 at 85. The American methodology (section 8.6)
+weights each year by the chance of being alive in it instead. On the euro curve
+that gives about 11 years at 67, 8 at 75 and 5 at 85, and about 7 to 10 points
+more equity between 67 and 75, 10 at 80 and 13 at 85. The two weightings
+bracket the effect.</p>
+
+<p><strong>Couples: too much equity.</strong> The model counts both pensions
+for as long as either spouse lives, and Choi's spreadsheet sums the two adults
+the same way. Under Italian rules a surviving spouse keeps their own pension
+and 60% of the other's, the reversibilit&agrave;, and less when their own income is
+high. With that rule at the full 60%, a retired couple's pension wealth is
+about 8 to 10% lower than the model counts, and lower still where the
+survivor's own income cuts the 60%, so the part of the answer above the
+no-pension share,
+29.3% at risk 5, is too high by about that proportion: 1.4 to 5.5 points in the
+couples tried, the most where savings are small against the pensions.</p>
+
+<p><strong>Tax while spending down: too much equity.</strong> Section 8 holds
+the money to one date. A retiree sells some of both funds every year, so part
+of the money is taxed after only a few years, where tax lowers the right share
+most. A simulation run for this revision on this document's snapshot, and not
+kept in the repository, of retirees aged 67 to 75 who spend their savings over
+14 to 20 years and rebalance every year puts the right share 5% to 11% below
+the model's answer: about 3 to 6 points too much equity.</p>
+
+<p><strong>Money set aside: no longer invited.</strong> The page used to
+describe its money as having "no planned use or withdrawal date", which
+invited a retiree to keep years of spending out of the savings typed in. That
+money still sits somewhere, usually in cash, so the household ended up with
+less equity than the model wants for its whole wealth. The page now speaks of
+money meant to last the rest of your life, with no fixed date to spend it, and
+its savings hint tells a retiree to include what they will draw down over the
+years and leave out only this year's spending and money for a dated goal. That
+is Choi, Liu and Liu's own accounting: savings are what is left after this
+year's consumption (equations 5 to 7 and section 1.3 of their paper), and the
+drawing down in later years is the model's own consumption.</p>
 
 <h2 id="s8">8. Tax</h2>
 
@@ -935,8 +1053,9 @@ for younger households. Taxing the equity fund as well, which
 is what the law does, lowers it, as the rest of this section measures.</p>
 
 <p><strong>Tax takes a share of the risk as well as of the return.</strong> A
-fund held for many years is usually in gain when it is sold, so the state
-takes about a quarter of the gain whether markets did well or badly: it shares
+fund held for many years is usually in gain when it is sold, 85% of the time
+at seven years and 98% at thirty on this document's snapshot (Table 7), so the
+state takes about a quarter of the gain whether markets did well or badly: it shares
 the swings, not only the average. That is the effect Domar and Musgrave (1944)
 described. Taking tax off the expected return and leaving the volatility as it
 is counts the first half and misses the second, and this variant did exactly
@@ -968,14 +1087,15 @@ best without it, by how long the money is held. Risk aversion 5.</caption>
 snapshot. Risk aversion 3 and 8 give the same column within a hundredth.</p>
 
 <p><strong>So the model reads the market figures as they are.</strong> The tax
-lowers the right equity share by about a quarter for money sold within three
-years, by about an eighth at seven years and by under a tenth beyond, and a
-household that ignores it gives up under 2 basis points a year of return at
-three years and under half a basis point from seven years on. Taking tax off
-the expected return alone cut the share by 17% to 32%. At three years that is
-about a third against the law's quarter, so there it is close to the law and
-nearer to it than leaving tax out. From seven years it cuts two to four times
-what the law does, and leaving tax out is both the simpler and the closer.</p>
+lowers the right equity share by about a quarter for money sold at three
+years, by about an eighth at seven years and by under a tenth at twelve years
+and beyond, and a household that ignores it gives up under 2 basis points a
+year of return at three years and under half a basis point from seven years
+on. Taking tax off the expected return alone cut the share by 17% to 32%. At
+three years the two are close, 0.682 of the untaxed share against the law's
+0.745, so there taxing the mean is nearer the law than leaving tax out. From
+seven years on it cuts two to four times what the law does, and there leaving
+tax out is both the simpler reading and the closer one.</p>
 
 <p><strong>The missing loss credit matters less than it looks.</strong> Losses
 on funds cannot offset gains, which is why this document once argued that the
@@ -1017,15 +1137,21 @@ as the measured persistence, not as an endorsement that parity holds quickly.</p
 savings in stocks until they reach 5.6 to 8.3 years of after-tax pay</strong>,
 depending on age, against 1.0 to 2.7 years on the American page (Table 8).
 That is the model's answer and not a fault, and this section shows where it
-comes from.</p>
+comes from. The default is 5, the value Choi, Liu and Liu's spreadsheet comes
+set to: an American value, not an Italian estimate, and the page says so.</p>
 
 <p><strong>How the answer is formed.</strong> The model counts two kinds of
 wealth: the savings typed in, and future pay and pension valued today, which
 Choi, Liu and Liu describe as "akin to a fixed income holding". It sets the
 share of the two together to hold in stocks, Merton's share, and then asks how
 much of the savings must be in stocks to reach it. When future pay is large and
-savings are small, all of the savings is not enough, and the page stops at 100%
-because it does not borrow.</p>
+savings are small, all of the savings is not enough, and the page stops at
+100%. That cap is the no-borrowing rule of the model the formula approximates,
+Cocco, Gomes and Maenhout's; the formula alone goes above it, and the page
+shows how far. As savings grow the answer falls, so the page also says, under
+the answer, to run it again once a year and rebalance to the new figure, using
+new savings first: Choi, Liu and Liu measure their rule as one followed at
+every age (section 4 of their paper).</p>
 
 <p><strong>The household the Italian page opens with</strong> is 45 years old,
 earns 30,000 euro a year after tax, has 50,000 saved and answers 5 for risk.
@@ -1129,28 +1255,40 @@ listed here so a reader does not have to find them.</p>
 mortality.</strong> The career and the pension are Italian (section 7), but the
 discount rates that value them are Choi's, fitted on Cocco, Gomes and
 Maenhout's three American earnings processes and the 2019 United States life
-table. Mortality cannot be made Italian from outside them, and the Italian
-earnings process sits beside his fitted set rather than inside it, as the flat
+table. Pay and pension are counted as if the person is alive in each year, and
+the coefficients supply the chance of dying, at American rates; that cannot be
+made Italian from outside them. The Italian earnings process sits beside his fitted set rather than inside it, as the flat
 path of his own worked example does. They were also fitted for a stock market
 with 18.5% volatility, and the euro fund's lower volatility does not reach them
 at all: they read only the log premium, the compound return over the safe rate
 measured in logs, 1.89 points, so they value future pay as though that premium
-came with American risk. That premium is also just below the 2% to 4% they
-were fitted over. Removing any of this would mean refitting the coefficients
-on Italian data rather than substituting inputs. The premium is Choi's own
-definition, the expected log return over the safe rate. His spreadsheet takes a
+came with American risk. The page shows that figure as the log excess drift,
+computed as the model computes it, at the 13.99% in use. It is also just below
+the 2% to 4% the coefficients were fitted over, by 0.11 points. Times the
+premium's coefficients, 0.267 in the wage discount rate and 0.217 in the
+benefit rate, that is an extrapolation of 0.03 and 0.02 points of discount
+rate, well under a tenth of a point. Removing any of this would mean refitting
+the coefficients on Italian data rather than substituting inputs. The premium
+is Choi's own definition, the expected log return over the safe rate. His spreadsheet takes a
 shortcut to it, the arithmetic mean in logs less half of 18.5% squared, which
 is the same number when volatility is 18.5% but here would give 1.15 points and
 lower the reference household's answer by 1.0 point.</p>
 
 <p><strong>Leaving tax out rests on a check of one decision, not on the full
-life-cycle model.</strong> Section 8 holds the money to a fixed date without
-rebalancing. A household that rebalances by selling realises gains sooner, and
-one that spends gradually sells some of its funds within a few years, where the
-tax matters most: by about a quarter of the equity share at three years. The
-full model with Italian tax, which would settle it, has not been solved. The
-stakes are bounded either way: ignoring the tax costs under 2 basis points a
-year of return.</p>
+life-cycle model.</strong> Section 8 holds money to one date. Simulations run
+for this revision on this document's snapshot, not kept in the repository,
+take it three steps further. Rebalancing every year leaves the effect about
+where it was, a little nearer none at thirty years: the taxed share is 0.74,
+0.87, 0.92 and 0.95 of the untaxed one at 3, 7, 12 and 30 years, against
+0.745, 0.877, 0.923 and 0.938 in Table 7. For a
+worker whose future pay, taken as a riskless untaxed claim, is worth one to
+four times their savings, tax moves the right share by about &minus;3% to +6%
+at 15 to 30 years, and still about &minus;10% at 7. For retirees who spend
+down, the right share is 5% to 11% below the model's answer (section 7.3). The
+full life-cycle model with
+Italian tax has not been solved. The cost of ignoring the tax, under 2 basis
+points a year, is computed for money held to a date three or more years
+away.</p>
 
 <p><strong>The level of volatility is a judgement.</strong> 13.99% is
 twenty-five years of one world index in euro. It is below Choi's 18.5%, which
@@ -1168,11 +1306,16 @@ monthly and annual returns give 18.9%, 18.5% and 19.0% (American methodology,
 section 3.2). Here it does matter. For an uncapped household each point of
 volatility near today's figure is worth about 6 points of equity share, and
 less further up: the household of section 6, 45 years old with 30,000 euro of pay,
-500,000 saved and risk 5, holds 61.0% at 13.99%, would hold 51.6% at 16% and
+500,000 saved and risk 5, holds 61.0% at 13.99%, would hold 51.5% at 16% and
 43.8% at Choi's 18.5%.</p>
 
 <p>Everything else in this document is measured against something outside this
-project, apart from how much the withholding of section 4.1 overstates what the
-fund loses, and section 2 is the list.</p>
+project, and section 2 is the list, with these exceptions. The fund's tracking
+in section 4.1, the daily and mid-month volatility checks of sections 6 and
+11, the retiree errors of section 7.3 and the tax steps above are this
+project's own measurements, on data and
+simulations not kept in the repository. The figure for American retirees
+comes from a direct solution of the full Cocco, Gomes and Maenhout model run
+for this project (not published).</p>
 
 </div>

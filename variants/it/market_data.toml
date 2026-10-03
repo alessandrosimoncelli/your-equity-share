@@ -29,7 +29,8 @@
 # against 12.5% on the gain at sale, and a fund held for years is usually in
 # gain when sold, so the tax takes a share of the risk as well as of the
 # return. Measured sale by sale it lowers the right equity share by about a
-# quarter for money sold at three years and by a tenth or less from seven, and
+# quarter for money sold at three years, by an eighth at seven and by under a
+# tenth from twelve, and
 # ignoring it costs under two basis points a year. Italian methodology,
 # section 8; tools/tax_check.py.
 #
@@ -178,8 +179,8 @@ expected_stock_real_return = 0.044947
 # inflation leg. The survey is still fetched, as the cross-check; the
 # safe rate rests on the break-even because it is a price.
 #
-# AAA rather than all euro area government bonds, which yield 0.61 points more
-# at the same maturity. That spread is compensation for a government not
+# AAA rather than all euro area government bonds, which yielded 0.64 points
+# more at the same maturity on 8 September 2026. That spread is compensation for a government not
 # paying, equation (4) cannot represent default risk, and booking it as a
 # risk-free return would raise this rate and lower the recommendation while
 # looking prudent. An Italian household buying BTP is NOT holding this asset.
@@ -216,7 +217,7 @@ nominal_safe_yield = 0.039178
 growth_source = "AQR's, as part of their published decomposition. Cross-checked on every refresh against the American variant's own 100-year trend through Shiller, which is a legitimate comparison because AQR themselves publish 2.7% for United States large cap against 2.6% for Global All Country, a tenth of a point apart: long-run real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic."
 growth_cross_check = "The alternative was tried and it failed, which is why the growth term is the American one. tools/global_growth.py rebuilds global real dividend growth from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The answer depends on the weighting scheme far more than on the data: weights pinned at today give 0.89% to 1.52%, weights pinned at the start of the window give 1.86% to 3.04%, and GDP shares each year give 2.77% to 5.43%, an envelope 4.5 points wide against 0.25 points for the American estimator, and keeping the war years rather than dropping them widens it further. The reason is structural. A fixed basket of countries is not an index, because an index reconstitutes and drops what stops paying, and JST publishes country index returns rather than the world index's constituents, so reconstitution cannot be reproduced. An earlier version of this file quoted a single scheme's 1.33% to 3.16% as the uncertainty, which was too flattering by a factor of four. Both this variant's 2.286% and AQR's 2.6% fall inside the envelope, which is corroboration too weak to lean on and is reported as such."
 currency_basis = "EUR. The dividend yield is measured on a euro-priced global index, the volatility is measured on a euro-priced series, and the safe rate is a euro government bond's traded real yield. Those three are euro figures by construction. The growth term is real growth in United States earnings per share, used as the global real rate, and that is the one place a cross-currency assumption still lives: it holds if relative purchasing power is preserved over a lifetime, which is AQR's own stated assumption for reading local real returns as any-currency real returns. It applies to one term of three rather than to the whole estimate, which is narrower than the previous version of this file, where the entire expected return was a local real figure read as a euro one."
-equity_index = "FTSE All-World"
+equity_index = "MSCI All Country World"
 real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year spot rate, 3.8430% continuously compounded on 2026-09-28, which is 3.9178% a year, less the MARKET break-even inflation rate of 2.2981% on DE0001030575, the longest euro inflation-linked government bond at 19.6 years, which gives 1.6197%. Subtracted because the Finanzagentur defines the break-even as a simple yield difference; annualised first because the ECB compounds continuously and the model reads annual rates. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should come close to its traded real yield of 1.6389%, and it lands 0.019 points away, the rest being a thirty-year nominal leg against a shorter inflation leg. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3; deflated by that instead the rate would be 1.8434%, +0.22 points away."
 volatility_source = "MSCI All Country World in euro, gross, monthly log returns from December 2000 to August 2026, annualised: 13.9860%. Held fixed, as Choi holds his 18.5%, rather than re-measured each week: a trailing window moved the answer whenever a crash entered or left it."
 volatility_currency = "EUR, unhedged"

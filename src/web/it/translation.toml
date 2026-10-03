@@ -559,11 +559,11 @@ it = '''steps.push(["Limitata al 100%<sup>c</sup>", pct1.format(r.equityShare)])
 
 [[t]]
 en = '''`The model asked for ${pct1.format(r.uncappedShare)}, which would mean ` +
-      `borrowing to buy equities. That is ruled out from outside the model ` +
-      `rather than by it, so the answer is held at 100%.`'''
+      `borrowing to buy equities. The model the formula approximates rules ` +
+      `that out, so the answer is held at 100%.`'''
 it = '''`Il modello ha chiesto il ${pct1.format(r.uncappedShare)}, cioè ` +
-      `indebitarsi per comprare azioni. Lo esclude un vincolo esterno al modello, ` +
-      `non il modello stesso, quindi la risposta resta al 100%.`'''
+      `indebitarsi per comprare azioni. Il modello che la formula approssima ` +
+      `lo esclude, quindi la risposta resta al 100%.`'''
 
 [[t]]
 en = '''xTitle: "Expected real return on equities, compound",'''

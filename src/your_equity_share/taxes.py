@@ -20,7 +20,8 @@ A fund held for years is usually in gain when it is sold (on the snapshot,
 of the swings as well as of the average return, which is the
 effect Domar and Musgrave (1944) described. Taken through the law sale by sale,
 the tax lowers the equity share a household should choose by about a quarter
-for money sold within three years and by a tenth or less beyond seven, and
+for money sold at three years, by an eighth at seven and by under a tenth from
+twelve, and
 ignoring it costs under two basis points a year at three years and under half a
 basis point beyond seven. Lowering only the expected return, as this variant
 did until October 2026, cut the share by a little more than the law at three

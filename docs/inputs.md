@@ -127,8 +127,8 @@ starts. So does the spousal benefit: where one spouse earned much less, they
 will usually claim **50% of the higher earner's** benefit instead of their
 own. Choi's spreadsheet has a switch for it; the page does not, so type it in
 the second adult's year-by-year box, from the age they will claim it. For a
-one-earner couple on $100,000 it is worth about 3 to 5 points of equity share,
-on the data of 3 September 2026.
+one-earner couple it is worth about 3 to 6 points of equity share with five
+years of pay saved and 1 to 2 with fifteen, on the data of 3 September 2026.
 
 ## Expected stock market real return
 
@@ -165,7 +165,7 @@ growth, is unavailable rather than rejected: aggregate growth needs a share
 count and the S&P earnings history is per share.
 
 Three others are computed as cross-checks and are **not used**: Damodaran's
-implied premium (7.05%, the outlier, embedding near-term analyst growth
+implied premium plus the real safe rate (7.05%, the outlier, embedding near-term analyst growth
 forecasts and quoted against the wrong maturity), a regression of realised
 30-year returns on valuation (5.32%, R2 of 0.19 on about four independent
 periods), and an earnings anchor built the way AQR builds theirs, a cyclically
