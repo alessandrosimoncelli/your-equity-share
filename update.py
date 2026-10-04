@@ -14,9 +14,11 @@ Two of the three inputs the model uses are fetched, from free sources that
 need no key or account; the third is fixed:
 
     real risk-free rate       the US Treasury's daily real yield curve,
-                              30 years, which FRED republishes as DFII30
-    expected stock return     Shiller: the dividend yield plus the 100-year
-                              trend in real earnings per share, no repricing
+                              30 years, which FRED republishes as DFII30,
+                              annualised from its semiannual quote
+    expected stock return     Shiller: the dividend yield compounded with the
+                              100-year trend in real earnings per share, no
+                              repricing
     stock market volatility   Choi, Liu and Liu's 18.5%, fixed: monthly CRSP
                               log excess returns, 1926 to 2024. A trailing
                               window moved the answer whenever a crash entered
@@ -262,8 +264,9 @@ def render_config(**f) -> str:
         f"expected_stock_real_return = {f['expected_return']:.6f}",
         "",
         f"# The 30-year TIPS yield, from the Treasury's real yield curve, which",
-        f"# FRED republishes as {FRED_REAL_RISK_FREE}. A real yield",
-        "# already, so no inflation adjustment is applied. Before tax: in a",
+        f"# FRED republishes as {FRED_REAL_RISK_FREE}, annualised from its",
+        "# semiannual quote: (1 + y/2)^2 - 1, recorded below as quoted. A real",
+        "# yield already, so no inflation adjustment is applied. Before tax: in a",
         "# taxable account the inflation increase in the principal is taxed",
         "# too, so what is left is about r(1 - t) - t * inflation, not r(1 - t).",
         "# Methodology section 3.3.",
@@ -317,6 +320,11 @@ def render_config(**f) -> str:
         'monthly CRSP value-weighted log excess returns, July 1926 to July '
         '2024, held fixed"',
         f'real_risk_free_source = "{f.get("real_risk_free_source", "FRED " + FRED_REAL_RISK_FREE)}"',
+        *(
+            [f"real_risk_free_quoted = {f['real_risk_free_quoted']:.6f}"]
+            if f.get("real_risk_free_quoted") is not None
+            else []
+        ),
         # Not an input. See the constant for what it is for.
         *(
             [f"real_cash = {f['real_cash']:.6f}"]
@@ -332,7 +340,7 @@ def render_config(**f) -> str:
             if f.get("buyback_yield") is not None
             else []
         ),
-        'expected_return_source = "dividend yield plus long-run real growth in '
+        'expected_return_source = "dividend yield compounded with long-run real growth in '
         'earnings per share, no repricing; see variants/us/methodology.html section 3"'
         if f["method"] == "building blocks"
         else 'expected_return_source = "set by hand"',
@@ -561,10 +569,15 @@ def main(argv: list[str]) -> int:
             # Reporting only, so a failure here must not stop a refresh.
             real_cash = None
 
-        rf_date, real_rf, rf_source = fetch_real_risk_free()
+        rf_date, quoted_rf, rf_source = fetch_real_risk_free()
+        # Treasury yields, TIPS included, are quoted on a semiannual
+        # bond-equivalent basis. The model reads annual rates, as the Italian
+        # variant's are, so the quote is annualised before anything uses it.
+        real_rf = (1.0 + quoted_rf / 2.0) ** 2 - 1.0
         print(f"  real risk-free rate (30y TIPS)   {real_rf:>8.2%}"
               f"   was {existing.real_risk_free_rate:>6.2%}"
               f"   {_change(real_rf, existing.real_risk_free_rate)}")
+        print(f"    {quoted_rf:.2%} as quoted, on a semiannual basis, annualised")
         if rf_source != TREASURY_SOURCE:
             print(f"    from {rf_source}")
 
@@ -719,6 +732,7 @@ def main(argv: list[str]) -> int:
         method=method,
         expected_return=expected,
         real_risk_free=real_rf,
+        real_risk_free_quoted=quoted_rf,
         real_risk_free_source=rf_source.replace('"', "'"),
         volatility=vol,
         as_of=rf_date,

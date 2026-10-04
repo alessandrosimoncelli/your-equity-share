@@ -21,13 +21,13 @@ generated_by = "update.py"
 #   dividend yield         0.0110
 #   real growth per share  0.0229   100 year trend
 #   repricing              0.0000   ratios held constant
-#   compound               0.0338
-#   arithmetic             0.0517   + volatility drag
+#   compound               0.0341
+#   arithmetic             0.0519   + volatility drag
 # NOT counted as income: buybacks return a further
 # 0.0153. Retiring shares is what makes earnings
 # per share grow, so the growth term already carries them and
 # adding them here would count them twice.
-expected_stock_real_return = 0.051670
+expected_stock_real_return = 0.051925
 
 # The 30-year TIPS yield, from the Treasury's real yield curve, which
 # FRED republishes as DFII30. A real yield
@@ -35,7 +35,9 @@ expected_stock_real_return = 0.051670
 # taxable account the inflation increase in the principal is taxed
 # too, so what is left is about r(1 - t) - t * inflation, not r(1 - t).
 # Methodology section 3.3.
-real_risk_free = 0.032900
+# Annualised from the semiannual quote, (1 + y/2)^2 - 1; the quote is
+# recorded below as real_risk_free_quoted.
+real_risk_free = 0.033171
 
 # Fixed at Choi, Liu and Liu's 18.5%: the annualised standard
 # deviation of monthly CRSP value-weighted log excess returns, July
@@ -50,15 +52,16 @@ as_of = 2026-09-29
 expected_return_method = "building blocks"
 implied_erp = 0.040900
 erp_as_of = 2026-09-01
-expected_return_spread = 0.042533
+expected_return_spread = 0.042771
 expected_return_basis = "arithmetic mean, converted from compound"
-expected_return_compound = 0.033826
-expected_return_estimates = "building blocks 0.0338 (used); implied premium 0.0738; earnings anchor 0.0313; valuation regression, 30y 0.0532"
+expected_return_compound = 0.034077
+expected_return_estimates = "building blocks 0.0341 (used); implied premium 0.0741; earnings anchor 0.0313; valuation regression, 30y 0.0532"
 dividend_yield = 0.010966
 real_growth = 0.022860
 history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
 volatility_source = "Choi, Liu and Liu (2025), section 1.2: 18.5%, monthly CRSP value-weighted log excess returns, July 1926 to July 2024, held fixed"
 real_risk_free_source = "US Treasury daily par real yield curve, 30 years"
+real_risk_free_quoted = 0.032900
 buyback_yield_not_counted = 0.015292
-expected_return_source = "dividend yield plus long-run real growth in earnings per share, no repricing; see variants/us/methodology.html section 3"
+expected_return_source = "dividend yield compounded with long-run real growth in earnings per share, no repricing; see variants/us/methodology.html section 3"

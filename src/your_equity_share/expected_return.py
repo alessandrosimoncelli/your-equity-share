@@ -228,7 +228,13 @@ def building_block_estimate(
     as_of: date | None = None,
     growth_basis: str = "",
 ) -> Estimate:
-    """Dividend yield plus real per-share growth plus any repricing.
+    """Dividend yield compounded with real per-share growth and any repricing.
+
+    With the price-to-dividend ratio held constant, a TRAILING yield D0/P0 and
+    growth g give exactly 1 + R = (1 + D0/P0)(1 + g): next year's dividend is
+    D0(1 + g), and the price grows with it. Adding the two instead drops the
+    cross term, about three hundredths of a point here. The worked example
+    below pays its dividend over the year it measures, where the sum is exact.
 
     The two terms have to be measured on the same basis, and this is easy to get
     wrong. Cash reaches a shareholder as dividends and as buybacks, so a *total*
@@ -258,10 +264,10 @@ def building_block_estimate(
     """
     return Estimate(
         method="building blocks",
-        value=dividend_yield + real_growth + repricing,
+        value=(1.0 + dividend_yield) * (1.0 + real_growth) * (1.0 + repricing) - 1.0,
         as_of=as_of,
         detail=(
-            f"{dividend_yield:.2%} dividend yield plus {real_growth:.2%} real "
+            f"{dividend_yield:.2%} dividend yield compounded with {real_growth:.2%} real "
             f"earnings growth per share"
             f"{f' ({growth_basis})' if growth_basis else ''}"
             + (f" plus {repricing:.2%} repricing" if repricing else ", no repricing")

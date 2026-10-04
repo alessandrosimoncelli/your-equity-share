@@ -46,9 +46,10 @@ def test_implied_premium_adds_the_real_rate() -> None:
     assert "Damodaran" in e.detail
 
 
-def test_building_blocks_sum_their_parts() -> None:
+def test_building_blocks_compound_their_parts() -> None:
+    """A trailing yield and growth, compounded: 1 + R = (1 + D0/P0)(1 + g)."""
     e = building_block_estimate(0.0110, 0.0229)
-    assert e.value == pytest.approx(0.0339)
+    assert e.value == pytest.approx(1.0110 * 1.0229 - 1)
     assert "no repricing" in e.detail
     assert "dividend yield" in e.detail
 
@@ -77,7 +78,11 @@ def test_dividend_yield_pairs_with_per_share_growth() -> None:
     dividend_yield = dividends / cap
     payout_yield = (dividends + buyback) / cap
 
-    right = building_block_estimate(dividend_yield, growth)
+    # The example pays its dividend over the year it measures, a forward
+    # yield; the estimator takes a trailing one, last year's dividend, which
+    # is the same dividend before a year of growth. Given that, compounding
+    # recovers the holder's return exactly.
+    right = building_block_estimate(dividend_yield / (1 + growth), growth)
     assert right.value == pytest.approx(truth, abs=1e-12)
 
     # Aggregate earnings are flat, so the other consistent pairing is the
@@ -85,8 +90,8 @@ def test_dividend_yield_pairs_with_per_share_growth() -> None:
     assert payout_yield == pytest.approx(truth, abs=2e-4)
 
     # And the pairing that was in use here until it was measured.
-    wrong = building_block_estimate(payout_yield, growth)
-    assert wrong.value - truth == pytest.approx(buyback / cap, abs=2e-4)
+    wrong = building_block_estimate(payout_yield / (1 + growth), growth)
+    assert wrong.value - truth == pytest.approx(buyback / cap, abs=1e-12)
     assert wrong.value > truth
 
 
@@ -111,7 +116,8 @@ def test_double_count_moves_the_answer_by_double_digits() -> None:
 
 def test_repricing_enters_with_its_sign() -> None:
     lower = building_block_estimate(0.0263, 0.0251, repricing=-0.01)
-    assert lower.value == pytest.approx(0.0414)
+    assert lower.value == pytest.approx(1.0263 * 1.0251 * 0.99 - 1)
+    assert lower.value < building_block_estimate(0.0263, 0.0251).value
 
 
 def test_total_return_index_beats_price_alone() -> None:

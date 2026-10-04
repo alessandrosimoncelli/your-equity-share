@@ -29,9 +29,8 @@
 # against 12.5% on the gain at sale, and a fund held for years is usually in
 # gain when sold, so the tax takes a share of the risk as well as of the
 # return. Measured sale by sale it lowers the right equity share by about a
-# quarter for money sold at three years, by an eighth at seven and by under a
-# tenth from twelve, and
-# ignoring it costs under two basis points a year. Italian methodology,
+# quarter for money sold at three years, by about a ninth at seven and by
+# under a tenth from twelve, and ignoring it costs under two basis points a year. Italian methodology,
 # section 8; tools/tax_check.py.
 #
 # The REPLACEMENT RATE is the Italian Treasury's 66% of final net pay
@@ -87,8 +86,9 @@ generated_by = "tools/refresh_italy.py"
 # BUILT HERE, by the construction variants/us/market_data.toml uses, because that
 # construction carries no horizon and this model prices a lifetime.
 #   the dividend yield of MSCI ACWI in euro, net of withholding, trailing
-#   over today's price, plus the 100-year OLS trend of real growth in
-#   earnings per share through Shiller, plus zero repricing, converted
+#   over today's price, compounded with the 100-year OLS trend of real
+#   growth in earnings per share through Shiller, with zero repricing,
+#   converted
 #   to an arithmetic mean at the fixed volatility below.
 #
 # WHY NOT AQR'S PUBLISHED FIGURE, which this file used until September 2026 and
@@ -148,7 +148,7 @@ generated_by = "tools/refresh_italy.py"
 # refresh and both currently sit within a third of a point, which is a firm
 # that does this for a living arriving at the same two numbers from their own
 # data. tools/estimators_it.py sets the whole family side by side.
-expected_stock_real_return = 0.049134
+expected_stock_real_return = 0.049417
 
 # The ECB's AAA euro area government curve at thirty years, deflated by the
 # MARKET break-even inflation rate of the longest euro inflation-linked bond.
@@ -208,8 +208,8 @@ variant = "it"
 provisional_fields = ""
 expected_return_method = "building blocks, global"
 expected_return_basis = "arithmetic mean, converted from compound"
-expected_return_compound = 0.035027
-expected_return_source = "Built here, by the construction the American variant uses, because that construction carries no horizon and this model prices a lifetime: a 1.2168% trailing dividend yield of MSCI All Country World in euro over 20250930 to 20260930, NET of the withholding tax the fund suffers at source (1.5637% gross), measured from the gap between MSCI net and price index levels and divided by the price at the end, plus 2.2860% real growth in earnings per share, the 100-year OLS trend through Shiller to 2026-06-01, plus zero repricing. Cross-checked against AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 2025-12-31, who quote gross: their dividend yield of 1.6% is +0.04 points from our gross figure and their real EPS growth of 2.6% is +0.31 points from ours. Theirs is the check and not the estimate because they state it is for a horizon of 5 to 10 years, while Table 7 of the American methodology shows this construction is the one that wins at 30."
+expected_return_compound = 0.035306
+expected_return_source = "Built here, by the construction the American variant uses, because that construction carries no horizon and this model prices a lifetime: a 1.2168% trailing dividend yield of MSCI All Country World in euro over 20250930 to 20260930, NET of the withholding tax the fund suffers at source (1.5637% gross), measured from the gap between MSCI net and price index levels and divided by the price at the end, compounded with 2.2860% real growth in earnings per share, the 100-year OLS trend through Shiller to 2026-06-01, as (1 + yield)(1 + growth) - 1, with zero repricing. Cross-checked against AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country, as of 2025-12-31, who quote gross: their dividend yield of 1.6% is +0.04 points from our gross figure and their real EPS growth of 2.6% is +0.31 points from ours. Theirs is the check and not the estimate because they state it is for a horizon of 5 to 10 years, while Table 7 of the American methodology shows this construction with the lowest error at 30, on few independent windows."
 dividend_yield = 0.012168
 real_growth = 0.022860
 history_as_of = "2026-06-01"

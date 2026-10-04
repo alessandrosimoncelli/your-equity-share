@@ -313,8 +313,9 @@ def part_three(workbook: Path) -> None:
             rows.append(dict(
                 cape=cape[k], realised=realised,
                 estimates={
+                    # Compounded, as the tool's own estimator is.
                     "Dividend yield plus per-share growth":
-                        dividends[k] / prices[k] + growth,
+                        (1.0 + dividends[k] / prices[k]) * (1.0 + growth) - 1.0,
                     "Trailing earnings yield": earnings[k] / prices[k],
                     "Cyclically adjusted earnings yield": 1.0 / cape[k],
                     "Dividend yield alone": dividends[k] / prices[k],
@@ -323,7 +324,7 @@ def part_three(workbook: Path) -> None:
         starts[horizon] = rows
 
     WANT7 = {
-        "Dividend yield plus per-share growth": (-1.63, 5.47, -1.25, 3.12, -1.06, 2.25),
+        "Dividend yield plus per-share growth": (-1.58, 5.46, -1.19, 3.11, -1.00, 2.25),
         "Trailing earnings yield": (0.38, 4.82, 0.85, 2.89, 1.17, 3.31),
         "Cyclically adjusted earnings yield": (0.19, 4.73, 0.70, 3.07, 1.08, 3.18),
         "Dividend yield alone": (-2.96, 5.96, -2.53, 3.70, -2.32, 2.91),
@@ -346,8 +347,8 @@ def part_three(workbook: Path) -> None:
     by_cape = sorted(rows, key=lambda r: r["cape"])
     fifth = len(rows) // 5
     key = "Dividend yield plus per-share growth"
-    WANT8 = {"all": (7.12, 5.48), "cheapest": (11.20, 7.65),
-             "dearest": (3.61, 3.54), "expensive": (3.26, 3.32)}
+    WANT8 = {"all": (7.12, 5.54), "cheapest": (11.20, 7.75),
+             "dearest": (3.61, 3.57), "expensive": (3.26, 3.34)}
     for label, group, want in (
             ("all starts", rows, WANT8["all"]),
             ("cheapest fifth by CAPE", by_cape[:fifth], WANT8["cheapest"]),
@@ -434,9 +435,9 @@ def part_four() -> None:
     default = Household(500_000.0, [Person(45, 100_000.0)], 5.0)
 
     # --- Table 12, the conversion at three volatilities -------------------
-    for label, at, want in (("a bond held to maturity", 0.0, "2.96%"),
-                            ("2% volatility", 0.02, "2.98%"),
-                            ("equities", vol, "4.74%")):
+    for label, at, want in (("a bond held to maturity", 0.0, "2.98%"),
+                            ("2% volatility", 0.02, "3.00%"),
+                            ("equities", vol, "4.76%")):
         got = "%.2f%%" % (arithmetic_from_compound(rf, at) * 100)
         check("Table 12, %s" % label, got == want and in_doc(want),
               "%.2f%% compound becomes %s arithmetic" % (rf * 100, got))
@@ -445,10 +446,12 @@ def part_four() -> None:
     # The equity estimate is held at its compound value and converted, so only
     # the safe rate moves down the column.
     held = arithmetic_from_compound(compound, vol)
-    for label, rate, want in (("cash", 0.013679, "75.1%"),
-                              ("the 5-year TIPS", 0.0215, "54.9%"),
-                              ("the 10-year TIPS", 0.0242, "48.7%"),
-                              ("the 30-year TIPS, used here", 0.0296, "37.3%")):
+    # TIPS yields are quoted semiannually; the model reads annual rates, so
+    # the 5- and 10-year quotes are annualised as the 30-year one is.
+    for label, rate, want in (("cash", 0.013679, "75.7%"),
+                              ("the 5-year TIPS", (1 + 0.0215 / 2) ** 2 - 1, "55.1%"),
+                              ("the 10-year TIPS", (1 + 0.0242 / 2) ** 2 - 1, "48.9%"),
+                              ("the 30-year TIPS, used here", rf, "37.3%")):
         share = recommend(default, held, rate, vol).equity_share
         drift = log_premium(held, rate, CALIB_VOL)
         check("Table 13, %s" % label,
@@ -524,7 +527,7 @@ def part_four() -> None:
     # an 80% replacement rate the default household's pension reaches the
     # Social Security ceiling, so that row peaks at the value used.
     for field, low, high, want_low, want_high, want_range in (
-            ("permanent_shock_volatility", 0.08, 0.20, "48.1%", "26.4%", "21.7"),
+            ("permanent_shock_volatility", 0.08, 0.20, "48.1%", "26.4%", "21.6"),
             ("benefit_replacement_rate", 0.0, 0.80, "35.7%", "36.6%", "1.6"),
             ("temporary_shock_volatility", 0.15, 0.35, "37.0%", "37.7%", "0.7")):
         shares = []

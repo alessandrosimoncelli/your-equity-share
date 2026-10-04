@@ -82,12 +82,13 @@ Part of a dry run of the American refresh, on 29 September 2026:
 
 ```
 Fetching...
-  real risk-free rate (30y TIPS)      3.28%   was  3.22%   +0.06 points
+  real risk-free rate (30y TIPS)      3.31%   was  3.25%   +0.06 points
+    3.28% as quoted, on a semiannual basis, annualised
   stock volatility, fixed            18.50%   Choi's 18.5%
 
   Expected real return on equities.
-    building blocks                3.38%   <- used
-      1.10% dividend yield plus 2.29% real earnings growth per share (100 year trend), no repricing
+    building blocks                3.41%   <- used
+      1.10% dividend yield compounded with 2.29% real earnings growth per share (100 year trend), no repricing
       Buybacks return a further 1.53% that this
       does not count as income, because per-share growth
       already carries it. Counting it twice would add
@@ -96,12 +97,12 @@ Fetching...
 
   Cross-checks, not used. See section 3 of the methodology
   for why each is worse for a lifetime horizon.
-    implied premium                7.37%
+    implied premium                7.40%
     earnings anchor                3.13%
     valuation regression, 30y      5.32% +/- 0.74%
 
-    as an arithmetic mean          5.17%   +1.78 from the volatility drag
-    spread of the cross-checks     4.24%   <- how little is known here
+    as an arithmetic mean          5.19%   +1.78 from the volatility drag
+    spread of the cross-checks     4.27%   <- how little is known here
 
 Dry run, nothing saved. Run without --dry-run to apply.
 ```
@@ -113,9 +114,9 @@ fixed 18.5%. The Italian sources are in
 
 | Input | Source | Note |
 | --- | --- | --- |
-| real risk-free rate | US Treasury daily real yield curve, 30 years | a real yield already; FRED's DFII30 is the same series, used if the Treasury does not answer |
+| real risk-free rate | US Treasury daily real yield curve, 30 years | a real yield already, annualised from its semiannual quote; FRED's DFII30 is the same series, used if the Treasury does not answer |
 | stock volatility | Choi, Liu and Liu (2025), section 1.2 | 18.5%, monthly CRSP log excess returns 1926 to 2024, held fixed rather than re-measured |
-| expected stock return | Shiller: dividend yield plus 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
+| expected stock return | Shiller: dividend yield compounded with 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
 
 The expected return is the number the answer is most sensitive to and the one
 nobody can observe. Three further estimates are computed as cross-checks and

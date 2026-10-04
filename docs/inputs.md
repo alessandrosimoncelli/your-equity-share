@@ -197,7 +197,7 @@ For the default earner, 45 on $100,000 with $500,000 saved, and a partner of
 one-earner couple, with the earner aged 35 to 55 and the partner two or three
 years younger, it is worth about half a point to 3 points with five years of
 pay saved and under a point with fifteen. Nearer retirement it is worth more:
-4.7 points with five years of pay saved and 1.6 with fifteen, for an earner of
+4.6 points with five years of pay saved and 1.5 with fifteen, for an earner of
 60 and a partner of 58. These are on the data of 3 September 2026. The Italian
 page has no such tick, because the benefit is Social Security's.
 
@@ -230,8 +230,14 @@ was written with; the tool shows the current ones.
 | Dividend yield | Dividends over price, same month of Shiller's workbook | 1.10% |
 | Real earnings growth | 100-year trend through log real earnings per share, Shiller | 2.29% |
 | Repricing | Set to zero, which is what "ratios stay constant" means | 0.00% |
-| **Expected real return** | | **3.38% compound** |
-| | converted once, at the point the model reads it | **5.17% arithmetic** |
+| **Expected real return** | the three terms compounded, not added | **3.41% compound** |
+| | converted once, at the point the model reads it | **5.19% arithmetic** |
+
+**The terms compound.** The yield is trailing: last year's dividends over
+today's price. With the ratios held constant, next year's dividends are last
+year's grown at the growth rate, and the price grows at the same rate, so
+1 + R = (1 + yield)(1 + growth) exactly. Adding the two instead, 3.38%, leaves
+out their product.
 
 **Not the payout yield.** Buybacks return a further 1.53%, and it is tempting to
 add them, since a buyback is cash reaching a shareholder. It would be double
@@ -248,7 +254,7 @@ growth, is unavailable rather than rejected: aggregate growth needs a share
 count and the S&P earnings history is per share.
 
 Three others are computed as cross-checks and are **not used**: Damodaran's
-implied premium plus the real safe rate (7.05%, the outlier, embedding near-term analyst growth
+implied premium plus the real safe rate (7.07%, the outlier, embedding near-term analyst growth
 forecasts and quoted against the wrong maturity), a regression of realised
 30-year returns on valuation (5.32%, R2 of 0.19 on about four independent
 periods), and an earnings anchor built the way AQR builds theirs, a cyclically
@@ -258,7 +264,7 @@ Section 3.1 of the methodology gives the full reasoning.
 The choice matters more than any other in the tool: across the five estimators
 Table 5 of the methodology compares, from the cyclically adjusted earnings
 yield to Damodaran's premium, the recommendation for the default household
-runs from 21% to 100%.
+runs from 20% to 100%.
 
 ### Why the horizon of the regression matters
 
@@ -304,10 +310,10 @@ at the point it is handed to the model:
     arithmetic = exp( ln(1 + compound) + sigma^2 / 2 ) - 1
 
 At Choi's 18.5% volatility, which the tool holds fixed, that is worth **1.78
-percentage points**: 3.38% compound becomes 5.17% arithmetic. Feeding the
+percentage points**: 3.41% compound becomes 5.19% arithmetic. Feeding the
 compound figure straight in would understate the input by those 1.78 points,
-which is most of the equity premium: over the 2.96% real safe rate the premium
-is 2.21 points, and it would shrink to 0.42.
+which is most of the equity premium: over the 2.98% real safe rate the premium
+is 2.21 points, and it would shrink to 0.43.
 
 The volatility is not re-measured. It is the 18.5% Choi, Liu and Liu use, the
 annualised standard deviation of monthly CRSP log excess returns from 1926 to
@@ -335,10 +341,10 @@ compared by hand rather than fetched.
 AQR's forecast has the same three terms as this tool's: a yield, real growth
 in earnings per share, and no repricing. Their 2026 edition puts US large caps
 at **3.9% real**, from what their Exhibit 3A calls a 1.3% combined payout yield
-and 2.7% combined growth, against this tool's 3.38% on 3 September 2026, from
-a 1.10% dividend yield and 2.29% growth. Each of their two terms averages two
-estimates, one built on the dividend yield and one on an earnings anchor, so
-their yield is not a dividend yield alone. Most of the half point between the
+and 2.7% combined growth, against this tool's 3.41% on 3 September 2026, from
+a 1.10% dividend yield compounded with 2.29% growth. Each of their two terms
+averages two estimates, one built on the dividend yield and one on an earnings
+anchor, so their yield is not a dividend yield alone. Most of the half point between the
 totals is growth: AQR starts from 25-year growth and shrinks it towards the
 global average, forecast GDP growth and an equilibrium rate, where this tool
 fits a hundred-year trend. Section 8.3 of the methodology sets the two side by
@@ -386,6 +392,11 @@ The return on the safe asset, above inflation. The guide suggests the **30-year
 TIPS yield**, which is a real yield directly and needs no inflation adjustment.
 The safe part of the answer means TIPS held to maturity, or a ladder of them,
 which is what the page names.
+
+**It is annualised first.** Like every Treasury yield it is quoted on a
+semiannual basis, and the model reads annual rates, as the Italian variant's
+are. So the tool converts it, (1 + y/2)^2 - 1, and keeps the quote beside it:
+the 2.96% quoted on 3 September 2026 is 2.98% a year.
 
 The tool works before tax. If most of your bonds sit in a taxable account, the
 guide suggests reducing the rate by your marginal income tax rate. The page

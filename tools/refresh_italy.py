@@ -556,7 +556,9 @@ def main(argv: list[str]) -> int:
 
     # Net of the withholding the fund suffers at source, which no holder
     # receives: see the module docstring.
-    compound = net + growth
+    # Compounded, the exact form of the constant-ratio identity for a
+    # trailing yield, as the American estimator does.
+    compound = (1.0 + net) * (1.0 + growth) - 1.0
     volatility = ITALY_VOLATILITY
     arithmetic = arithmetic_from_compound(compound, volatility)
 
@@ -584,7 +586,7 @@ def main(argv: list[str]) -> int:
     print(f"    their real EPS growth                  {AQR_GROWTH:>8.4%}   "
           f"{drift_growth * 100:>+6.2f} against ours")
     print(f"    their compound, gross                  "
-          f"{AQR_COMPOUND:>8.4%}   {(AQR_COMPOUND - gross - growth) * 100:>+6.2f} "
+          f"{AQR_COMPOUND:>8.4%}   {(AQR_COMPOUND - ((1 + gross) * (1 + growth) - 1)) * 100:>+6.2f} "
           f"against ours gross")
     stale = [name for name, drift in (("the dividend yield", drift_yield),
                                       ("the growth rate", drift_growth))
@@ -718,15 +720,16 @@ def expected_return_note(gross: float, net: float, first, last, growth: float,
         "lifetime: a %.4f%% trailing dividend yield of MSCI All Country World "
         "in euro over %s to %s, NET of the withholding tax the fund suffers at "
         "source (%.4f%% gross), measured from the gap between MSCI net and "
-        "price index levels and divided by the price at the end, plus %.4f%% "
-        "real growth in earnings per share, the %d-year OLS trend through "
-        "Shiller to %s, plus zero repricing. Cross-checked against AQR, %s, as "
+        "price index levels and divided by the price at the end, compounded "
+        "with %.4f%% real growth in earnings per share, the %d-year OLS trend "
+        "through Shiller to %s, as (1 + yield)(1 + growth) - 1, with zero "
+        "repricing. Cross-checked against AQR, %s, as "
         "of %s, who quote gross: their dividend yield of %.1f%% is %+.2f "
         "points from our gross figure and their real EPS growth of %.1f%% is "
         "%+.2f points from ours. Theirs is the check and not the estimate "
         "because they state it is for a horizon of 5 to 10 years, while Table "
-        "7 of the American methodology shows this construction is the one that "
-        "wins at 30."
+        "7 of the American methodology shows this construction with the lowest "
+        "error at 30, on few independent windows."
         % (net * 100, first, last, gross * 100, growth * 100,
            GROWTH_WINDOW_YEARS, growth_as_of, AQR_REPORT, AQR_AS_OF,
            AQR_YIELD * 100, (AQR_YIELD - gross) * 100,

@@ -237,7 +237,7 @@ def signal(rows, index, gamma, lag, growth_years):
     inflation = (span[-1]["cpi"] / span[0]["cpi"]) ** (12.0 / (len(span) - 1)) - 1.0
     safe = (1.0 + rows[index]["rate"] / 100.0) / (1.0 + inflation) - 1.0
 
-    compound = yield_ + growth
+    compound = (1.0 + yield_) * (1.0 + growth) - 1.0
     if compound <= -1.0 or safe <= -1.0:
         return None
     return compound, safe, sigma

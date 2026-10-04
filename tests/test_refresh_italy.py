@@ -73,7 +73,7 @@ def test_the_refresh_writes_what_its_sources_imply(monkeypatch, tmp_path) -> Non
     assert f["real_risk_free"] == pytest.approx(nominal - BREAKEVEN, abs=5e-7)
     assert f["dividend_yield"] == pytest.approx(NET, abs=5e-7)
     assert f["dividend_yield_withheld"] == pytest.approx(GROSS - NET, abs=5e-7)
-    compound = NET + GROWTH
+    compound = 1.0122 * 1.02286 - 1    # (1 + net yield)(1 + growth) - 1, by hand
     assert f["expected_return_compound"] == pytest.approx(compound, abs=5e-7)
     assert f["expected_stock_real_return"] == pytest.approx(
         arithmetic_from_compound(compound, refresh_italy.ITALY_VOLATILITY), abs=5e-7)

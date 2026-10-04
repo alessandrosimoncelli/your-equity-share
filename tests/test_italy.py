@@ -116,7 +116,8 @@ def test_the_equity_sleeve_is_global_and_the_configuration_says_so(italy) -> Non
 
 
 def test_the_expected_return_is_equation_five_with_no_repricing(italy) -> None:
-    """A measured dividend yield plus a measured growth rate, and nothing else.
+    """A measured dividend yield compounded with a measured growth rate, and
+    nothing else: 1 + R = (1 + yield)(1 + growth), with no repricing.
 
     This variant borrowed AQR's 4.2% whole until September 2026. It now builds
     the estimate itself, from the same three terms the American variant uses,
@@ -125,7 +126,7 @@ def test_the_expected_return_is_equation_five_with_no_repricing(italy) -> None:
     yield_ = float(italy.provenance["dividend_yield"])
     growth = float(italy.provenance["real_growth"])
     compound = float(italy.provenance["expected_return_compound"])
-    assert yield_ + growth == pytest.approx(compound, abs=5e-6)
+    assert (1 + yield_) * (1 + growth) - 1 == pytest.approx(compound, abs=5e-6)
 
 
 def test_the_expected_return_is_built_rather_than_borrowed(italy) -> None:
@@ -231,7 +232,7 @@ def test_the_yield_used_is_net_of_withholding(italy) -> None:
     measured, withheld = float(p["dividend_yield_measured"]), float(p["dividend_yield_withheld"])
     assert 0.001 < withheld < 0.010
     assert float(p["dividend_yield"]) == pytest.approx(measured - withheld, abs=5e-6)
-    compound = float(p["dividend_yield"]) + float(p["real_growth"])
+    compound = (1 + float(p["dividend_yield"])) * (1 + float(p["real_growth"])) - 1
     assert float(p["expected_return_compound"]) == pytest.approx(compound, abs=5e-6)
     assert italy.expected_stock_real_return == pytest.approx(
         arithmetic_from_compound(compound, italy.stock_volatility), abs=5e-6)

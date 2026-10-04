@@ -154,7 +154,11 @@ def test_the_american_file_respects_its_own_construction(name) -> None:
     assert data.expected_stock_real_return == pytest.approx(
         arithmetic_from_compound(compound, data.stock_volatility), abs=5e-6)
     assert p["expected_return_estimates"].startswith("building blocks %.4f (used)" % compound)
-    assert compound == pytest.approx(float(p["dividend_yield"]) + float(p["real_growth"]), abs=5e-6)
+    assert compound == pytest.approx(
+        (1 + float(p["dividend_yield"])) * (1 + float(p["real_growth"])) - 1, abs=5e-6)
+    # The TIPS quote is semiannual; the model reads the annual rate.
+    quoted = float(p["real_risk_free_quoted"])
+    assert data.real_risk_free_rate == pytest.approx((1 + quoted / 2) ** 2 - 1, abs=5e-7)
 
 
 @pytest.mark.parametrize("name", ["market_data.toml", "snapshot.toml"])

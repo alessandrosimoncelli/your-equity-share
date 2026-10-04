@@ -647,20 +647,20 @@ it = '''`Nelle persone non è cambiato nulla.`'''
 
 [[t]]
 en = '''[`${pct2.format(g.dividend_yield_gross)} yield before withholding, ` +
-                 `as the S&P figure is, plus ${pct2.format(g.real_growth)} growth, ${g.as_of}`,'''
+                 `as the S&P figure is, compounded with ${pct2.format(g.real_growth)} growth, ${g.as_of}`,'''
 it = '''[`${pct2.format(g.dividend_yield_gross)} di dividendi prima delle ritenute, ` +
-                 `come il dato S&P, più ${pct2.format(g.real_growth)} di crescita, ${g.as_of}`,'''
+                 `come il dato S&P, composto con ${pct2.format(g.real_growth)} di crescita, ${g.as_of}`,'''
 
 [[t]]
 en = '''`&nbsp;&nbsp;the same estimator on ${g.index}`'''
 it = '''`&nbsp;&nbsp;la stessa stima su ${g.index}`'''
 
 [[t]]
-en = '''{ "building blocks": "dividend yield plus long-run growth",
+en = '''{ "building blocks": "dividend yield compounded with long-run growth",
                   consensus: "median of three estimators",
                   implied: "market implied",
                   fixed: "set by hand" }'''
-it = '''{ "building blocks": "rendimento da dividendi al netto delle ritenute più crescita di lungo periodo",
+it = '''{ "building blocks": "rendimento da dividendi al netto delle ritenute composto con la crescita di lungo periodo",
                   consensus: "mediana di tre stime",
                   implied: "implicito nei prezzi",
                   fixed: "impostato a mano" }'''
@@ -689,7 +689,7 @@ it = '''row([["&nbsp;&nbsp;lo stesso, come media aritmetica", "k"],
 
 [[t]]
 en = '''row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
-         ["30-year TIPS yield before tax, from the Treasury's real yield curve (FRED's DFII30), as Choi's guide suggests. If most of your bonds sit in a taxable account, his guide multiplies it by one minus your income tax rate; this page does not, so read the answer as low (methodology 3.3)", "why"]]) +'''
+         ["30-year TIPS yield before tax, from the Treasury's real yield curve (FRED's DFII30), annualised from its semiannual quote, as Choi's guide suggests. If most of your bonds sit in a taxable account, his guide multiplies it by one minus your income tax rate; this page does not, so read the answer as low (methodology 3.3)", "why"]]) +'''
 it = '''row([["Tasso reale privo di rischio", "k"], [pct2.format(rf), "n"],
          ["rendimento alla pari a 30 anni della curva AAA dell'area euro della BCE, meno l'inflazione di pareggio del Bund€i", "why"]]) +'''
 

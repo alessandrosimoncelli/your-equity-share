@@ -286,7 +286,7 @@ def main() -> int:
     rows = [
         ("Cyclically adjusted yield plus growth", cyclical + growth, "none"),
         ("AQR's earnings anchor, dividend form", anchor, "10y"),
-        ("Dividend yield plus long-run growth", trailing + growth, "none"),
+        ("Dividend yield plus long-run growth", (1 + trailing) * (1 + growth) - 1, "none"),
         ("AQR published, Global All Country", AQR_COMPOUND, "5 to 10y"),
         ("Dividend yield alone, no growth", trailing, "none"),
     ]
@@ -356,7 +356,7 @@ def main() -> int:
     print("  advantage by %.2f points rather than inflating it, and each"
           % (((ep["global"] - ep["united states"])
               - (mine["global"] - mine["united states"])) * 100))
-    print("  variant sits within about a tenth of a point of its own market's")
+    print("  variant sits within about an eighth of a point of its own market's")
     print("  earnings yield. Equation (5) and E/P agree when retained earnings")
     print("  earn the cost of equity, so agreeing is what soundness looks like.")
 

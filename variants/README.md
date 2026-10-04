@@ -44,9 +44,9 @@ gap between a 21% American answer and a 54% Italian one for the same household
 (45, 100,000 a year after tax, 1.5 million saved, risk aversion 5), both before
 tax and on the documents' data, is the country rather than the method.** Both take the
 dividend yield from their own index, both take real growth in earnings per
-share from the same hundred-year trend through Shiller, both assume no
-repricing, and a test asserts the growth term is identical to five decimal
-places rather than merely close.
+share from the same hundred-year trend through Shiller, both compound the two
+and assume no repricing, and a test asserts the growth term is identical to
+five decimal places rather than merely close.
 
 Duplicate the model into two folders and that guarantee is gone within a month.
 The two would be edited on different days, and every later comparison between
@@ -65,7 +65,7 @@ fund would take the American answer for that household from 20.7% to 20.4%.
 | equity sleeve | S&P 500 | FTSE All-World |
 | dividend yield | Shiller, trailing over today's price | MSCI ACWI in euro, net of the withholding the fund suffers, same construction |
 | real growth | 100-year Shiller trend | the same number, and `us_vs_global.py` measures what that substitution costs |
-| safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30 | ECB AAA 30-year par yield, annualised, less the market break-even of the Bund€i |
+| safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30, annualised from its semiannual quote | ECB AAA 30-year par yield, annualised, less the market break-even of the Bund€i |
 | volatility | Choi's 18.5%, CRSP monthly 1926 to 2024, fixed | 16.45%, MSCI ACWI in euro, monthly log returns 2001 to 2026 from every day of the month, averaged and fixed (`tools/italy_volatility.py`) |
 | earnings | an American college graduate, Cocco, Gomes and Maenhout | an Italian private-sector employee, Daminato and Padula (2024) |
 | pension | 40% of the final wage, up to Social Security's maximum of $39,859 a year after tax | 61.4% of the final wage with the TFR, which is the Italian Treasury's 66% of final net pay without it, projected for retiring near 67 |
