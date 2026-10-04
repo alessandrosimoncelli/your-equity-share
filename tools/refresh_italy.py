@@ -31,19 +31,26 @@ A break-even clears all three. It is the rate at which holding the linker and
 holding a nominal bond pay the same, so it is a price rather than a forecast,
 and subtracting it from a nominal curve recovers a real yield.
 
+The nominal rate is the curve's 30-year PAR yield, the coupon a 30-year bond
+priced at par would pay. It is the same kind of rate as DFII30, which is the
+30-year point of the Treasury's par real curve, and as the two bond yields the
+break-even is the difference of; the zero-coupon (spot) rate used until
+October 2026 sits above it whenever the long end of the curve slopes up.
+
 Two conventions are matched before the subtraction. The ECB publishes its
-curve CONTINUOUSLY COMPOUNDED ("The continuous method is used to compound
-interest rates", ECB technical notes on the euro area yield curves), so the
-spot rate is annualised first, because the model reads annual rates. The
-Finanzagentur defines its break-even as a SIMPLE YIELD DIFFERENCE between the
-linker and the nominal Bund nearest in maturity, so it is subtracted, not
-divided out.
+curves CONTINUOUSLY COMPOUNDED ("The continuous method is used to compound
+interest rates", ECB technical notes on the euro area yield curves; the par
+series is labelled "continuous compounding" too), so the par yield is
+annualised first, because the model reads annual rates. The Finanzagentur
+defines its break-even as a SIMPLE YIELD DIFFERENCE between the linker and the
+nominal Bund nearest in maturity, so it is subtracted, not divided out.
 
 The construction can be checked against itself. The break-even is derived from
 the 2046, so subtracting it from a nominal yield should come close to that
-bond's own traded real yield. It does, within about a tenth of a point; the
-rest is maturity, a thirty-year nominal leg against a nineteen-year inflation
-leg.
+bond's own traded real yield. It does, within a few hundredths of a point;
+the rest is maturity, a thirty-year nominal leg against a nineteen-year
+inflation leg, which shortens a year every year (the refresh refuses it below
+ten years).
 
 The survey is still fetched and still reported, as the cross-check. When it
 sits below the break-even the gap is an inflation risk premium, which a
@@ -109,6 +116,7 @@ src/your_equity_share/taxes.py says why.
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import math
 import re
@@ -157,24 +165,27 @@ DRIFT_LIMIT = 0.0033
 # trailing five-year window turned it into a lumpy regime variable: when the
 # 2020 crash left the window in February and March 2025 the answer for an
 # uncapped household jumped about nine points in five weeks with no change in
-# long-run risk. This is the same convention on the fund's own index: the
-# annualised standard deviation of monthly log returns of MSCI All Country
-# World in euro, gross, December 2000 to August 2026 (Italian methodology,
-# section 6). It is written once and refreshed only by hand.
-ITALY_VOLATILITY = 0.139860
+# long-run risk. This is Choi's estimator on the fund's own index, MSCI All
+# Country World in euro, gross, January 2001 to August 2026: the annualised
+# standard deviation of monthly log returns, run from every day of the month
+# 1 to 28 and averaged, because over 25 years the day matters. Month-end alone
+# gave 13.99%, the lowest of the 28: the crashes of October 2008 and March
+# 2020 each fell across two month-ends. tools/italy_volatility.py measures it
+# (Italian methodology, section 6). Written once and refreshed only by hand.
+ITALY_VOLATILITY = 0.164545
 
 ECB = "https://data-api.ecb.europa.eu/service/data/{}?lastNObservations=1&format=csvdata"
 
-# AAA-rated euro area central government bonds, spot rate, thirty years. The
-# same maturity Choi's guide asks for, and the same one the American variant
-# uses, so the two safe assets differ in currency and credit rather than in
-# horizon as well.
-NOMINAL_30Y = "YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_30Y"
+# AAA-rated euro area central government bonds, par yield, thirty years. The
+# same maturity Choi's guide asks for and the same kind of rate the American
+# variant uses, so the two safe assets differ in currency and credit rather
+# than in horizon or construction as well.
+NOMINAL_30Y = "YC/B.U2.EUR.4F.G_N_A.SV_C_YM.PY_30Y"
 
 # Every euro area central government bond at the same maturity. Not used as
 # the safe rate. Fetched so the spread can be reported, because that spread is
 # the credit risk this variant is choosing not to book as return.
-NOMINAL_30Y_ALL = "YC/B.U2.EUR.4F.G_N_C.SV_C_YM.SR_30Y"
+NOMINAL_30Y_ALL = "YC/B.U2.EUR.4F.G_N_C.SV_C_YM.PY_30Y"
 
 # ECB Survey of Professional Forecasters, longer-term HICP expectation.
 SPF_LONG_RUN = "SPF/Q.U2.HICP.POINT.LT.Q.AVG"
@@ -393,6 +404,11 @@ def american_growth_trend() -> tuple[float, str] | tuple[None, None]:
 # The ECB curve and the break-even are read on different pages. Their dates
 # can differ by a weekend or a holiday, not by weeks.
 BREAKEVEN_MAX_LAG_DAYS = 10
+# MSCI's monthly series ends at the last month-end: up to a month and a half
+# behind the ECB's daily date is normal, more is a feed that stopped.
+MSCI_MAX_LAG_DAYS = 45
+# The shortest inflation leg that still stands for a thirty-year rate.
+MIN_BREAKEVEN_YEARS = 10
 
 
 def optional(fetch, *args):
@@ -400,7 +416,8 @@ def optional(fetch, *args):
     an outage there is reported instead of stopping the refresh."""
     try:
         return fetch(*args)
-    except (SystemExit, urllib.error.URLError, OSError, ValueError, KeyError):
+    except (SystemExit, urllib.error.URLError, OSError, ValueError, KeyError,
+            http.client.HTTPException):
         return None
 
 
@@ -426,6 +443,13 @@ def main(argv: list[str]) -> int:
         raise SystemExit(
             "the break-even is dated %s and the ECB curve %s, %d days apart; "
             "refusing to deflate one by the other" % (breakeven_date, aaa_date, lag))
+    # The inflation leg shortens a year every year: the longest German linker
+    # had 19.5 years left in 2026. Below ten it no longer describes a lifetime,
+    # and the switch to another deflator has to be made by hand, loudly.
+    if breakeven_years < MIN_BREAKEVEN_YEARS:
+        raise SystemExit(
+            "the longest linker has %.1f years left, under %d; the break-even "
+            "no longer matches a thirty-year rate" % (breakeven_years, MIN_BREAKEVEN_YEARS))
 
     # Cross-checks only. The model reads none of them, so a source that fails
     # here is reported and skipped rather than allowed to stop the refresh.
@@ -444,7 +468,7 @@ def main(argv: list[str]) -> int:
     deflated = aaa - breakeven
     real = deflated
 
-    print(f"  AAA euro area government, 30y, nominal   {aaa:>8.4%}   "
+    print(f"  AAA euro area government, 30y par, nominal {aaa:>8.4%}   "
           f"{aaa_date}, {aaa_continuous:.4%} continuously compounded")
     print(f"  break-even inflation, {isin}   "
           f"{breakeven:>8.4%}   {breakeven_years:.1f} years")
@@ -511,6 +535,13 @@ def main(argv: list[str]) -> int:
     gross, first, last = trailing_dividend_yield("GRTR")
     net, _, _ = trailing_dividend_yield("NETR")
     growth, growth_as_of = american_growth_trend()
+    # MSCI's window must be current too: an old one would publish an old
+    # yield under the ECB's fresh date.
+    yield_end = date(int(str(last)[:4]), int(str(last)[4:6]), int(str(last)[6:]))
+    if (date.fromisoformat(aaa_date) - yield_end).days > MSCI_MAX_LAG_DAYS:
+        raise SystemExit(
+            "MSCI's levels end %s, more than %d days before the ECB curve's %s; "
+            "refusing to publish an old yield" % (yield_end, MSCI_MAX_LAG_DAYS, aaa_date))
 
     if growth is None:
         print("  Shiller's workbook was not found, so the growth term and the")
@@ -569,6 +600,13 @@ def main(argv: list[str]) -> int:
         print("  the check passing: a firm that builds this for a living, on")
         print("  their own data, gets the same two numbers we measure.")
 
+    if arithmetic <= real:
+        # The same refusal as update.py's: a file the loader would reject must
+        # not be written, or the failure shows up as broken tests instead.
+        print(f"\n  The expected return {arithmetic:.2%} is not above the safe "
+              f"rate {real:.2%}. Nothing written.")
+        return 1
+
     if not args.write:
         print("\n  Report only. Pass --write to update the configuration.")
         return 0
@@ -610,6 +648,15 @@ def main(argv: list[str]) -> int:
             raise SystemExit(f"{CONFIG.name} has no line for {field}")
     text = text.replace('provisional_fields = "real_risk_free"',
                         'provisional_fields = ""')
+    # The vintage of the long history behind the growth term, which the page
+    # footer prints: MSCI's yield is a month old at most, Shiller's earnings
+    # arrive months after the prices they belong to.
+    for field, value in (("history_as_of", str(growth_as_of)),
+                         ("history_source", "Shiller's workbook, for the growth term")):
+        text, hits = re.subn(r'^%s = ".*"$' % field, lambda _: '%s = "%s"' % (field, value),
+                             text, count=1, flags=re.M)
+        if hits != 1:
+            raise SystemExit(f"{CONFIG.name} has no line for {field}")
     text = re.sub(r'^real_risk_free_source = ".*"$',
                   lambda _: 'real_risk_free_source = "%s"' % safe_rate_note(
                       aaa_continuous, aaa_date, breakeven, isin, breakeven_years,
@@ -620,7 +667,7 @@ def main(argv: list[str]) -> int:
                       gross, net, first, last, growth, growth_as_of),
                   text, count=1, flags=re.M)
     CONFIG.write_text(text, encoding="utf-8")
-    print(f"\n  Written to {CONFIG.relative_to(ROOT)}: the safe rate and the "
+    print(f"\n  Written to {CONFIG.relative_to(ROOT) if CONFIG.is_relative_to(ROOT) else CONFIG}: the safe rate and the "
           f"expected return.")
     return 0
 
@@ -646,7 +693,7 @@ def safe_rate_note(aaa_continuous: float, aaa_date, breakeven: float, isin: str,
             "deflated by that instead the rate would be %.4f%%, %+.2f points away."
             % (survey * 100, spf_date, surveyed * 100, (surveyed - real) * 100))
     return (
-        "ECB AAA euro area central government bond curve, 30-year spot rate, "
+        "ECB AAA euro area central government bond curve, 30-year par yield, "
         "%.4f%% continuously compounded on %s, which is %.4f%% a year, less the "
         "MARKET break-even inflation rate of %.4f%% on %s, the longest euro "
         "inflation-linked government bond at %.1f years, which gives %.4f%%. "

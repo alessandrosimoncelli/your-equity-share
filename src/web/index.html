@@ -296,6 +296,19 @@ input:focus-visible, a:focus-visible {
 }
 .check input { accent-color: var(--green); margin-top: 0.2rem; }
 
+/* The age a pension starts and whether it is the state one, under its amount. */
+.pension-extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  margin-top: 0.45rem;
+  font-size: var(--t-small);
+}
+.pension-extra input[type="number"] { width: 5.5rem; }
+input:disabled { opacity: 0.55; cursor: not-allowed; }
+#partner-spousal-field { margin-top: 0.45rem; }
+
 .readout { font-size: var(--t-small); margin-top: 0.5rem; }
 .readout b { color: var(--green); }
 
@@ -587,7 +600,8 @@ td.why { min-width: 15rem; }
   with the human capital adjustment of Choi, Liu and Liu (2025).</p>
   <p class="scope">Money meant to last the rest of your life, with no fixed date
   to spend it. United States only, calibrated for a college-educated household whose
-  Social Security will replace about 40% of final pay.</p>
+  Social Security will replace about 40% of final pay, with the equities in a
+  broad index fund rather than a handful of shares.</p>
 </header>
 
 <div id="boot" class="boot">Loading the market data.</div>
@@ -616,19 +630,30 @@ td.why { min-width: 15rem; }
         <label class="lbl" for="wealth">Investable net worth</label>
         <input type="text" inputmode="numeric" id="wealth" value="500000">
         <span class="hint">Non-housing assets less non-mortgage debt, after tax
-        on withdrawal. Retired? Include what you will draw down over the years;
-        leave out only this year's spending and money for a dated goal. With
-        savings under about two years of your pension, read the answer as an
-        upper bound.</span>
+        on withdrawal: count pre-tax 401(k) and IRA balances at 0.8. Retired?
+        Include what you will draw down over the years; leave out only what you
+        will take from savings this year beyond your pension, and money for a
+        dated goal.</span>
       </div>
 
       <div class="field">
-        <label class="lbl" for="benefit">Pension already paid to you</label>
+        <label class="lbl" for="benefit">Pension, a year of it after tax</label>
         <input type="text" inputmode="numeric" id="benefit" value="0">
-        <span class="hint">A year of it after tax, even if you still work: a
-        retirement, survivor's or disability pension. The pension your current
-        job will pay is added on its own when your wage stops. If you have
-        stopped work and your pension starts later, enter it year by year.</span>
+        <div class="pension-extra">
+          <label for="benefit-start">from age</label>
+          <input type="number" id="benefit-start" min="20" max="100" step="1" placeholder="now">
+          <label class="check"><input type="checkbox" id="benefit-state">
+            <span>It is my Social Security</span></label>
+        </div>
+        <span class="hint">One already paid, even if you still work, or a fixed
+        one from a later age: survivor's, disability, military, or a company
+        pension from an earlier job. Your
+        wage is projected through 66 (this year is the last if you are 66 or
+        older), and from the year after the tool adds your Social Security at
+        40% of your last wage, up to its legal maximum. If the pension here is
+        your Social Security, or your own estimate of it with the age you will
+        claim, tick the box: it then replaces that estimate. A pension that does
+        not rise with prices: enter about four fifths of it.</span>
       </div>
 
       <div class="field span-2">
@@ -704,7 +729,7 @@ td.why { min-width: 15rem; }
         <div id="override-field" hidden>
           <label class="visually-hidden" for="mu">Expected real return on equities, compound</label>
           <div class="slider-value" id="mu-value"></div>
-          <input type="range" id="mu" min="0.00" max="0.09" step="0.0005">
+          <input type="range" id="mu" min="0.00" max="0.09" step="0.0001">
           <div class="slider-ends"><span>0%</span><span>9%</span></div>
           <div class="readout" id="mu-readout"></div>
         </div>
@@ -732,18 +757,25 @@ td.why { min-width: 15rem; }
           <input type="text" inputmode="numeric" id="partner-wage" value="80000">
         </div>
         <div class="field">
-          <label class="lbl" for="partner-benefit">Their pension already paid</label>
+          <label class="lbl" for="partner-benefit">Their pension, a year of it after tax</label>
           <input type="text" inputmode="numeric" id="partner-benefit" value="0">
-          <span class="hint">A pension of theirs that starts later, such as the
-          spousal benefit (half of yours), goes in their year-by-year box.</span>
+          <div class="pension-extra">
+            <label for="partner-benefit-start">from age</label>
+            <input type="number" id="partner-benefit-start" min="20" max="100" step="1" placeholder="now">
+            <label class="check"><input type="checkbox" id="partner-benefit-state">
+              <span>It is their Social Security</span></label>
+          </div>
+          <label class="check" id="partner-spousal-field"><input type="checkbox" id="partner-spousal">
+            <span>They will claim the spousal benefit, half of your Social
+            Security, instead of a pension of their own</span></label>
         </div>
       </div>
 
       <div id="path-fields" class="span-all" hidden>
         <p class="sub" style="margin-top:0">One line per year, under the headings
           below. Edit the years that differ and leave the rest; a year you delete
-          keeps its projected value. Commas, dollar signs and spaces are all
-          read the same way.</p>
+          keeps its projected value. Separate the columns with spaces; dollar
+          signs and thousands commas are ignored.</p>
         <div class="paths">
           <div class="field">
             <div class="path-head">
@@ -809,7 +841,7 @@ td.why { min-width: 15rem; }
           <tbody id="wealth-rows"></tbody>
         </table>
       </div>
-      <p class="sub">Most of what you own is not in the account. That is the
+      <p class="sub" id="wealth-note">Most of what you own is not in the account. That is the
         whole reason the answer is not simply the Merton share.</p>
     </section>
 
@@ -904,6 +936,8 @@ const VARIANT = {
   group: ",",
   decimal: ".",
   calibration: CGM_CALIBRATION,
+  // Choi's spousal switch exists only where there is a spousal benefit.
+  spousal: true,
 };
 
 const pct0 = new Intl.NumberFormat(VARIANT.locale, { style: "percent", maximumFractionDigits: 0 });
@@ -1141,7 +1175,9 @@ function readMoney(el, fallback) {
 
 function showMoney(el) {
   const v = readMoney(el, null);
-  el.value = v === null ? "" : money.format(v);
+  // Keep a minus sign: a negative net worth must not turn positive on blur.
+  const minus = /^\s*[-\u2212(]/.test(el.value) && v ? "-" : "";
+  el.value = v === null ? "" : minus + money.format(v);
 }
 
 /*
@@ -1189,14 +1225,36 @@ const freshRisk = () => ({
 });
 const risk = { ...freshRisk(), own: null };
 
+// The pension inputs of one adult: the age it starts (empty: already paid),
+// whether it is the adult's own state pension, which then replaces the one
+// the model would impute, and, for the second adult on the American page,
+// Choi's spousal switch.
+function pensionOptions(which) {
+  const prefix = which === 1 ? "benefit" : "partner-benefit";
+  const raw = String($(`${prefix}-start`).value).trim();
+  const from = raw === "" ? NaN : Math.round(Number(raw));
+  return {
+    benefitStart: Number.isFinite(from) ? Math.min(100, Math.max(20, from)) : null,
+    benefitIsState: $(`${prefix}-state`).checked,
+    claimsSpousal: which === 2 && VARIANT.spousal && $("partner-spousal").checked,
+  };
+}
+
+// A pension counts in this year's income only if it is already being paid.
+function pensionNow(which) {
+  const start = pensionOptions(which).benefitStart;
+  const age = Number($(which === 1 ? "age" : "partner-age").value);
+  const amount = readMoney($(which === 1 ? "benefit" : "partner-benefit"), 0);
+  return start === null || start <= age + 1 ? amount : 0;
+}
+
 // Wages and any pension already being drawn, both adults', as the Health and
 // Retirement Study frames its gamble on current total family income.
 function questionIncome() {
   return coinIncome(
     readMoney($("wage"), 0),
     $("partnered").checked ? readMoney($("partner-wage"), 0) : 0,
-    readMoney($("benefit"), 0) +
-      ($("partnered").checked ? readMoney($("partner-benefit"), 0) : 0));
+    pensionNow(1) + ($("partnered").checked ? pensionNow(2) : 0));
 }
 
 function riskPhase() {
@@ -1299,7 +1357,7 @@ function renderRisk(gamma) {
   // Choi solved his model at 4 to 10; below 4 the answer is extrapolated, on
   // the side where it tends to reach 100% anyway (methodology section 3.6).
   const below = (phase === "done" || phase === "own") && gamma < 4
-    ? " Choi solved his model for values from 4 to 10, so below 4 the answer is an extrapolation."
+    ? " Choi solved his model for risk aversion of 4 to 10, so below 4 the answer is an extrapolation; today's safe rate and premium are outside his range too (methodology 3.6)."
     : "";
   const clash = phase === "done" && answersDisagree(risk.willingness, gamma)
     ? ` You rated your willingness to take financial risks ${risk.willingness} out of 10, ` +
@@ -1331,19 +1389,39 @@ function readInputs() {
   const gamma = currentGamma();
   const custom = $("custom-path").checked;
 
+  // Once a box has been edited it owns that adult's pension: a benefit typed
+  // in its first year is a pension already being paid, which is what the
+  // model values as certain, and the pension fields above are locked so they
+  // cannot move the answer behind the typed years.
+  const edited = (which) => custom && $(`path-${which}`).value !== prefilled[which];
+  const pension = (which, parsed, age) => {
+    if (edited(which) && parsed && parsed.benefits[age + 1] !== undefined) {
+      return [parsed.benefits[age + 1], { ...pensionOptions(which), benefitStart: null }];
+    }
+    return [nonNegative($(which === 1 ? "benefit" : "partner-benefit"), 0), pensionOptions(which)];
+  };
+
   const age1 = clampInt($("age"), 20, 99, 45);
   const p1 = custom ? parsePath($("path-1").value, age1) : null;
-  const adults = [makePerson(age1, nonNegative($("wage"), 0), nonNegative($("benefit"), 0),
+  const [benefit1, options1] = pension(1, p1, age1);
+  const adults = [makePerson(age1, nonNegative($("wage"), 0), benefit1,
                              p1 && p1.used ? p1.wages : null,
-                             p1 && Object.keys(p1.benefits).length ? p1.benefits : null)];
+                             p1 && Object.keys(p1.benefits).length ? p1.benefits : null,
+                             options1)];
   let p2 = null;
   if ($("partnered").checked) {
     const age2 = clampInt($("partner-age"), 20, 99, 42);
     p2 = custom ? parsePath($("path-2").value, age2) : null;
-    adults.push(makePerson(age2, nonNegative($("partner-wage"), 0),
-                           nonNegative($("partner-benefit"), 0),
+    const [benefit2, options2] = pension(2, p2, age2);
+    adults.push(makePerson(age2, nonNegative($("partner-wage"), 0), benefit2,
                            p2 && p2.used ? p2.wages : null,
-                           p2 && Object.keys(p2.benefits).length ? p2.benefits : null));
+                           p2 && Object.keys(p2.benefits).length ? p2.benefits : null,
+                           options2));
+  }
+  for (const [which, prefix] of [[1, "benefit"], [2, "partner-benefit"]]) {
+    for (const id of [prefix, `${prefix}-start`, `${prefix}-state`]) {
+      $(id).disabled = edited(which);
+    }
   }
   if (custom) {
     drawPath($("path-1-chart"), projectEarnings(adults[0], VARIANT.calibration));
@@ -1356,9 +1434,14 @@ function readInputs() {
       ? `Projected from the fields above, and it follows them until you change a year.`
       : parsed.bad.length
       ? `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`
-      : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed. They replace the wage and pension above; Reset to projection brings those back.`;
+      : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed. They replace the wage and pension above, which stay locked until Reset to projection; a benefit in the first year counts as a pension already being paid.`;
   }
   const wealth = Math.max(1000, nonNegative($("wealth"), 1000));
+  // Choi's input is investable net worth above zero; the guide says the model
+  // has no solution when it is negative. A minus sign or a zero says so.
+  const typedWealth = String($("wealth").value).trim();
+  const noSavings = /^[-\u2212(]/.test(typedWealth) ||
+    (typedWealth !== "" && readMoney($("wealth"), 1) === 0);
   // The slider is a COMPOUND return, because that is how every published
   // forecast is quoted and so what a reader will type. The model takes an
   // arithmetic mean, so convert here rather than letting someone hand over a
@@ -1367,7 +1450,7 @@ function readInputs() {
     ? modelReturn(Number($("mu").value))
     : market.expected_stock_real_return;
 
-  return { household: makeHousehold(wealth, adults, gamma), gamma, expected, wealth };
+  return { household: makeHousehold(wealth, adults, gamma), gamma, expected, wealth, noSavings };
 }
 
 /** The return the model reads, from a compound return as forecasts publish it. */
@@ -1396,7 +1479,8 @@ function row(cells) {
 // --- render -----------------------------------------------------------------
 
 function render() {
-  const { household, gamma, expected } = readInputs();
+  const { household, gamma, expected, noSavings } = readInputs();
+  document.querySelector(".section-exhibits").hidden = noSavings;
   const rf = market.real_risk_free;
   const sigma = market.stock_volatility;
   const r = recommend(household, expected, rf, sigma, VARIANT.calibration);
@@ -1413,11 +1497,17 @@ function render() {
   // The answer is a comparison, and the thing it is compared against is
   // currently paying an unusually good real rate. A reader who does not know
   // that reads a low equity share as pessimism about stocks.
-  $("verdict-figure").textContent = pct0.format(r.equityShare);
+  $("verdict-figure").textContent = noSavings ? "" : pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
-    `of your ${money.format(r.financialWealth)} portfolio belongs in equities, or <b>${money.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset: long-dated inflation-linked government bonds, at the rate in Exhibit 5.`;
+    `of your ${money.format(r.financialWealth)} portfolio belongs in equities, or <b>${money.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset: inflation-linked Treasury bonds (TIPS) held to maturity, or a ladder of them, at the rate in Exhibit 5.`;
 
+  if (noSavings) {
+    $("verdict-text").innerHTML =
+      `Choi's model has no answer when savings are zero or debts exceed them: ` +
+      `his guide says it has no solutions for a negative net worth.`;
+  }
   drawSplit($("split-chart"), $("split-key"), r);
+  $("wealth-note").hidden = r.humanCapital <= r.financialWealth;
 
   $("cap-flag").innerHTML = r.isCapped
     ? `<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The 100% cap is the no-borrowing rule of the model the formula approximates; the formula alone goes above it.`
@@ -1472,7 +1562,7 @@ function render() {
   // without converting anything; the model is still handed the arithmetic
   // mean, one conversion later.
   const sens = [];
-  for (let g = 0.0; g <= 0.0801; g += 0.001) {
+  for (let g = 0.0; g <= 0.0901; g += 0.001) {
     const mu = modelReturn(g);
     if (mu <= rf) continue;
     sens.push({ x: g, y: recommend(household, mu, rf, sigma, VARIANT.calibration).equityShare });
@@ -1484,7 +1574,7 @@ function render() {
     // Named ticks, because the curve starts wherever equities first beat the
     // safe rate and two auto ticks near that edge both round to the same
     // percent.
-    xTicks: [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08],
+    xTicks: [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09],
     xFormat: (v) => pct0.format(v),
     yFormat: (v) => pct0.format(v),
     xTitle: "Expected real return on equities, compound",
@@ -1526,7 +1616,7 @@ function render() {
   $("glide-note").innerHTML =
     `Your household, its ages and salaries unchanged, at every level of savings. `
     + `At ${money.format(r.financialWealth)} the answer is ${pct0.format(r.equityShare)}; `
-    + `the same household with ten times that would be told `
+    + `the same household with ${money.format(Math.min(HI, r.financialWealth * 10))} would be told `
     + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma, VARIANT.calibration).equityShare)}. `
     + `Nothing about the people changed.`;
 
@@ -1541,16 +1631,14 @@ function render() {
   // of the two markets today.
   function globalRow(market) {
     const g = market.global;
-    if (!g || g.expected_stock_real_return_compound == null) return "";
-    const parts = [];
-    if (g.dividend_yield != null && g.real_growth != null) {
-      parts.push(`${pct2.format(g.dividend_yield)} yield plus ` +
-                 `${pct2.format(g.real_growth)} growth`);
-    }
-    parts.push(g.as_of);
+    if (!g || g.dividend_yield_gross == null || g.real_growth == null) return "";
+    // Before withholding, as the S&P figure above is: an American world fund
+    // pays none on the American part of the index.
     return row([[`&nbsp;&nbsp;the same estimator on ${g.index}`, "k"],
-                [pct2.format(g.expected_stock_real_return_compound), "n"],
-                [parts.join(", "), "why"]]);
+                [pct2.format(g.dividend_yield_gross + g.real_growth), "n"],
+                [`${pct2.format(g.dividend_yield_gross)} yield before withholding, ` +
+                 `as the S&P figure is, plus ${pct2.format(g.real_growth)} growth, ${g.as_of}`,
+                 "why"]]);
   }
 
   // The inputs, with where each came from.
@@ -1572,7 +1660,7 @@ function render() {
           `points for the volatility drag`, "why"]]) +
     globalRow(market) +
     row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
-         ["30-year TIPS yield, from the Treasury's real yield curve (FRED's DFII30), which is what Choi's guide asks for", "why"]]) +
+         ["30-year TIPS yield before tax, from the Treasury's real yield curve (FRED's DFII30), as Choi's guide suggests. If most of your bonds sit in a taxable account, his guide multiplies it by one minus your income tax rate; this page does not, so read the answer as low (methodology 3.3)", "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          ["Choi's 18.5%, monthly CRSP returns 1926 to 2024, held fixed rather than re-measured each week", "why"]]) +
     row([["Your risk aversion", "k"], [num1.format(gamma), "n"], [riskSource(), "why"]]) +
@@ -1582,8 +1670,12 @@ function render() {
 
   // The extrapolation is section 3.6 of the methodology. It was a paragraph
   // here, then a line, and it belonged in neither: a caveat printed beside
-  // every answer stops being read and only crowds the answer out.
-  $("range-note").innerHTML = "";
+  // every answer stops being read and only crowds the answer out. What does
+  // belong here is data that has stopped updating, which nothing else shows.
+  const stale = ageOfData(market.as_of);
+  $("range-note").innerHTML = stale > 21
+    ? `The market data are ${stale} days old, so the weekly update may have stopped.`
+    : "";
 }
 
 // --- boot -------------------------------------------------------------------
@@ -1631,7 +1723,7 @@ async function boot() {
         : "Earnings always arrive after the prices they belong to, so a few months is normal.");
   }
   $("foot").innerHTML =
-    `Rate and volatility as of <b>${market.as_of}</b>, ` +
+    `Market data as of <b>${market.as_of}</b>, ` +
     `<span class="${fresh ? "ok" : "stale"}">${days} day${days === 1 ? "" : "s"} old</span>` +
     `${fresh ? "" : ", past the 90 day limit"}.` + histNote + " " +
     `Everything on this page is computed in your browser; nothing you enter is sent anywhere. ` +
@@ -1648,21 +1740,30 @@ async function boot() {
     $(id).addEventListener("blur", () => { showMoney($(id)); render(); });
   }
 
-  for (const id of ["age", "wage", "wealth", "benefit", "partner-age", "partner-wage", "partner-benefit", "mu"]) {
+  for (const id of ["age", "wage", "wealth", "benefit", "benefit-start", "partner-age",
+                    "partner-wage", "partner-benefit", "partner-benefit-start", "mu"]) {
     $(id).addEventListener("input", render);
   }
+  for (const id of ["benefit-state", "partner-benefit-state", "partner-spousal"]) {
+    $(id).addEventListener("change", render);
+  }
+  $("partner-spousal-field").hidden = !VARIANT.spousal;
   // A box nobody has typed in follows the fields it was filled from, so a
   // changed salary still reaches the answer. This runs after render's own
   // listener, so it renders again once the box is refilled.
-  for (const [which, ids] of [[1, ["age", "wage", "benefit"]],
-                              [2, ["partner-age", "partner-wage", "partner-benefit"]]]) {
+  for (const [which, ids] of [[1, ["age", "wage", "benefit", "benefit-start", "benefit-state"]],
+                              [2, ["partner-age", "partner-wage", "partner-benefit",
+                                   "partner-benefit-start", "partner-benefit-state",
+                                   "partner-spousal"]]]) {
     for (const id of ids) {
-      $(id).addEventListener("input", () => {
-        if ($(`path-${which}`).value === prefilled[which]) {
-          prefillPath(which);
-          render();
-        }
-      });
+      for (const event of ["input", "change"]) {
+        $(id).addEventListener(event, () => {
+          if ($(`path-${which}`).value === prefilled[which]) {
+            prefillPath(which);
+            render();
+          }
+        });
+      }
     }
   }
 
@@ -1750,7 +1851,8 @@ async function boot() {
     // readMoney, not Number: the field shows a formatted amount once focus
     // has left it, and Number("$30,000") is not a number.
     const benefit = readMoney($(which === 1 ? "benefit" : "partner-benefit"), 0);
-    $(`path-${which}`).value = pathText(makePerson(age, wage, benefit));
+    $(`path-${which}`).value = pathText(makePerson(age, wage, benefit, null, null,
+                                                   pensionOptions(which)));
     prefilled[which] = $(`path-${which}`).value;
   }
 

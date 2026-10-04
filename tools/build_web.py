@@ -84,6 +84,8 @@ ITALIAN_VARIANT = """const VARIANT = {
   group: ".",
   decimal: ",",
   calibration: ITALY_CALIBRATION,
+  // Choi's spousal switch exists only where there is a spousal benefit.
+  spousal: false,
 };"""
 
 
@@ -154,6 +156,10 @@ def build_global_block() -> dict | None:
             if "expected_return_compound" in provenance else None),
         "dividend_yield": (float(provenance["dividend_yield"])
                            if "dividend_yield" in provenance else None),
+        # Before withholding, as the S&P figure beside it is: an American
+        # world fund suffers no withholding on the American part of the index.
+        "dividend_yield_gross": (float(provenance["dividend_yield_measured"])
+                                 if "dividend_yield_measured" in provenance else None),
         "real_growth": (float(provenance["real_growth"])
                         if "real_growth" in provenance else None),
         "real_risk_free": float(market["real_risk_free"]),

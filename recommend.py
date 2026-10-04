@@ -76,6 +76,37 @@ def ask(prompt: str, cast=float, minimum=None):
         return value
 
 
+def ask_optional(prompt: str, cast=int):
+    """A number, or None for a blank answer."""
+    while True:
+        raw = input(f"  {prompt}: ").strip().replace("$", "").replace(",", "")
+        if raw == "":
+            return None
+        try:
+            return cast(raw)
+        except ValueError:
+            print("  Enter a number, or leave it blank.")
+
+
+def ask_yes(prompt: str) -> bool:
+    while True:
+        raw = input(f"  {prompt} (y/n): ").strip().lower()
+        if raw in ("y", "yes", "n", "no"):
+            return raw.startswith("y")
+        print("  Answer y or n.")
+
+
+def ask_pension(whose: str) -> tuple[float, int | None, bool]:
+    """A pension, the age it starts and whether it is Social Security, as the
+    page asks for them."""
+    amount = ask(f"{whose} pension, a year of it after tax (0 if none)", float, 0)
+    if amount == 0:
+        return 0.0, None, False
+    start = ask_optional("The age it starts (blank if already paid)")
+    state = ask_yes("Is it Social Security? Then it replaces the 40% estimate")
+    return amount, start, state
+
+
 def money(x: float) -> str:
     return f"${x:,.0f}"
 
@@ -117,8 +148,9 @@ def print_report(result, market, household) -> None:
 
     if result.is_capped:
         print("  The model wants more than 100%, meaning it would borrow to")
-        print("  invest. The cap is imposed from outside; the model did not")
-        print("  produce it. See variants/us/methodology.html section 4.")
+        print("  invest. The cap is the no-borrowing rule of the model the")
+        print("  formula approximates (Choi's equation 9). See section 4 of")
+        print("  variants/us/methodology.html.")
         print()
 
     print(THIN)
@@ -161,7 +193,9 @@ def print_glide(household, market) -> None:
         try:
             trial = Household(
                 investable_net_worth=household.investable_net_worth,
-                adults=[Person(age, base.current_wage, base.current_benefit)],
+                adults=[Person(age, base.current_wage, base.current_benefit,
+                               benefit_start=base.benefit_start,
+                               benefit_is_state=base.benefit_is_state)],
                 risk_aversion=household.risk_aversion,
             )
         except ValueError:
@@ -194,9 +228,24 @@ def main(argv: list[str]) -> int:
         "--risk-aversion", type=float, help="1 to 10, see docs/inputs.md"
     )
     parser.add_argument("--benefit", type=float, default=0.0,
-                        help="retirement benefit already being received")
+                        help="your pension, a year of it after tax: one already "
+                             "paid, or one from --benefit-start")
+    parser.add_argument("--benefit-start", type=int,
+                        help="the age your pension starts, if not already paid")
+    parser.add_argument("--state-pension", action="store_true",
+                        help="your pension is your Social Security: it replaces "
+                             "the 40%% estimate instead of adding to it")
     parser.add_argument("--partner-age", type=int, help="second adult's age")
     parser.add_argument("--partner-wage", type=float, help="second adult's wage")
+    parser.add_argument("--partner-benefit", type=float, default=0.0,
+                        help="second adult's pension, a year of it after tax")
+    parser.add_argument("--partner-benefit-start", type=int,
+                        help="the age the second adult's pension starts")
+    parser.add_argument("--partner-state-pension", action="store_true",
+                        help="the second adult's pension is their Social Security")
+    parser.add_argument("--partner-spousal", action="store_true",
+                        help="the second adult claims the spousal benefit, half "
+                             "of your Social Security, instead of their own")
     parser.add_argument("--glide", action="store_true",
                         help="also show the path across ages")
     args = parser.parse_args(argv[1:])
@@ -216,20 +265,34 @@ def main(argv: list[str]) -> int:
         age = int(ask("Your age", int, 20))
         wage = ask("Current after-tax annual wage", float, 0)
         wealth = ask("Investable net worth, excluding housing", float, 1)
+        benefit, start, state = ask_pension("Your")
+        partner_age = ask_optional("Second adult's age (blank if none)")
+        partner_wage = partner_benefit = 0.0
+        partner_start, partner_state, spousal = None, False, False
+        if partner_age is not None:
+            partner_wage = ask("Their after-tax annual wage", float, 0)
+            partner_benefit, partner_start, partner_state = ask_pension("Their")
+            if partner_benefit == 0:
+                spousal = ask_yes("Will they claim the spousal benefit, half of "
+                                  "your Social Security, instead of their own?")
         gamma = ask_risk_aversion()
-        partner_age = partner_wage = None
     else:
         age, wage, wealth = args.age, args.wage, args.wealth
         gamma = args.risk_aversion if args.risk_aversion is not None else 5.0
         partner_age, partner_wage = args.partner_age, args.partner_wage
+        benefit, start, state = args.benefit, args.benefit_start, args.state_pension
+        partner_benefit, partner_start = args.partner_benefit, args.partner_benefit_start
+        partner_state, spousal = args.partner_state_pension, args.partner_spousal
 
-    adults = [Person(age, wage, args.benefit)]
+    adults = [Person(age, wage, benefit, benefit_start=start, benefit_is_state=state)]
     if partner_age is not None:
         if partner_wage is None:
             print("\n--partner-age needs --partner-wage. Pass 0 if they do not")
             print("earn, so that the zero is deliberate rather than assumed.")
             return 1
-        adults.append(Person(partner_age, partner_wage))
+        adults.append(Person(partner_age, partner_wage, partner_benefit,
+                             benefit_start=partner_start,
+                             benefit_is_state=partner_state, claims_spousal=spousal))
     elif partner_wage is not None:
         print("\n--partner-wage needs --partner-age.")
         return 1

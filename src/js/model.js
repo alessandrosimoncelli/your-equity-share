@@ -46,13 +46,14 @@ export const CGM_CALIBRATION = Object.freeze({
 /**
  * An Italian private-sector employee, as human_capital.py documents: the
  * earnings process Daminato and Padula (2024) estimate on the Bank of Italy's
- * household survey, and the Italian Treasury's 66% pension.
+ * household survey, and the Italian Treasury's 66% pension, restated on the
+ * wage-plus-TFR the page asks for: 0.66 / 1.075 = 0.614.
  */
 export const ITALY_CALIBRATION = Object.freeze({
   stockVolatility: 0.185,
   permanentShockVolatility: Math.sqrt(0.015156),
   temporaryShockVolatility: Math.sqrt(0.023609),
-  benefitReplacementRate: 0.66,
+  benefitReplacementRate: 0.614,
   ageProfile: Object.freeze([-0.001022, 0.000613, -0.000006]),
   benefitCap: null,
 });
@@ -227,11 +228,15 @@ export function imputedWage(age, currentAge, currentWage, calibration = CGM_CALI
 }
 
 /**
- * One adult in the household. `currentBenefit` covers someone already drawing a
- * retirement income; leave it at zero for anyone still working and the benefit
- * is imputed from the final wage instead.
+ * One adult. `currentBenefit` is a pension whose amount is already fixed,
+ * paid now or from `benefitStart`; `benefitIsState` says it is the person's
+ * state pension, which then replaces the imputed one; `claimsSpousal` marks
+ * a second adult who claims half of the first adult's Social Security.
+ * See Person in human_capital.py.
  */
-export function makePerson(currentAge, currentWage, currentBenefit = 0.0, wages = null, benefits = null) {
+export function makePerson(currentAge, currentWage, currentBenefit = 0.0, wages = null,
+                           benefits = null,
+                           { benefitStart = null, benefitIsState = false, claimsSpousal = false } = {}) {
   if (!(currentAge >= 20 && currentAge <= 99)) {
     throw new RangeError(
       `current age ${currentAge} is outside the 20 to 99 range the approximation was fitted over`,
@@ -240,53 +245,78 @@ export function makePerson(currentAge, currentWage, currentBenefit = 0.0, wages 
   if (currentWage < 0 || currentBenefit < 0) {
     throw new RangeError("wages and benefits cannot be negative");
   }
-  return { currentAge, currentWage, currentBenefit, wages, benefits };
+  if (benefitStart != null && benefitStart > FINAL_AGE) {
+    throw new RangeError(`a pension starting at ${benefitStart} is never paid`);
+  }
+  return { currentAge, currentWage, currentBenefit, wages, benefits,
+           benefitStart, benefitIsState, claimsSpousal };
+}
+
+/** The pension in `currentBenefit` paid at `age`: zero before it starts. */
+export function pensionPaid(person, age) {
+  return age >= pensionStart(person) ? person.currentBenefit : 0.0;
+}
+
+function pensionStart(person) {
+  return person.benefitStart == null
+    ? person.currentAge + 1 : Math.max(person.currentAge + 1, person.benefitStart);
+}
+
+/**
+ * Riskless: already being paid, or not the state pension (a fixed pension from
+ * an earlier job). A state pension that starts later is an estimate the rest
+ * of the career can still move, as in human_capital.py.
+ */
+export function pensionIsCertain(person) {
+  return !person.benefitIsState || pensionStart(person) <= person.currentAge + 1;
 }
 
 /**
  * Wages and benefits for every year from next year to age 100.
  *
- * Uses whatever the person supplied year by year and imputes the rest. A
- * pension already being paid continues every year. The retirement benefit for
- * the person's own career is a fixed share of the final wage, paid from the
- * first year without wages onward, on top of it.
+ * Uses whatever the person supplied year by year and imputes the rest. The
+ * pension in `currentBenefit` is paid every year from its start. The
+ * retirement benefit for the person's own career is a fixed share of the wage
+ * in the last year of work, paid from the year after it, on top of that
+ * pension unless it is the state one; a break typed before work ends pays
+ * none of it. See project_earnings in human_capital.py.
  */
 export function projectEarnings(person, calibration = CGM_CALIBRATION) {
-  const years = [];
-  let finalWage = 0.0;
+  const ages = [];
+  for (let age = person.currentAge + 1; age <= FINAL_AGE; age += 1) ages.push(age);
+  const wages = {};
+  let lastWork = null;
+  for (const age of ages) {
+    wages[age] = person.wages != null && Object.prototype.hasOwnProperty.call(person.wages, age)
+      ? person.wages[age]
+      : imputedWage(age, person.currentAge, person.currentWage, calibration);
+    if (wages[age] > 0) lastWork = age;
+  }
+
+  // Fixed once, off the wage in the last year of work, as in human_capital.py:
+  // today's wage when none is left to project, none for a retiree, none when
+  // the pension typed is the state one or the person claims the spousal one.
   let careerBenefit = 0.0;
-
-  for (let age = person.currentAge + 1; age <= FINAL_AGE; age += 1) {
-    let wage;
-    if (person.wages != null && Object.prototype.hasOwnProperty.call(person.wages, age)) {
-      wage = person.wages[age];
-    } else {
-      wage = imputedWage(age, person.currentAge, person.currentWage, calibration);
+  if (!(person.benefitIsState || person.claimsSpousal)) {
+    const base = lastWork !== null ? wages[lastWork] : person.currentWage;
+    careerBenefit = base * calibration.benefitReplacementRate;
+    if (calibration.benefitCap != null) {
+      careerBenefit = Math.min(careerBenefit, calibration.benefitCap);
     }
+  }
 
+  const years = [];
+  for (const age of ages) {
+    const paid = pensionPaid(person, age);
     let benefit;
     if (person.benefits != null && Object.prototype.hasOwnProperty.call(person.benefits, age)) {
       benefit = person.benefits[age];
-    } else if (wage > 0) {
-      benefit = person.currentBenefit;
+    } else if (lastWork !== null && age <= lastWork) {
+      benefit = paid;
     } else {
-      // First year without wages: fix the career benefit off the last wage
-      // earned, then hold it for life, on top of any pension already paid.
-      if (careerBenefit === 0.0) {
-        // With no wage left to project, today's wage is the last one, unless
-        // a pension is already being paid, which then is that career's.
-        const base = finalWage > 0 ? finalWage
-          : person.currentBenefit === 0 ? person.currentWage : 0.0;
-        careerBenefit = base * calibration.benefitReplacementRate;
-        if (calibration.benefitCap != null) {
-          careerBenefit = Math.min(careerBenefit, calibration.benefitCap);
-        }
-      }
-      benefit = person.currentBenefit + careerBenefit;
+      benefit = paid + careerBenefit;
     }
-
-    if (wage > 0) finalWage = wage;
-    years.push({ age, wage, benefit });
+    years.push({ age, wage: wages[age], benefit });
   }
   return years;
 }
@@ -306,6 +336,7 @@ export function humanCapital(
   realRiskFree,
   calibration = CGM_CALIBRATION,
   volatility = null,
+  spousalFromAge = null,
 ) {
   const years = projectEarnings(person, calibration);
   let lastWork = 0;
@@ -323,8 +354,13 @@ export function humanCapital(
     safeChain *= 1.0 + benefitRate;
     // Typed or not, as in human_capital.py: the page passes its prefilled
     // path as typed once the year-by-year box is ticked.
-    const pension = Math.min(person.currentBenefit, year.benefit);
+    const paid = pensionIsCertain(person) ? pensionPaid(person, year.age) : 0.0;
+    const pension = Math.min(paid, year.benefit);
     total += (year.wage + year.benefit - pension) / chain + pension / safeChain;
+    if (spousalFromAge != null && year.age >= spousalFromAge) {
+      const fixed = person.benefitIsState ? pension : 0.0;
+      total += 0.5 * (year.benefit - pension) / chain + 0.5 * fixed / safeChain;
+    }
   }
   return total;
 }
@@ -518,12 +554,14 @@ export function makeHousehold(investableNetWorth, adults, riskAversion = 5.0) {
  *
  *     w_fin = clip( beta * (1 + HC/W), 0, 1 )
  *
- * The clip is a no-leverage, no-shorting constraint imposed from outside. It is
- * not a result of the model, so the uncapped figure is reported alongside.
+ * The clip is the no-borrowing and no-short-selling constraint of the model
+ * the formula approximates, which Choi's equation (9) carries. The formula
+ * alone does not respect it, so the uncapped figure is reported alongside.
  *
- * `stockVolatility` is the volatility of the portfolio actually held, used in
- * the Merton term. The discount rates inside layer two keep the calibration's
- * 18.5% regardless, because their coefficients were fitted with that in place.
+ * `stockVolatility` is the volatility of the asset held, a fixed long-run
+ * figure. It sets the Merton term and also turns the arithmetic return back
+ * into the log risk premium the discount rates take, so both layers read one
+ * asset. See recommend in allocation.py.
  */
 export function recommend(
   household,
@@ -539,9 +577,15 @@ export function recommend(
     stockVolatility,
   );
 
-  const perAdult = household.adults.map((adult) =>
+  // Choi's spousal switch, as in allocation.py.
+  let spousalFrom = null;
+  if (household.adults.length === 2 && household.adults[1].claimsSpousal) {
+    const [earner, partner] = household.adults;
+    spousalFrom = earner.currentAge + Math.max(1, 62 - partner.currentAge);
+  }
+  const perAdult = household.adults.map((adult, i) =>
     humanCapital(adult, household.riskAversion, expectedStockRealReturn, realRiskFree, calibration,
-                 stockVolatility),
+                 stockVolatility, i === 0 ? spousalFrom : null),
   );
   // Summed in the same order as Python's sum() over the tuple, because floating
   // point addition is not associative and the fixture pins the result.

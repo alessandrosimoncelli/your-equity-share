@@ -48,8 +48,10 @@ def italy():
 def test_the_italian_calibration_changes_the_career_and_the_pension() -> None:
     """An Italian private-sector employee in place of an American graduate.
 
-    The 18.5% stays: it is the volatility Choi's coefficients were fitted
-    with, a property of the regression rather than of the household.
+    The calibration's 18.5% stays, but only as a default: the model is always
+    handed the volatility of the asset held (16.45% for the Italian fund), and
+    the discount rates read it through the log risk premium, as Choi defines
+    it.
     """
     differences = {
         f.name for f in dataclasses.fields(CGM_CALIBRATION)
@@ -80,20 +82,23 @@ def test_the_italian_career_keeps_rising_where_the_american_one_falls() -> None:
 def test_the_italian_replacement_rate_is_the_treasury_figure() -> None:
     """66% net, the Ragioneria Generale dello Stato's projection for a private
     employee retiring in 2050 at 66 with 38 years of contributions (Rapporto
-    n. 26, 2025, Table 6.3.a). The model retires at 67.
+    n. 26, 2025, Table 6.3.a), restated on the base the page asks for. The 66%
+    is a share of the final net pay without the TFR; the page asks for the
+    wage with the yearly TFR accrual added, about 7.5% of net pay, so the same
+    pension is 0.66 / 1.075 of it. The model retires at 67.
 
     It was the OECD's 79% until October 2026, a figure for 48 years of
     contributions ending at 70. Italian pensions are contributory, so a
     retirement at 67 earns less, and 79% paid from 67 overstated the pension.
     """
-    assert ITALY_CALIBRATION.benefit_replacement_rate == 0.66
+    assert ITALY_CALIBRATION.benefit_replacement_rate == pytest.approx(0.66 / 1.075, abs=5e-4)
 
 
 def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
     """This is why the swap is legitimate rather than an extrapolation.
 
     Equation (12) takes the replacement rate as a regressor, fitted over 0.4,
-    0.6 and 0.8. Italy's 66% is between the second and third, so the
+    0.6 and 0.8. Italy's 61.4% is between the second and third, so the
     coefficient is being interpolated rather than used outside its range. The
     American 40% sits on the bottom edge of the same grid.
     """
@@ -245,6 +250,32 @@ def test_the_volatility_is_fixed_not_measured_each_week(italy) -> None:
     assert "volatility_observations" not in IT_CONFIG.read_text(encoding="utf-8")
 
 
+def test_the_fixed_volatility_is_choi_s_estimator_on_every_day_of_the_month() -> None:
+    """Recomputed from MSCI's daily levels when they are cached, so the
+    constant cannot drift from its own definition. Month-end alone is the
+    lowest of the 28 days in this window, which is why it is not used."""
+    import json
+    import sys as _sys
+    _sys.path.insert(0, str(ROOT / "tools"))
+    import italy_volatility
+    import refresh_italy
+
+    # On every run: the constant is the average of the 28 recorded figures,
+    # and month-end sits below all of them.
+    recorded = italy_volatility.MEASURED
+    assert len(recorded) == 28
+    average = (sum(v * v for v in recorded) / len(recorded)) ** 0.5
+    assert refresh_italy.ITALY_VOLATILITY == pytest.approx(average, abs=1e-6)
+    assert italy_volatility.MONTH_END < min(recorded) < 0.15 < 0.18 < max(recorded)
+    # Where the daily levels are cached, the 28 are measured again.
+    if not italy_volatility.CACHE.exists():
+        return
+    levels = json.loads(italy_volatility.CACHE.read_text(encoding="utf-8"))
+    sigma, by_day = italy_volatility.volatility(levels)
+    assert refresh_italy.ITALY_VOLATILITY == pytest.approx(sigma, abs=5e-7)
+    assert by_day == pytest.approx(list(recorded), abs=5e-7)
+
+
 def test_the_expected_return_is_the_arithmetic_mean_the_model_takes(italy) -> None:
     """The same conversion the American variant makes, at the global volatility."""
     from your_equity_share.expected_return import arithmetic_from_compound
@@ -331,7 +362,7 @@ def test_the_safe_rate_holds_its_maturity_fixed(italy) -> None:
     """
     source = italy.provenance["real_risk_free_source"]
     assert source.startswith("ECB AAA")
-    assert "30-year spot rate" in source
+    assert "30-year par yield" in source
     assert "constant maturity" in source.lower()
 
 
@@ -345,11 +376,9 @@ def test_the_safe_rate_deflator_is_a_price_not_a_forecast(italy) -> None:
     """
     source = italy.provenance["real_risk_free_source"]
     assert "break-even" in source.lower()
-    breakeven = float(italy.provenance["expected_inflation"])
-    survey = float(italy.provenance["expected_inflation_survey"])
-    # Either can be the higher. The band only catches a scraper reading the
-    # real-yield chart instead of the break-even, which is about 0.7 off.
-    assert abs(breakeven - survey) < 0.01
+    # Which chart the scraper reads is tested on a fixture page in
+    # tests/test_refresh_italy.py; a band around the survey could not catch
+    # it, and on weekly data it was a state of the market.
 
 
 def test_the_safe_rate_is_the_annual_nominal_less_the_break_even(italy) -> None:
@@ -377,21 +406,23 @@ def test_the_safe_rate_reproduces_a_bond_that_exists(italy) -> None:
     """
     source = italy.provenance["real_risk_free_source"]
     assert "DE0001030575" in source
-    assert "traded real yield" in source
-    assert "points away" in source
+    # The cross-checks are optional in the refresh: a week the linker chart or
+    # the survey does not answer leaves them out rather than stopping it.
+    if "Checked against itself" in source:
+        assert "traded real yield" in source and "points away" in source
 
 
 def test_the_safe_rate_is_not_italian_paper(italy) -> None:
     """Equation (4) has no way to represent default risk.
 
-    All euro area government bonds yielded 0.64 points more at the same
+    All euro area government bonds yielded 0.56 points more at the same
     maturity, and that spread is compensation for a government not paying.
     Booking it as a risk-free return would raise the rate and lower the
     recommendation while looking prudent.
     """
     text = Path("variants/it/market_data.toml").read_text(encoding="utf-8")
     assert "NOT holding this asset" in text
-    assert "0.64 points" in text
+    assert "0.56 points" in text
 
 
 def test_the_currency_basis_is_recorded_and_names_its_assumption(italy) -> None:
@@ -489,12 +520,15 @@ def test_the_measured_yield_uses_todays_price_as_its_denominator() -> None:
         pytest.skip("MSCI levels have not been cached; run tools/estimators_it.py")
     levels = json.loads(cache.read_text(encoding="utf-8"))
     price, gross = levels["STRD"], levels["GRTR"]
-    dates = sorted(set(price) & set(gross))[-13:]
+    # The snapshot's window, which the cache was saved for; the weekly file
+    # moves on every month and is checked by the refresh itself.
+    snapshot = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
+    dates = sorted(d for d in set(price) & set(gross) if str(d) <= "20260831")[-13:]
     cash = sum((gross[b] / gross[a] - price[b] / price[a]) * price[a]
                for a, b in zip(dates, dates[1:]))
 
     expected = cash / price[dates[-1]]
-    assert float(italy_provenance()["dividend_yield_measured"]) == \
+    assert float(snapshot.provenance["dividend_yield_measured"]) == \
         pytest.approx(expected, abs=1e-5)
 
     # And the two rejected constructions really are far enough away to matter.
@@ -891,8 +925,16 @@ def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
                f'<td class="num">{b}</td></tr>')
         assert row in doc, row
 
-    # What the prose says about them.
-    assert opening(frozenset({"market"})) == 1.0
+    # What the prose says about them: "the smaller savings count for about as
+    # much as the market", and "any two of the three changes take the
+    # American opening household to 100%, so whichever comes third shows
+    # nothing" (no single one does).
+    import itertools
+    reasons = ("market", "career", "savings")
+    assert abs(first["savings"] - first["market"]) < 0.02
+    assert all(opening(frozenset(pair)) == 1.0
+               for pair in itertools.combinations(reasons, 2))
+    assert all(opening(frozenset({one})) < 1.0 for one in reasons)
     assert round(5 * second["market"] / sum(second.values())) == 4
     # The rounded rows add up to the rounded totals, so a reader's sum works.
     for split, start, end in ((first, opening(frozenset()), opening(everything)),
@@ -926,13 +968,15 @@ def test_the_tax_table_is_the_check_s_output() -> None:
                f'<td class="num">{loss:.1%}</td></tr>')
         assert row in doc, row
     assert round(1 - laws[0], 2) == 0.25                      # "about a quarter"
-    assert abs((1 - laws[1]) - 0.125) < 0.01                 # "about an eighth"
+    assert abs((1 - laws[1]) - 1 / 9) < 0.01                 # "about a ninth"
     assert all(1 - law < 0.1 for law in laws[2:])            # "under a tenth beyond"
     assert costs[0] < 2 and max(costs[1:]) < 0.5             # "under 2", "under half"
-    # "about a third against the law's quarter ... nearer to it than leaving
-    # tax out", and "two to four times what the law does" from seven years.
+    # "about three tenths against the law's quarter ... nearer to it than
+    # leaving tax out", and "between two and a little over four times what
+    # the law does" from seven years.
     assert round(1 - means[0], 1) == 0.3 and laws[0] - means[0] < 1 - laws[0]
-    assert all(2 <= (1 - m) / (1 - l) <= 4 for m, l in zip(means[1:], laws[1:]))
+    ratios = [(1 - m) / (1 - l) for m, l in zip(means[1:], laws[1:])]
+    assert min(ratios) >= 2 and 4 < max(ratios) < 4.25
     assert f"by {round((1 - max(means)) * 100)}% to {round((1 - min(means)) * 100)}%" in doc
     for gamma in (3.0, 8.0):                                 # "within a hundredth"
         for years, law in zip(tax_check.YEARS, laws):

@@ -68,6 +68,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # the commit step rebases, which needs history
+          # The newest main, not the commit that triggered the run: a push
+          # queued behind a Monday refresh would otherwise rebuild without
+          # the data that refresh committed, and publish last week's figures.
+          ref: main
 
       - uses: actions/setup-python@v5
         with:
@@ -152,27 +156,6 @@ jobs:
       - name: Verifier
         run: python tools/verify_model.py
 
-      # After the checks, never before: data that fails them is never
-      # committed. Only the two market data files are staged, so nothing else
-      # the run produced can slip into the history.
-      - name: Commit the refreshed data
-        if: >-
-          github.event_name != 'push' &&
-          env.COMMIT_REFRESHED_DATA == 'true' &&
-          steps.us.outcome == 'success' &&
-          steps.it.outcome == 'success'
-        run: |
-          git add variants/us/market_data.toml variants/it/market_data.toml
-          if git diff --cached --quiet; then
-            echo "The data did not change this week; nothing to commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Refresh market data, week of $(date -u +%Y-%m-%d)"
-          git pull --rebase origin main
-          git push origin HEAD:main
-
       - name: Build
         run: python tools/build_web.py
 
@@ -196,6 +179,30 @@ jobs:
           python -c "import json; json.load(open('web/market.json'))"
           grep -q '<!doctype html>' web/index.html
           echo "the published files are present and well formed"
+
+      # The site is built above, from the tree the checks just passed. The
+      # commit below rebases onto anything pushed meanwhile; building after
+      # it would publish commits this run never tested.
+      # After the checks, never before: data that fails them is never
+      # committed. Only the two market data files are staged, so nothing else
+      # the run produced can slip into the history.
+      - name: Commit the refreshed data
+        if: >-
+          github.event_name != 'push' &&
+          env.COMMIT_REFRESHED_DATA == 'true' &&
+          steps.us.outcome == 'success' &&
+          steps.it.outcome == 'success'
+        run: |
+          git add variants/us/market_data.toml variants/it/market_data.toml
+          if git diff --cached --quiet; then
+            echo "The data did not change this week; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh market data, week of $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
+          git push origin HEAD:main
 
       - uses: actions/configure-pages@v5
 

@@ -78,8 +78,18 @@ function compare(where, got, want) {
   }
 }
 
+// The pension options a person may carry, under the names the page passes.
+function options(payload) {
+  return {
+    benefitStart: payload.benefit_start ?? null,
+    benefitIsState: payload.benefit_is_state ?? false,
+    claimsSpousal: payload.claims_spousal ?? false,
+  };
+}
+
 function person(payload) {
-  return makePerson(payload.current_age, payload.current_wage, payload.current_benefit);
+  return makePerson(payload.current_age, payload.current_wage, payload.current_benefit,
+                    payload.wages ?? null, payload.benefits ?? null, options(payload));
 }
 
 const cases = fixture.cases;
@@ -201,7 +211,8 @@ for (const [i, c] of cases.human_capital.entries()) {
 
 for (const [i, c] of (cases.human_capital_paths ?? []).entries()) {
   const p = c.person;
-  const made = makePerson(p.current_age, p.current_wage, p.current_benefit, p.wages, p.benefits);
+  const made = makePerson(p.current_age, p.current_wage, p.current_benefit, p.wages, p.benefits,
+                          options(p));
   const [gamma, mu, rf, volatility] = c.args;
   const calibration = c.calibration === "it" ? ITALY_CALIBRATION : CGM_CALIBRATION;
   compare(`human_capital_paths[${i}]`,

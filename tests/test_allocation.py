@@ -257,7 +257,8 @@ def test_human_capital_ratio_not_age_drives_the_answer() -> None:
 
 
 def test_the_cap_is_reported_separately_from_the_answer() -> None:
-    """The constraint is imposed from outside, so the raw figure stays visible."""
+    """The formula alone goes above the model's no-borrowing constraint, so the
+    raw figure stays visible beside the capped one."""
     young = recommend(
         _household(investable_net_worth=10_000.0, adults=[Person(25, 70_000.0)]),
         MU, REAL_RF, 0.17,
@@ -482,12 +483,85 @@ def test_a_pension_that_starts_later_is_discounted_as_a_pension() -> None:
 
 
 def test_someone_of_66_still_earning_retires_on_today_s_wage() -> None:
-    """With no wage left to project, the career pension comes off today's wage,
-    unless a pension is already being paid, which is then that career's."""
+    """With no wage left to project, the career pension comes off today's wage.
+    Another pension is added to it, at every age; one marked as the person's
+    state pension replaces it, as in Choi's spreadsheet."""
     working = project_earnings(Person(66, 50_000.0))
     assert working[0].wage == 0.0 and working[0].benefit == pytest.approx(20_000.0)
-    claiming = project_earnings(Person(66, 50_000.0, 24_000.0))
-    assert claiming[0].benefit == pytest.approx(24_000.0)
+    other = project_earnings(Person(66, 50_000.0, 24_000.0))
+    assert other[0].benefit == pytest.approx(44_000.0)
+    state = project_earnings(Person(66, 50_000.0, 24_000.0, benefit_is_state=True))
+    assert state[0].benefit == pytest.approx(24_000.0)
+
+
+def test_a_state_pension_already_claimed_is_not_counted_twice() -> None:
+    """An American still working at 63 who already draws Social Security has
+    one Social Security, not that plus 40% of the final wage."""
+    claimed = Person(63, 80_000.0, 25_000.0, benefit_is_state=True)
+    years = {y.age: y.benefit for y in project_earnings(claimed)}
+    assert years[64] == years[70] == 25_000.0
+    added = {y.age: y.benefit for y in project_earnings(Person(63, 80_000.0, 25_000.0))}
+    assert added[70] > 50_000.0
+
+
+def test_a_pension_that_starts_later_is_paid_from_its_age_and_valued_as_safe() -> None:
+    """A fixed pension from 60 for someone working to 66: nothing before 60,
+    the amount from 60, and divided by the benefit rates from today, so it is
+    worth what the same pension in its own field is worth from that age."""
+    args = (5.0, 0.05167, 0.0296, CGM_CALIBRATION, 0.185)
+    later = Person(50, 80_000.0, 20_000.0, benefit_start=60)
+    years = {y.age: y.benefit for y in project_earnings(later)}
+    assert years[59] == 0.0 and years[60] == 20_000.0
+    without = human_capital(Person(50, 80_000.0), *args)
+    gain = human_capital(later, *args) - without
+    safe = 1.0
+    expected = 0.0
+    for age in range(51, 101):
+        safe *= 1.0 + benefit_discount_rate(age, 5.0, 0.05167, 0.0296, CGM_CALIBRATION, 0.185)
+        if age >= 60:
+            expected += 20_000.0 / safe
+    assert gain == pytest.approx(expected, rel=1e-9)
+
+
+def test_an_estimate_ticked_as_social_security_is_valued_like_the_imputed_one() -> None:
+    """Entering the same amount the tool would impute, from 67, ticked as the
+    person's Social Security, must not change the answer: it is still an
+    estimate that the rest of the career moves, so it rides the wage chain
+    to the last wage year, as the imputed pension does. Only a pension already
+    being paid, or one from an earlier job, is riskless."""
+    args = (5.0, 0.05167, 0.0296, CGM_CALIBRATION, 0.185)
+    imputed = {y.age: y.benefit for y in project_earnings(Person(45, 100_000.0))}[67]
+    estimate = Person(45, 100_000.0, imputed, benefit_start=67, benefit_is_state=True)
+    assert human_capital(estimate, *args) == pytest.approx(
+        human_capital(Person(45, 100_000.0), *args), rel=1e-12)
+    fixed = Person(45, 100_000.0, imputed, benefit_start=67)   # an earlier job's
+    assert human_capital(fixed, *args) > human_capital(Person(45, 100_000.0), *args)
+
+
+def test_the_spousal_switch_pays_half_the_earner_s_pension_from_62() -> None:
+    """Choi's switch: the second adult claims half of the first adult's Social
+    Security from 62, has no pension of their own, and the half rides the
+    earner's chain, because it moves with the earner's career."""
+    args = (0.05167, 0.0296, 0.185)
+    earner = Person(45, 100_000.0)
+    plain = recommend(Household(500_000.0, [earner, Person(43, 0.0)], 5.0), *args)
+    spousal = recommend(Household(500_000.0, [earner, Person(43, 0.0, claims_spousal=True)], 5.0), *args)
+    assert spousal.per_adult_human_capital[1] == 0.0
+    gain = spousal.per_adult_human_capital[0] - plain.per_adult_human_capital[0]
+    assert gain > 0
+    # Half of the earner's pension, on the earner's own chain: the same as a
+    # replacement rate half as large again from the earner's first pension year.
+    years = project_earnings(earner)
+    last = max(y.age for y in years if y.wage > 0)
+    chain, expected = 1.0, 0.0
+    for y in years:
+        rate = (wage_discount_rate if y.age <= last else benefit_discount_rate)(
+            y.age, 5.0, *args[:2], CGM_CALIBRATION, 0.185)
+        chain *= 1.0 + rate
+        if y.age >= 45 + (62 - 43):
+            expected += 0.5 * y.benefit / chain
+    assert gain == pytest.approx(expected, rel=1e-9)
+    assert spousal.equity_share > plain.equity_share
 
 
 def test_the_partner_s_pension_counts() -> None:

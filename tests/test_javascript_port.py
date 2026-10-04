@@ -175,7 +175,10 @@ def test_fixture_still_matches_human_capital(fixture: dict) -> None:
 def test_fixture_still_matches_the_recommendation(fixture: dict) -> None:
     for case in fixture["cases"]["recommend"]:
         adults = [
-            Person(a["current_age"], a["current_wage"], a["current_benefit"])
+            Person(a["current_age"], a["current_wage"], a["current_benefit"],
+                   benefit_start=a.get("benefit_start"),
+                   benefit_is_state=a.get("benefit_is_state", False),
+                   claims_spousal=a.get("claims_spousal", False))
             for a in case["household"]["adults"]
         ]
         household = Household(

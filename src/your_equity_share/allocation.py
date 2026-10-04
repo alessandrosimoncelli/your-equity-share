@@ -8,9 +8,10 @@ Two layers, as set out in variants/us/methodology.html.
 
     w_fin = clip( beta * (1 + HC/W), 0, 1 )
 
-The clip is a no-leverage, no-shorting constraint imposed from outside. It is
-not a result of the model, and the uncapped figure is reported alongside so the
-difference is visible.
+The clip is the no-borrowing and no-short-selling constraint of the model the
+formula approximates, which Choi's equation (9) carries. The formula alone does
+not respect it, so the uncapped figure is reported alongside and the difference
+stays visible.
 """
 
 from __future__ import annotations
@@ -156,6 +157,13 @@ def recommend(
         stock_volatility,
     )
 
+    # Choi's spousal switch: the second adult claims half of the first adult's
+    # Social Security once they are 62, valued with the pension it is half of.
+    spousal_from = None
+    if len(household.adults) == 2 and household.adults[1].claims_spousal:
+        earner, partner = household.adults
+        spousal_from = earner.current_age + max(1, 62 - partner.current_age)
+
     per_adult = tuple(
         human_capital(
             adult,
@@ -164,8 +172,9 @@ def recommend(
             real_risk_free,
             calibration,
             stock_volatility,
+            spousal_from if i == 0 else None,
         )
-        for adult in household.adults
+        for i, adult in enumerate(household.adults)
     )
     total_hc = sum(per_adult)
 

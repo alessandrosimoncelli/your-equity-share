@@ -80,15 +80,33 @@ Then reduce it by tax that will be owed when the assets are sold and spent:
 - Ordinary taxable accounts: a small adjustment in principle, since the cost
   basis is not taxed again. The guide says leaving it alone is tolerable.
 - Pre-tax 401(k) and traditional IRA: the whole balance is taxable on
-  withdrawal. Multiply by 0.8 if you have no better estimate of the rate.
+  withdrawal. Multiply by 0.8 if you have no better estimate of the rate,
+  which is the guide's own default and what the page's hint says.
 
 Housing is excluded entirely.
 
+**It has to be above zero.** Choi's spreadsheet asks for a figure above zero,
+and his guide says the model was not solved for negative net worth. When
+savings are zero or debts exceed them, the page says the model has no answer
+instead of showing a share.
+
 **Retired, or drawing on it?** Include what you will draw down over the years.
-In Choi's model the savings are everything invested after this year's spending
-(the paper's equations 5 to 7), and spending in retirement is the model's own
-consumption. Leave out only this year's spending and money set aside for a
-goal with a date.
+Leave out only what you will take from savings this year beyond your pension,
+and money set aside for a goal with a date. That is Choi's own accounting. In
+his model the money invested this year is cash on hand less this year's
+spending, and cash on hand is what you hold plus this year's income (the
+paper's section 1.1, equation 5). A retiree's pension this year pays for part
+of this year's spending, so only the rest comes out of savings. When this
+year's income and spending are about equal, the money invested is simply what
+you hold, which is the guide's definition and what the page asks a worker for.
+Spending in later years is the model's own consumption, so the savings that
+will pay for it stay in.
+
+**On the Italian page** the same rule counts two Italian items. TFR left with
+the employer counts at about three quarters, because the rest is its separate
+tax, and it belongs to the safe share. Pension funds, including TFR paid into
+one, count at about nine tenths, because their benefits are taxed at 15%,
+falling to 9% after 35 years of membership (D.Lgs. 252/2005, art. 11(6)).
 
 **Run it again once a year**, and rebalance to the new figure, using new
 savings first. The rule is meant to be applied at every age (the paper's
@@ -110,25 +128,90 @@ inside Choi's fitted discount rates, which were solved with the American life
 table: the income itself is not weighted by the chance of being alive to
 receive it, because the paper's expectations are conditional on surviving.
 
-**A pension you already receive** goes in its own field, a year of it after
-tax: a retirement, survivor's or disability pension, even if you still work.
-It is treated as riskless and valued at the benefit rates from today, which
-departs from Choi's spreadsheet (methodology section 7.6). The second adult has the same field. Leave out the pension your
-current job will pay: the tool adds it when your wage stops, at the guide's
-estimate for a college graduate, **40% of the after-tax wage in the year
-before claiming**, then flat for life, up to Social Security's maximum: $4,152
-a month at full retirement age in 2026, counted at 0.8 after tax, or $39,859 a
-year. Above a final wage of about $100,000 after tax, 40% would be more than
-Social Security pays anyone.
+**The career is projected, and so is the pension it pays.** From today's wage
+the tool projects your pay along the average college graduate's earnings path
+through age 66, the last year anyone works in Choi's model. From the year
+after, it adds the pension your own work will pay, at the guide's estimate for
+a college graduate: **40% of the after-tax wage in the last year of work**,
+then flat for life, up to Social Security's maximum: $4,152 a month at full
+retirement age in 2026, counted at 0.8 after tax, or $39,859 a year. Above a
+final wage of about $100,000 after tax, 40% would be more than Social Security
+pays anyone. If you are 66 or older and still earning, this year is taken as
+your last year of pay, and the pension starts next year at 40% of today's wage.
+To work longer or stop sooner, type the years in the year-by-year box. A break
+typed there, with wages after it, pays none of this pension during the break:
+it starts after the last year with a wage.
 
-A pension that starts later than your last wage, for instance if you stop
-work at 62 and claim at 67, goes in the year-by-year box, from the year it
-starts. So does the spousal benefit: where one spouse earned much less, they
-will usually claim **50% of the higher earner's** benefit instead of their
-own. Choi's spreadsheet has a switch for it; the page does not, so type it in
-the second adult's year-by-year box, from the age they will claim it. For a
-one-earner couple it is worth about 3 to 6 points of equity share with five
-years of pay saved and 1 to 2 with fifteen, on the data of 3 September 2026.
+On the Italian page the wage includes the TFR that accrues each year, about
+7.5% of net pay after its tax, and the imputed pension is 61.4% of the last
+such wage, which is the Italian Treasury's 66% of final net pay without the
+TFR.
+
+**A pension whose amount is already fixed** goes in the pension field, a year
+of it after tax. Two settings sit beside it.
+
+- **From age.** Left empty, the pension is already being paid. Include it even
+  if you still work. An age means it starts then: a company pension from 60,
+  or Social Security you will claim at 67 after stopping work at 62.
+- **It is my Social Security.** Tick it if the pension in the field is your own
+  Social Security: claimed already, even while you still work, or your own
+  estimate of it, entered with the age you will claim. It then replaces the
+  tool's 40% estimate, as the benefit cell does in Choi's spreadsheet. Left
+  unticked, the pension is added to that estimate, which is right for a
+  military, company or other employer pension paid on top of Social Security.
+  A Social Security disability benefit becomes the retirement benefit at full
+  retirement age, so it is ticked too. So is a Social Security survivor's
+  benefit larger than your own would be, because Social Security pays only the
+  larger of the two.
+
+The tick matters. Social Security already claimed and left unticked is counted
+twice: for a 67-year-old still earning $60,000 after tax who already draws
+$15,000 of it, with $500,000 saved, the answer is 18.4% ticked and 28.0%
+unticked. The Italian page's tick reads "È la mia pensione INPS di vecchiaia"
+and works the same way.
+
+A pension in the field that is already being paid, or fixed by an earlier
+job, is treated as riskless: it is divided by the benefit discount rates from
+today, from the age it starts, rather than carried on the same discount chain
+as the wage. An estimate of your own Social Security for a later claim is
+different: the rest of your career still moves it, so, ticked, it is
+discounted like the 40% estimate it replaces, on the wage rates until your
+wage stops. That
+departs from Choi's spreadsheet and from his paper (methodology section 7.6).
+A pension that does not rise with prices goes in at about four fifths of its
+amount.
+
+**The second adult** has the same field, start age and tick. On the American
+page they have one more tick: **They will claim the spousal benefit, half of
+your Social Security, instead of a pension of their own.** It is the switch in
+Choi's spreadsheet. From the year they turn 62, once you have claimed, half of
+your Social Security is added to your own and valued with it, on your discount
+chain: at the wage rate while it still depends on your future pay, and as
+riskless where it rests on Social Security you have already entered in your
+field and ticked. The tool then imputes them no pension of their own. Do not
+type the spousal benefit in their pension field instead: there it would be
+valued as riskless from today, though it moves with your career.
+
+For the default earner, 45 on $100,000 with $500,000 saved, and a partner of
+42 with no wage, the tick takes the answer from 37.3% to 38.4%. For a
+one-earner couple, with the earner aged 35 to 55 and the partner two or three
+years younger, it is worth about half a point to 3 points with five years of
+pay saved and under a point with fifteen. Nearer retirement it is worth more:
+4.7 points with five years of pay saved and 1.6 with fifteen, for an earner of
+60 and a partner of 58. These are on the data of 3 September 2026. The Italian
+page has no such tick, because the benefit is Social Security's.
+
+**Typing earnings year by year** replaces the wage and pension amounts above
+with what you type, one line per year to age 100. Keep a pension you already
+receive in its field as well: that is what tells the model that part of each
+typed benefit is certain. Typed only in the box, it is discounted on the same
+chain as the wage.
+
+**On the command line**, `recommend.py` asks for the same things, or takes
+them as flags: `--benefit`, `--benefit-start` and `--state-pension` for you;
+`--partner-age`, `--partner-wage`, `--partner-benefit`,
+`--partner-benefit-start` and `--partner-state-pension` for a second adult;
+and `--partner-spousal` for the spousal benefit. It runs the American variant.
 
 ## Expected stock market real return
 
@@ -156,7 +239,7 @@ counting. Retiring shares is exactly what makes earnings *per share* grow, so a
 buyback is already inside the growth term; adding it again as income counts it
 twice and overstates the expected return by the buyback yield. This tool made
 that mistake until September 2026, and correcting it moved the default
-household from 70% equities to 38%. Section 3.1 of the methodology works the
+household from 65% equities to 37%. Section 3.1 of the methodology works the
 arithmetic through on a single company, and reports a backtest against realised
 returns since 1910.
 
@@ -169,13 +252,13 @@ implied premium plus the real safe rate (7.05%, the outlier, embedding near-term
 forecasts and quoted against the wrong maturity), a regression of realised
 30-year returns on valuation (5.32%, R2 of 0.19 on about four independent
 periods), and an earnings anchor built the way AQR builds theirs, a cyclically
-adjusted earnings yield at a 50% payout plus 1.8% equilibrium growth (3.13% on
-29 September 2026). Section 3.1 of the methodology gives the full reasoning.
+adjusted earnings yield at a 50% payout plus 1.8% equilibrium growth (3.12%).
+Section 3.1 of the methodology gives the full reasoning.
 
 The choice matters more than any other in the tool: across the five estimators
 Table 5 of the methodology compares, from the cyclically adjusted earnings
 yield to Damodaran's premium, the recommendation for the default household
-runs from 19% to 100%.
+runs from 21% to 100%.
 
 ### Why the horizon of the regression matters
 
@@ -191,7 +274,7 @@ years to 0.24 at thirty, and today's stretched valuation therefore predicts:
 
 A lifetime model must use a long horizon. On the same data and the same day,
 the ten-year figure gives the default household 26% in equities and the
-thirty-year figure 78%. That gap is the horizon mismatch, not a finding.
+thirty-year figure 72%. That gap is the horizon mismatch, not a finding.
 
 ### Risk aversion: the guide's scale is not the paper's grid
 
@@ -231,7 +314,12 @@ annualised standard deviation of monthly CRSP log excess returns from 1926 to
 2024, and over the whole S&P 500 history daily, monthly and annual returns all
 give about that figure (18.9%, 18.5% and 19.0%). A trailing window of a few
 years moves the answer each time a crash enters or leaves it, with no change
-in the long-run risk the model is about.
+in the long-run risk the model is about. The Italian variant fixes its own
+figure the same way: 16.45%, the same estimator on MSCI All Country World in
+euro from January 2001 to August 2026, run from every day of the month and
+averaged, because over twenty-five years the day each month is cut on matters.
+Cut at month-end alone it gives 13.99%, the lowest of them all, since the 2008
+and 2020 crashes each fell across two month-ends.
 
 The intuition: +50% then −50% averages to zero, but leaves you down 25%. The
 arithmetic mean always sits above what money actually grows at, by roughly half
@@ -244,15 +332,17 @@ US large-cap equities' log excess return over cash, from their Capital Market
 Assumptions. The publication is free but arrives as an annual PDF, so it is
 compared by hand rather than fetched.
 
-The comparison is unusually clean, because AQR builds its equity forecast the
-way this tool does: a dividend yield, plus real growth in earnings per share,
-plus no repricing. Their 2026 edition puts US large caps at **3.9% real**, from
-a 1.3% yield and 2.7% growth, against this tool's 3.38% on 3 September 2026,
-from 1.10% and 2.29%. Most of the half point between them is growth: AQR
-starts from 25-year growth and shrinks it towards the global average,
-forecast GDP growth and an equilibrium rate, where this tool fits a
-hundred-year trend. Section 8.3 of the
-methodology sets the two side by side, with nine other firms.
+AQR's forecast has the same three terms as this tool's: a yield, real growth
+in earnings per share, and no repricing. Their 2026 edition puts US large caps
+at **3.9% real**, from what their Exhibit 3A calls a 1.3% combined payout yield
+and 2.7% combined growth, against this tool's 3.38% on 3 September 2026, from
+a 1.10% dividend yield and 2.29% growth. Each of their two terms averages two
+estimates, one built on the dividend yield and one on an earnings anchor, so
+their yield is not a dividend yield alone. Most of the half point between the
+totals is growth: AQR starts from 25-year growth and shrinks it towards the
+global average, forecast GDP growth and an equilibrium rate, where this tool
+fits a hundred-year trend. Section 8.3 of the methodology sets the two side by
+side, beside eight other published forecasts.
 
 Compare the total real return, as that section does, rather than a premium.
 AQR's premium is over cash and this tool's safe asset is a 30-year TIPS, and a
@@ -275,25 +365,31 @@ Choi fitted his approximation over **log** excess drifts of 2%, 3% and 4%, where
 
     pi = ln(1 + mu) - sigma^2 / 2 - ln(1 + r)
 
-An arithmetic premium is not that quantity: at 18.5% volatility the two differ
-by 1.71 points. At today's real rate of about 3%, an expected return below
-roughly 6.9% puts the log drift **below** the range the coefficients were fitted
-over, and the 30-year real rate sits above the 0% to 2% range fitted for the
-safe rate as well. Choi's own guide defaults, 5% and 2.5%, sit outside it too.
-The answer is then an extrapolation and should be read as indicative.
+An arithmetic premium is not that quantity: at 18.5% volatility and today's
+rates the two differ by 1.80 points, which is half the variance, 1.71, plus
+0.09 from taking logs. At today's real rate of about 3%, an expected return
+below roughly 6.9% puts the log drift **below** the range the coefficients
+were fitted over, and the 30-year real rate sits above the 0% to 2% range
+fitted for the safe rate as well. Choi's own guide defaults, 5% and 2.5%, sit
+outside it too. The answer is then an extrapolation.
 
 `update.py` says so every time it refreshes. The page shows the drift in its
-inputs table, Exhibit 5, but prints no warning beside the answer. Section 3.6
-of the methodology sets out what being outside the range affects, which is the
-value of future wages, and what it does not, which is the Merton share.
+inputs table, Exhibit 5, and mentions the range beside the risk question only
+when risk aversion is below 4, where it is out of range too. Section 3.6 of the
+methodology sets out what being outside the range affects, which is the value
+of future wages, and what it does not, which is the Merton share, and it
+measures the formula's error there.
 
 ## Real risk-free interest rate
 
 The return on the safe asset, above inflation. The guide suggests the **30-year
 TIPS yield**, which is a real yield directly and needs no inflation adjustment.
+The safe part of the answer means TIPS held to maturity, or a ladder of them,
+which is what the page names.
 
-The tool works before tax. If most of your bonds sit in a taxable account,
-the guide says to reduce the rate by your marginal income tax rate, which
+The tool works before tax. If most of your bonds sit in a taxable account, the
+guide suggests reducing the rate by your marginal income tax rate. The page
+does not, so in that case read its answer as low. The guide's rule also
 understates the tax: the yearly inflation increase in a TIPS principal is
 taxed as income too, in the year it occurs (IRS Publication 1212). What is
 left after tax is roughly `r(1 - t) - t * inflation`. At a 3% real yield, 2.5%

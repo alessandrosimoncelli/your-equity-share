@@ -21,10 +21,11 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 **For** money you have invested and do not need on any particular date, meant
 to last the rest of a life. Two variants share one model. The **United
 States** variant holds the S&P 500 against 30-year TIPS. The **Italian**
-variant holds a global equity fund against the euro real safe rate, for an
-Italian private-sector employee: Daminato and Padula's
-(2024) earnings process, estimated on the Bank of Italy's household survey,
-and the Italian Treasury's 66% pension. What neither variant changes is the
+variant holds a global equity fund against the euro real safe rate of AAA
+government bonds, for an Italian private-sector employee: Daminato and
+Padula's (2024) earnings process, estimated on the Bank of Italy's household
+survey, and the Italian Treasury's projected pension, 66% of final net pay
+without the TFR. What neither variant changes is the
 mortality table, American in both, because it sits inside the numerical
 solution Choi fitted his coefficients to. Section 11 of the Italian
 methodology lists what that leaves American.
@@ -57,8 +58,9 @@ It is built to be left alone:
   the schedule alive: GitHub switches off scheduled runs in a repository with
   no commits for sixty days.
 
-The tool shows the date of its data on its own face, and warns once it is more
-than 90 days old, which would mean the schedule has stopped.
+The tool shows the date of its data on its own face, and warns under the
+answer once the data are more than three weeks old, which would mean the
+weekly update has stopped.
 
 To get the latest figures on your own machine, `git pull`. To refresh by hand,
 for example in a copy that is not on GitHub, run both scripts, in this order,
@@ -88,7 +90,9 @@ Fetching...
       1.10% dividend yield plus 2.29% real earnings growth per share (100 year trend), no repricing
       Buybacks return a further 1.53% that this
       does not count as income, because per-share growth
-      already carries it.
+      already carries it. Counting it twice would add
+      1.53% to the estimate and roughly thirty
+      points to the default household's equity share.
 
   Cross-checks, not used. See section 3 of the methodology
   for why each is worse for a lifetime horizon.
@@ -126,12 +130,16 @@ Options:
 ```bash
 python update.py --dry-run    # show what would change, save nothing
 python update.py --fixed-return 0.05   # set the expected return by hand
-python update.py --force      # save even if a price series fails its checks
 ```
 
 If a provider is unreachable the script says so, leaves the file untouched, and
-exits non-zero. **The tool itself never touches the network**, so a slow or dead
-provider can never break a demonstration; it simply runs on the data it has.
+exits non-zero. It refuses the same way when Shiller's history is more than a
+year old, or older than the one already saved. That refusal also holds back
+the week's new TIPS yield, and on GitHub, where the two variants are kept
+together, the euro data too: a known limitation, recorded in section 2.4 of
+the further work. **The tool itself never touches the network**, so a slow or
+dead provider can never break a demonstration; it simply runs on the data it
+has.
 
 ## Why this approach
 
@@ -158,9 +166,11 @@ estimators does (section 3.1 of the methodology).
 
 These costs are measured inside the ranges Choi solved his model over. Today's
 inputs sit outside two of them: the 30-year real rate is above his 0% to 2%,
-and the excess drift below his 2% to 4%. Section 3.6 of the methodology has the
-detail, and the answer should be read as indicative until the approximation
-is checked there.
+and the excess drift below his 2% to 4%. Section 3.6 of the methodology
+measures the formula's error there against a direct solution of the full
+Cocco, Gomes and Maenhout model run for this project (not published), and
+sections 6 and 8.6 report where it is larger, among retirees with little
+saved.
 
 ## Status
 
@@ -192,9 +202,9 @@ Nothing is published unless the tests, the check of the JavaScript against the
 Python and the verifier have all passed first.
 
 `python tools/build_web.py` writes the same thing locally to `web/`: the tool,
-its model and its market data, about 75 KB, plus the three documents, about
-300 KB in all. The Italian page in `web/it/` is not a second copy of the tool.
-The build writes it from `src/web/index.html`, swapping the page's VARIANT
+its model and its market data, about 105 KB, and with the Italian page and the
+three documents about 500 KB in all. The Italian page in `web/it/` is not a
+second copy of the tool. The build writes it from `src/web/index.html`, swapping the page's VARIANT
 block (currency, number format, calibration) for the Italian one and
 translating the words with `src/web/it/translation.toml`. Every English
 fragment the table translates must still be on the page, exactly once, or the
@@ -208,9 +218,9 @@ The page runs `src/js/model.js`, a port of the model. **Python remains the
 reference implementation.** The two are held together by `tests/golden.json`,
 written by `tools/make_golden.py` and replayed through the port by
 `tools/check_golden.mjs`, which `pytest` also runs. Only the model crossed
-over: fetching, parsing, volatility, the expected-return estimators and the
-frozen spreadsheet baseline all stay in Python, because they run here and not
-in a reader's browser.
+over: fetching, parsing, the measurement of the Italian volatility, the
+expected-return estimators and the frozen spreadsheet baseline all stay in
+Python, because they run here and not in a reader's browser.
 
 Two earlier versions are gone. The first shipped Streamlit compiled to
 WebAssembly: faithful, and about thirty seconds to start, because the cost is
@@ -263,7 +273,10 @@ python -m http.server 8600 --directory web
 
 Then open http://localhost:8600. A self-assessment, five quick choices and a
 check set your risk aversion, and a slider for the expected return shows by
-dragging how much the answer depends on it. The
+dragging how much the answer depends on it. Each adult's pension takes the
+age it starts and a tick for Social Security, which then replaces the tool's
+estimate instead of adding to it, and a second adult can take the spousal
+benefit instead of a pension of their own (docs/inputs.md). The
 recommendation with its working, a sensitivity curve, the answer at every level
 of savings, and a box for typing your earnings year by year.
 
@@ -276,7 +289,19 @@ The same folder is what GitHub Pages serves. The build also packs it as
 python recommend.py                                          # asks you the inputs
 python recommend.py --age 45 --wage 100000 --wealth 500000   # or pass them
 python recommend.py --age 45 --wage 100000 --wealth 500000 --glide
+python recommend.py --age 67 --wage 60000 --wealth 500000 \
+                    --benefit 15000 --state-pension         # Social Security already drawn
 ```
+
+The pension flags are the page's inputs: `--benefit`, a year of it after tax;
+`--benefit-start`, the age it starts if it is not paid yet; and
+`--state-pension`, which says it is your Social Security, so it replaces the
+40% estimate instead of adding to it. A second adult has `--partner-age`,
+`--partner-wage`, `--partner-benefit`, `--partner-benefit-start` and
+`--partner-state-pension`, and `--partner-spousal` says they will claim half
+of your Social Security instead of a pension of their own. Asked
+interactively, the script puts the same questions. It runs the American
+variant.
 
 From Python:
 
@@ -294,6 +319,15 @@ result = recommend(
 result.equity_share          # the recommendation
 result.uncapped_share        # before the no-leverage cap
 result.human_capital         # present value of future earnings
+```
+
+A pension already paid, or one from a set age, is the third argument of
+`Person`, a year of it after tax:
+
+```python
+Person(67, 60_000, 15_000, benefit_is_state=True)   # Social Security already drawn
+Person(55, 80_000, 12_000, benefit_start=60)        # a company pension from 60
+Person(42, 0, claims_spousal=True)                  # a second adult on the spousal benefit
 ```
 
 The Italian variant runs the same way, before tax like the American one

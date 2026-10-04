@@ -361,6 +361,62 @@ def part_three(workbook: Path) -> None:
               f"realised {realised:.2f}%, estimated {estimate:.2f}%, "
               f"bias {estimate - realised:+.2f} over {len(group)} starts")
 
+    # --- Table 9 and the equation (6) example ------------------------------
+    # Both were computed on data ending in June 2023 while the rest of the
+    # document used the 2026 file, so they described a different vintage.
+    # Recomputed here on the file cut at June 2026, the end the document
+    # states, so a later vintage of the workbook cannot move them silently.
+    # Windows of 90, 100 and 110 years; end dates 0, 1, 2 and 3 years back.
+    # Each cell is the largest estimate less the smallest, in points.
+    print()
+
+    def point_to_point(s):
+        return (s[-1] / s[0]) ** (12.0 / (len(s) - 1)) - 1
+
+    def ten_year_ends(s):
+        return ((sum(s[-120:]) / 120) / (sum(s[:120]) / 120)) ** (12.0 / (len(s) - 120)) - 1
+
+    def log_trend(s):
+        return trend_growth(s, len(s))
+
+    def table9(series):
+        rows = []
+        for estimator in (point_to_point, ten_year_ends, log_trend):
+            windows = [estimator(series[-12 * years:]) for years in (90, 100, 110)]
+            ends = [estimator(series[:len(series) - 12 * back][-1200:])
+                    for back in range(4)]
+            rows.append(((max(windows) - min(windows)) * 100,
+                         (max(ends) - min(ends)) * 100))
+        return rows
+
+    dates = list(history.dates)
+    if "2026-06-01" not in dates or "2023-06-01" not in dates:
+        skip("Table 9 and the equation (6) example",
+             "the workbook does not run through June 2026")
+        return
+    upto = earnings[:dates.index("2026-06-01") + 1]
+    upto_2023 = earnings[:dates.index("2023-06-01") + 1]
+    t9 = re.search(r'id="t9">(.*?)</table>', doc_text(), re.S)
+    printed = re.findall(r'<td class="num">(?:<strong>)?([\d.]+)%',
+                         t9.group(1) if t9 else "")
+    got = ["%.2f" % v for row in table9(upto) for v in row]
+    check("Table 9, both columns, on the file to June 2026",
+          printed == got,
+          "window then end date, by estimator: %s" % ", ".join(got))
+    old = ["%.2f" % row[1] for row in table9(upto_2023)[:2]] + \
+          ["%.3f" % table9(upto_2023)[2][1]]
+    check("Table 9's end-date column on data ending in June 2023, as quoted",
+          in_doc("%s, %s and %s points" % (old[0], old[1], old[2].rstrip("0"))),
+          ", ".join(old))
+    window = upto[-1200:]
+    example = ("%.2f%%" % (point_to_point(window) * 100),
+               "$%.2f" % window[0], "$%.2f" % window[-1],
+               "%.2f%%" % (log_trend(window) * 100))
+    check("the equation (6) example, point to point against the trend",
+          in_doc("<strong>%s</strong> a year, from real earnings of %s in July 1926 "
+                 "and %s in June 2026" % example[:3], example[3]),
+          "%s from %s to %s, against a trend of %s" % example)
+
 
 # ---------------------------------------------------------------------------
 # The model-derived tables

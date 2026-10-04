@@ -376,14 +376,10 @@ class ShillerHistory:
 
         Preferred over the point-to-point rate. Both describe the same century,
         but a point-to-point rate is decided by two months and inherits
-        whatever the cycle was doing in each of them. Measured on this data:
-
-            varying the window 90 to 110 years   point to point 1.27%, trend 0.25%
-            moving the end date back 0 to 36mo   point to point 0.82%, trend 0.015%
-
-        The second line is the one that matters here. The published series runs
-        months behind, and with a trend estimate three years of lag costs about
-        a basis point, so the staleness stops being a problem worth solving.
+        whatever the cycle was doing in each of them. Table 9 of the American
+        methodology measures both on the current file: the trend moves far less
+        with the window, and the few months the published series runs behind
+        move it by about a basis point and a half.
 
         Ordinary least squares on log earnings against time, annualised.
         """

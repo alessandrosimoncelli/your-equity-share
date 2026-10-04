@@ -340,6 +340,7 @@ h4 {
   <li><a href="#s2-1"><span class="tno">2.1</span>The horizon audit of the peer table</a></li>
   <li><a href="#s2-2"><span class="tno">2.2</span>A better global growth series</a></li>
   <li><a href="#s2-3"><span class="tno">2.3</span>The American safe rate is extreme</a></li>
+  <li><a href="#s2-4"><span class="tno">2.4</span>A stale Shiller file holds back the safe rate</a></li>
   <li><a href="#s3"><span class="tno">3</span>Not on this list, and why</a></li>
 </ol>
 </nav>
@@ -353,8 +354,9 @@ methodology, which describes what the model <em>does</em> do.</p>
 recomputed by the tools named beside it. Equity shares are for the default
 household of the methodology: age 45, 1,500,000 of financial wealth, 100,000
 of salary, risk aversion 5, on the Italian configuration, which recommends
-<strong>75.2%</strong>, before tax as the model works (Italian methodology,
-section 8).</p>
+<strong>54.0%</strong>, before tax as the model works (Italian methodology,
+section 8). American figures are on the data of 3 September 2026, the
+American methodology's.</p>
 <hr class="titlerule">
 
 <p>This is the list of things the model deliberately does not do. It exists so
@@ -377,18 +379,21 @@ points of equity share unless the row says otherwise</caption>
 <tr><td>Shares rather than funds, loss offset</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Italian inflation rather than euro area</td><td>Italy</td><td class="num">not yet measured</td></tr>
 <tr><td>Currency hedging</td><td>Italy</td><td class="num">not yet measured</td></tr>
+<tr><td>Pension rate for a career steeper than average</td><td>Italy</td><td class="num">about 1 point</td></tr>
 <tr><td>Horizon audit of the peer table</td><td>both</td><td class="num">about 0.9 points of return</td></tr>
-<tr><td>Growth term inherited from the United States</td><td>Italy</td><td class="num">0.1 to 0.5 points of growth</td></tr>
+<tr><td>Growth term inherited from the United States</td><td>Italy</td><td class="num">0.10 to 1.48 points of growth, about 1.7 points of share for each 0.1</td></tr>
 <tr><td>American safe rate at a historical extreme</td><td>United States</td><td class="num">context, not a defect</td></tr>
+<tr><td>A stale Shiller file holds back the safe rate</td><td>both</td><td class="num">none today; about 1 point for each 0.1 the TIPS yield moves while it lasts</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">Computed on the current configuration. Five items have left
-this list: showing both expected returns on screen and putting both variants
-on one growth estimator, in September 2026; the Italian career and pension, on
-1 October; and Italian tax, measured and left out of the model, and the
-withholding tax, now taken off the dividend yield, on 2 October.</p>
+<p class="src">Computed on the snapshots the two methodologies were written
+with. Five items have left this list: showing both expected returns on screen
+and putting both variants on one growth estimator, in September 2026; the
+Italian career and pension, on 1 October; and Italian tax, measured and left
+out of the model, and the withholding tax, now taken off the dividend yield,
+on 2 October.</p>
 
 <h2 id="s1">1. The Italian variant</h2>
 
@@ -397,13 +402,13 @@ withholding tax, now taken off the dividend yield, on 2 October.</p>
 <p><strong>Decided on 2 October 2026.</strong> The Italian answer is before tax,
 as Choi's is. Italian law taxes the equity fund at 26% and a government bond
 fund at 12.5%, on the gain at sale, but a fund held for years is usually in
-gain when sold, 85% of the time at seven years and 98% at thirty, so the tax
+gain when sold, 81% of the time at seven years and 97% at thirty, so the tax
 takes a share of the risk as well as of the return. Taken through the law sale
 by sale (<code>tools/tax_check.py</code>), it lowers the right equity share by
-about a quarter for money sold at three years, by about an eighth at seven and
+about a quarter for money sold at three years, by about a ninth at seven and
 by under a tenth from twelve, and ignoring it costs under two basis points a
 year at three years and under half a basis point from seven. The variant had
-applied tax to the expected returns only, which cut the share by 17% to 32%:
+applied tax to the expected returns only, which cut the share by 15% to 28%:
 close to the law at three years, two to four times its cut from seven.
 Italian methodology, section 8.</p>
 
@@ -433,6 +438,13 @@ household choosing between a fund inside a pension wrapper and the same fund
 outside one is answering a different question from the one this model asks, and
 the deductibility in particular interacts with income rather than with wealth.</p>
 
+<p>What the page does already is count the balances at what they will pay
+out. Its savings hint asks for a pension fund, including TFR paid into one, at
+about nine tenths of its value, for the tax on the benefit, and for TFR left
+with the employer at about three quarters, for its separate tax. That is the
+tax on the way out, which belongs in the savings figure; the lower tax on the
+way through and the deduction are what this item would add.</p>
+
 <h3 id="s1-4">1.4 Shares rather than funds</h3>
 
 <p>Gains on funds are <em>redditi di capitale</em> and losses on the same funds
@@ -444,7 +456,7 @@ too, so there the losses do offset.</p>
 shares the downside as well as the upside, the Domar and Musgrave (1944)
 result. Section 8 of the Italian methodology measures the fund case, where
 losses do not offset, and finds the same thing in practice: a fund held for
-years is usually sold at a gain (85% of the time at seven years, 98% at
+years is usually sold at a gain (81% of the time at seven years, 97% at
 thirty), so the tax still takes a share of the swings. A household holding individual shares is in the offset regime, which
 the model does not represent either; tax is left out in both cases.</p>
 
@@ -452,20 +464,36 @@ the model does not represent either; tax is left out in both cases.</p>
 
 <p>The career and the pension are now Italian: Daminato and Padula's earnings
 process for private employees, estimated on the Bank of Italy's household
-survey, and the Italian Treasury's 66% replacement rate (Italian methodology,
-section 7). What remains American is inside Choi's coefficients: the 2019
-United States life table, and the three American earnings processes his
-discount rates were fitted on.</p>
+survey, and the Italian Treasury's 66% replacement rate. That rate is a share
+of final net pay without the TFR, and the page asks for the wage with the
+yearly TFR accrual in it, so the model imputes the same pension as 61.4% of
+that wage (Italian methodology, section 7.2). What remains American is inside
+Choi's coefficients: the 2019 United States life table, and the three American
+earnings processes his discount rates were fitted on.</p>
 
 <p>Making those Italian would mean refitting the coefficients on Italian data
 rather than substituting inputs, which is why it is not a configuration
 change.</p>
 
+<p>One part of the pension is measured and not coded. The Treasury's 66% is
+for a career whose pay keeps pace with average pay, and a contributory
+pension pays a career that rises faster less against its final wage: a career
+growing half a point a year faster takes the 2050 rate from 60.3% to 55.9% of
+gross pay (Ragioneria Generale dello Stato, 2025, Table 6.2.a). If
+the whole rise in Daminato and Padula's age profile were individual career
+growth, the rate would be about 50% rather than 61.4%, which lowers the answer
+by about 1 point for the default household and by 1 to 3 points for uncapped
+workers aged 40 to 50. That is the size if the whole slope is a career effect.
+How much of it is, the survey data cannot say precisely, which is why it is
+recorded here rather than coded.</p>
+
 <h3 id="s1-6">1.6 Italian inflation rather than euro area</h3>
 
-<p>The safe rate is deflated by euro area HICP. An Italian household's cost of
-living is Italian, and only BTP Italia tracks that, at five years and retail. So
-the deflator is approximate in a way an American's TIPS is not.</p>
+<p>The safe rate is the ECB's AAA 30-year par yield less the market break-even
+of the Bund&euro;i, so it is real against euro area inflation, HICP. An Italian
+household's cost of living is Italian, and only BTP Italia tracks that, at
+five years and retail. So the deflator is approximate in a way an American's
+TIPS is not.</p>
 
 <h3 id="s1-7">1.7 Currency</h3>
 
@@ -475,7 +503,10 @@ AQR's own stated assumption for reading local real returns in any currency. It
 is defensible over a lifetime because real exchange rates mean-revert over
 decades. It is not defensible over five years, and nothing in the model
 represents the real currency losses a euro investor in an unhedged world fund
-can experience for long stretches.</p>
+can experience for long stretches. The volatility, 16.45%, is measured on the
+index priced in euro (Italian methodology, section 6), so the currency's
+month-to-month swings are inside it; a decade-long drift of the real exchange
+rate is not.</p>
 
 <p>A hedged share class would remove that risk at a cost, and the model has no
 way to express the trade.</p>
@@ -483,14 +514,27 @@ way to express the trade.</p>
 <h3 id="s1-8">1.8 Withholding tax</h3>
 
 <p>Done on 2 October 2026. Withholding costs a world fund <strong>0.34
-points</strong> of dividend yield, taken at source before the dividend reaches
-the fund, so no Italian holder ever receives it. It is a property of the fund,
-like its price, and not the household's own tax: VWCE's net asset value is
-already net of what the fund pays, a little less than MSCI's net index deducts
-(Italian methodology, section 4.1). So the Italian expected return now uses the yield net of
-withholding, as MSCI's net index measures it. An American holding domestic
-stock suffers none, so the gross Shiller column is the same measurement there.
-Kept here so the numbering of the items after it does not move.</p>
+points</strong> of dividend yield as MSCI's net index measures it, taken at
+source before the dividend reaches the fund, so no Italian holder ever
+receives it. It is a property of the fund, like its price, and not the
+household's own tax. So the Italian expected return uses the yield net of
+withholding, 1.19% against 1.53% gross, which makes it 3.48% compound rather
+than 3.82%. An American holding domestic stock suffers none, so the gross
+Shiller column is the same measurement there, and the American page's
+world-index figure, for an American who holds a world fund, is built on the
+gross yield for the same reason. The Italian page tells a reader who enters a
+forecast quoted gross, such as AQR's, to take about 0.3 points off it.</p>
+
+<p>The fund itself pays less than MSCI deducts. MSCI applies the rate a fund
+pays without a tax treaty, 30% on American dividends, the largest single
+country's share of the index's, where VWCE, in Ireland, pays 15% on them. The
+fund's own costs take about as much back: over five to seven years to August
+2026 its price rose 0.06 to 0.07 points a year less than the net index
+(Italian methodology, section 4.1). So the Italian figure is in effect after
+the fund's costs, while the American one is before any fund's costs, as in
+Choi's guide. A 0.03% index fund would take the American answer for the
+default household from 20.7% to 20.4%. Kept here so the numbering of the items
+after it does not move.</p>
 
 <h3 id="s1-9">1.9 The Italian methodology</h3>
 
@@ -513,34 +557,47 @@ high is open: AQR's published pair implies a gap costing 0.10 points on the
 global rate, and the modern MSCI sample, twenty-three years in local currency,
 implies 1.48.</p>
 
-<p>What keeps it small is arithmetic rather than either estimate. The global
-index is about 64% American, so an American growth rate is only wrong on the
-other 36%: a full point of annual difference between the United States and
-everywhere else costs 0.36 points on the global rate. The honest reading is
-that the growth term is too high by <strong>a tenth to half a point</strong>.</p>
+<p>What limits it is arithmetic rather than either estimate. The global index
+is about 64% American, so an American growth rate is only wrong on the other
+36%: a full point of annual difference between the United States and
+everywhere else costs 0.36 points on the global rate. On the two usable
+estimates, the growth term is too high by between <strong>0.10
+points</strong>, on AQR's pair, and <strong>1.48</strong>, on MSCI from 2002 to
+2024, a short window of unusual American outperformance. This project reads it
+as a tenth to half a point, which is a judgement and not a measurement. Each
+0.1 point of growth is worth about 1.7 points of equity share for the default
+household, and 1.2 to 2.2 points for the other uncapped Italian households
+tried: half a point would take the default household from 54.0% to 45.6%, and
+the full 1.48 points to 29.6%.</p>
 
-<p>AQR's figure is a <em>lower</em> bound rather than a best guess, because they
-shrink cross-country growth differences 50% toward the global average by
-construction, so their tight gap is partly their own method.</p>
+<p>AQR's figure is a <em>lower</em> bound rather than a best guess, because
+their construction pulls each country's growth towards common figures: a
+cross-sectional shrink towards the global average, a shift a third of the way
+towards forecast GDP growth, and an average with an equilibrium rate of 1.8%
+shared by every country (American methodology, section 8.3). Their tight gap
+is partly their own method.</p>
 
-<p>One consolation, and it is real. The estimate this produces is 3.82%
-compound, already 0.38 points below AQR's own published 4.20% for the same
-index. Even at the top of the bias range the total lands under the number the
-firms publish, so the error does not tip the tool into optimism.</p>
+<p>The estimate is not optimistic against the firms either. Measured gross of
+withholding, as AQR measure theirs, it is 3.82% compound, 0.38 points below
+AQR's 4.20% for the same index at the end of 2025; the model uses it net of
+withholding, 3.48%. A firm that has the global data and needs no American
+substitute arrives higher, not lower.</p>
 
 <p>It is not corrected, because correcting it would mean inventing a haircut.
-Scaling by AQR's ratio looks principled and is not: they publish to one decimal,
-and propagating that rounding through the 64% weight puts the implied gap
-anywhere between 0.10 and 0.59 points. An adjustment less reliable than the
-thing it adjusts is not an improvement.</p>
+Scaling by AQR's ratio looks principled and is not: they publish to one
+decimal, so their 2.7% and 2.6% fit an American lead over the rest of the
+world anywhere from 0 to 0.56 points, which is 0 to 0.20 on the global rate.
+An adjustment less reliable than the thing it adjusts is not an
+improvement.</p>
 
 <h2 id="s2">2. Both variants</h2>
 
 <h3 id="s2-1">2.1 The horizon audit of the peer table</h3>
 
-<p>Table 26 of the methodology sets this model against ten firms. Every one of
-them forecasts seven to twenty years and this model prices a lifetime, so the
-comparison is not like for like. The correction is noted there in prose and
+<p>Table 26 of the methodology sets this model against nine published
+forecasts. Every one of them except Damodaran's, which is perpetual, runs five
+to twenty years, and this model prices a lifetime, so the comparison is not
+like for like. The correction is noted there in prose and
 never carried into the number: Vanguard, the only firm publishing both horizons
 off one model run, has its thirty-year forecast <strong>0.9 points</strong>
 above its ten-year.</p>
@@ -549,11 +606,12 @@ above its ten-year.</p>
 
 <p>Both variants currently use one number, the hundred-year trend through
 Shiller, and for the Italian one that is a United States growth rate standing in
-for a global one. It is the largest borrowed thing left in the model. AQR's own
-figures put the gap at a tenth of a point, 2.7% for United States large cap
-against 2.6% for Global All Country, and our trend sits 0.31 points below their
-global figure, so the error is small and its sign is known. It is still a
-substitution.</p>
+for a global one. It is the largest borrowed thing left in the model. AQR's
+pair, 2.7% for United States large cap against 2.6% for Global All Country,
+puts its cost at a tenth of a point on the global rate, but their construction
+pulls country figures together, so that is a lower bound; the modern MSCI
+sample puts it at 1.48 points (section 1.10). Our trend sits 0.31 points below
+their global figure. The sign of the error is known and its size is not.</p>
 
 <p><code>tools/global_growth.py</code> is the record of trying to remove it and
 failing. Rebuilding global real dividend growth from free long-horizon data
@@ -609,9 +667,9 @@ already in hand swing 2.37 points across start dates.</p>
 <p>So the honest statement of the position is not that an American series is
 being used because it is American. <strong>It is being used because it is the
 only equity earnings series anywhere that is long enough for a long-horizon
-trend</strong>, and the substitution it forces is one whose size is known: AQR,
-who do have the global data, publish 2.7% for United States large cap against
-2.6% for Global All Country.</p>
+trend</strong>, and the substitution it forces is one whose direction is known
+and whose size is bounded only loosely, between 0.10 and 1.48 points of growth
+(section 1.10).</p>
 
 <p>Two routes could still change that. A vendor opening a global fundamental
 history back to 1970 or earlier, which MSCI could do since their index starts
@@ -628,21 +686,47 @@ single largest thing driving the American answer and nothing on the page says
 so.</p>
 
 <p>FRED's 30-year TIPS yield was <strong>2.96%</strong> on 3 September 2026.
-Across its own history, 4,138 daily observations from February 2010, that
-series had a minimum of &minus;0.59%, a median of <strong>1.01%</strong> and a
-maximum of 3.06%, so the day sat at the <strong>99.6th percentile</strong>. On
-28 September it set a new record, 3.28%.</p>
+Across its own history, 4,138 daily observations from February 2010, when the
+series begins, it had a minimum of &minus;0.59%, a median of
+<strong>1.01%</strong> and a maximum of 3.06%, so the day sat at the
+<strong>99.6th percentile</strong>. On 28 September it set a record for the
+series, 3.28%. Long TIPS paid more before the series began, around 2000, and
+for a few days in late 2008, so the record is the series' and not the
+asset's.</p>
 
 <p>So the American variant recommends 21% equities to a 45-year-old on $100,000
 with $1.5 million saved partly because its safe asset is paying close to the
-most it ever has. The model is right to use the rate the market
+most it has since 2010. The model is right to use the rate the market
 offers today, and section 3.3 argues that case at length. But a reader seeing
-21% should know that the number is being held down by a real risk-free rate at
-or near its record, and that if that rate returns toward its own median the answer rises
-steeply.</p>
+21% should know that the number is being held down by a real risk-free rate
+at the top of its recent range. Each tenth of a point the rate falls adds
+about a point to that household's answer, and the series' median of 1.01%
+comes from a decade of low real rates, so it is no forecast of where the rate
+is going.</p>
 
 <p>Nothing needs fixing. What is missing is the sentence saying it, on the page
 rather than only here.</p>
+
+<h3 id="s2-4">2.4 A stale Shiller file holds back the safe rate</h3>
+
+<p>A known limitation of the weekly refresh, recorded before it has ever
+happened. <code>update.py</code> refuses to save when Shiller's history is
+more than twelve months old, or older than the one already saved, because a
+dividend yield that old saved under today's date would be worse than keeping
+last week's figures. The refusal stops the whole American refresh, so the
+30-year TIPS yield is not updated that week either, and because the two
+variants are refreshed together or not at all, the euro safe rate waits too.
+Every week the history stays stale, both pages keep the safe rates of the last
+good week.</p>
+
+<p>What it costs is the safe rate's own movement while it lasts. On the
+American snapshot each tenth of a point of TIPS yield moves the default
+household by about 1 point of equity share, and the page's own default, 45 on
+$100,000 with $500,000 saved, by about 2. The third of a point the yield rose
+between 3 and 29 September 2026 is worth 3.4 points to the first and 6.4 to
+the second. Nothing binds today: the history runs to June 2026. The fix is to
+refuse only the expected-return fields, keep last week's, and still write the
+new safe rate.</p>
 
 <h2 id="s3">3. Not on this list, and why</h2>
 
@@ -653,10 +737,14 @@ deferred, and they are recorded here so they do not come back as suggestions.</p
 return or the safe rate. Choi does not use them: his stated rationale for the 5%
 default is current valuation ratios, held constant, with growth at its long-run
 historical average, which is the building block the model implements. The
-backtest rejects them: his flat 5% scores worse than every conditional estimator
-at every horizon. And the literature rejects them, most directly in Fama and
-French (2002), who show that estimates from dividend and earnings growth are far
-more precise than estimates from average returns, and that the high realised
+backtest leans the same way without settling it: a flat 5%, the one constant
+in Table 7 of the methodology, has a larger error than the estimator used here
+at every horizon, by 0.3 to 0.5 points of root mean square error, though at
+thirty years it beats the two earnings yields, and three independent
+thirty-year windows cannot separate figures that close. And the literature
+rejects them, most directly in Fama and French (2002), who show that estimates
+from dividend and earnings growth are far more precise than estimates from
+average returns, and that the high realised
 average of the second half of the twentieth century came from an unexpected
 decline in discount rates, which is a one-off capital gain rather than a
 repeatable expected return.</p>

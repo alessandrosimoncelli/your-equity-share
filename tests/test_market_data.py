@@ -393,6 +393,34 @@ def test_both_failing_names_both(monkeypatch) -> None:
         update.fetch_real_risk_free(date(2026, 9, 30))
 
 
+# --- the live config: identities, never market states ----------------------
+#
+# The snapshot's identities hold on the weekly file too. None of these is a
+# state of the market: each is a relation the refresh itself must respect.
+
+@pytest.mark.parametrize("name", ["market_data.toml", "snapshot.toml"])
+def test_the_american_file_respects_its_own_construction(name) -> None:
+    from your_equity_share.expected_return import (
+        CALIBRATION_VOLATILITY, arithmetic_from_compound)
+
+    data = load_market_data(Path(__file__).resolve().parents[1] / "variants" / "us" / name)
+    p = data.provenance
+    compound = float(p["expected_return_compound"])
+    assert data.stock_volatility == CALIBRATION_VOLATILITY
+    assert data.expected_stock_real_return == pytest.approx(
+        arithmetic_from_compound(compound, data.stock_volatility), abs=5e-6)
+    assert p["expected_return_estimates"].startswith("building blocks %.4f (used)" % compound)
+    assert compound == pytest.approx(float(p["dividend_yield"]) + float(p["real_growth"]), abs=5e-6)
+
+
+@pytest.mark.parametrize("name", ["market_data.toml", "snapshot.toml"])
+def test_both_variants_use_one_growth_term(name) -> None:
+    root = Path(__file__).resolve().parents[1] / "variants"
+    us = load_market_data(root / "us" / name).provenance
+    it = load_market_data(root / "it" / name).provenance
+    assert float(us["real_growth"]) == pytest.approx(float(it["real_growth"]), abs=5e-6)
+
+
 # --- the live config: structure only ---------------------------------------
 #
 # variants/us/market_data.toml is rewritten every time `python update.py` runs, so

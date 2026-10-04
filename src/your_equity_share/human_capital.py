@@ -95,11 +95,14 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 # The Italian variant: an Italian private-sector employee's career and pension.
 #
 # THE PENSION. Choi's equation (12) takes the replacement rate as a regressor,
-# fitted over 0.4, 0.6 and 0.8, so Italy's 66% sits inside the grid. It is the
-# Italian Treasury's projected net replacement rate for a private employee
-# retiring in 2050 at 66 years and 2 months with 38 years of contributions:
-# Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, base
-# case. The model retires everyone at 67, where Choi fitted his coefficients,
+# fitted over 0.4, 0.6 and 0.8, so Italy's rate sits inside the grid. It starts
+# from the Italian Treasury's projected net replacement rate for a private
+# employee retiring in 2050 at 66 years and 2 months with 38 years of
+# contributions, 66%: Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
+# Table 6.3.a, base case. That is a share of the final net pay WITHOUT the
+# TFR, and the page asks for the wage with the yearly TFR accrual added, about
+# 7.5% of net pay after its separate tax. On that base the same pension is
+# 0.66 / 1.075 = 61.4% of the wage the model projects. The model retires everyone at 67, where Choi fitted his coefficients,
 # and today's 45-year-old reaches 67 in 2048, close to that row; the table's other cases near
 # 67 give 63% to 64%, and its old-age case at 69 gives 73%. It replaced the
 # OECD's 79% in October 2026, a figure for 48 years of contributions ending at
@@ -132,7 +135,7 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 ITALY_CALIBRATION = Calibration(
     permanent_shock_volatility=math.sqrt(0.015156),
     temporary_shock_volatility=math.sqrt(0.023609),
-    benefit_replacement_rate=0.66,
+    benefit_replacement_rate=0.614,
     age_profile=(-0.001022, 0.000613, -0.000006),
 )
 
@@ -286,11 +289,26 @@ class EarningsYear:
 class Person:
     """One adult in the household.
 
-    `current_benefit` is a pension already being paid, a year of it after tax:
-    a retiree's, or one drawn while still working (an earlier career's, a
-    survivor's, a disability pension). It is paid every year from now. The
-    retirement benefit for the person's own wages is imputed from the final
-    wage and added once the wages stop.
+    `current_benefit` is a pension, a year of it after tax: one being paid now
+    (a retiree's, or one drawn while still working: an earlier career's, a
+    survivor's, a disability pension) or one that starts at `benefit_start`.
+    Once its amount is fixed it is riskless, and it is valued on the benefit
+    rates from today: that is a pension already being paid, and one from an
+    earlier job. A state pension entered as an estimate for a later start is
+    not fixed yet: it still depends on the pay to come, like the imputed
+    pension it replaces, and it is valued the same way.
+
+    The pension the person's own work will pay is imputed from the final wage
+    and paid from the first year without wages, on top of `current_benefit`,
+    unless `benefit_is_state` says that pension IS this one: Social Security
+    already claimed or estimated, or an Italian pension that becomes the
+    old-age one. Then it replaces the imputed pension, as the current benefit
+    does in Choi's spreadsheet, and nothing is counted twice.
+
+    `claims_spousal` marks the second adult of an American couple who will
+    claim half of the first adult's Social Security instead of a pension of
+    their own, Choi's spreadsheet switch; recommend() pays it on the first
+    adult's discount chain, because it moves with that adult's career.
     """
 
     current_age: int
@@ -298,6 +316,9 @@ class Person:
     current_benefit: float = 0.0
     wages: dict[int, float] | None = field(default=None)
     benefits: dict[int, float] | None = field(default=None)
+    benefit_start: int | None = None
+    benefit_is_state: bool = False
+    claims_spousal: bool = False
 
     def __post_init__(self) -> None:
         if not 20 <= self.current_age <= 99:
@@ -307,6 +328,25 @@ class Person:
             )
         if self.current_wage < 0 or self.current_benefit < 0:
             raise ValueError("wages and benefits cannot be negative")
+        if self.benefit_start is not None and self.benefit_start > FINAL_AGE:
+            raise ValueError(f"a pension starting at {self.benefit_start} is never paid")
+
+    @property
+    def pension_start(self) -> int:
+        """The first age at which `current_benefit` is paid."""
+        start = self.current_age + 1
+        return start if self.benefit_start is None else max(start, self.benefit_start)
+
+    def pension_paid(self, age: int) -> float:
+        """The pension in `current_benefit` paid at `age`, zero before it starts."""
+        return self.current_benefit if age >= self.pension_start else 0.0
+
+    @property
+    def pension_is_certain(self) -> bool:
+        """Riskless: already being paid, or not the state pension (a fixed
+        pension from an earlier job). A state pension that starts later is an
+        estimate that the rest of the career can still move."""
+        return not self.benefit_is_state or self.pension_start <= self.current_age + 1
 
 
 def project_earnings(
@@ -315,47 +355,42 @@ def project_earnings(
     """Wages and benefits for every year from next year to age 100.
 
     Uses whatever the person supplied year by year, and imputes the rest. A
-    pension already being paid continues every year. The retirement benefit
+    fixed pension is paid every year from its start. The retirement benefit
     for the person's own career is a fixed share of the final wage, paid from
-    the first year without wages onward, which matches the guide's rule of
-    thumb of 40% of the last after-tax wage; someone with no wages ahead has
-    no career benefit to impute.
+    the year after the last wage onward, which matches the guide's rule of
+    thumb of 40% of the last after-tax wage; a year without wages before work
+    ends (a break typed year by year) pays none of it. A retiree has no career
+    benefit to impute, and a pension marked as the state one replaces it.
     """
-    years: list[EarningsYear] = []
-    final_wage = 0.0
+    ages = range(person.current_age + 1, FINAL_AGE + 1)
+    wages = {
+        age: (person.wages[age] if person.wages is not None and age in person.wages
+              else imputed_wage(age, person.current_age, person.current_wage, calibration))
+        for age in ages
+    }
+    last_work = max((age for age in ages if wages[age] > 0), default=None)
+
+    # Fixed once, off the wage in the last year of work. With no wage left to
+    # project (someone of 66 or more still earning) today's wage is the last
+    # one; a retiree has none. A pension marked as the state one replaces it,
+    # and a partner who claims the spousal benefit has none of their own.
     career_benefit = 0.0
+    if not (person.benefit_is_state or person.claims_spousal):
+        base = wages[last_work] if last_work is not None else person.current_wage
+        career_benefit = base * calibration.benefit_replacement_rate
+        if calibration.benefit_cap is not None:
+            career_benefit = min(career_benefit, calibration.benefit_cap)
 
-    for age in range(person.current_age + 1, FINAL_AGE + 1):
-        if person.wages is not None and age in person.wages:
-            wage = person.wages[age]
-        else:
-            wage = imputed_wage(age, person.current_age, person.current_wage, calibration)
-
+    years: list[EarningsYear] = []
+    for age in ages:
+        paid = person.pension_paid(age)
         if person.benefits is not None and age in person.benefits:
             benefit = person.benefits[age]
-        elif wage > 0:
-            benefit = person.current_benefit
+        elif last_work is not None and age <= last_work:
+            benefit = paid
         else:
-            # First year without wages: fix the career benefit off the last
-            # wage earned, then hold it for life, on top of any pension
-            # already being paid. With no wage left to project (someone of 66
-            # or more still earning) today's wage is the last one, unless a
-            # pension is already being paid, which then is that career's.
-            if career_benefit == 0.0:
-                if final_wage > 0:
-                    base = final_wage
-                elif person.current_benefit == 0:
-                    base = person.current_wage
-                else:
-                    base = 0.0
-                career_benefit = base * calibration.benefit_replacement_rate
-                if calibration.benefit_cap is not None:
-                    career_benefit = min(career_benefit, calibration.benefit_cap)
-            benefit = person.current_benefit + career_benefit
-
-        if wage > 0:
-            final_wage = wage
-        years.append(EarningsYear(age=age, wage=wage, benefit=benefit))
+            benefit = paid + career_benefit
+        years.append(EarningsYear(age=age, wage=wages[age], benefit=benefit))
 
     return years
 
@@ -367,6 +402,7 @@ def human_capital(
     real_risk_free: float,
     calibration: Calibration = CGM_CALIBRATION,
     volatility: float | None = None,
+    spousal_from_age: int | None = None,
 ) -> float:
     """Present value today of one person's future wages and benefits.
 
@@ -376,10 +412,18 @@ def human_capital(
     Choi's retirement threshold; a year without wages before work ends (a
     break typed year by year) stays on the wage rate.
 
-    A pension already being paid while the person still works is the one
-    stream Choi's model does not have. It is riskless, so it is divided by the
-    benefit rates from today rather than carried on the wage chain. For a
-    retiree, whose whole path is on the benefit rate, the two are the same.
+    A certain pension, already being paid or fixed by an earlier job, is
+    riskless, so it is divided by the benefit rates from today rather than
+    carried on the wage chain. Choi's income process counts such transfers as
+    labour income (his footnote 5), which would put them on the wage rate;
+    the American methodology's Table 21 measures the difference. A state
+    pension entered as an estimate rides the chain, like the imputed one. For
+    a retiree, whose whole path is on the benefit rate, the two are the same.
+
+    `spousal_from_age` adds, from that age of this person's, half of this
+    person's state pension, paid to the other adult (Choi's spousal switch):
+    on this person's chain where it rests on the imputed pension, and on the
+    benefit rates where it rests on a state pension already fixed.
     """
     years = project_earnings(person, calibration)
     last_work = max((y.age for y in years if y.wage > 0), default=0)
@@ -402,7 +446,11 @@ def human_capital(
         safe_chain *= 1.0 + benefit_rate
         # Whether or not the year was typed: the page passes its prefilled
         # path as typed as soon as the year-by-year box is ticked, and a
-        # pension already being paid is riskless either way.
-        pension = min(person.current_benefit, year.benefit)
+        # certain pension is riskless either way. An estimate rides the chain.
+        paid = person.pension_paid(year.age) if person.pension_is_certain else 0.0
+        pension = min(paid, year.benefit)
         total += (year.income - pension) / chain + pension / safe_chain
+        if spousal_from_age is not None and year.age >= spousal_from_age:
+            fixed = pension if person.benefit_is_state else 0.0
+            total += 0.5 * (year.benefit - pension) / chain + 0.5 * fixed / safe_chain
     return total

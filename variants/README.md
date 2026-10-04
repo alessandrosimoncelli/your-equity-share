@@ -40,7 +40,7 @@ move with the market while the document stays true to the day it describes.
 
 That is not laziness about copying files. It is the property several rounds of
 work were spent establishing: **both variants use the same estimator, so the
-gap between a 21% American answer and a 65% Italian one for the same household
+gap between a 21% American answer and a 54% Italian one for the same household
 (45, 100,000 a year after tax, 1.5 million saved, risk aversion 5), both before
 tax and on the documents' data, is the country rather than the method.** Both take the
 dividend yield from their own index, both take real growth in earnings per
@@ -52,17 +52,24 @@ Duplicate the model into two folders and that guarantee is gone within a month.
 The two would be edited on different days, and every later comparison between
 them would silently mix a country difference with a code difference.
 
+One difference of basis is left, and it is small. The Italian yield is net of
+the withholding tax a world fund suffers abroad, as MSCI's net index measures
+it, and that index tracks what the fund delivered after its own costs. The
+American figure is before any fund's costs, as in Choi's guide. A 0.03% index
+fund would take the American answer for that household from 20.7% to 20.4%.
+
 ## What each variant does differ in, and where it is argued
 
 |  | United States | Italy |
 |---|---|---|
 | equity sleeve | S&P 500 | FTSE All-World |
-| dividend yield | Shiller, trailing over today's price | MSCI ACWI in euro, same construction |
+| dividend yield | Shiller, trailing over today's price | MSCI ACWI in euro, net of the withholding the fund suffers, same construction |
 | real growth | 100-year Shiller trend | the same number, and `us_vs_global.py` measures what that substitution costs |
-| safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30 | ECB AAA 30-year curve less the market break-even |
-| volatility | Choi's 18.5%, CRSP monthly 1926 to 2024, fixed | 13.99%, MSCI ACWI in euro monthly 2000 to 2026, fixed |
+| safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30 | ECB AAA 30-year par yield, annualised, less the market break-even of the Bund€i |
+| volatility | Choi's 18.5%, CRSP monthly 1926 to 2024, fixed | 16.45%, MSCI ACWI in euro, monthly log returns 2001 to 2026 from every day of the month, averaged and fixed (`tools/italy_volatility.py`) |
 | earnings | an American college graduate, Cocco, Gomes and Maenhout | an Italian private-sector employee, Daminato and Padula (2024) |
-| pension | 40% replacement | 66%, the Italian Treasury's projection for retiring near 67 |
+| pension | 40% of the final wage, up to Social Security's maximum of $39,859 a year after tax | 61.4% of the final wage with the TFR, which is the Italian Treasury's 66% of final net pay without it, projected for retiring near 67 |
+| spousal benefit | Choi's switch: half of the earner's Social Security, from the partner's 62 | none, as the switch is Social Security's |
 | tax | not modelled, as in Choi | not modelled either: measured in section 8 of the Italian methodology, `tools/tax_check.py` |
 
 ## Refreshing

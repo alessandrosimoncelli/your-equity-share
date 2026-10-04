@@ -177,11 +177,15 @@ def disagreement_cases() -> list[dict]:
 
 
 def _person_payload(p: Person) -> dict:
-    return {
+    payload = {
         "current_age": p.current_age,
         "current_wage": p.current_wage,
         "current_benefit": p.current_benefit,
     }
+    if p.benefit_start is not None or p.benefit_is_state or p.claims_spousal:
+        payload.update(benefit_start=p.benefit_start, benefit_is_state=p.benefit_is_state,
+                       claims_spousal=p.claims_spousal)
+    return payload
 
 
 def earnings_cases() -> list[dict]:
@@ -239,6 +243,17 @@ def pension_path_cases() -> list[dict]:
         Person(45, 60_000.0, 0.0, wages=retire_early),
         Person(60, 0.0, 0.0, benefits={a: 18_000.0 for a in range(67, 101)}),
         Person(75, 0.0, 20_000.0),
+        # A fixed pension from a later age, a state pension that replaces the
+        # imputed one, and both together with a typed path.
+        Person(50, 80_000.0, 20_000.0, benefit_start=60),
+        Person(63, 80_000.0, 25_000.0, benefit_is_state=True),
+        Person(55, 70_000.0, 30_000.0, benefit_start=70, benefit_is_state=True),
+        Person(67, 40_000.0, 15_000.0),
+        Person(45, 60_000.0, 12_000.0, wages=retire_early, benefits=later_pension,
+               benefit_start=50),
+        # A two-year break typed mid-career: no pension during it, and the
+        # pension from 67 set off the wage at 66.
+        Person(45, 60_000.0, 0.0, wages={50: 0.0, 51: 0.0}),
     ]
     cases = []
     for person in people:
@@ -342,31 +357,37 @@ def recommend_cases() -> list[dict]:
         ((55, 55), (150_000.0, 150_000.0)),
     ]:
         for gamma in [2.0, 5.0, 8.0]:
-            adults = [Person(ages[0], wages[0]), Person(ages[1], wages[1])]
-            household = Household(750_000.0, adults, gamma)
-            r = recommend(household, 0.0673, 0.0298, 0.1719)
-            cases.append(
-                {
-                    "household": {
-                        "investable_net_worth": 750_000.0,
-                        "adults": [_person_payload(a) for a in adults],
-                        "risk_aversion": gamma,
-                    },
-                    "args": [0.0673, 0.0298, 0.1719],
-                    "expect": {
-                        "equity_share": r.equity_share,
-                        "merton_share": r.merton_share,
-                        "human_capital": r.human_capital,
-                        "financial_wealth": r.financial_wealth,
-                        "uncapped_share": r.uncapped_share,
-                        "human_capital_ratio": r.human_capital_ratio,
-                        "is_capped": r.is_capped,
-                        "bond_share": r.bond_share,
-                        "equity_dollars": r.equity_dollars,
-                        "per_adult_human_capital": list(r.per_adult_human_capital),
-                    },
-                }
-            )
+            for spousal in (False, True):
+                # Choi's spousal switch: the second adult claims half of the
+                # first adult's Social Security instead of a pension of their own.
+                if spousal and wages[1] > 0:
+                    continue
+                adults = [Person(ages[0], wages[0]),
+                          Person(ages[1], wages[1], claims_spousal=spousal)]
+                household = Household(750_000.0, adults, gamma)
+                r = recommend(household, 0.0673, 0.0298, 0.1719)
+                cases.append(
+                    {
+                        "household": {
+                            "investable_net_worth": 750_000.0,
+                            "adults": [_person_payload(a) for a in adults],
+                            "risk_aversion": gamma,
+                        },
+                        "args": [0.0673, 0.0298, 0.1719],
+                        "expect": {
+                            "equity_share": r.equity_share,
+                            "merton_share": r.merton_share,
+                            "human_capital": r.human_capital,
+                            "financial_wealth": r.financial_wealth,
+                            "uncapped_share": r.uncapped_share,
+                            "human_capital_ratio": r.human_capital_ratio,
+                            "is_capped": r.is_capped,
+                            "bond_share": r.bond_share,
+                            "equity_dollars": r.equity_dollars,
+                            "per_adult_human_capital": list(r.per_adult_human_capital),
+                        },
+                    }
+                )
     return cases
 
 

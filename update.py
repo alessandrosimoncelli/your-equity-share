@@ -32,6 +32,7 @@ slow or unreachable provider can never break a demonstration.
 from __future__ import annotations
 
 import argparse
+import http.client
 import re
 import sys
 import urllib.error
@@ -154,6 +155,10 @@ def _get(url: str, timeout: float = TIMEOUT_SECONDS) -> bytes:
         raise DataUnavailable(f"could not reach {url}: {exc.reason}") from exc
     except TimeoutError as exc:
         raise DataUnavailable(f"timed out after {timeout:g}s: {url}") from exc
+    except (http.client.HTTPException, OSError) as exc:
+        # A body cut off while being read (IncompleteRead, a reset
+        # connection) is a source not answering like any other.
+        raise DataUnavailable(f"could not read {url}: {exc}") from exc
 
 
 def fetch_real_risk_free(today: date | None = None) -> tuple[date, float, str]:
@@ -286,6 +291,15 @@ def render_config(**f) -> str:
                 f'expected_return_estimates = "{f["estimate_summary"]}"',
             ]
             if f.get("estimates")
+            else []
+        ),
+        # The two building blocks as numbers, so a test can check that the
+        # compound return is their sum and that the Italian file uses the same
+        # growth term.
+        *(
+            [f"dividend_yield = {f['dividend_yield']:.6f}",
+             f"real_growth = {f['real_growth']:.6f}"]
+            if f["method"] == "building blocks" and f.get("dividend_yield") is not None
             else []
         ),
         # The vintage of the long history behind two of the three estimators.
@@ -492,8 +506,6 @@ def main(argv: list[str]) -> int:
                              "Choi's guide defaults to 0.05")
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH,
                         help=argparse.SUPPRESS)
-    parser.add_argument("--force", action="store_true",
-                        help="save even if a price series fails its checks")
     args = parser.parse_args(argv[1:])
 
     if args.fixed_return is not None and not -0.05 < args.fixed_return < 0.30:
@@ -621,7 +633,7 @@ def main(argv: list[str]) -> int:
                 if months > 6:
                     print("      Both terms come from this month of that file.")
                     print("      Growth is the trend through a century, where")
-                    print("      three years of lag moves it about a basis")
+                    print("      a few months of lag move it about a basis")
                     print("      point. The yield divides that month's dividend")
                     print("      by that month's price, so it is as old as the")
                     print("      file: after a sharp market move it is out of")
@@ -635,6 +647,13 @@ def main(argv: list[str]) -> int:
                         f"Shiller's history ends {history_as_of}, {months} "
                         f"months ago. Refusing to save a yield that old under "
                         f"today's date.")
+                stored = (existing.provenance or {}).get("history_as_of")
+                if stored and str(history_as_of) < str(stored):
+                    # A source rolled back to an older vintage: never save a
+                    # history older than the one already published.
+                    raise DataUnavailable(
+                        f"Shiller's history ends {history_as_of}, before the "
+                        f"{stored} already saved. Refusing to go back.")
 
             print()
             compound = chosen.value
