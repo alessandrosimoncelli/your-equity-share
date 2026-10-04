@@ -8,7 +8,6 @@ watching the suite stay green.
 
 from __future__ import annotations
 
-import math
 import sys
 from pathlib import Path
 
@@ -17,32 +16,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from your_equity_share import statistics as stats  # noqa: E402
 from your_equity_share.providers import ShillerHistory  # noqa: E402
-
-
-def test_volatility_is_annualised_by_the_conventional_trading_year() -> None:
-    """252 could be set to 200 and nothing failed.
-
-    Volatility enters the recommendation squared, so a fifth off the
-    annualisation is worth about half the equity share. The number is a
-    convention rather than a measurement, which is exactly why it needs
-    pinning: nothing about the data would object.
-    """
-    assert stats.TRADING_DAYS_PER_YEAR == 252
-
-
-def test_annualising_scales_by_the_square_root_of_the_period_count() -> None:
-    """The other half of the same constant: that it enters under a square root.
-
-    A series with a known daily standard deviation must come back as that
-    figure times sqrt(252), and doubling the period count must multiply the
-    answer by sqrt(2), not by 2.
-    """
-    daily = [0.01, -0.01] * 500
-    one = stats.annualised_volatility(daily, periods_per_year=252)
-    two = stats.annualised_volatility(daily, periods_per_year=504)
-    assert two / one == pytest.approx(math.sqrt(2.0), rel=1e-12)
 
 
 def test_the_dividend_yield_is_the_latest_month_not_an_earlier_one() -> None:

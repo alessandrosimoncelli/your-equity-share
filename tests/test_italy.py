@@ -112,7 +112,6 @@ def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
 # --- the market data --------------------------------------------------------
 
 def test_the_equity_sleeve_is_global_and_the_configuration_says_so(italy) -> None:
-    assert italy.market_ticker != "SPY"
     assert "All Country World" in italy.provenance.get("equity_index", "")
 
 

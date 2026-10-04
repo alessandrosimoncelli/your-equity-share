@@ -136,7 +136,9 @@ KNOWN_VARIANTS = {"us"}
 FRED_SHORT_NOMINAL = "DTB3"
 FRED_BREAKEVEN = "T10YIE"
 
-# The price endpoint rejects the default urllib agent string.
+# Sent with every request. It was added because the price endpoint, since
+# removed, rejected the default urllib agent string, and the sources left have
+# not been tried without it.
 USER_AGENT = "Mozilla/5.0 (compatible; your-equity-share/0.1; research tool)"
 TIMEOUT_SECONDS = 40
 # For downloads that only feed a printed comparison, so a provider that does
@@ -272,7 +274,6 @@ def render_config(**f) -> str:
         "# 1926 to July 2024 (paper, section 1.2). Not re-measured: a trailing",
         "# window moves the answer whenever a crash enters or leaves it.",
         f"stock_volatility = {f['volatility']:.6f}",
-        f'market_ticker = "{f["ticker"]}"',
         "",
         f"as_of = {f['as_of'].isoformat()}",
         "",
@@ -720,7 +721,6 @@ def main(argv: list[str]) -> int:
         real_risk_free=real_rf,
         real_risk_free_source=rf_source.replace('"', "'"),
         volatility=vol,
-        ticker=existing.market_ticker,
         as_of=rf_date,
         erp=erp,
         erp_as_of=erp_as_of.isoformat() if erp_as_of else None,

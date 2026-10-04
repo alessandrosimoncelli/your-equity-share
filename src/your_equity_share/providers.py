@@ -3,11 +3,13 @@
 Kept apart from the fetching so that every parser can be tested against a
 fixture with no network. `update.py` does the fetching and calls these.
 
-Three sources, all free and none needing a key or an account:
+The sources, all free and none needing a key or an account:
 
-    FRED            the 30-year TIPS yield, a real yield directly
-    Yahoo chart     daily adjusted closes, for the volatility estimate
-    Damodaran       the implied equity risk premium, monthly
+    Treasury        the 30-year real yield, from its daily real yield curve
+    FRED            the same yield as DFII30, when the Treasury fails
+    Shiller         the long monthly history the expected return is built from
+    Damodaran       the implied equity risk premium and the payout yields
+    multpl          the current CAPE, optional
 """
 
 from __future__ import annotations
@@ -15,23 +17,20 @@ from __future__ import annotations
 import csv
 import io
 import math
-import json
 import re
 import struct
 import zipfile
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 
 __all__ = [
     "DataUnavailable",
-    "PriceSeries",
     "ShillerHistory",
     "parse_damodaran_components",
     "parse_damodaran_erp",
     "parse_fred_csv",
     "parse_treasury_real_yield_csv",
     "parse_multpl_current",
-    "parse_price_json",
     "read_xls_sheet",
     "parse_shiller_xls",
     "parse_shiller_csv",
@@ -46,82 +45,6 @@ _EPOCH_1904 = date(1904, 1, 1)
 
 class DataUnavailable(Exception):
     """A provider could not be reached or returned something unusable."""
-
-
-class PriceSeries:
-    """Daily closes for one instrument, keyed by ISO date."""
-
-    __slots__ = ("ticker", "closes", "adjusted")
-
-    def __init__(self, ticker: str, closes: dict[str, float], adjusted: bool) -> None:
-        self.ticker = ticker
-        self.closes = closes
-        self.adjusted = adjusted
-
-
-def parse_price_json(text: str, ticker: str) -> PriceSeries:
-    """Parse Yahoo's chart JSON, preferring the adjusted close.
-
-    `adjclose` is adjusted for both splits and dividends, so successive ratios
-    are total returns. `close` is adjusted for splits only, which leaves a small
-    downward step on each ex-dividend day. Measured on five years of SPY, using
-    the unadjusted series overstates annual volatility by about 4 basis points.
-    Small, but there is no reason to accept it when the better series is in the
-    same response.
-
-    Rows with a null close are dropped: the provider emits them for days the
-    exchange was shut, and carrying them as zeros would manufacture crashes.
-    """
-    try:
-        payload = json.loads(text)
-    except json.JSONDecodeError:
-        head = text.strip().splitlines()[:1]
-        raise DataUnavailable(
-            f"{ticker}: response is not JSON. First line: {head}"
-        ) from None
-
-    error = (payload.get("chart") or {}).get("error")
-    if error:
-        raise DataUnavailable(f"{ticker}: provider returned an error: {error}")
-
-    try:
-        result = payload["chart"]["result"][0]
-        stamps = result["timestamp"]
-    except (KeyError, IndexError, TypeError):
-        raise DataUnavailable(
-            f"{ticker}: response did not contain a price series"
-        ) from None
-
-    adjusted = True
-    series = None
-    try:
-        series = result["indicators"]["adjclose"][0]["adjclose"]
-    except (KeyError, IndexError, TypeError):
-        adjusted = False
-    if series is None:
-        try:
-            series = result["indicators"]["quote"][0]["close"]
-            adjusted = False
-        except (KeyError, IndexError, TypeError):
-            raise DataUnavailable(
-                f"{ticker}: response contained neither adjclose nor close"
-            ) from None
-
-    if len(stamps) != len(series):
-        raise DataUnavailable(
-            f"{ticker}: {len(stamps)} timestamps but {len(series)} closes"
-        )
-
-    closes: dict[str, float] = {}
-    for stamp, value in zip(stamps, series):
-        if value is None:
-            continue
-        day = datetime.fromtimestamp(stamp, tz=timezone.utc).date().isoformat()
-        closes[day] = float(value)
-
-    if not closes:
-        raise DataUnavailable(f"{ticker}: no usable observations in the response")
-    return PriceSeries(ticker, closes, adjusted)
 
 
 def parse_fred_csv(text: str, series: str) -> tuple[date, float]:
@@ -404,33 +327,6 @@ class ShillerHistory:
         sxx = sum((x - mean_x) ** 2 for x in xs)
         sxy = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
         return math.exp((sxy / sxx) * 12.0) - 1.0
-
-    def real_earnings_growth(self, years: int) -> float:
-        """Annualised real growth in earnings per share over the last `years`.
-
-        The window is taken from the end of the series and must be contiguous.
-        An earlier version filtered non-positive earnings out first and then
-        sliced by count, which would have silently reached further back than
-        the window it claimed while still dividing by the claimed number of
-        months, overstating the growth rate. Nothing is filtered now: a
-        non-positive month inside the window is an error, not something to
-        step over.
-        """
-        months = years * 12
-        if len(self.real_earnings) <= months:
-            raise DataUnavailable(
-                f"only {len(self.real_earnings) // 12} years of earnings, "
-                f"need {years}"
-            )
-        window = self.real_earnings[-months:]
-        bad = [d for d, e in zip(self.dates[-months:], window) if e <= 0]
-        if bad:
-            raise DataUnavailable(
-                f"{len(bad)} month(s) of non-positive real earnings inside the "
-                f"{years} year window, first at {bad[0]}; the growth rate would "
-                f"not describe the period it claims"
-            )
-        return (window[-1] / window[0]) ** (12.0 / (len(window) - 1)) - 1.0
 
 
 def parse_shiller_csv(text: str) -> ShillerHistory:

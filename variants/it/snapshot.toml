@@ -205,7 +205,6 @@ real_risk_free = 0.014709
 # points in five weeks when the 2020 crash left it. Priced in euro, so it
 # carries the currency exposure of an unhedged world fund.
 stock_volatility = 0.164545
-market_ticker = "VWCE.DE"
 
 as_of = 2026-09-08
 

@@ -219,7 +219,6 @@ def build_italian_market_json() -> str:
         "expected_stock_real_return_compound": float(provenance["expected_return_compound"]),
         "real_risk_free": float(market["real_risk_free"]),
         "stock_volatility": float(market["stock_volatility"]),
-        "market_ticker": str(market.get("market_ticker", provenance.get("market_ticker", ""))),
         "as_of": str(market["as_of"]),
         "provenance": {k: str(v) if not isinstance(v, (int, float, bool)) else v
                        for k, v in provenance.items()},
@@ -271,7 +270,6 @@ def build_market_json() -> str:
         ),
         "real_risk_free": float(market["real_risk_free"]),
         "stock_volatility": float(market["stock_volatility"]),
-        "market_ticker": str(market.get("market_ticker", "SPY")),
         # tomllib returns a date object; the page wants an ISO string.
         "as_of": str(market["as_of"]),
         "provenance": {k: str(v) if not isinstance(v, (int, float, bool)) else v

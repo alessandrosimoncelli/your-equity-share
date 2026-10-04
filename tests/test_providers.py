@@ -7,7 +7,6 @@ memory, so a test run never depends on a provider being up.
 from __future__ import annotations
 
 import io
-import json
 import zipfile
 from datetime import date
 
@@ -18,83 +17,8 @@ from your_equity_share.providers import (
     parse_damodaran_components,
     parse_damodaran_erp,
     parse_fred_csv,
-    parse_price_json,
     parse_treasury_real_yield_csv,
 )
-
-
-# --- Yahoo chart ------------------------------------------------------------
-
-
-def _chart(close=None, adjclose=None, stamps=None, error=None):
-    stamps = stamps if stamps is not None else [1767312000, 1767571200, 1767657600]
-    indicators = {}
-    if close is not None:
-        indicators["quote"] = [{"close": close}]
-    if adjclose is not None:
-        indicators["adjclose"] = [{"adjclose": adjclose}]
-    if error is not None:
-        return json.dumps({"chart": {"error": error, "result": None}})
-    return json.dumps(
-        {
-            "chart": {
-                "error": None,
-                "result": [{"timestamp": stamps, "indicators": indicators}],
-            }
-        }
-    )
-
-
-def test_prefers_the_adjusted_close() -> None:
-    """Adjusted for dividends as well as splits, so ratios are total returns."""
-    text = _chart(close=[100.0, 101.0, 102.0], adjclose=[90.0, 91.0, 92.0])
-    series = parse_price_json(text, "SPY")
-    assert series.adjusted is True
-    assert list(series.closes.values()) == [90.0, 91.0, 92.0]
-
-
-def test_falls_back_to_the_unadjusted_close_and_says_so() -> None:
-    """Some instruments return no adjclose. Usable, but the caller must know."""
-    series = parse_price_json(_chart(close=[100.0, 101.0, 102.0]), "X")
-    assert series.adjusted is False
-    assert list(series.closes.values()) == [100.0, 101.0, 102.0]
-
-
-def test_dates_come_back_as_iso_strings() -> None:
-    series = parse_price_json(_chart(adjclose=[1.0, 2.0, 3.0]), "SPY")
-    assert sorted(series.closes) == ["2026-01-02", "2026-01-05", "2026-01-06"]
-
-
-def test_null_closes_are_dropped_not_zeroed() -> None:
-    """A shut exchange. Treating the gap as zero would invent a total loss."""
-    series = parse_price_json(_chart(adjclose=[100.0, None, 102.0]), "SPY")
-    assert len(series.closes) == 2
-    assert 0.0 not in series.closes.values()
-
-
-def test_rejects_a_bot_check_page() -> None:
-    with pytest.raises(DataUnavailable, match="not JSON"):
-        parse_price_json("<!DOCTYPE html><html><head>", "SPY")
-
-
-def test_surfaces_a_provider_error() -> None:
-    with pytest.raises(DataUnavailable, match="provider returned an error"):
-        parse_price_json(_chart(error={"code": "Not Found"}), "NOSUCH")
-
-
-def test_rejects_mismatched_lengths() -> None:
-    with pytest.raises(DataUnavailable, match="timestamps but"):
-        parse_price_json(_chart(adjclose=[1.0], stamps=[1, 2, 3]), "SPY")
-
-
-def test_rejects_a_response_with_no_price_series_at_all() -> None:
-    with pytest.raises(DataUnavailable, match="neither adjclose nor close"):
-        parse_price_json(_chart(), "SPY")
-
-
-def test_rejects_an_all_null_series() -> None:
-    with pytest.raises(DataUnavailable, match="no usable observations"):
-        parse_price_json(_chart(adjclose=[None, None, None]), "SPY")
 
 
 # --- FRED -------------------------------------------------------------------
