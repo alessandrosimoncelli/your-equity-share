@@ -245,3 +245,17 @@ jobs:
             exit 1
           fi
           echo "Both refreshes succeeded."
+
+  # A few figures come from annual publications and nothing refreshes them.
+  # When one is out of date this job fails, after the site is published, so
+  # GitHub's usual e-mail arrives without the data or the site being held back.
+  yearly:
+    name: Say so if a yearly figure is out of date
+    needs: [deploy]
+    if: always() && github.event_name != 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/maintenance.py

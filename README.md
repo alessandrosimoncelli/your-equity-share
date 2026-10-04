@@ -142,6 +142,14 @@ the further work. **The tool itself never touches the network**, so a slow or
 dead provider can never break a demonstration; it simply runs on the data it
 has.
 
+**Once a year** a few figures need a hand update, because they come from
+annual publications that no source serves as data. `python tools/maintenance.py`
+lists them with the file to edit and where the new figure is published, and
+the weekly workflow runs it: when one is out of date that run turns red, after
+the site is published, so the data keeps refreshing in the meantime. Today the
+list is Social Security's maximum benefit (each January) and AQR's capital
+market assumptions, the Italian cross-check (each spring).
+
 ## Why this approach
 
 Choi, Liu and Liu solved the underlying life-cycle model for 5,103 parameter
