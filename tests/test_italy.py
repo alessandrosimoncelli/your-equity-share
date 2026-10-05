@@ -889,29 +889,30 @@ def test_the_three_reasons_quote_the_model() -> None:
 def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
     """Table 9, by the Shapley value, for both columns.
 
-    The first column moves the American opening household to the Italian one
-    in three steps; the second moves the reference household of section 1,
-    which saves the same in both countries, in two.
+    The two pages open on the same savings, five years of pay, so both columns
+    move an American household to the Italian one in the same two steps: the
+    first is the pages' opening household, the second the reference household
+    of section 1.
     """
     doc = _doc()
     markets = _snapshots()
     age, us_pay, us_savings, gamma = _opening("us")
     _, it_pay, it_savings, _ = _opening("it")
+    # The section says the savings are no part of the difference.
+    assert round(it_savings / it_pay, 6) == round(us_savings / us_pay, 6)
 
     def opening(have):
-        savings = it_savings / it_pay if "savings" in have else us_savings / us_pay
         return _share(markets["it" if "market" in have else "us"],
                       ITALY_CALIBRATION if "career" in have else CGM_CALIBRATION,
-                      age, 1.0, savings, gamma)
+                      age, 1.0, us_savings / us_pay, gamma)
 
     def reference(have):
         return _share(markets["it" if "market" in have else "us"],
                       ITALY_CALIBRATION if "career" in have else CGM_CALIBRATION,
                       45, 100_000.0, 1_500_000.0, 5.0)
 
-    everything = frozenset({"market", "career", "savings"})
     italian = frozenset({"market", "career"})
-    first = _shapley(("market", "career", "savings"), opening)
+    first = _shapley(("market", "career"), opening)
     second = _shapley(("market", "career"), reference)
     rows = (
         ("American answer", f"{opening(frozenset()):.1%}",
@@ -920,9 +921,7 @@ def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
          f"{second['market'] * 100:+.1f}"),
         ("2. The Italian career and pension", f"{first['career'] * 100:+.1f}",
          f"{second['career'] * 100:+.1f}"),
-        (f"3. Savings of {it_savings / it_pay:.1f} years of pay rather than "
-         f"{us_savings / us_pay:.0f}", f"{first['savings'] * 100:+.1f}", "none"),
-        ("Italian answer", f"{opening(everything):.1%}",
+        ("Italian answer", f"{opening(italian):.1%}",
          f"{reference(italian):.1%}"),
     )
     for label, a, b in rows:
@@ -930,19 +929,16 @@ def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
                f'<td class="num">{b}</td></tr>')
         assert row in doc, row
 
-    # What the prose says about them: "the smaller savings count for about as
-    # much as the market", and "any two of the three changes take the
-    # American opening household to 100%, so whichever comes third shows
-    # nothing" (no single one does).
-    import itertools
-    reasons = ("market", "career", "savings")
-    assert abs(first["savings"] - first["market"]) < 0.02
-    assert all(opening(frozenset(pair)) == 1.0
-               for pair in itertools.combinations(reasons, 2))
-    assert all(opening(frozenset({one})) < 1.0 for one in reasons)
-    assert round(5 * second["market"] / sum(second.values())) == 4
+    # What the prose says about them: "about four fifths of the extra equity is
+    # the market" for both, and for the opening households "neither change
+    # alone takes the American answer to 100%, and the two together take it
+    # past it".
+    for split in (first, second):
+        assert round(5 * split["market"] / sum(split.values())) == 4
+    assert all(opening(frozenset({one})) < 1.0 for one in ("market", "career"))
+    assert opening(italian) == 1.0
     # The rounded rows add up to the rounded totals, so a reader's sum works.
-    for split, start, end in ((first, opening(frozenset()), opening(everything)),
+    for split, start, end in ((first, opening(frozenset()), opening(italian)),
                               (second, reference(frozenset()), reference(italian))):
         shown = sum(round(v * 100, 1) for v in split.values())
         assert abs(shown - (round(end * 100, 1) - round(start * 100, 1))) < 0.1 + 1e-9

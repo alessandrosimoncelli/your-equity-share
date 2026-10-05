@@ -27,9 +27,10 @@ it = '''content="Quanta parte dei tuoi risparmi di lungo periodo tenere in azion
 # --- masthead and inputs ----------------------------------------------------
 #
 # Three entries change a default rather than a word: the Italian page opens
-# on a salary of 30,000 net, 50,000 of savings, and a partner on the same
-# 30,000. INPS's 2024 average for a permanent private employee is 29,594
-# gross, so 30,000 net is above the average.
+# on a salary of 21,000 net, about what the median private employee paid for
+# the whole year takes home (INPS 2024: about 28,300 gross), 105,000 of
+# savings, five years of pay as on the American page, and a partner on the
+# same 21,000.
 
 [[t]]
 en = '''How much of your long-term savings to keep in stocks.'''
@@ -68,7 +69,7 @@ it = '''Netto, in euro di oggi: con tredicesima e quattordicesima, il TFR che
 
 [[t]]
 en = '''id="wage" value="100000">'''
-it = '''id="wage" value="30000">'''
+it = '''id="wage" value="21000">'''
 
 [[t]]
 en = '''for="wealth">Investable net worth</label>'''
@@ -76,7 +77,7 @@ it = '''for="wealth">Patrimonio investibile</label>'''
 
 [[t]]
 en = '''id="wealth" value="500000">'''
-it = '''id="wealth" value="50000">'''
+it = '''id="wealth" value="105000">'''
 
 [[t]]
 en = '''Savings and investments, not your home, minus debts other than the
@@ -224,7 +225,7 @@ it = '''for="partner-wage">Il suo stipendio annuo netto</label>'''
 
 [[t]]
 en = '''id="partner-wage" value="80000">'''
-it = '''id="partner-wage" value="30000">'''
+it = '''id="partner-wage" value="21000">'''
 
 [[t]]
 en = '''for="partner-benefit">Their pension, a year of it after tax</label>'''

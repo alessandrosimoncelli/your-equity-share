@@ -106,9 +106,9 @@ def test_the_italian_page_is_written_from_the_english_one(built: Path) -> None:
 def test_the_italian_partner_opens_on_the_first_adult_s_salary(built: Path) -> None:
     """A second adult ticked on the Italian page earns what the first one does.
 
-    The English page's 80,000 sits beside a first adult on 100,000. Carried
-    unchanged into a page that opens on 30,000, it gave the partner nearly
-    three times the first adult's pay.
+        The English page's 80,000 sits beside a first adult on 100,000. Carried
+    unchanged into the Italian page, it gave the partner several times the
+    first adult's pay.
     """
     import re
 
