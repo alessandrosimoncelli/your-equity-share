@@ -65,11 +65,12 @@ en = '''for="wage">After-tax annual wage</label>'''
 it = '''for="wage">Stipendio annuo netto</label>'''
 
 [[t]]
-en = '''After tax, in today's money. Include any employer retirement
-        contribution, counting a pre-tax one at 0.8.'''
-it = '''Netto, in euro di oggi: con tredicesima e quattordicesima, il TFR che
-        maturi ogni anno (circa il 7,5% del netto) e l'eventuale contributo del
-        datore di lavoro al fondo pensione.'''
+en = '''After tax, in today's money. <span id="wage-more" hidden>Include any employer retirement contribution, counting a pre-tax one at 0.8. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="wage-more-toggle" aria-controls="wage-more" data-more="More" data-less="Less">More</button>'''
+it = '''Netto, in euro di oggi: con tredicesima, quattordicesima e il TFR che maturi ogni anno. <span id="wage-more" hidden>Il TFR vale circa il 7,5% del netto. Aggiungi anche l'eventuale contributo del datore di lavoro al fondo pensione. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="wage-more-toggle" aria-controls="wage-more" data-more="Altro" data-less="Meno">Altro</button>'''
 
 [[t]]
 en = '''id="wage" value="100000">'''
@@ -84,14 +85,12 @@ en = '''id="wealth" value="500000">'''
 it = '''id="wealth" value="105000">'''
 
 [[t]]
-en = '''Savings and investments, not your home, minus debts other than the
-        mortgage. Count pre-tax 401(k) and IRA balances at 0.8. Leave out money
-        for a planned purchase and, if you are retired, this year's spending
-        beyond your pension.'''
-it = '''Risparmi e investimenti, casa esclusa, meno i debiti diversi dal mutuo.
-        Conta il TFR rimasto in azienda per tre quarti e i fondi pensione per
-        nove decimi. Lascia fuori il denaro per una spesa programmata e, se sei
-        in pensione, quanto spenderai quest'anno oltre la pensione.'''
+en = '''Savings and investments, not your home, minus debts other than the mortgage. <span id="wealth-more" hidden>Count pre-tax 401(k) and IRA balances at 0.8. Leave out money for a planned purchase and, if you are retired, this year's spending beyond your pension. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="wealth-more-toggle" aria-controls="wealth-more" data-more="More" data-less="Less">More</button>'''
+it = '''Risparmi e investimenti, casa esclusa, meno i debiti diversi dal mutuo. <span id="wealth-more" hidden>Conta il TFR rimasto in azienda per tre quarti e i fondi pensione per nove decimi. Lascia fuori il denaro per una spesa programmata e, se sei in pensione, quanto spenderai quest'anno oltre la pensione. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="wealth-more-toggle" aria-controls="wealth-more" data-more="Altro" data-less="Meno">Altro</button>'''
 
 [[t]]
 en = '''for="benefit">Pension, a year of it after tax</label>'''
@@ -110,13 +109,12 @@ en = '''<span>It is my Social Security</span>'''
 it = '''<span>È la mia pensione INPS di vecchiaia</span>'''
 
 [[t]]
-en = '''A pension you already receive, or a fixed one that starts later (enter the
-        age). Your own Social Security is already counted: tick the box only if this
-        pension is your Social Security, or your estimate of it.'''
-it = '''Netta e con la tredicesima: una pensione che ricevi già, o una fissa che
-        parte più avanti (indica l'età). La pensione INPS che maturi lavorando è già
-        calcolata: spunta la casella solo se questa è la tua pensione INPS di
-        vecchiaia, o la sua stima (La mia pensione futura).'''
+en = '''A pension you already receive, or a fixed one that starts later (enter the age). Your own Social Security is already counted. <span id="benefit-more" hidden>Tick the box only if this pension is your Social Security, or your estimate of it. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="benefit-more-toggle" aria-controls="benefit-more" data-more="More" data-less="Less">More</button>'''
+it = '''Netta e con la tredicesima: una pensione che ricevi già, o una fissa che parte più avanti (indica l'età). La pensione INPS che maturi lavorando è già calcolata. <span id="benefit-more" hidden>Spunta la casella solo se questa è la tua pensione INPS di vecchiaia, o la sua stima (La mia pensione futura). </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="benefit-more-toggle" aria-controls="benefit-more" data-more="Altro" data-less="Meno">Altro</button>'''
 
 [[t]]
 en = '''id="risk-label">How much you dislike risk</span>'''
@@ -187,15 +185,12 @@ en = '''<span>Set the expected return myself</span>'''
 it = '''<span>Imposto io il rendimento atteso</span>'''
 
 [[t]]
-en = '''The tool's estimate of the yearly return on <b>US</b> stocks after inflation,
-        from today's dividend yield and a century of earnings growth. Tick to enter
-        your own forecast instead, as a <b>real, compound</b> rate. For a world index
-        fund, Exhibit 5 shows the world figure.'''
-it = '''La stima del rendimento annuo delle azioni <b>globali</b> al netto
-        dell'inflazione, dai dividendi di oggi (al netto delle ritenute) e da un secolo
-        di crescita degli utili. Spunta per inserire la tua previsione, come tasso
-        <b>reale e composto</b>, prima delle imposte; da una previsione lorda come
-        quella di AQR togli circa 0,3 punti.'''
+en = '''The tool's estimate of the yearly return on <b>US</b> stocks after inflation. <span id="mu-more" hidden>It comes from today's dividend yield and a century of earnings growth. Tick to enter your own forecast instead, as a <b>real, compound</b> rate. For a world index fund, Exhibit 5 shows the world figure. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="mu-more-toggle" aria-controls="mu-more" data-more="More" data-less="Less">More</button>'''
+it = '''La stima del rendimento annuo delle azioni <b>globali</b> al netto dell'inflazione. <span id="mu-more" hidden>Viene dai dividendi di oggi (al netto delle ritenute) e da un secolo di crescita degli utili. Spunta per inserire la tua previsione, come tasso <b>reale e composto</b>, prima delle imposte; da una previsione lorda come quella di AQR togli circa 0,3 punti. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="mu-more-toggle" aria-controls="mu-more" data-more="Altro" data-less="Meno">Altro</button>'''
 
 [[t]]
 en = '''for="mu">Expected real return on equities, compound</label>'''

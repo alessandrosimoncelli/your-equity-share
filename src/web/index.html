@@ -405,6 +405,8 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
   margin-top: 0.5rem;
 }
 
+.more-toggle { white-space: nowrap; }
+
 .linkbtn {
   font-family: var(--body);
   font-size: var(--t-small);
@@ -466,7 +468,7 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
   align-items: baseline;
   gap: 1rem;
   flex-wrap: wrap;
-  max-width: 38rem;
+  max-width: 44rem;
   margin: 0 0 0.5rem;
 }
 .verdict-figure {
@@ -476,21 +478,21 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.verdict-text { flex: 1 1 15rem; line-height: 1.45; }
+.verdict-text { flex: 1 1 15rem; font-size: var(--t-head); line-height: 1.45; }
 .verdict-text b { color: var(--green); }
 
-.split { max-width: 26rem; }
+.split { max-width: 30rem; }
 .split svg { width: 100%; display: block; }
 .split-key {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 0.25rem 0.6rem;
   align-items: baseline;
-  font-size: var(--t-small);
-  margin-top: 0.55rem;
+  font-size: var(--t-body);
+  margin-top: 0.65rem;
   font-variant-numeric: tabular-nums;
 }
-.split-key i { width: 0.7rem; height: 0.7rem; display: inline-block; }
+.split-key i { width: 0.85rem; height: 0.85rem; display: inline-block; }
 .split-key .v { text-align: right; }
 
 /* Exhibits are numbered and named, which is what a report does with its
@@ -643,17 +645,17 @@ td.why { min-width: 15rem; }
       <div class="field">
         <label class="lbl" for="wage">After-tax annual wage</label>
         <input type="text" inputmode="numeric" id="wage" value="100000">
-        <span class="hint">After tax, in today's money. Include any employer retirement
-        contribution, counting a pre-tax one at 0.8.</span>
+        <span class="hint">After tax, in today's money. <span id="wage-more" hidden>Include any employer retirement contribution, counting a pre-tax one at 0.8. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="wage-more-toggle" aria-controls="wage-more" data-more="More" data-less="Less">More</button></span>
       </div>
 
       <div class="field">
         <label class="lbl" for="wealth">Investable net worth</label>
         <input type="text" inputmode="numeric" id="wealth" value="500000">
-        <span class="hint">Savings and investments, not your home, minus debts other than the
-        mortgage. Count pre-tax 401(k) and IRA balances at 0.8. Leave out money
-        for a planned purchase and, if you are retired, this year's spending
-        beyond your pension.</span>
+        <span class="hint">Savings and investments, not your home, minus debts other than the mortgage. <span id="wealth-more" hidden>Count pre-tax 401(k) and IRA balances at 0.8. Leave out money for a planned purchase and, if you are retired, this year's spending beyond your pension. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="wealth-more-toggle" aria-controls="wealth-more" data-more="More" data-less="Less">More</button></span>
       </div>
 
       <div class="field">
@@ -665,9 +667,9 @@ td.why { min-width: 15rem; }
           <label class="check"><input type="checkbox" id="benefit-state">
             <span>It is my Social Security</span></label>
         </div>
-        <span class="hint">A pension you already receive, or a fixed one that starts later (enter the
-        age). Your own Social Security is already counted: tick the box only if this
-        pension is your Social Security, or your estimate of it.</span>
+        <span class="hint">A pension you already receive, or a fixed one that starts later (enter the age). Your own Social Security is already counted. <span id="benefit-more" hidden>Tick the box only if this pension is your Social Security, or your estimate of it. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="benefit-more-toggle" aria-controls="benefit-more" data-more="More" data-less="Less">More</button></span>
       </div>
 
       <div class="field span-2">
@@ -734,10 +736,9 @@ td.why { min-width: 15rem; }
         <label class="lbl">Market assumptions</label>
         <label class="check"><input type="checkbox" id="override">
           <span>Set the expected return myself</span></label>
-        <span class="hint">The tool's estimate of the yearly return on <b>US</b> stocks after inflation,
-        from today's dividend yield and a century of earnings growth. Tick to enter
-        your own forecast instead, as a <b>real, compound</b> rate. For a world index
-        fund, Exhibit 5 shows the world figure.</span>
+        <span class="hint">The tool's estimate of the yearly return on <b>US</b> stocks after inflation. <span id="mu-more" hidden>It comes from today's dividend yield and a century of earnings growth. Tick to enter your own forecast instead, as a <b>real, compound</b> rate. For a world index fund, Exhibit 5 shows the world figure. </span><button
+        type="button" class="linkbtn more-toggle" aria-expanded="false"
+        id="mu-more-toggle" aria-controls="mu-more" data-more="More" data-less="Less">More</button></span>
         <div id="override-field" hidden>
           <label class="visually-hidden" for="mu">Expected real return on equities, compound</label>
           <div class="slider-value" id="mu-value"></div>
@@ -1058,7 +1059,7 @@ function drawChart(svg, tip, opts) {
  */
 function drawSplit(svg, key, r) {
   const W = svg.clientWidth || 380;
-  const H = 30;
+  const H = 44;
   const eq = Math.max(0, Math.min(1, r.equityShare));
   const gap = eq > 0.002 && eq < 0.998 ? 2 : 0;
   const wEq = Math.max(0, eq * W - gap / 2);
@@ -1727,6 +1728,19 @@ async function boot() {
     `<a href="./it/methodology.html">Italian methodology</a> · ` +
     `<a href="./further-work.html">Further work</a>. ` +
     `Not investment advice.`;
+
+  // A long hint shows its first part and keeps the rest behind a link, so the
+  // form does not read as a wall of text. The link's words come from the
+  // markup, where the Italian table translates them.
+  for (const id of ["wage", "wealth", "benefit", "mu"]) {
+    const button = $(`${id}-more-toggle`), rest = $(`${id}-more`);
+    button.addEventListener("click", () => {
+      const open = rest.hidden;
+      rest.hidden = !open;
+      button.setAttribute("aria-expanded", String(open));
+      button.textContent = open ? button.dataset.less : button.dataset.more;
+    });
+  }
 
   // Money fields reformat when focus leaves them, never while typing, so the
   // caret does not jump out from under the person using it.
