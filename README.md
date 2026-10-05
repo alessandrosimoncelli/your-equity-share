@@ -140,8 +140,7 @@ annual publications that no source serves as data. `python tools/maintenance.py`
 lists them with the file to edit and where the new figure is published, and
 the weekly workflow runs it: when one is out of date that run turns red, after
 the site is published, so the data keeps refreshing in the meantime. Today the
-list is Social Security's maximum benefit (each January) and AQR's capital
-market assumptions, the cross-check in both variants (each spring).
+list is Social Security's maximum benefit, each January.
 
 ## Why this approach
 

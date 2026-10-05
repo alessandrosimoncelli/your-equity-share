@@ -26,10 +26,7 @@ import refresh_italy  # noqa: E402
 from your_equity_share.expected_return import arithmetic_from_compound  # noqa: E402
 
 PAR_CC = 0.038          # the ECB's 30-year par yield, continuously compounded
-ALL_CC = 0.045
 BREAKEVEN = 0.0228
-TRADED = 0.0160
-SURVEY = 0.0204
 GROSS, NET = 0.0156, 0.0122
 GROWTH = 0.02286
 
@@ -41,17 +38,12 @@ def _stub(monkeypatch, tmp_path, *, par=PAR_CC, breakeven_date=date(2026, 9, 30)
     monkeypatch.setattr(refresh_italy, "CONFIG", config)
 
     def observe(series):
-        if series == refresh_italy.NOMINAL_30Y:
-            return "2026-10-01", par
-        if series == refresh_italy.NOMINAL_30Y_ALL:
-            return "2026-10-01", ALL_CC
-        return "2026-Q3", SURVEY
+        assert series == refresh_italy.NOMINAL_30Y, series
+        return "2026-10-01", par
 
     monkeypatch.setattr(refresh_italy, "observe", observe)
     monkeypatch.setattr(refresh_italy, "breakeven_inflation",
                         lambda: ("DE0001030575", linker_years, BREAKEVEN, breakeven_date))
-    monkeypatch.setattr(refresh_italy, "longest_german_linker",
-                        lambda: ("DE0001030575", linker_years, TRADED, breakeven_date))
     def trailing(variant):
         if variant == "NETR" and net_window:
             return (NET, *net_window)
@@ -91,10 +83,7 @@ def test_a_negative_rate_is_written_and_then_overwritten(monkeypatch, tmp_path) 
     config = _stub(monkeypatch, tmp_path, par=0.012)
     assert refresh_italy.main(["refresh_italy.py", "--write"]) == 0
     assert _written(config)["real_risk_free"] < 0
-    monkeypatch.setattr(refresh_italy, "observe",
-                        lambda s: ("2026-10-01", PAR_CC) if s == refresh_italy.NOMINAL_30Y
-                        else (("2026-10-01", ALL_CC) if s == refresh_italy.NOMINAL_30Y_ALL
-                              else ("2026-Q3", SURVEY)))
+    monkeypatch.setattr(refresh_italy, "observe", lambda s: ("2026-10-01", PAR_CC))
     assert refresh_italy.main(["refresh_italy.py", "--write"]) == 0
     assert _written(config)["real_risk_free"] == pytest.approx(math.expm1(PAR_CC) - BREAKEVEN, abs=5e-7)
 
@@ -111,17 +100,6 @@ def test_stale_or_unfit_inputs_are_refused(monkeypatch, tmp_path, kwargs) -> Non
     with pytest.raises(SystemExit):
         refresh_italy.main(["refresh_italy.py", "--write"])
     assert config.read_text(encoding="utf-8") == before
-
-
-def test_a_cross_check_that_fails_does_not_stop_the_refresh(monkeypatch, tmp_path) -> None:
-    config = _stub(monkeypatch, tmp_path)
-
-    def broken():
-        raise SystemExit("no chart")
-
-    monkeypatch.setattr(refresh_italy, "longest_german_linker", broken)
-    assert refresh_italy.main(["refresh_italy.py", "--write"]) == 0
-    assert "Checked against itself" not in _written(config)["real_risk_free_source"]
 
 
 def test_no_premium_no_write(monkeypatch, tmp_path) -> None:
@@ -166,5 +144,3 @@ def test_the_chart_is_chosen_by_its_label_not_its_place(monkeypatch) -> None:
     assert (isin, years) == ("DE0001030575", 19.5)
     assert value == pytest.approx(0.0223)
     assert when == date(2026, 10, 1)
-    _, _, real, _ = refresh_italy.longest_german_linker()
-    assert real == pytest.approx(0.0164)

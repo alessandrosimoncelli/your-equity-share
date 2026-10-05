@@ -36,16 +36,6 @@ ITEMS = (
         source="SSA's cost-of-living adjustment fact sheet, published each "
                "October for the next January",
     ),
-    Item(
-        what="AQR's capital market assumptions, the Italian cross-check: "
-             "the edition of 31 December 2025",
-        due=date(2027, 3, 1),
-        where="AQR_REPORT, AQR_AS_OF, AQR_YIELD, AQR_GROWTH and AQR_COMPOUND in "
-              "tools/refresh_italy.py, the same three figures in tools/estimators_it.py, "
-              "AQR's figures in both methodologies (the American one's section 8.3), "
-              "docs/inputs.md and docs/further-work.html, and the due date here",
-        source="AQR, Alternative Thinking, first issue of each year",
-    ),
 )
 
 

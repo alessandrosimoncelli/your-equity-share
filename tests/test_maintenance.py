@@ -12,7 +12,6 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tools"))
 
 import maintenance  # noqa: E402
-import refresh_italy  # noqa: E402
 from your_equity_share.human_capital import SOCIAL_SECURITY_MAXIMUM  # noqa: E402
 
 
@@ -30,10 +29,3 @@ def test_the_social_security_item_names_the_figure_the_code_uses() -> None:
     js = (ROOT / "src" / "js" / "model.js").read_text(encoding="utf-8")
     assert f"0.8 * {monthly:.1f} * 12" in js
     assert item.due.year == int(re.search(r"the (\d{4}) figure", item.what).group(1)) + 1
-
-
-def test_the_aqr_item_names_the_edition_the_refresh_uses() -> None:
-    item = maintenance.ITEMS[1]
-    edition = date.fromisoformat(refresh_italy.AQR_AS_OF)
-    assert f"31 December {edition.year}" in item.what
-    assert item.due > edition

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -404,12 +405,13 @@ def test_the_safe_rate_reproduces_a_bond_that_exists(italy) -> None:
     has picked up the wrong chart or the curves have stopped being flat, and
     both are worth stopping for.
     """
-    source = italy.provenance["real_risk_free_source"]
-    assert "DE0001030575" in source
-    # The cross-checks are optional in the refresh: a week the linker chart or
-    # the survey does not answer leaves them out rather than stopping it.
-    if "Checked against itself" in source:
-        assert "traded real yield" in source and "points away" in source
+    assert "DE0001030575" in italy.provenance["real_risk_free_source"]
+    # Measured on the snapshot, which records the check; the weekly refresh
+    # stopped repeating it in October 2026.
+    snapshot = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
+    note = snapshot.provenance["real_risk_free_source"]
+    gap = float(re.search(r"lands ([0-9.]+) points away", note).group(1))
+    assert gap < 0.2
 
 
 def test_the_safe_rate_is_not_italian_paper(italy) -> None:
