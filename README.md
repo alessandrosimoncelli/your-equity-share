@@ -78,12 +78,13 @@ A hand refresh leaves the two market data files changed. Discard it with
 `git checkout -- variants/` before pulling, or the pull will collide with the
 Monday commit.
 
-Part of a dry run of the American refresh, on 29 September 2026:
+Part of a dry run of the American refresh, run on 4 October 2026 on the
+Treasury's yield of 2 October:
 
 ```
 Fetching...
-  real risk-free rate (30y TIPS)      3.31%   was  3.25%   +0.06 points
-    3.28% as quoted, on a semiannual basis, annualised
+  real risk-free rate (30y TIPS)      3.37%   was  3.32%   +0.05 points
+    3.34% as quoted, on a semiannual basis, annualised
   stock volatility, fixed            18.50%   Choi's 18.5%
 
   Expected real return on equities.
@@ -97,12 +98,12 @@ Fetching...
 
   Cross-checks, not used. See section 3 of the methodology
   for why each is worse for a lifetime horizon.
-    implied premium                7.40%
-    earnings anchor                3.13%
+    implied premium                7.46%
+    earnings anchor                3.12%
     valuation regression, 30y      5.32% +/- 0.74%
 
     as an arithmetic mean          5.19%   +1.78 from the volatility drag
-    spread of the cross-checks     4.27%   <- how little is known here
+    spread of the cross-checks     4.34%   <- how little is known here
 
 Dry run, nothing saved. Run without --dry-run to apply.
 ```
@@ -148,7 +149,7 @@ lists them with the file to edit and where the new figure is published, and
 the weekly workflow runs it: when one is out of date that run turns red, after
 the site is published, so the data keeps refreshing in the meantime. Today the
 list is Social Security's maximum benefit (each January) and AQR's capital
-market assumptions, the Italian cross-check (each spring).
+market assumptions, the cross-check in both variants (each spring).
 
 ## Why this approach
 
@@ -212,7 +213,7 @@ Python and the verifier have all passed first.
 
 `python tools/build_web.py` writes the same thing locally to `web/`: the tool,
 its model and its market data, about 105 KB, and with the Italian page and the
-three documents about 500 KB in all. The Italian page in `web/it/` is not a
+three documents about 550 KB in all. The Italian page in `web/it/` is not a
 second copy of the tool. The build writes it from `src/web/index.html`, swapping the page's VARIANT
 block (currency, number format, calibration) for the Italian one and
 translating the words with `src/web/it/translation.toml`. Every English

@@ -346,8 +346,8 @@ h4 {
 
 <h1>Your Equity Share, Italy</h1>
 <p class="subtitle">What the Italian variant does differently, and what checks each number</p>
-<p class="docmeta">Version 1.0, September 2026. Companion to the technical
-methodology, which describes the model itself. This document does not restate
+<p class="docmeta">Version 1.1, October 2026. Companion to the <a href="../methodology.html">technical
+methodology</a>, which describes the model itself. This document does not restate
 Merton (1969), Choi, Liu and Liu (2025), the human capital layer or the
 derivation of the equity share. Those are shared between the two variants and
 are argued there.</p>
@@ -385,8 +385,8 @@ Italian, with this variant's calibration and its own market file, so a
 fix to the page reaches both.</p>
 
 <p>One difference of convention is left in and stated. The Italian yield is net
-of the withholding the fund suffers, and that leaves it within about 0.06
-points a year of what the fund delivers after its own costs. The American
+of the withholding the fund suffers, and that leaves it within about 0.06 to
+0.07 points a year of what the fund delivers after its own costs. The American
 figure is the index's own, before any fund's costs, as the premium in Choi,
 Liu and Liu's paper is. Section 4.1 gives the size.</p>
 
@@ -437,7 +437,8 @@ Economic Association</em>, with the estimates in Table 7 of working paper CSEF
 2024.</p>
 
 <p><strong>Nothing in that table is within rounding of its check by accident.
-The largest gap is the expected return</strong>, 0.70 points below AQR's, and
+Two rows are well away from their checks, the expected return and the
+volatility.</strong> The expected return is 0.70 points below AQR's, and
 withholding is half of it, 0.35: AQR quote gross, and this variant uses the
 yield net of it, which is what the fund delivers after its costs (section
 4.1). Measured gross, as theirs is, the estimate is the other 0.35 below. The
@@ -561,8 +562,8 @@ treaty, the most a fund can suffer: measured on MSCI's own indices over the
 same twelve months, 30.1% of American dividends and 17.4% of the rest of the
 world's. A fund domiciled where treaties apply pays less: VWCE, in Ireland,
 pays 15% on American dividends rather than 30%, and American companies paid
-45.8% of the world index's dividends, so the fund suffers about 0.24 points of
-withholding where MSCI deducts 0.34, about a third less. It also pays its own
+45.8% of the world index's dividends, so the fund suffers about 0.24 to 0.25
+points of withholding where MSCI deducts 0.34, a quarter to a third less. It also pays its own
 costs, and the two roughly cancel. Over the five, six and seven
 years to August 2026, VWCE's price on Xetra rose 0.06 to 0.07 points a year
 less than MSCI ACWI in euro net, and about 0.58 points a year less than the
@@ -640,7 +641,7 @@ because their construction narrows the gap, and 1.48 points, from MSCI's indices
 over 2002 to 2024, a short window in which the United States outgrew the rest by
 an unusual margin. This project reads the bias as a tenth to half a point, and
 that reading is a judgement, not a measurement. It matters: each tenth of a
-point of growth is worth about 1 to 2 points of equity share for an uncapped
+point of growth is worth about 1 to 3 points of equity share for an uncapped
 household at risk 5. The household of section 6, 45 years old with 30,000 euro
 of pay, 500,000 saved and risk 5, holds 51.5%; with the growth term a tenth of a
 point lower it would hold 49.9%, half a point lower 43.5%, and 1.48 points lower
@@ -746,11 +747,12 @@ Table 3 is for.</p>
 <h2 id="s5">5. The safe asset</h2>
 
 <p>The ECB's AAA euro area government curve at thirty years, read as a par
-yield, less the market break-even inflation rate of the longest euro linker.
+yield, less the market break-even inflation rate of the longest German linker,
+the Bund/euro-i 2046.
 <strong>1.4709%</strong>. Under the answer the page names the asset the rest of
 the savings goes to: inflation-linked government bonds of AAA-rated issuers,
-such as the Bund/euro-i and not BTP, held to maturity, at the rate in its
-Exhibit 5. The rate is the AAA curve's, which is why the page names AAA issuers
+such as the Bund/euro-i and not BTP, held to maturity or as a ladder, at the
+rate in its Exhibit 5. The rate is the AAA curve's, which is why the page names AAA issuers
 (below).</p>
 
 <p>It took three attempts and each failed a different test, which is worth
@@ -947,7 +949,9 @@ the accrual, the pension is restated on that base, 0.66 / 1.075 = 61.4% of it
 (section 7.2). TFR left with the employer is part of the safe share, so the
 page says to apply the percentage to the total and put all the equity in the
 rest. This is the rule of Choi, Liu and Liu's guide for an employer's
-retirement contributions, which go in the wage, applied to Italy.</p>
+retirement contributions, which go in the wage, applied to Italy, and an
+employer's contribution to a pension fund goes in the wage the same way, at
+the nine tenths the next paragraph explains.</p>
 
 <p><strong>Pension funds count at about nine tenths</strong>, and so does TFR
 paid into one. Their benefits are taxed at 15%, less 0.3 points for each year
@@ -1111,9 +1115,11 @@ earlier job, is riskless and is discounted at the benefit rates from today,
 from the year it starts. A ticked estimate of the INPS pension for a later
 start is not fixed yet, so it is discounted like the imputed pension it
 replaces, on the wage rates until work ends. Unticked,
-it is added to the pension the person's own work will pay: a survivor's,
-disability or supplementary pension, whether already paid or due from a later
-age. Ticked, it replaces that pension, as the current benefit does in Choi's
+it is added to the pension the person's own work will pay and treated as
+fixed: a survivor's or disability pension, or one from an earlier job,
+whether already paid or due from a later age, or a supplementary pension
+already being paid. A pension fund still being built does not go here: the
+savings field counts it, at about nine tenths. Ticked, it replaces that pension, as the current benefit does in Choi's
 spreadsheet: the INPS old-age pension already drawn, an invalidity allowance or
 early pension that will become it, or INPS's own estimate entered with the age
 it starts. Before the tick, a person who still worked and already drew their
@@ -1135,18 +1141,25 @@ household receives while it works as labour income (their footnote 5), so such
 a pension rides on the wage process there and is discounted at the wage rate.
 Here it is riskless, the way Bodie, Merton and Samuelson (1992) value a
 riskless income. For a pension of 10,000 euro paid while working, the riskless
-reading gives 4 to 8 points more equity than the wage-rate one for uncapped
-households, more near 100%. Typed only in the year-by-year box with the field
-left at zero, the same pension is discounted at the wage rate through the last
-year of work.</p>
+reading gives about 4 to 8 points more equity than the wage-rate one for a
+45-year-old on 30,000 euro with fifteen to thirty years of pay saved, more
+nearer 100%, and 1 to 4 points at 60. Typed only in the year-by-year box
+instead, with the field empty, it is read the same way, because the page takes
+a pension in the box's first year as one already being paid; only a pension that first appears in a later
+year of the box is discounted at the wage rate through the last year of
+work.</p>
 
 <p>Every year is entered as Choi, Liu and Liu's guide asks, "assuming you are
 still alive in each future year": the calculations already allow for the chance
 of dying, at United States rates (section 11). The year-by-year box follows the
-age, wage and pension fields until a year in it is edited. From then on a note
-under it says the typed years replace the wage and pension amounts above, and
-that a pension already received stays in its field, because the field is what
-tells the model that part is certain. A reset brings the projection back.</p>
+age, wage and pension fields until a year in it is edited. From then on the
+pension amount, its starting age and its tick are locked, and they go on
+telling the model which part of each typed benefit is fixed, so a pension
+entered there before the edit keeps its treatment. A note under the box says
+that the typed years replace the wage and pension above until Reset to
+projection, and that, with no pension in the field, a pension in the box's
+first year counts as one already being paid. A reset brings the projection
+back and unlocks the fields.</p>
 
 <h3 id="s7-3">7.3 Retirees</h3>
 
@@ -1320,8 +1333,9 @@ three. It is real growth in United States earnings per share, used as the
 global real rate. Reading a dollar real growth rate as a euro one needs the
 assumption AQR state for exactly this purpose: "one simple assumption is that
 relative purchasing power is preserved, which implies the expected spot
-currency return is equal to the expected inflation differential. Under this
-assumption, expected real returns are the same regardless of currency."</p>
+currency return is equal to the expected inflation differential. [...] Under
+this assumption, expected real returns are the same regardless of
+currency."</p>
 
 <p><strong>The literature says when that is safe and when it is not, and the
 answer is a matter of horizon.</strong> Rogoff (1996) describes a "remarkable

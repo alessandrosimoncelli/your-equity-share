@@ -132,7 +132,8 @@ receive it, because the paper's expectations are conditional on surviving.
 the tool projects your pay along the average college graduate's earnings path
 through age 66, the last year anyone works in Choi's model. From the year
 after, it adds the pension your own work will pay, at the guide's estimate for
-a college graduate: **40% of the after-tax wage in the last year of work**,
+a college graduate: **40% of the after-tax wage in the year before payments
+start**, which here is the last year of work,
 then flat for life, up to Social Security's maximum: $4,152 a month at full
 retirement age in 2026, counted at 0.8 after tax, or $39,859 a year. Above a
 final wage of about $100,000 after tax, 40% would be more than Social Security
@@ -186,9 +187,13 @@ page they have one more tick: **They will claim the spousal benefit, half of
 your Social Security, instead of a pension of their own.** It is the switch in
 Choi's spreadsheet. From the year they turn 62, once you have claimed, half of
 your Social Security is added to your own and valued with it, on your discount
-chain: at the wage rate while it still depends on your future pay, and as
-riskless where it rests on Social Security you have already entered in your
-field and ticked. The tool then imputes them no pension of their own. Do not
+chain: at the wage rate while it still depends on your future pay, including
+when it rests on an estimate you entered for a later claim, and as riskless
+where it rests on Social Security you already draw, entered in your field and
+ticked. The tool then imputes them no pension of their own. The tick counts
+only while their own pension field is empty, because the benefit is claimed
+instead of a pension of their own; on the command line `--partner-spousal`
+cannot go with `--partner-benefit`. Do not
 type the spousal benefit in their pension field instead: there it would be
 valued as riskless from today, though it moves with your career.
 
@@ -202,10 +207,13 @@ pay saved and under a point with fifteen. Nearer retirement it is worth more:
 page has no such tick, because the benefit is Social Security's.
 
 **Typing earnings year by year** replaces the wage and pension amounts above
-with what you type, one line per year to age 100. Keep a pension you already
-receive in its field as well: that is what tells the model that part of each
-typed benefit is certain. Typed only in the box, it is discounted on the same
-chain as the wage.
+with what you type, one line per year to age 100, until you press Reset to
+projection. Once you edit a year the pension fields lock, and a pension
+entered there before the edit keeps its treatment: they still tell the model
+which part of each typed benefit is fixed. Typed only in the box, a pension
+that is there from the box's first year counts as one already being paid; one
+that starts in a later year is discounted on the same chain as the wage, so a
+fixed pension from a later age belongs in the field, with the age it starts.
 
 **On the command line**, `recommend.py` asks for the same things, or takes
 them as flags: `--benefit`, `--benefit-start` and `--state-pension` for you;
@@ -321,7 +329,8 @@ annualised standard deviation of monthly CRSP log excess returns from 1926 to
 give about that figure (18.9%, 18.5% and 19.0%). A trailing window of a few
 years moves the answer each time a crash enters or leaves it, with no change
 in the long-run risk the model is about. The Italian variant fixes its own
-figure the same way: 16.45%, the same estimator on MSCI All Country World in
+figure the same way: 16.45%, the same estimator, applied to total rather than
+excess returns, on MSCI All Country World in
 euro from January 2001 to August 2026, run from every day of the month and
 averaged, because over twenty-five years the day each month is cut on matters.
 Cut at month-end alone it gives 13.99%, the lowest of them all, since the 2008
@@ -393,7 +402,7 @@ TIPS yield**, which is a real yield directly and needs no inflation adjustment.
 The safe part of the answer means TIPS held to maturity, or a ladder of them,
 which is what the page names.
 
-**It is annualised first.** Like every Treasury yield it is quoted on a
+**It is annualised first.** Like the Treasury's other par yields it is quoted on a
 semiannual basis, and the model reads annual rates, as the Italian variant's
 are. So the tool converts it, (1 + y/2)^2 - 1, and keeps the quote beside it:
 the 2.96% quoted on 3 September 2026 is 2.98% a year.
