@@ -35,8 +35,6 @@ from your_equity_share.human_capital import (
     wage_discount_rate,
 )
 from your_equity_share.taxes import ITALY_TAX, NO_TAX, TaxRegime
-from your_equity_share.legacy import LegacyInputs, LegacySleeve, bull_formula_share
-from your_equity_share.legacy import merton_share as legacy_merton_share
 from your_equity_share.risk_aversion import (
     certainty_equivalent,
     gamma_from_certainty_equivalent,
@@ -51,18 +49,14 @@ __all__ = [
     "TaxRegime",
     "Calibration",
     "Household",
-    "LegacyInputs",
-    "LegacySleeve",
     "Person",
     "Recommendation",
     "benefit_discount_rate",
-    "bull_formula_share",
     "certainty_equivalent",
     "gamma_from_certainty_equivalent",
     "guide_table",
     "human_capital",
     "imputed_wage",
-    "legacy_merton_share",
     "merton_share",
     "project_earnings",
     "recommend",

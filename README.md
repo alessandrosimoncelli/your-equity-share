@@ -88,22 +88,15 @@ Fetching...
   stock volatility, fixed            18.50%   Choi's 18.5%
 
   Expected real return on equities.
-    building blocks                3.41%   <- used
+  A COMPOUND return, which is what a Gordon discount rate
+  produces.
+    building blocks                3.41%
       1.10% dividend yield compounded with 2.29% real earnings growth per share (100 year trend), no repricing
-      Buybacks return a further 1.53% that this
-      does not count as income, because per-share growth
-      already carries it. Counting it twice would add
-      1.53% to the estimate and roughly thirty
-      points to the default household's equity share.
-
-  Cross-checks, not used. See section 3 of the methodology
-  for why each is worse for a lifetime horizon.
-    implied premium                7.46%
-    earnings anchor                3.12%
-    valuation regression, 30y      5.32% +/- 0.74%
+    long history runs to        2026-06-01   4 months behind
+      source: Shiller's own site
 
     as an arithmetic mean          5.19%   +1.78 from the volatility drag
-    spread of the cross-checks     4.34%   <- how little is known here
+  was 5.19%, unchanged
 
 Dry run, nothing saved. Run without --dry-run to apply.
 ```
@@ -120,12 +113,11 @@ fixed 18.5%. The Italian sources are in
 | expected stock return | Shiller: dividend yield compounded with 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
 
 The expected return is the number the answer is most sensitive to and the one
-nobody can observe. Three further estimates are computed as cross-checks and
-reported alongside, precisely because they disagree by several points. Override
-it with `--fixed-return 0.05` if you prefer your own view. See
-[docs/inputs.md](docs/inputs.md) for why buybacks are deliberately not added to
-the yield, and for the caveat on combining a 10-year-based premium with a
-30-year real yield.
+nobody can observe. Section 3 of the methodology compares the estimator with
+three others, which disagree with it by several points, and says why it is the
+one used. Override it with `--fixed-return 0.05` if you prefer your own view.
+See [docs/inputs.md](docs/inputs.md) for why buybacks are deliberately not
+added to the yield.
 
 Options:
 
@@ -189,7 +181,7 @@ asserted.
 
 | Stage | State |
 | --- | --- |
-| 1. Faithful port of the source spreadsheet, with regression baseline | **done** |
+| 1. Faithful port of the source spreadsheet, as a regression baseline | **done**, removed in October 2026 |
 | 2. Market data pipeline and risk-aversion elicitation | **done** |
 | 3. Choi's formula: human capital, discount rates, imputed earnings | **done** |
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |
@@ -229,8 +221,7 @@ reference implementation.** The two are held together by `tests/golden.json`,
 written by `tools/make_golden.py` and replayed through the port by
 `tools/check_golden.mjs`, which `pytest` also runs. Only the model crossed
 over: fetching, parsing, the measurement of the Italian volatility, the
-expected-return estimators and the frozen spreadsheet baseline all stay in
-Python, because they run here and not in a reader's browser.
+expected-return estimator all stay in Python, because they run here and not in a reader's browser.
 
 Two earlier versions are gone. The first shipped Streamlit compiled to
 WebAssembly: faithful, and about thirty seconds to start, because the cost is
@@ -241,21 +232,12 @@ second had already drifted.
 
 ### Stage 1: the baseline
 
-`your_equity_share.legacy` reproduces the "Merton Share" worksheet of
-`QUANTO DEVO INVESTIRE IN AZIONI.xlsx` exactly, **defects included**. It exists
-to be a fixed reference point, not to give advice.
-
-Expected values are not transcribed. `tools/extract_baseline.py` reads them
-straight out of the workbook into `tests/baseline_cells.json`. A passing run is
-therefore evidence that the port matches the spreadsheet, rather than evidence
-that the port and the test share a typo. Comparison is exact equality: the port
-applies the same operations in the same order as each worksheet formula, so the
-results are bit-identical doubles.
-
-Cell `G4`, the Merton share, reproduces as `0.8156054116198155`.
-
-Four defects are reproduced deliberately and pinned by their own tests, so that
-fixing each produces a visible, measured change:
+The project began as an exact port of the "Merton Share" worksheet of
+`QUANTO DEVO INVESTIRE IN AZIONI.xlsx`, **defects included**, kept as a fixed
+reference point while its four defects were corrected, so that each correction
+was measured rather than asserted. Once the model had replaced it and nothing
+was measured against it any more, the port was removed, in October 2026; the
+git history keeps it. The four defects:
 
 | Defect | Effect | Fixed in |
 | --- | --- | --- |

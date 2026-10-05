@@ -44,8 +44,6 @@ SOURCES = [
     ("US safe rate, FRED fallback",
      update.FRED_URL.format(series=update.FRED_REAL_RISK_FREE), update.USER_AGENT),
     ("Shiller, page", update.SHILLER_PAGE, update.USER_AGENT),
-    ("Damodaran premium", update.ERP_URL, update.USER_AGENT),
-    ("CAPE, multpl", update.CAPE_URL, update.USER_AGENT),
     ("Italian safe rate, ECB",
      italy.ECB.format(italy.NOMINAL_30Y), italy.USER_AGENT),
     ("Italian break-even, Finanzagentur", italy.LINKER_PAGE, italy.USER_AGENT),

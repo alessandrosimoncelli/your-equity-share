@@ -3,21 +3,11 @@
 This is the input the recommendation is most sensitive to and the one nobody can
 observe. Choi treats it as the user's best guess and defaults to 5%, justified as
 "what current valuation ratios imply if those ratios stay constant and growth
-matches its long-run average". That is a construction, not a number, so this
-module builds it three independent ways from free public data and reports the
-spread rather than pretending to one answer.
-
-    A  implied premium     Damodaran's implied equity risk premium plus the real
-                           risk-free rate. Forward looking, market implied,
-                           monthly. Embeds analyst growth forecasts.
-    B  building blocks     dividend yield plus long-run real growth in earnings
-                           per share, the Gordon identity with repricing at
-                           zero. This is Choi's own sentence read literally.
-    C  valuation           regress realised subsequent real return on the
-                           cyclically adjusted earnings yield across Shiller's
-                           history, then read off today's valuation.
-
-They do not agree, and the disagreement is the point. See `spread`.
+matches its long-run average". That is a construction, not a number, and this
+module builds it the way that sentence reads: the dividend yield compounded with
+long-run real growth in earnings per share, with repricing at zero. Section 3
+of the American methodology compares it, once, with three other estimators and
+says why each is worse for a lifetime horizon.
 
 A note on which premium is which. Choi fits his approximation over *log* excess
 drifts of 2%, 3% and 4%, where the drift is
@@ -33,8 +23,7 @@ tooling reports both.
 from __future__ import annotations
 
 import math
-import statistics
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 
 __all__ = [
@@ -47,13 +36,7 @@ __all__ = [
     "arithmetic_from_compound",
     "compound_from_arithmetic",
     "building_block_estimate",
-    "consensus",
-    "earnings_anchor_estimate",
-    "implied_premium_estimate",
     "log_premium",
-    "real_total_return_index",
-    "spread",
-    "valuation_regression_estimate",
     "within_fitted_range",
 ]
 
@@ -116,43 +99,19 @@ def compound_from_arithmetic(arithmetic: float, volatility: float) -> float:
 
 @dataclass(frozen=True)
 class Estimate:
-    """One expected real return, with enough to judge how much to trust it.
+    """One expected real return, as a COMPOUND rate, with where it came from.
 
-    `basis` records whether `value` is a compound or an arithmetic return.
-    Every estimator here produces compound returns; the conversion happens once,
-    at the point the number is handed to the model.
+    The conversion to the arithmetic mean the model reads happens once, at the
+    point the number is handed to the model.
     """
 
     method: str
     value: float
     as_of: date | None = None
     detail: str = ""
-    standard_error: float | None = None
-    observations: int = 0
-    independent_observations: int = 0
-    basis: str = "compound"
-
-    def as_arithmetic(self, volatility: float) -> "Estimate":
-        """The same estimate expressed as an arithmetic mean."""
-        if self.basis == "arithmetic":
-            return self
-        converted = arithmetic_from_compound(self.value, volatility)
-        return Estimate(
-            method=self.method,
-            value=converted,
-            as_of=self.as_of,
-            detail=self.detail,
-            standard_error=self.standard_error,
-            observations=self.observations,
-            independent_observations=self.independent_observations,
-            basis="arithmetic",
-        )
 
     def __str__(self) -> str:
-        error = (
-            f" +/- {self.standard_error:.2%}" if self.standard_error is not None else ""
-        )
-        return f"{self.method}: {self.value:.2%}{error}"
+        return f"{self.method}: {self.value:.2%}"
 
 
 def log_premium(
@@ -193,32 +152,7 @@ def within_fitted_range(
     return low <= log_premium(expected_real_return, real_risk_free, volatility) <= high
 
 
-# --- A: the market's implied premium ---------------------------------------
-
-
-def implied_premium_estimate(
-    implied_erp: float, real_risk_free: float, as_of: date | None = None
-) -> Estimate:
-    """Damodaran's implied premium plus the real risk-free rate.
-
-    The premium is quoted against the 10-year nominal Treasury. Adding it to a
-    30-year real yield treats it as neutral to both maturity and inflation. The
-    maturity part of that is measurable: the 30-year real yield currently sits
-    about half a point above the 10-year, and that difference passes straight
-    into this estimate.
-    """
-    return Estimate(
-        method="implied premium",
-        value=implied_erp + real_risk_free,
-        as_of=as_of,
-        detail=(
-            f"{implied_erp:.2%} implied premium (Damodaran, a discounted cash "
-            f"flow on the index) plus {real_risk_free:.2%} real risk-free rate"
-        ),
-    )
-
-
-# --- B: the Gordon building blocks ------------------------------------------
+# --- the Gordon building blocks --------------------------------------------
 
 
 def building_block_estimate(
@@ -273,182 +207,3 @@ def building_block_estimate(
             + (f" plus {repricing:.2%} repricing" if repricing else ", no repricing")
         ),
     )
-
-
-# --- C: what valuations have historically implied ---------------------------
-
-
-def real_total_return_index(
-    real_prices: list[float], real_dividends: list[float]
-) -> list[float]:
-    """A real total return index from monthly real prices and annual dividends.
-
-    One twelfth of the annual dividend is reinvested each month. Price alone is
-    not a return: over Shiller's history dividends are the larger part of it.
-    """
-    if len(real_prices) != len(real_dividends):
-        raise ValueError("prices and dividends must be the same length")
-    index = [1.0]
-    for i in range(1, len(real_prices)):
-        if real_prices[i - 1] <= 0:
-            raise ValueError(f"non-positive real price at position {i - 1}")
-        index.append(
-            index[-1]
-            * (real_prices[i] + real_dividends[i] / 12.0)
-            / real_prices[i - 1]
-        )
-    return index
-
-
-def _ols(x: list[float], y: list[float]) -> tuple[float, float, float, float]:
-    """Intercept, slope, r-squared, residual standard deviation."""
-    n = len(x)
-    if n < 3:
-        raise ValueError("need at least three observations to fit a line")
-    mx, my = sum(x) / n, sum(y) / n
-    sxx = sum((a - mx) ** 2 for a in x)
-    if sxx == 0:
-        raise ValueError("the regressor does not vary")
-    slope = sum((a - mx) * (b - my) for a, b in zip(x, y)) / sxx
-    intercept = my - slope * mx
-    residuals = [b - (intercept + slope * a) for a, b in zip(x, y)]
-    ss_res = sum(r * r for r in residuals)
-    ss_tot = sum((b - my) ** 2 for b in y)
-    r2 = 1.0 - ss_res / ss_tot if ss_tot else 0.0
-    return intercept, slope, r2, math.sqrt(ss_res / (n - 2))
-
-
-# AQR's equilibrium real growth in earnings per share, developed large cap.
-# 2.2% for small caps and emerging markets, which this tool does not cover.
-AQR_EQUILIBRIUM_GROWTH = 0.018
-
-# "roughly the U.S. long-run dividend payout ratio", in their words.
-AQR_PAYOUT_RATIO = 0.5
-
-
-def earnings_anchor_estimate(
-    cape: float,
-    equilibrium_growth: float = AQR_EQUILIBRIUM_GROWTH,
-    payout_ratio: float = AQR_PAYOUT_RATIO,
-    as_of: date | None = None,
-) -> Estimate:
-    """AQR's earnings-based anchor, computed exactly as they publish it.
-
-        E(r) = CAEP x (1 + g_eq x 5) x payout + g_eq
-
-    where CAEP is one over the cyclically adjusted price to earnings ratio.
-
-    Worth having because of what it is rather than what it says. It has no
-    fitted coefficients, no window to choose and no free parameters beyond two
-    constants AQR states in the text, so two people computing it from the same
-    CAPE get the same number. That is not true of the valuation regression
-    beside it, which is this project's own fit with an R-squared of 0.19.
-
-    The 1 + g x 5 term ages the ten-year average earnings in the CAPE forward
-    to the middle of the coming decade; the payout ratio converts an earnings
-    yield into the cash a holder receives; and the equilibrium growth is added
-    back because the price grows with earnings.
-
-    It is the lower of the two anchors around the building block estimate. AQR
-    average it with a payout-based estimate to reach the 3.9% that section 8.3
-    compares against, and the payout half needs a global cross-section and
-    survey GDP forecasts this project has no source for.
-    """
-    if cape <= 0:
-        raise ValueError("a cyclically adjusted ratio must be positive")
-    caep = 1.0 / cape
-    income = caep * (1.0 + equilibrium_growth * 5.0) * payout_ratio
-    return Estimate(
-        method="earnings anchor",
-        value=income + equilibrium_growth,
-        as_of=as_of,
-        detail=(
-            f"{income:.2%} from a CAPE of {cape:.1f} at a {payout_ratio:.0%} "
-            f"payout, plus {equilibrium_growth:.1%} equilibrium growth "
-            f"(AQR's construction)"
-        ),
-    )
-
-
-def valuation_regression_estimate(
-    cape_history: list[float],
-    total_return_index: list[float],
-    current_cape: float,
-    horizon_years: int = 30,
-    as_of: date | None = None,
-) -> Estimate:
-    """Fit realised subsequent real return on the cyclically adjusted yield.
-
-    This is the Campbell and Shiller relation: buy cheap and you earn more. The
-    regressor is 1/CAPE, the cyclically adjusted earnings yield, and the
-    dependent variable is the annualised real total return actually realised
-    over the following `horizon_years`.
-
-    The horizon matters a great deal, and not in the direction people expect.
-    The slope falls sharply with horizon, so a stretched valuation predicts a
-    much weaker ten-year return than a thirty-year one. A lifetime model should
-    use a long horizon.
-
-    The standard error deserves care. The windows overlap almost completely, so
-    the naive count of observations wildly overstates how much independent
-    information is present. The error reported here divides the residual spread
-    by the square root of the number of *non-overlapping* windows, which is a
-    handful, not thousands.
-    """
-    months = horizon_years * 12
-    if len(cape_history) != len(total_return_index):
-        raise ValueError("CAPE history and return index must be the same length")
-    if len(cape_history) <= months + 3:
-        raise ValueError(
-            f"need more than {horizon_years} years of history to fit a "
-            f"{horizon_years} year horizon"
-        )
-    if current_cape <= 0:
-        raise ValueError("CAPE must be positive")
-
-    usable = len(cape_history) - months
-    x = [1.0 / cape_history[i] for i in range(usable)]
-    y = [
-        (total_return_index[i + months] / total_return_index[i]) ** (1.0 / horizon_years)
-        - 1.0
-        for i in range(usable)
-    ]
-    intercept, slope, r2, residual_sd = _ols(x, y)
-    independent = max(1, len(cape_history) // months)
-
-    return Estimate(
-        method=f"valuation regression, {horizon_years}y",
-        value=intercept + slope * (1.0 / current_cape),
-        as_of=as_of,
-        detail=(
-            f"CAPE {current_cape:.1f}, slope {slope:.2f}, R2 {r2:.2f}, "
-            f"{usable} overlapping windows containing about {independent} "
-            f"independent ones"
-        ),
-        standard_error=residual_sd / math.sqrt(independent),
-        observations=usable,
-        independent_observations=independent,
-    )
-
-
-# --- combining them ---------------------------------------------------------
-
-
-def consensus(estimates: list[Estimate]) -> float:
-    """The median of the estimates.
-
-    A median rather than a mean because the three methods disagree by several
-    percentage points and any one of them can be the outlier. A median is
-    unmoved by which one that happens to be.
-    """
-    if not estimates:
-        raise ValueError("no estimates to combine")
-    return statistics.median(e.value for e in estimates)
-
-
-def spread(estimates: list[Estimate]) -> float:
-    """Highest minus lowest. The honest measure of how little is known."""
-    if not estimates:
-        raise ValueError("no estimates to compare")
-    values = [e.value for e in estimates]
-    return max(values) - min(values)

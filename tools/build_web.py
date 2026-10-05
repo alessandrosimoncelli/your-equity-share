@@ -255,12 +255,6 @@ def build_market_json() -> str:
     # market assumption is quoted on and the only one a reader can compare.
     provenance = raw.get("provenance", {})
     compound = provenance.get("expected_return_compound")
-    if compound is None and "expected_return_estimates" in provenance:
-        import re as _re
-
-        found = _re.search(r"building blocks ([0-9.]+)",
-                           str(provenance["expected_return_estimates"]))
-        compound = float(found.group(1)) if found else None
 
     payload = {
         "global": build_global_block(),

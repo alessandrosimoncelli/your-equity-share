@@ -24,8 +24,8 @@ need no key or account; the third is fixed:
                               window moved the answer whenever a crash entered
                               or left it, with no change in long-run risk
 
-Damodaran's implied premium, an earnings anchor and a valuation regression are
-computed beside it as cross-checks and are not used.
+Section 3 of the American methodology compares this estimate with three
+others, once, on the data of September 2026. None of them is fetched here.
 
 Nothing here runs when you use the tool. The model reads the saved file, so a
 slow or unreachable provider can never break a demonstration.
@@ -56,27 +56,17 @@ from your_equity_share.expected_return import (  # noqa: E402
     within_fitted_risk_free,
     arithmetic_from_compound,
     building_block_estimate,
-    earnings_anchor_estimate,
-    consensus,
-    implied_premium_estimate,
     log_premium,
-    real_total_return_index,
-    spread,
-    valuation_regression_estimate,
     within_fitted_range,
 )
 from your_equity_share.providers import (  # noqa: E402
     DataUnavailable,
-    parse_damodaran_components,
-    parse_damodaran_erp,
     parse_fred_csv,
     parse_treasury_real_yield_csv,
-    parse_multpl_current,
     parse_shiller_xls,
     ShillerHistory,
 )
 FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
-ERP_URL = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx"
 # The long history, from Shiller's own site, whose download link is discovered
 # rather than hardcoded, because the file sits behind a content delivery
 # network and the address carries a version stamp that changes with every
@@ -85,12 +75,6 @@ ERP_URL = "https://pages.stern.nyu.edu/~adamodar/pc/implprem/ERPbymonth.xlsx"
 # was a 2023 valuation written in as today's. If the site fails, the refresh
 # fails, and the weekly job keeps last week's data, which is fresher.
 SHILLER_PAGE = "https://shillerdata.com/"
-CAPE_URL = "https://www.multpl.com/shiller-pe"
-
-# Horizon for the valuation regression. The model's own horizon is a lifetime,
-# and the slope of the relation falls sharply as the horizon lengthens, so a
-# ten-year fit would understate the expected return for this purpose.
-REGRESSION_HORIZON_YEARS = 30
 
 # Window for the long-run real earnings growth term. A century spans several
 # regimes, which is the point. Shorter windows are dominated by the buyback era:
@@ -221,22 +205,7 @@ def render_config(**f) -> str:
         "[market]",
         "",
     ]
-    if f["method"] == "implied":
-        out += [
-            "# Implied equity risk premium plus the real risk-free rate. The",
-            "# premium is Damodaran's, published monthly, and is derived by",
-            "# discounting expected index cash flows back to the current level.",
-            f"#   implied premium {f['erp']:.4f} as of {f['erp_as_of']}",
-            f"#   plus real rate  {f['real_risk_free']:.4f}",
-            "# CAVEAT. The premium is quoted against the 10-year NOMINAL",
-            "# Treasury. Adding it to a 30-year REAL yield treats the premium",
-            "# as neutral to both maturity and inflation, which it is not",
-            "# exactly. Pairing it with Damodaran's own 10-year nominal and a",
-            "# 10-year breakeven gives a real expected return about half a",
-            "# point lower. The 30-year real yield is used here because the",
-            "# model's horizon is a whole lifetime.",
-        ]
-    elif f["method"] == "building blocks":
+    if f["method"] == "building blocks":
         out += [
             "# What current valuation ratios imply if those ratios hold and",
             "# growth matches its long-run average, which is Choi's own stated",
@@ -249,10 +218,9 @@ def render_config(**f) -> str:
             f"#   compound               {f['compound_return']:.4f}",
             f"#   arithmetic             {f['expected_return']:.4f}   "
             f"+ volatility drag",
-            "# NOT counted as income: buybacks, which Damodaran's payout yield",
-            "# adds, recorded below when his workbook answered. Retiring shares",
-            "# is what makes earnings per share grow, so the growth term already",
-            "# carries them and adding them here would count them twice.",
+            "# NOT counted as income: buybacks. Retiring shares is what makes",
+            "# earnings per share grow, so the growth term already carries them",
+            "# and adding them here would count them twice.",
         ]
     else:
         out += [
@@ -283,30 +251,19 @@ def render_config(**f) -> str:
         "# Where each number came from. The model does not read this section.",
         "[provenance]",
         f'expected_return_method = "{f["method"]}"',
-        f"implied_erp = {f['erp']:.6f}" if f["erp"] is not None else "implied_erp = 0.0",
-        f"erp_as_of = {f['erp_as_of']}" if f["erp_as_of"] else "# erp_as_of = none",
+        # The compound return, which the page shows beside the arithmetic one
+        # because it is the basis every published forecast is quoted on, and
+        # its two terms, so a test can check that it is their compound and
+        # that the Italian file uses the same growth term.
         *(
-            [
-                f"expected_return_spread = {f['spread']:.6f}",
-                'expected_return_basis = "arithmetic mean, converted from compound"',
-                # The page shows this beside the arithmetic figure, because it
-                # is the basis every published forecast is quoted on.
-                f"expected_return_compound = {f['compound_return']:.6f}",
-                f'expected_return_estimates = "{f["estimate_summary"]}"',
-            ]
-            if f.get("estimates")
-            else []
-        ),
-        # The two building blocks as numbers, so a test can check that the
-        # compound return is their sum and that the Italian file uses the same
-        # growth term.
-        *(
-            [f"dividend_yield = {f['dividend_yield']:.6f}",
+            ['expected_return_basis = "arithmetic mean, converted from compound"',
+             f"expected_return_compound = {f['compound_return']:.6f}",
+             f"dividend_yield = {f['dividend_yield']:.6f}",
              f"real_growth = {f['real_growth']:.6f}"]
-            if f["method"] == "building blocks" and f.get("dividend_yield") is not None
+            if f["method"] == "building blocks"
             else []
         ),
-        # The vintage of the long history behind two of the three estimators.
+        # The vintage of the long history the estimate is built from.
         # Prices arrive promptly; the earnings a cyclically adjusted ratio needs
         # do not, and the feed has stopped updating its derived columns before
         # while still appending price rows. Without this the file's as_of date,
@@ -329,15 +286,6 @@ def render_config(**f) -> str:
         *(
             [f"real_cash = {f['real_cash']:.6f}"]
             if f.get("real_cash") is not None
-            else []
-        ),
-        # Not added to the estimate. Buybacks reach the holder as growth in
-        # earnings per share, which the growth term already carries, so adding
-        # them here as income would count them twice. Recorded because it is
-        # the size of what the dividend yield alone does not show.
-        *(
-            [f"buyback_yield_not_counted = {f['buyback_yield']:.6f}"]
-            if f.get("buyback_yield") is not None
             else []
         ),
         'expected_return_source = "dividend yield compounded with long-run real growth in '
@@ -418,88 +366,25 @@ def fetch_shiller_history() -> tuple[ShillerHistory, str]:
     )
 
 
-def estimate_expected_return(
-    real_risk_free: float,
-) -> tuple[list, str, str, float, float, float]:
-    """Build the expected real return three independent ways.
-
-    Each uses free public data and none of them needs a key. They disagree by
-    several percentage points, which is the honest state of knowledge about
-    this input, so all three are returned rather than one. The trailing values
-    are the pieces of the first estimate, for the record it writes: the
-    buyback yield, which is reported but deliberately not used, and the two
-    terms that are.
-    """
-    # Damodaran's workbook feeds a cross-check and the buyback figure, neither
-    # of which the model reads, so an outage there must not stop a refresh.
-    try:
-        workbook = _get(ERP_URL)
-        erp_as_of, erp = parse_damodaran_erp(workbook)
-        _payout_as_of, payout_yield, _smoothed = parse_damodaran_components(workbook)
-    except (DataUnavailable, urllib.error.URLError, OSError, ValueError):
-        erp_as_of = erp = payout_yield = None
-
+def estimate_expected_return() -> tuple:
+    """The building-blocks estimate, and what the record keeps beside it: the
+    vintage and source of the long history, and the estimate's two terms."""
     shiller, shiller_source = fetch_shiller_history()
     # The trend through the window, not the two months at its ends. See
     # ShillerHistory.real_earnings_trend_growth for the measured difference.
     real_growth = shiller.real_earnings_trend_growth(GROWTH_WINDOW_YEARS)
 
-    # Dividends only. Damodaran's payout yield adds buybacks, and a buyback is
-    # already inside `real_growth`, since retiring shares is what lifts earnings
-    # per share. See building_block_estimate for the arithmetic. The buyback
-    # yield is still worth carrying: it is the size of the term this estimate
-    # leaves out, and the reason the dividend yield reads so low.
+    # Dividends only. A buyback is already inside `real_growth`, since
+    # retiring shares is what lifts earnings per share; see
+    # building_block_estimate for the arithmetic.
     dividend_yield = shiller.dividend_yield
-    buyback_yield = (payout_yield - dividend_yield
-                     if payout_yield is not None else None)
-
-    # A current cyclically adjusted ratio, falling back to Shiller's own last
-    # observation when the scrape fails. The fallback is months stale but the
-    # ratio moves slowly, and a stale ratio beats no estimate.
-    try:
-        cape = parse_multpl_current(
-            _get(CAPE_URL).decode("utf-8", "replace"), "Shiller PE"
-        )
-        if not 5.0 < cape < 80.0:
-            raise DataUnavailable(f"CAPE of {cape} is implausible")
-        cape_note = "current"
-    except DataUnavailable:
-        cape = shiller.cape[-1]
-        cape_note = f"as of {shiller.dates[-1]}, current value unavailable"
-
-    index = real_total_return_index(
-        list(shiller.real_prices), list(shiller.real_dividends)
+    estimate = building_block_estimate(
+        dividend_yield,
+        real_growth,
+        as_of=shiller.last_date_as_date(),
+        growth_basis=f"{GROWTH_WINDOW_YEARS} year trend",
     )
-
-    # Order matters: the first is the estimate, the rest are cross-checks.
-    # AQR's own construction, computed exactly as they publish it. It is the
-    # lower anchor around the estimate as the implied premium is the upper
-    # one, and unlike the regression below it has nothing fitted.
-    anchor = earnings_anchor_estimate(cape)
-    if cape_note != "current":
-        anchor = type(anchor)(**{**anchor.__dict__,
-                                 "detail": anchor.detail + f", {cape_note}"})
-    estimates = [
-        building_block_estimate(
-            dividend_yield,
-            real_growth,
-            as_of=shiller.last_date_as_date(),
-            growth_basis=f"{GROWTH_WINDOW_YEARS} year trend",
-        ),
-        *([implied_premium_estimate(erp, real_risk_free, erp_as_of)]
-          if erp is not None else []),
-        anchor,
-        valuation_regression_estimate(
-            list(shiller.cape),
-            index,
-            cape,
-            horizon_years=REGRESSION_HORIZON_YEARS,
-            as_of=None,
-        ),
-    ]
-    history_as_of = shiller.last_date
-    return (estimates, history_as_of, shiller_source, buyback_yield,
-            dividend_yield, real_growth)
+    return estimate, shiller.last_date, shiller_source, dividend_yield, real_growth
 
 
 def _change(new: float, old: float) -> str:
@@ -550,9 +435,6 @@ def main(argv: list[str]) -> int:
         print(f"\n{exc}")
         return 1
 
-    erp: float | None = None
-    erp_as_of: date | None = None
-
     try:
         print("\nFetching...")
 
@@ -592,56 +474,28 @@ def main(argv: list[str]) -> int:
         if args.fixed_return is not None:
             method = "fixed"
             expected = args.fixed_return
-            estimates = []
             history_as_of = None
             history_source = None
-            buyback_yield = dividend_yield = real_growth = None
+            dividend_yield = real_growth = None
             print(f"  expected stock real return       {expected:>8.2%}"
                   f"   set by hand")
         else:
             method = "building blocks"
-            (estimates, history_as_of, history_source, buyback_yield,
-             dividend_yield, real_growth) = estimate_expected_return(real_rf)
-            chosen, *cross_checks = estimates
-            erp_as_of = next(
-                (e.as_of for e in estimates if e.method == "implied premium"), None
-            )
-            erp = next(
-                (e.value - real_rf for e in estimates
-                 if e.method == "implied premium"), None
-            )
+            (chosen, history_as_of, history_source,
+             dividend_yield, real_growth) = estimate_expected_return()
 
             print()
             print("  Expected real return on equities.")
-            print("  A COMPOUND return, which is what a Gordon discount rate,")
-            print("  a discounted cash flow and a regression on annualised")
-            print("  returns all produce.")
-            print(f"    {chosen.method:<28s} {chosen.value:>7.2%}   <- used")
+            print("  A COMPOUND return, which is what a Gordon discount rate")
+            print("  produces.")
+            print(f"    {chosen.method:<28s} {chosen.value:>7.2%}")
             print(f"      {chosen.detail}")
             print("      Choi's own stated rationale for his 5% default: what")
             print("      current valuation ratios imply if those ratios hold")
             print("      and growth matches its long-run average. It is also")
             print("      the method behind AQR's 1.9%, the figure he anchors")
             print("      his own 2% log premium to.")
-            if buyback_yield is not None:
-                print(f"      Buybacks return a further {buyback_yield:.2%} that this")
-                print("      does not count as income, because per-share growth")
-                print("      already carries it. Counting it twice would add")
-                print(f"      {buyback_yield:.2%} to the estimate and roughly thirty")
-                print("      points to the default household's equity share.")
-            print()
-            print("  Cross-checks, not used. See section 3 of the methodology")
-            print("  for why each is worse for a lifetime horizon.")
-            for estimate in cross_checks:
-                error = (
-                    f" +/- {estimate.standard_error:.2%}"
-                    if estimate.standard_error is not None
-                    else ""
-                )
-                print(f"    {estimate.method:<28s} {estimate.value:>7.2%}{error}")
-                print(f"      {estimate.detail}")
             if history_as_of:
-                from datetime import date as _date
                 y, m, _d = (int(x) for x in history_as_of.split("-"))
                 today = datetime.now(timezone.utc).date()
                 months = (today.year - y) * 12 + today.month - m
@@ -681,8 +535,6 @@ def main(argv: list[str]) -> int:
                   f"+{(expected - compound) * 100:.2f} from the volatility drag")
             print(f"      The paper states the conversion itself: the level")
             print(f"      premium is exp(r + pi + sigma^2/2) - exp(r).")
-            print(f"    {'spread of the cross-checks':<28s} "
-                  f"{spread(estimates):>7.2%}   <- how little is known here")
             print(f"  was {existing.expected_stock_real_return:.2%}, "
                   f"{_change(expected, existing.expected_stock_real_return)}")
 
@@ -744,22 +596,13 @@ def main(argv: list[str]) -> int:
         real_risk_free_source=rf_source.replace('"', "'"),
         volatility=vol,
         as_of=rf_date,
-        erp=erp,
-        erp_as_of=erp_as_of.isoformat() if erp_as_of else None,
-        spread=spread(estimates) if estimates else 0.0,
-        estimate_summary="; ".join(
-            f'{e.method} {e.value:.4f}{" (used)" if i == 0 else ""}'
-            for i, e in enumerate(estimates)
-        ) if estimates else "",
-        estimates=bool(estimates),
         history_as_of=history_as_of,
         history_source=history_source,
         real_cash=real_cash,
-        buyback_yield=buyback_yield,
         dividend_yield=dividend_yield,
         real_growth=real_growth,
         growth_window=GROWTH_WINDOW_YEARS,
-        compound_return=estimates[0].value if estimates else expected,
+        compound_return=chosen.value if method == "building blocks" else expected,
     )
 
     if args.dry_run:

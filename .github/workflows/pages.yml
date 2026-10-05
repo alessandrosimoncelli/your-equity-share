@@ -85,7 +85,7 @@ jobs:
 
       # Which sources answer GitHub's servers today. The refresh stops at the
       # first source that fails, which hides every source after it; this asks
-      # all twelve at once and puts the answer on the summary page. It only
+      # every one at once and puts the answer on the summary page. It only
       # reports, so it can never fail the run.
       - name: Check which data sources answer
         if: github.event_name != 'push'

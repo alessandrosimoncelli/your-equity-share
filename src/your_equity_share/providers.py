@@ -8,8 +8,6 @@ The sources, all free and none needing a key or an account:
     Treasury        the 30-year real yield, from its daily real yield curve
     FRED            the same yield as DFII30, when the Treasury fails
     Shiller         the long monthly history the expected return is built from
-    Damodaran       the implied equity risk premium and the payout yields
-    multpl          the current CAPE, optional
 """
 
 from __future__ import annotations
@@ -17,30 +15,19 @@ from __future__ import annotations
 import csv
 import io
 import math
-import re
 import struct
-import zipfile
 from dataclasses import dataclass
 from datetime import date, datetime
 
 __all__ = [
     "DataUnavailable",
     "ShillerHistory",
-    "parse_damodaran_components",
-    "parse_damodaran_erp",
     "parse_fred_csv",
     "parse_treasury_real_yield_csv",
-    "parse_multpl_current",
     "read_xls_sheet",
     "parse_shiller_xls",
     "parse_shiller_csv",
 ]
-
-# Excel stores dates as a day count from an epoch. Which epoch depends on a flag
-# in the workbook, and the two are four years apart, so guessing wrong dates
-# every observation four years out.
-_EPOCH_1900 = date(1899, 12, 30)
-_EPOCH_1904 = date(1904, 1, 1)
 
 
 class DataUnavailable(Exception):
@@ -106,99 +93,6 @@ def parse_treasury_real_yield_csv(
         if latest is None or day > latest[0]:
             latest = (day, value)
     return latest
-
-
-def _sheet_path(zf: zipfile.ZipFile, wanted: str) -> str:
-    """Locate a worksheet by its tab name rather than by position."""
-    workbook = zf.read("xl/workbook.xml").decode("utf-8", "replace")
-    rels = zf.read("xl/_rels/workbook.xml.rels").decode("utf-8", "replace")
-
-    rid = None
-    for match in re.finditer(r"<sheet\b([^>]*)/?>", workbook):
-        attrs = match.group(1)
-        name = re.search(r'name="([^"]*)"', attrs)
-        ident = re.search(r'r:id="([^"]*)"', attrs)
-        if name and ident and name.group(1).strip().lower() == wanted.lower():
-            rid = ident.group(1)
-            break
-    if rid is None:
-        raise DataUnavailable(f'workbook has no sheet named "{wanted}"')
-
-    relationship = re.search(
-        rf'<Relationship[^>]*Id="{re.escape(rid)}"[^>]*/?>', rels
-    )
-    if relationship is None:
-        raise DataUnavailable(f"workbook relationship {rid} is missing")
-    target = re.search(r'Target="([^"]*)"', relationship.group(0))
-    if target is None:
-        raise DataUnavailable(f"workbook relationship {rid} has no target")
-    path = target.group(1).lstrip("/")
-    path = path if path.startswith("xl/") else f"xl/{path}"
-    if "/worksheets/" not in path:
-        # A tab can be a chart rather than a grid. In this workbook the tab
-        # called "ERP in last 12 months" is exactly that, which is why the data
-        # is read from "Last 12 months data" instead.
-        raise DataUnavailable(
-            f'sheet "{wanted}" is not a data worksheet, it resolves to {path}'
-        )
-    return path
-
-
-def parse_damodaran_erp(data: bytes) -> tuple[date, float]:
-    """Latest monthly implied equity risk premium for the S&P 500.
-
-    Damodaran publishes this monthly. It is a forward-looking premium implied by
-    discounting expected index cash flows back to the current level, which is a
-    different construct from a historical average, and the only credible free
-    source of a forward-looking number this project has found.
-
-    The workbook uses the 1904 date system. Assuming the more common 1900 epoch
-    would date every observation exactly four years early, so the flag is read
-    rather than guessed.
-    """
-    try:
-        archive = zipfile.ZipFile(io.BytesIO(data))
-    except zipfile.BadZipFile:
-        raise DataUnavailable(
-            "the equity risk premium download is not a readable workbook"
-        ) from None
-
-    with archive as zf:
-        workbook = zf.read("xl/workbook.xml").decode("utf-8", "replace")
-        epoch = _EPOCH_1904 if 'date1904="1"' in workbook else _EPOCH_1900
-        sheet = zf.read(_sheet_path(zf, "Last 12 months data")).decode(
-            "utf-8", "replace"
-        )
-
-    latest: tuple[int, float] | None = None
-    for row in re.finditer(r"<row\b[^>]*>(.*?)</row>", sheet, re.S):
-        cells: dict[str, float] = {}
-        for cell in re.finditer(r'<c\b([^>]*?)/?>(?:(.*?)</c>)?', row.group(1), re.S):
-            ref = re.search(r'r="([A-Z]+)\d+"', cell.group(1))
-            value = re.search(r"<v>(.*?)</v>", cell.group(2) or "", re.S)
-            if ref and value and 't="s"' not in cell.group(1):
-                try:
-                    cells[ref.group(1)] = float(value.group(1))
-                except ValueError:
-                    pass
-        # In this sheet: A month, B index level, C 10-year Treasury, D premium.
-        if "A" in cells and "D" in cells:
-            serial = int(cells["A"])
-            if latest is None or serial > latest[0]:
-                latest = (serial, cells["D"])
-
-    if latest is None:
-        raise DataUnavailable("no equity risk premium rows found in the workbook")
-
-    serial, premium = latest
-    if not 0.0 < premium < 0.25:
-        raise DataUnavailable(
-            f"implied equity risk premium of {premium:.1%} is outside any "
-            f"plausible range; the workbook layout has probably changed"
-        )
-    from datetime import timedelta
-
-    return epoch + timedelta(days=serial), premium
 
 
 @dataclass(frozen=True)
@@ -362,7 +256,6 @@ def parse_shiller_csv(text: str) -> ShillerHistory:
     return ShillerHistory(
         tuple(dates), tuple(prices), tuple(dividends), tuple(earnings), tuple(cape)
     )
-
 
 
 # --- reading a legacy .xls, with the standard library only -------------------
@@ -677,66 +570,3 @@ def parse_shiller_xls(data: bytes) -> "ShillerHistory":
     )
 
 
-def parse_multpl_current(html: str, label: str) -> float:
-    """The current value from a multpl.com page.
-
-    The page states its figure in a block marked "current". Scraping is
-    fragile by nature, so the result is range-checked by the caller and the
-    whole fetch is optional: the tool falls back to the last CAPE in Shiller's
-    own history if this fails.
-    """
-    match = re.search(r'id="current"[^>]*>(.*?)</div>', html, re.S)
-    if match is None:
-        raise DataUnavailable(f"{label}: no current value found on the page")
-    text = re.sub(r"<[^>]+>", " ", match.group(1))
-    number = re.search(r"([0-9]+(?:\.[0-9]+)?)", text)
-    if number is None:
-        raise DataUnavailable(f"{label}: could not read a number from the page")
-    return float(number.group(1))
-
-
-def parse_damodaran_components(data: bytes) -> tuple[date, float, float]:
-    """Index level, trailing payout yield and cyclically adjusted payout yield.
-
-    From the historical sheet of the same workbook the premium comes from.
-    Column B is the index, F the trailing twelve month cash returned to
-    shareholders, which is dividends *and* buybacks, and E a ten-year average
-    of the same. Returns (month, F/B, E/B).
-    """
-    try:
-        archive = zipfile.ZipFile(io.BytesIO(data))
-    except zipfile.BadZipFile:
-        raise DataUnavailable("the workbook download is not readable") from None
-
-    with archive as zf:
-        workbook = zf.read("xl/workbook.xml").decode("utf-8", "replace")
-        epoch = _EPOCH_1904 if 'date1904="1"' in workbook else _EPOCH_1900
-        sheet = zf.read(_sheet_path(zf, "Historical ERP")).decode("utf-8", "replace")
-
-    best: tuple[int, float, float] | None = None
-    for row in re.finditer(r"<row\b[^>]*>(.*?)</row>", sheet, re.S):
-        cells: dict[str, float] = {}
-        for cell in re.finditer(r"<c\b([^>]*?)/?>(?:(.*?)</c>)?", row.group(1), re.S):
-            ref = re.search(r'r="([A-Z]+)\d+"', cell.group(1))
-            value = re.search(r"<v>(.*?)</v>", cell.group(2) or "", re.S)
-            if ref and value and 't="s"' not in cell.group(1):
-                try:
-                    cells[ref.group(1)] = float(value.group(1))
-                except ValueError:
-                    pass
-        if {"A", "B", "E", "F"} <= cells.keys() and cells["B"] > 0:
-            serial = int(cells["A"])
-            if best is None or serial > best[0]:
-                best = (serial, cells["F"] / cells["B"], cells["E"] / cells["B"])
-
-    if best is None:
-        raise DataUnavailable("no payout rows found in the workbook")
-    serial, trailing, smoothed = best
-    if not 0.0 < trailing < 0.20 or not 0.0 < smoothed < 0.20:
-        raise DataUnavailable(
-            f"payout yields of {trailing:.1%} and {smoothed:.1%} are implausible; "
-            f"the workbook layout has probably changed"
-        )
-    from datetime import timedelta
-
-    return epoch + timedelta(days=serial), trailing, smoothed

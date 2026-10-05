@@ -158,7 +158,6 @@ def test_the_american_file_respects_its_own_construction(name) -> None:
     compound = float(p["expected_return_compound"])
     assert data.expected_stock_real_return == pytest.approx(
         arithmetic_from_compound(compound, data.stock_volatility), abs=5e-6)
-    assert p["expected_return_estimates"].startswith("building blocks %.4f (used)" % compound)
     assert compound == pytest.approx(
         (1 + float(p["dividend_yield"])) * (1 + float(p["real_growth"])) - 1, abs=5e-6)
 

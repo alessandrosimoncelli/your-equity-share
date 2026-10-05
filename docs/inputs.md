@@ -247,7 +247,8 @@ year's grown at the growth rate, and the price grows at the same rate, so
 1 + R = (1 + yield)(1 + growth) exactly. Adding the two instead, 3.38%, leaves
 out their product.
 
-**Not the payout yield.** Buybacks return a further 1.53%, and it is tempting to
+**Not the payout yield.** Buybacks returned a further 1.53% in September 2026,
+and it is tempting to
 add them, since a buyback is cash reaching a shareholder. It would be double
 counting. Retiring shares is exactly what makes earnings *per share* grow, so a
 buyback is already inside the growth term; adding it again as income counts it
@@ -261,7 +262,8 @@ The correct alternative pairing, a payout yield with *aggregate* earnings
 growth, is unavailable rather than rejected: aggregate growth needs a share
 count and the S&P earnings history is per share.
 
-Three others are computed as cross-checks and are **not used**: Damodaran's
+Three others were measured once, in September 2026, and are **not used**:
+Damodaran's
 implied premium plus the real safe rate (7.07%, the outlier, embedding near-term analyst growth
 forecasts and quoted against the wrong maturity), a regression of realised
 30-year returns on valuation (5.32%, R2 of 0.19 on about four independent
