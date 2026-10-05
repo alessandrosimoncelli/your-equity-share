@@ -16,8 +16,8 @@
 #
 # The EXPECTED RETURN is built here, by the construction variants/us/market_data.toml
 # uses, because that construction carries no horizon and this model prices a
-# lifetime. AQR's published figure is the cross-check rather than the estimate:
-# it is a good number, and they state it is for five to ten years.
+# lifetime. AQR's published figure is not the estimate: it is a good number,
+# and they state it is for five to ten years.
 #
 # The SAFE ASSET is the ECB's AAA euro area government curve at thirty years,
 # deflated by the MARKET break-even inflation rate of the longest German linker.
@@ -91,9 +91,8 @@ generated_by = "tools/refresh_italy.py"
 #   converted
 #   to an arithmetic mean at the fixed volatility below.
 #
-# WHY NOT AQR'S PUBLISHED FIGURE, which this file used until September 2026 and
-# which is still fetched and reported as the cross-check. Because they say what
-# it is for, and it is not this:
+# WHY NOT AQR'S PUBLISHED FIGURE, which this file used until September 2026.
+# Because they say what it is for, and it is not this:
 #
 #   "We present local real (inflation-adjusted) and nominal annual compound
 #   rates of return for a horizon of 5 to 10 years. Over such intermediate
@@ -144,10 +143,10 @@ generated_by = "tools/refresh_italy.py"
 # years of data across eighteen countries and the answer moves 4.5 points
 # across weighting schemes that are equally defensible.
 #
-# THE CHECK STILL RUNS. AQR's two halves are compared with ours on every
-# refresh and both currently sit within a third of a point, which is a firm
-# that does this for a living arriving at the same two numbers from their own
-# data. tools/estimators_it.py sets the whole family side by side.
+# AQR's two halves sat within a third of a point of ours in October 2026
+# (Italian methodology, section 2): a firm that does this for a living
+# arriving at the same two numbers from their own data. tools/estimators_it.py
+# sets the whole family side by side.
 expected_stock_real_return = 0.049416
 
 # The ECB's AAA euro area government curve at thirty years, deflated by the
@@ -178,8 +177,8 @@ expected_stock_real_return = 0.049416
 # the break-even as a simple yield difference, so it is subtracted. The
 # result lands within a few hundredths of a point of the 2046's own traded
 # real yield, the rest being a 30-year nominal leg against a 19.6-year
-# inflation leg. The survey is still fetched, as the cross-check; the
-# safe rate rests on the break-even because it is a price.
+# inflation leg. The safe rate rests on the break-even because it is a
+# price, not on a survey of forecasters.
 #
 # AAA rather than all euro area government bonds, which yielded 0.56 points
 # more at the same maturity on 8 September 2026. That spread is compensation for a government not
@@ -217,7 +216,6 @@ history_source = "Shiller's workbook, for the growth term"
 dividend_yield_measured = 0.015637
 dividend_yield_withheld = 0.003470
 expected_inflation = 0.022845
-expected_inflation_survey = 0.020369
 nominal_safe_yield = 0.037473
 growth_source = "The American variant's own 100-year OLS trend of real earnings per share through Shiller, the same number to five decimals. Using it for a world index is a measured choice: AQR publish 2.7% for United States large cap against 2.6% for Global All Country, a tenth of a point apart, because long-run real growth in earnings per share is a return on retained capital net of issuance rather than a national characteristic; tools/us_vs_global.py bounds what the substitution costs."
 growth_cross_check = "The alternative was tried and it failed, which is why the growth term is the American one. tools/global_growth.py rebuilds global real dividend growth from the Jorda-Schularick-Taylor Macrohistory Database R6, eighteen advanced economies from 1870, using dividend growth in place of the earnings growth JST does not carry. The answer depends on the weighting scheme far more than on the data: weights pinned at today give 0.89% to 1.52%, weights pinned at the start of the window give 1.86% to 3.04%, and GDP shares each year give 2.77% to 5.43%, an envelope 4.5 points wide against 0.25 points for the American estimator, and keeping the war years rather than dropping them widens it further. The reason is structural. A fixed basket of countries is not an index, because an index reconstitutes and drops what stops paying, and JST publishes country index returns rather than the world index's constituents, so reconstitution cannot be reproduced. An earlier version of this file quoted a single scheme's 1.33% to 3.16% as the uncertainty, which was too flattering by a factor of four. Both this variant's 2.286% and AQR's 2.6% fall inside the envelope, which is corroboration too weak to lean on and is reported as such."
