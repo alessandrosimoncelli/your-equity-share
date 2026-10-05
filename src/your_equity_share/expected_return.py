@@ -73,7 +73,7 @@ CHOI_FITTED_LOG_PREMIUM_RANGE = (0.02, 0.04)
 # The other half of the same grid, and the one that went unchecked here for
 # longer. Log real risk-free rates of 0, 0.01 and 0.02, calibrated in the paper
 # to "the five-year TIPS real yield in 2024". The guide then tells a reader to
-# enter the THIRTY-year yield, which in September 2026 is 2.96% and sits above
+# enter the THIRTY-year yield, which in September 2026 was 2.98% a year and sat above
 # every value the coefficients were fitted on. The regressor carries +1.132
 # against -0.267 for the premium, so a point of extrapolation here costs four
 # times what a point of premium extrapolation costs.

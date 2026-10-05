@@ -9,7 +9,7 @@ hard way: run on the Italian file once, it wrote the 30-year United States
 TIPS in as the safe rate and deleted the note saying the rate was a guess.
 
 THE SAFE RATE is the ECB's AAA euro area government curve at thirty years,
-deflated by the MARKET BREAK-EVEN inflation rate of the longest euro linker.
+deflated by the MARKET BREAK-EVEN inflation rate of the longest German linker.
 
 It took three tries to get here and each attempt failed a different test.
 
@@ -151,6 +151,8 @@ GROWTH_WINDOW_YEARS = 100
 # different estimator and would change the method rather than refresh it.
 AQR_REPORT = "Alternative Thinking 2026 Issue 1, Exhibit 3A, Global All Country"
 AQR_AS_OF = "2025-12-31"
+# Their yield term, the "combined payout yield": the average of their
+# dividend yield, 1.5%, and an earnings-based payout yield, 1.7% (Exhibit A1).
 AQR_YIELD = 0.016
 AQR_GROWTH = 0.026
 AQR_COMPOUND = 0.042
@@ -295,7 +297,7 @@ def linker_chart(axis_label: str) -> tuple[str, float, float, date]:
 
 
 def longest_german_linker() -> tuple[str, float, float, date]:
-    """The longest euro linker: ISIN, years left, traded real yield."""
+    """The longest German linker: ISIN, years left, traded real yield."""
     return linker_chart("Real yield")
 
 
@@ -460,7 +462,7 @@ def main(argv: list[str]) -> int:
     traded, years_left = (linker[2], linker[1]) if linker else (None, None)
 
     # The deflator is the MARKET's inflation rate, not a forecaster's. It is
-    # the break-even of the longest euro linker: the rate at which holding the
+    # the break-even of the longest German linker: the rate at which holding the
     # linker and holding a nominal bond pay the same. A price, and the only
     # inflation number here that nobody had to form a view to produce. The
     # Finanzagentur publishes it as a simple yield difference, so it comes off
@@ -533,7 +535,13 @@ def main(argv: list[str]) -> int:
     print("=" * 68)
 
     gross, first, last = trailing_dividend_yield("GRTR")
-    net, _, _ = trailing_dividend_yield("NETR")
+    net, net_first, net_last = trailing_dividend_yield("NETR")
+    if (net_first, net_last) != (first, last):
+        # The model reads the net yield, under the gross index's dates.
+        raise SystemExit(
+            "MSCI's net levels cover %s to %s and the gross ones %s to %s; "
+            "refusing to publish a net yield under the wrong window"
+            % (net_first, net_last, first, last))
     growth, growth_as_of = american_growth_trend()
     # MSCI's window must be current too: an old one would publish an old
     # yield under the ECB's fresh date.
@@ -581,14 +589,14 @@ def main(argv: list[str]) -> int:
     print(f"  AQR, {AQR_REPORT},")
     print(f"  as of {AQR_AS_OF}, is the cross-check rather than the estimate,")
     print(f"  because they state it is for a horizon of five to ten years:")
-    print(f"    their dividend yield                   {AQR_YIELD:>8.4%}   "
+    print(f"    their payout yield                     {AQR_YIELD:>8.4%}   "
           f"{drift_yield * 100:>+6.2f} against ours")
     print(f"    their real EPS growth                  {AQR_GROWTH:>8.4%}   "
           f"{drift_growth * 100:>+6.2f} against ours")
     print(f"    their compound, gross                  "
           f"{AQR_COMPOUND:>8.4%}   {(AQR_COMPOUND - ((1 + gross) * (1 + growth) - 1)) * 100:>+6.2f} "
           f"against ours gross")
-    stale = [name for name, drift in (("the dividend yield", drift_yield),
+    stale = [name for name, drift in (("the yield", drift_yield),
                                       ("the growth rate", drift_growth))
              if abs(drift) > DRIFT_LIMIT]
     print()
@@ -697,8 +705,8 @@ def safe_rate_note(aaa_continuous: float, aaa_date, breakeven: float, isin: str,
     return (
         "ECB AAA euro area central government bond curve, 30-year par yield, "
         "%.4f%% continuously compounded on %s, which is %.4f%% a year, less the "
-        "MARKET break-even inflation rate of %.4f%% on %s, the longest euro "
-        "inflation-linked government bond at %.1f years, which gives %.4f%%. "
+        "MARKET break-even inflation rate of %.4f%% on %s, the longest German "
+        "inflation-linked federal bond at %.1f years, which gives %.4f%%. "
         "Subtracted because the Finanzagentur defines the break-even as a "
         "simple yield difference; annualised first because the ECB compounds "
         "continuously and the model reads annual rates. It clears three bars "
@@ -724,7 +732,7 @@ def expected_return_note(gross: float, net: float, first, last, growth: float,
         "with %.4f%% real growth in earnings per share, the %d-year OLS trend "
         "through Shiller to %s, as (1 + yield)(1 + growth) - 1, with zero "
         "repricing. Cross-checked against AQR, %s, as "
-        "of %s, who quote gross: their dividend yield of %.1f%% is %+.2f "
+        "of %s, who quote gross: their payout yield of %.1f%% is %+.2f "
         "points from our gross figure and their real EPS growth of %.1f%% is "
         "%+.2f points from ours. Theirs is the check and not the estimate "
         "because they state it is for a horizon of 5 to 10 years, while Table "

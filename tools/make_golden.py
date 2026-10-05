@@ -388,6 +388,45 @@ def recommend_cases() -> list[dict]:
                         },
                     }
                 )
+
+    # The spousal switch beside each kind of pension the first adult can
+    # have, and with a partner young enough that the half starts after the
+    # first adult retires: an already claimed Social Security, a company
+    # pension that is not the base of the half, a ticked estimate for a later
+    # claim, a first adult still earning at 66, and a partner of 50.
+    for first, partner in [
+        (Person(70, 0.0, 30_000.0, benefit_is_state=True), Person(64, 0.0, claims_spousal=True)),
+        (Person(55, 100_000.0, 20_000.0, benefit_start=60), Person(53, 0.0, claims_spousal=True)),
+        (Person(45, 100_000.0, 37_000.0, benefit_start=67, benefit_is_state=True),
+         Person(43, 0.0, claims_spousal=True)),
+        (Person(66, 60_000.0), Person(63, 0.0, claims_spousal=True)),
+        (Person(60, 100_000.0), Person(50, 0.0, claims_spousal=True)),
+        (Person(60, 100_000.0), Person(50, 40_000.0, claims_spousal=True)),
+    ]:
+        household = Household(400_000.0, [first, partner], 5.0)
+        r = recommend(household, 0.0673, 0.0298, 0.1719)
+        cases.append(
+            {
+                "household": {
+                    "investable_net_worth": 400_000.0,
+                    "adults": [_person_payload(a) for a in (first, partner)],
+                    "risk_aversion": 5.0,
+                },
+                "args": [0.0673, 0.0298, 0.1719],
+                "expect": {
+                    "equity_share": r.equity_share,
+                    "merton_share": r.merton_share,
+                    "human_capital": r.human_capital,
+                    "financial_wealth": r.financial_wealth,
+                    "uncapped_share": r.uncapped_share,
+                    "human_capital_ratio": r.human_capital_ratio,
+                    "is_capped": r.is_capped,
+                    "bond_share": r.bond_share,
+                    "equity_dollars": r.equity_dollars,
+                    "per_adult_human_capital": list(r.per_adult_human_capital),
+                },
+            }
+        )
     return cases
 
 
@@ -454,12 +493,14 @@ def conversion_cases() -> list[dict]:
     return cases
 
 
-def main() -> int:
+def all_cases() -> dict[str, list[dict]]:
+    """Every case, as main() writes them; tests/test_golden.py compares the
+    Python of the day with the committed file through this."""
     wage_rates, benefit_rates = discount_rate_cases()
     italy_capital, italy_advice = italy_cases()
     forward_ce, inverse_ce = risk_aversion_cases()
 
-    cases = {
+    return {
         "merton_share": merton_cases(),
         "wage_discount_rate": wage_rates,
         "benefit_discount_rate": benefit_rates,
@@ -479,6 +520,9 @@ def main() -> int:
         "must_reject": rejection_cases(),
     }
 
+
+def main() -> int:
+    cases = all_cases()
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "generator": "tools/make_golden.py",

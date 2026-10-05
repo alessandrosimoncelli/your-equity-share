@@ -157,7 +157,7 @@ def print_report(result, market, household) -> None:
     print(f"  Market data, as of {market.as_of}")
     print()
     method = market.provenance.get("expected_return_method", "set by hand")
-    note = {"building blocks": "dividend yield plus long-run growth",
+    note = {"building blocks": "dividend yield compounded with long-run growth",
             "consensus": "median of three estimators",
             "implied": "market implied premium",
             "fixed": "set by hand"}.get(method, method)
@@ -267,7 +267,7 @@ def main(argv: list[str]) -> int:
         wealth = ask("Investable net worth, excluding housing", float, 1)
         benefit, start, state = ask_pension("Your")
         partner_age = ask_optional("Second adult's age (blank if none)")
-        partner_wage = partner_benefit = 0.0
+        partner_wage, partner_benefit = None, 0.0
         partner_start, partner_state, spousal = None, False, False
         if partner_age is not None:
             partner_wage = ask("Their after-tax annual wage", float, 0)
@@ -284,20 +284,33 @@ def main(argv: list[str]) -> int:
         partner_benefit, partner_start = args.partner_benefit, args.partner_benefit_start
         partner_state, spousal = args.partner_state_pension, args.partner_spousal
 
-    adults = [Person(age, wage, benefit, benefit_start=start, benefit_is_state=state)]
-    if partner_age is not None:
-        if partner_wage is None:
-            print("\n--partner-age needs --partner-wage. Pass 0 if they do not")
-            print("earn, so that the zero is deliberate rather than assumed.")
-            return 1
-        adults.append(Person(partner_age, partner_wage, partner_benefit,
-                             benefit_start=partner_start,
-                             benefit_is_state=partner_state, claims_spousal=spousal))
-    elif partner_wage is not None:
+    # The page's rules, for the flags: a Social Security tick needs an amount,
+    # or it would replace the imputed pension with none, and the spousal
+    # benefit is claimed instead of a pension of the partner's own.
+    if state and benefit <= 0:
+        print("\n--state-pension needs --benefit, the amount of the pension.")
+        return 1
+    if partner_state and partner_benefit <= 0:
+        print("\n--partner-state-pension needs --partner-benefit, the amount.")
+        return 1
+    if spousal and partner_benefit > 0:
+        print("\n--partner-spousal is instead of a pension of their own, so it")
+        print("cannot go with --partner-benefit.")
+        return 1
+    if partner_age is None and partner_wage is not None:
         print("\n--partner-wage needs --partner-age.")
+        return 1
+    if partner_age is not None and partner_wage is None:
+        print("\n--partner-age needs --partner-wage. Pass 0 if they do not")
+        print("earn, so that the zero is deliberate rather than assumed.")
         return 1
 
     try:
+        adults = [Person(age, wage, benefit, benefit_start=start, benefit_is_state=state)]
+        if partner_age is not None:
+            adults.append(Person(partner_age, partner_wage, partner_benefit,
+                                 benefit_start=partner_start,
+                                 benefit_is_state=partner_state, claims_spousal=spousal))
         household = Household(wealth, adults, gamma)
     except ValueError as exc:
         print(f"\n{exc}")

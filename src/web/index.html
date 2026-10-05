@@ -651,8 +651,9 @@ td.why { min-width: 15rem; }
         wage is projected through 66 (this year is the last if you are 66 or
         older), and from the year after the tool adds your Social Security at
         40% of your last wage, up to its legal maximum. If the pension here is
-        your Social Security, or your own estimate of it with the age you will
-        claim, tick the box: it then replaces that estimate. A pension that does
+        your Social Security, a Social Security disability or survivor's benefit
+        included, or your own estimate of it with the age you will claim, tick
+        the box: it then replaces that estimate. A pension that does
         not rise with prices: enter about four fifths of it.</span>
       </div>
 
@@ -723,7 +724,7 @@ td.why { min-width: 15rem; }
         <span class="hint">The expected <b>real</b> return on <b>United States</b>
         equities, above inflation, over a lifetime. Enter it the way forecasts
         are published: as a <b>compound</b> rate. The figure below is a dividend
-        yield plus long-run growth in earnings per share. If your equities are a
+        yield compounded with long-run growth in earnings per share. If your equities are a
         world index fund, Exhibit 5 shows the same construction on a world index,
         and you can enter that instead.</span>
         <div id="override-field" hidden>
@@ -821,7 +822,7 @@ td.why { min-width: 15rem; }
         <p class="note">This is today's answer. Run it again once a year and
         rebalance to the new figure, using new savings first.</p>
       </div>
-      <div class="split">
+      <div class="split" id="split">
         <svg id="split-chart" role="img" aria-label="How the portfolio divides"></svg>
         <div class="split-key" id="split-key"></div>
       </div>
@@ -1173,10 +1174,15 @@ function readMoney(el, fallback) {
   return digits !== "" && Number.isFinite(v) && v >= 0 ? v : fallback;
 }
 
+// A minus sign or an opening bracket before the first digit: how a debt is
+// typed, "-50,000", "$-50,000" or "(50,000)".
+const NEGATIVE = /^[^0-9]*[-\u2212(]/;
+
 function showMoney(el) {
   const v = readMoney(el, null);
-  // Keep a minus sign: a negative net worth must not turn positive on blur.
-  const minus = /^\s*[-\u2212(]/.test(el.value) && v ? "-" : "";
+  // Keep the minus on savings, so a negative net worth does not turn positive
+  // on blur. Every other amount is read as positive, so it is shown that way.
+  const minus = el.id === "wealth" && NEGATIVE.test(el.value) && v ? "-" : "";
   el.value = v === null ? "" : minus + money.format(v);
 }
 
@@ -1235,8 +1241,11 @@ function pensionOptions(which) {
   const from = raw === "" ? NaN : Math.round(Number(raw));
   return {
     benefitStart: Number.isFinite(from) ? Math.min(100, Math.max(20, from)) : null,
-    benefitIsState: $(`${prefix}-state`).checked,
-    claimsSpousal: which === 2 && VARIANT.spousal && $("partner-spousal").checked,
+    // Ticked with no amount, it would replace the imputed pension with none.
+    benefitIsState: $(`${prefix}-state`).checked && readMoney($(prefix), 0) > 0,
+    // Claimed instead of a pension of their own, so only with none entered.
+    claimsSpousal: which === 2 && VARIANT.spousal && $("partner-spousal").checked &&
+      readMoney($("partner-benefit"), 0) === 0,
   };
 }
 
@@ -1389,16 +1398,23 @@ function readInputs() {
   const gamma = currentGamma();
   const custom = $("custom-path").checked;
 
-  // Once a box has been edited it owns that adult's pension: a benefit typed
-  // in its first year is a pension already being paid, which is what the
-  // model values as certain, and the pension fields above are locked so they
-  // cannot move the answer behind the typed years.
+  // Once a box has been edited its years replace the wage and pension above,
+  // and the pension fields are locked, so they go on saying what they said
+  // when the box was filled: which part of each year's benefit is a pension
+  // that is fixed, from what age, and whether it is the state pension. With
+  // that field empty, whatever the box's first year carries beyond the
+  // projection it was filled with is a pension already being paid, which the
+  // model values as certain.
   const edited = (which) => custom && $(`path-${which}`).value !== prefilled[which];
   const pension = (which, parsed, age) => {
-    if (edited(which) && parsed && parsed.benefits[age + 1] !== undefined) {
-      return [parsed.benefits[age + 1], { ...pensionOptions(which), benefitStart: null }];
+    const amount = nonNegative($(which === 1 ? "benefit" : "partner-benefit"), 0);
+    const options = pensionOptions(which);
+    if (amount === 0 && edited(which) && parsed && parsed.benefits[age + 1] !== undefined) {
+      const before = prefilled[which] ? parsePath(prefilled[which], age).benefits[age + 1] : 0;
+      const extra = Math.max(0, parsed.benefits[age + 1] - (before || 0));
+      return [extra, { ...options, benefitStart: null }];
     }
-    return [nonNegative($(which === 1 ? "benefit" : "partner-benefit"), 0), pensionOptions(which)];
+    return [amount, options];
   };
 
   const age1 = clampInt($("age"), 20, 99, 45);
@@ -1423,6 +1439,7 @@ function readInputs() {
       $(id).disabled = edited(which);
     }
   }
+  $("partner-spousal").disabled = edited(2) || readMoney($("partner-benefit"), 0) > 0;
   if (custom) {
     drawPath($("path-1-chart"), projectEarnings(adults[0], VARIANT.calibration));
     if (adults[1]) drawPath($("path-2-chart"), projectEarnings(adults[1], VARIANT.calibration));
@@ -1434,13 +1451,13 @@ function readInputs() {
       ? `Projected from the fields above, and it follows them until you change a year.`
       : parsed.bad.length
       ? `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`
-      : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed. They replace the wage and pension above, which stay locked until Reset to projection; a benefit in the first year counts as a pension already being paid.`;
+      : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed. They replace the wage and pension above until Reset to projection. The pension fields stay locked and still say which pension is fixed; with none entered there, a benefit in the first year counts as one already being paid.`;
   }
-  const wealth = Math.max(1000, nonNegative($("wealth"), 1000));
+  const wealth = Math.max(1, nonNegative($("wealth"), 1000));
   // Choi's input is investable net worth above zero; the guide says the model
   // has no solution when it is negative. A minus sign or a zero says so.
   const typedWealth = String($("wealth").value).trim();
-  const noSavings = /^[-\u2212(]/.test(typedWealth) ||
+  const noSavings = NEGATIVE.test(typedWealth) ||
     (typedWealth !== "" && readMoney($("wealth"), 1) === 0);
   // The slider is a COMPOUND return, because that is how every published
   // forecast is quoted and so what a reader will type. The model takes an
@@ -1506,10 +1523,12 @@ function render() {
       `Choi's model has no answer when savings are zero or debts exceed them: ` +
       `his guide says it has no solutions for a negative net worth.`;
   }
-  drawSplit($("split-chart"), $("split-key"), r);
+  // With no savings there is no answer, so nothing to draw and nothing to cap.
+  $("split").hidden = noSavings;
+  if (!noSavings) drawSplit($("split-chart"), $("split-key"), r);
   $("wealth-note").hidden = r.humanCapital <= r.financialWealth;
 
-  $("cap-flag").innerHTML = r.isCapped
+  $("cap-flag").innerHTML = r.isCapped && !noSavings
     ? `<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The 100% cap is the no-borrowing rule of the model the formula approximates; the formula alone goes above it.`
     : "";
 
@@ -1622,8 +1641,8 @@ function render() {
 
   // The same construction, run on a global index, printed beside the American
   // number. Not a second recommendation: the model would also need the Italian
-  // human capital calibration to produce one. It is here because "3.38% real"
-  // is hard to judge on its own and easy to judge next to what the identical
+  // human capital calibration to produce one. It is here because the American
+  // figure is hard to judge on its own and easy to judge next to what the identical
   // estimator says about a portfolio most readers could also buy.
   //
   // The two differ by the YIELD, not the method. Both use the same 100-year
@@ -1660,7 +1679,7 @@ function render() {
           `points for the volatility drag`, "why"]]) +
     globalRow(market) +
     row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
-         ["30-year TIPS yield before tax, from the Treasury's real yield curve (FRED's DFII30), annualised from its semiannual quote, as Choi's guide suggests. If most of your bonds sit in a taxable account, his guide multiplies it by one minus your income tax rate; this page does not, so read the answer as low (methodology 3.3)", "why"]]) +
+         ["30-year TIPS yield before tax, the rate Choi's guide suggests, from the Treasury's real yield curve (FRED's DFII30), annualised from its semiannual quote, which his spreadsheet does not do (methodology 3.3). If most of your bonds sit in a taxable account, his guide multiplies it by one minus your income tax rate; this page does not, so read the answer as low (methodology 3.3)", "why"]]) +
     row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
          ["Choi's 18.5%, monthly CRSP returns 1926 to 2024, held fixed rather than re-measured each week", "why"]]) +
     row([["Your risk aversion", "k"], [num1.format(gamma), "n"], [riskSource(), "why"]]) +

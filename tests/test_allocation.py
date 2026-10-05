@@ -564,6 +564,55 @@ def test_the_spousal_switch_pays_half_the_earner_s_pension_from_62() -> None:
     assert spousal.equity_share > plain.equity_share
 
 
+def test_the_spousal_half_of_a_claimed_pension_is_as_safe_as_the_pension() -> None:
+    """A first adult already drawing Social Security: the half the partner
+    claims is fixed as well, so it is worth what the same amount paid as a
+    fixed pension of its own would be. Still working, so that the wage's
+    chain and the benefit rates' differ, and only the second is right."""
+    args = (0.05167, 0.0296, 0.185)
+    earner = Person(64, 24_000.0, 20_000.0, benefit_is_state=True)
+    plain = recommend(Household(300_000.0, [earner, Person(63, 0.0)], 5.0), *args)
+    spousal = recommend(Household(300_000.0, [earner, Person(63, 0.0, claims_spousal=True)], 5.0), *args)
+    gain = spousal.per_adult_human_capital[0] - plain.per_adult_human_capital[0]
+    half = recommend(Household(300_000.0, [Person(64, 0.0, 10_000.0)], 5.0), *args)
+    assert gain == pytest.approx(half.human_capital, rel=1e-12)
+
+
+def test_the_spousal_half_is_not_taken_of_a_company_pension() -> None:
+    """Half of the first adult's Social Security, not of an earlier job's
+    pension paid beside it."""
+    args = (0.05167, 0.0296, 0.185)
+
+    def gain(earner):
+        plain = recommend(Household(400_000.0, [earner, Person(53, 0.0)], 5.0), *args)
+        both = recommend(Household(400_000.0, [earner, Person(53, 0.0, claims_spousal=True)], 5.0), *args)
+        return both.per_adult_human_capital[0] - plain.per_adult_human_capital[0]
+
+    assert gain(Person(55, 100_000.0, 20_000.0, benefit_start=60)) == pytest.approx(
+        gain(Person(55, 100_000.0)), rel=1e-12)
+
+
+def test_the_spousal_half_starts_when_the_partner_is_62() -> None:
+    """A partner ten years younger: the half starts at the first adult's 72,
+    after both the first adult's retirement and the age of 66 or 67."""
+    args = (5.0, 0.05167, 0.0296, CGM_CALIBRATION, 0.185)
+    earner = Person(60, 100_000.0)
+    couple = recommend(Household(400_000.0, [earner, Person(50, 0.0, claims_spousal=True)], 5.0),
+                       *(args[1], args[2], args[4]))
+    assert couple.per_adult_human_capital[0] == pytest.approx(
+        human_capital(earner, *args, spousal_from_age=72), rel=1e-12)
+    assert human_capital(earner, *args, spousal_from_age=67) > couple.per_adult_human_capital[0]
+
+
+def test_a_partner_on_the_spousal_switch_has_no_pension_of_their_own() -> None:
+    """A partner who still works and will claim the spousal benefit: their own
+    imputed pension goes, as in Choi's switch, and their wages stay."""
+    partner = Person(50, 40_000.0, claims_spousal=True)
+    years = project_earnings(partner)
+    assert all(y.benefit == 0.0 for y in years)
+    assert [y.wage for y in years] == [y.wage for y in project_earnings(Person(50, 40_000.0))]
+
+
 def test_the_partner_s_pension_counts() -> None:
     """A retired couple who both draw pensions: the second one reaches the
     answer through the partner's own field."""

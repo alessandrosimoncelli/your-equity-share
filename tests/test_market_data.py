@@ -149,16 +149,18 @@ def test_the_american_file_respects_its_own_construction(name) -> None:
 
     data = load_market_data(Path(__file__).resolve().parents[1] / "variants" / "us" / name)
     p = data.provenance
-    compound = float(p["expected_return_compound"])
     assert data.stock_volatility == CALIBRATION_VOLATILITY
+    # The TIPS quote is semiannual; the model reads the annual rate.
+    quoted = float(p["real_risk_free_quoted"])
+    assert data.real_risk_free_rate == pytest.approx((1 + quoted / 2) ** 2 - 1, abs=5e-7)
+    if p.get("expected_return_method") != "building blocks":
+        return  # update.py --fixed-return: a figure set by hand has no parts
+    compound = float(p["expected_return_compound"])
     assert data.expected_stock_real_return == pytest.approx(
         arithmetic_from_compound(compound, data.stock_volatility), abs=5e-6)
     assert p["expected_return_estimates"].startswith("building blocks %.4f (used)" % compound)
     assert compound == pytest.approx(
         (1 + float(p["dividend_yield"])) * (1 + float(p["real_growth"])) - 1, abs=5e-6)
-    # The TIPS quote is semiannual; the model reads the annual rate.
-    quoted = float(p["real_risk_free_quoted"])
-    assert data.real_risk_free_rate == pytest.approx((1 + quoted / 2) ** 2 - 1, abs=5e-7)
 
 
 @pytest.mark.parametrize("name", ["market_data.toml", "snapshot.toml"])
@@ -166,6 +168,8 @@ def test_both_variants_use_one_growth_term(name) -> None:
     root = Path(__file__).resolve().parents[1] / "variants"
     us = load_market_data(root / "us" / name).provenance
     it = load_market_data(root / "it" / name).provenance
+    if us.get("expected_return_method") != "building blocks":
+        pytest.skip("the American return was set by hand (update.py --fixed-return)")
     assert float(us["real_growth"]) == pytest.approx(float(it["real_growth"]), abs=5e-6)
 
 

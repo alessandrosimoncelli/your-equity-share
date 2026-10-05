@@ -35,7 +35,7 @@ GROWTH = 0.02286
 
 
 def _stub(monkeypatch, tmp_path, *, par=PAR_CC, breakeven_date=date(2026, 9, 30),
-          msci_end=20260930, linker_years=19.5):
+          msci_end=20260930, linker_years=19.5, net_window=None):
     config = tmp_path / "market_data.toml"
     shutil.copy(ROOT / "variants" / "it" / "market_data.toml", config)
     monkeypatch.setattr(refresh_italy, "CONFIG", config)
@@ -52,8 +52,12 @@ def _stub(monkeypatch, tmp_path, *, par=PAR_CC, breakeven_date=date(2026, 9, 30)
                         lambda: ("DE0001030575", linker_years, BREAKEVEN, breakeven_date))
     monkeypatch.setattr(refresh_italy, "longest_german_linker",
                         lambda: ("DE0001030575", linker_years, TRADED, breakeven_date))
-    monkeypatch.setattr(refresh_italy, "trailing_dividend_yield",
-                        lambda variant: (GROSS if variant == "GRTR" else NET, 20250930, msci_end))
+    def trailing(variant):
+        if variant == "NETR" and net_window:
+            return (NET, *net_window)
+        return (GROSS if variant == "GRTR" else NET, 20250930, msci_end)
+
+    monkeypatch.setattr(refresh_italy, "trailing_dividend_yield", trailing)
     monkeypatch.setattr(refresh_italy, "american_growth_trend",
                         lambda: (GROWTH, "2026-06-01"))
     return config
@@ -99,6 +103,7 @@ def test_a_negative_rate_is_written_and_then_overwritten(monkeypatch, tmp_path) 
     {"breakeven_date": date(2026, 9, 1)},   # a break-even a month older than the curve
     {"msci_end": 20260630},                  # an MSCI window three months old
     {"linker_years": 9.5},                   # an inflation leg too short for a lifetime
+    {"net_window": (20250331, 20260331)},    # net levels half a year behind the gross
 ])
 def test_stale_or_unfit_inputs_are_refused(monkeypatch, tmp_path, kwargs) -> None:
     config = _stub(monkeypatch, tmp_path, **kwargs)

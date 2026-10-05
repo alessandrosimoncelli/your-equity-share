@@ -284,9 +284,9 @@ def main() -> int:
 
     anchor = cyclical * (1 + AQR_EQUILIBRIUM_GROWTH * 5) + AQR_EQUILIBRIUM_GROWTH
     rows = [
-        ("Cyclically adjusted yield plus growth", cyclical + growth, "none"),
+        ("Cyclically adjusted yield with growth", (1 + cyclical) * (1 + growth) - 1, "none"),
         ("AQR's earnings anchor, dividend form", anchor, "10y"),
-        ("Dividend yield plus long-run growth", (1 + trailing) * (1 + growth) - 1, "none"),
+        ("Dividend yield with long-run growth", (1 + trailing) * (1 + growth) - 1, "none"),
         ("AQR published, Global All Country", AQR_COMPOUND, "5 to 10y"),
         ("Dividend yield alone, no growth", trailing, "none"),
     ]

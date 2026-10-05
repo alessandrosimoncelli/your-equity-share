@@ -369,6 +369,11 @@ def discover_shiller_url() -> str:
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 
+# Downloads to keep once the refresh has accepted what they hold. A history
+# the run refuses must not be left on disk, where tools/analysis.py and the
+# Italian refresh would read it.
+_TO_KEEP: dict[str, bytes] = {}
+
 
 def _keep(raw: bytes, name: str) -> None:
     """Save the raw download beside the repository, for tools/analysis.py.
@@ -402,7 +407,7 @@ def fetch_shiller_history() -> tuple[ShillerHistory, str]:
         url = discover_shiller_url()
         raw = _get(url)
         history = parse_shiller_xls(raw)
-        _keep(raw, "shiller.xls")
+        _TO_KEEP["shiller.xls"] = raw
         return history, "Shiller's own site"
     except (DataUnavailable, urllib.error.URLError, OSError, ValueError) as exc:
         problems.append(f"Shiller's own site: {exc}")
@@ -726,6 +731,9 @@ def main(argv: list[str]) -> int:
         print(f"\n{args.config.name} is unchanged. The tool still works on the")
         print(f"data it already has, from {existing.as_of}.")
         return 1
+
+    for name, raw in _TO_KEEP.items():
+        _keep(raw, name)
 
     document = render_config(
         generated_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat(),

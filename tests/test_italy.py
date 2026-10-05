@@ -369,7 +369,7 @@ def test_the_safe_rate_holds_its_maturity_fixed(italy) -> None:
 def test_the_safe_rate_deflator_is_a_price_not_a_forecast(italy) -> None:
     """No survey in the safe rate, which is the whole reason it changed.
 
-    The deflator is the market break-even of the longest euro linker: the rate
+    The deflator is the market break-even of the longest German linker: the rate
     at which holding that bond and holding a nominal bond pay the same. It is
     a price. The ECB Survey of Professional Forecasters is an opinion, and the
     tool is meant to hold measurements and trends.

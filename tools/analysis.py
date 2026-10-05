@@ -303,7 +303,9 @@ def part_three(workbook: Path) -> None:
     for horizon in (10, 20, 30):
         months = 12 * horizon
         rows = []
-        for k in range(360, len(index) - months):
+        # From the first month with thirty years of earnings behind it,
+        # November 1910, as the methodology says.
+        for k in range(359, len(index) - months):
             if prices[k] <= 0 or earnings[k] <= 0 or not cape[k] or cape[k] <= 0:
                 continue
             growth = trend_growth(earnings[:k + 1], min(1200, k + 1))
