@@ -78,7 +78,7 @@ def test_the_level_equity_premium_conversion() -> None:
     assert level == pytest.approx(0.0386, abs=5e-5)
 
 
-def test_log_premium_recovers_the_paper_s_pi() -> None:
+def test_log_premium_recovers_the_paper_s_log_premium() -> None:
     """Round trip: converting the level return back gives 2% again."""
     assert log_premium(EXPECTED_RETURN, REAL_RISK_FREE, SIGMA) == pytest.approx(
         LOG_EQUITY_PREMIUM, abs=1e-12

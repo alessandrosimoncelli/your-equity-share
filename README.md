@@ -31,9 +31,9 @@ solution Choi fitted his coefficients to. Section 11 of the Italian
 methodology lists what that leaves American.
 
 In the American variant, following Choi, the earnings risk is the average for
-**college graduates**; his spreadsheet declares the same assumption and this
-one does not vary it, because the estimates behind it are a cross-section of
-the 1970s to 1990s and there is no reason to think the relationship between
+**college graduates**; his spreadsheet makes the same assumption, his guide
+states it, and this one does not vary it, because the estimates behind it come
+from household panel data of the 1970s to 1990s and there is no reason to think the relationship between
 education and earnings risk is stable.
 
 **Not for** money with a date on it, a house, or a business. Horizon does not
@@ -180,7 +180,7 @@ asserted.
 
 | Stage | State |
 | --- | --- |
-| 1. Faithful port of the source spreadsheet, as a regression baseline | **done**, removed in October 2026 |
+| 1. Faithful port of the original "Merton Share" workbook, as a regression baseline | **done**, removed in October 2026 |
 | 2. Market data pipeline and risk-aversion elicitation | **done** |
 | 3. Choi's formula: human capital, discount rates, imputed earnings | **done** |
 | 4. Validated against Choi's own spreadsheet, both tabs | **done** |

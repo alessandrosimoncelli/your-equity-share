@@ -105,8 +105,8 @@ methodology shows it is also the one with the lowest error at thirty.
   a point.
 
 
-Tax is not applied: the model reads the figures before tax, as Choi does, and
-src/your_equity_share/taxes.py says why.
+Tax is not applied: the model reads the figures before tax, since Choi's model
+has no tax in it, and src/your_equity_share/taxes.py says why.
 """
 
 
@@ -146,7 +146,8 @@ GROWTH_WINDOW_YEARS = 100
 # trailing five-year window turned it into a lumpy regime variable: when the
 # 2020 crash left the window in February and March 2025 the answer for an
 # uncapped household jumped about nine points in five weeks with no change in
-# long-run risk. This is Choi's estimator on the fund's own index, MSCI All
+# long-run risk. This is Choi's estimator, on total rather than excess
+# returns, applied to the fund's own index, MSCI All
 # Country World in euro, gross, January 2001 to August 2026: the annualised
 # standard deviation of monthly log returns, run from every day of the month
 # 1 to 28 and averaged, because over 25 years the day matters. Month-end alone

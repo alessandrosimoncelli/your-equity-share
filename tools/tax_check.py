@@ -1,6 +1,7 @@
 """What Italian tax does to the equity share a household should choose.
 
-The model reads market figures before tax, as Choi, Liu and Liu do. This
+The model reads market figures before tax; Choi, Liu and Liu's model has no
+tax in it and treats every quantity as implicitly after tax. This
 checks that for Italy, where the law taxes the two funds differently, by taking
 them through the law as it is written and finding the best equity share
 directly, with the tax and without it:

@@ -1,8 +1,9 @@
 """Italian tax rates, and why the model itself does not apply them.
 
-The model reads the market figures before tax in both variants, as Choi, Liu
-and Liu do: their model has no tax in it, "so all variables are implicitly
-after-tax where relevant". For Italy that was measured rather than assumed,
+The model reads the market figures before tax in both variants. Choi, Liu
+and Liu's model has no tax in it, "so all variables are implicitly after-tax
+where relevant", and their guide's defaults are pre-tax market figures, though
+it suggests an after-tax safe rate for bonds held in a taxable account. For Italy that was measured rather than assumed,
 because the law taxes the two assets differently:
 
     26%    on the gain of an equity fund

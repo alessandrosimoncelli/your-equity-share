@@ -1,8 +1,9 @@
 """Read the static market data file.
 
-The model needs three numbers, which are exactly the three Choi's user guide
-asks for: the expected real return on the stock market, the real risk-free rate,
-and the volatility of the stock market. They live in the `[market]` section and
+The model needs three numbers: the expected real return on the stock market
+and the real risk-free rate, which Choi's user guide asks for, and the
+volatility of the stock market, which his spreadsheet fixes at 18.5% inside its
+formulas. They live in the `[market]` section and
 that section alone is required.
 
 The safe rate is stored as a *real* rate, taken from a long-dated TIPS yield.

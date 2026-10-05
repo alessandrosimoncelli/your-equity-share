@@ -4,7 +4,7 @@
     python tools/italy_volatility.py --fetch    # downloads them first
 
 Choi, Liu and Liu's 18.5% is the annualised standard deviation of monthly log
-returns over 98 years. In a sample that long it hardly matters on which day of
+returns in excess of the one-month Treasury, over 98 years. In a sample that long it hardly matters on which day of
 the month the returns are measured: on the S&P 500 since 1928 month-end
 sampling gives 18.5% and the average over every day of the month 18.8%. Over
 the 25 years of world-index data in euro it matters a great deal. The crashes
@@ -91,7 +91,8 @@ def fetch() -> dict[str, float]:
 
 
 def monthly_volatility(levels: dict[str, float], day: int) -> float:
-    """Choi's estimator started on one day of the month: the annualised sample
+    """Choi's estimator, on total rather than excess returns, started on one day
+    of the month: the annualised sample
     standard deviation of monthly log returns, each month's level being the
     last one on or before that day."""
     dates = sorted(levels)

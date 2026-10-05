@@ -715,7 +715,7 @@ def part_six() -> None:
             ("replacement rate", CGM_CALIBRATION.benefit_replacement_rate,
              cal["replacement_rate_grid"][0]),
     ):
-        check(f"calibration: {name} is the paper's college figure",
+        check(f"calibration: {name} is the paper's figure",
               close(ours, theirs), f"{ours:.4g}, paper section 1.2")
 
     # --- the fitted coefficients are the paper's Table 1 and Table 2 ------

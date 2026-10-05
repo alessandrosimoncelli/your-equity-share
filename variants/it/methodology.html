@@ -374,8 +374,8 @@ gap between a 20.7% American answer and a 54.4% Italian one is the country and
 not the method.</strong> That is the reference household used throughout: 45
 years old, 100,000 a year after tax, 1,500,000 saved, risk aversion 5. Neither
 variant applies tax, which Choi's model does not contain, and for Italy section
-8 measures why that is right and why the one tax rule in Choi's guide is not
-applied either. Were the model copied into two folders, the copies
+8 measures why that is right and why the guide's suggested cut to the safe
+rate is not applied either. Were the model copied into two folders, the copies
 would be edited on different days and every later comparison would quietly mix
 a country difference with a code difference.</p>
 
@@ -751,9 +751,9 @@ the Bund/euro-i 2046.
 <strong>1.4709%</strong>. The page gives the rate in its Exhibit 5. Under the
 answer it says only that the rest of the savings goes in safe assets, as the
 American page does. Choi does not tell a reader where to put it: his guide's
-footnote that a 30-year TIPS locks in the model's constant rate describes the
-asset the answer assumes rather than prescribing one, and it names an American
-bond. Why the rate is the AAA curve's, and why BTP are not the asset it
+footnote 5, that a 30-year TIPS locks in a rate for 30 years, at least on the
+amount first invested, describes the asset the answer assumes rather than
+prescribing one, and it names an American bond. Why the rate is the AAA curve's, and why BTP are not the asset it
 describes, is set out below.</p>
 
 <p>It took three attempts and each failed a different test, which is worth
@@ -832,7 +832,8 @@ this project computed.</p>
 
 <p><strong>AAA rather than every euro area government</strong>, whose par yield
 is 0.56 points higher at the same maturity. That spread is compensation for a
-government not paying; equation (4) cannot represent default risk, and booking
+government not paying; Merton's share, equation (4) of the American
+methodology, cannot represent default risk, and booking
 a credit premium as a risk-free return would lower the recommendation while
 looking prudent. An Italian household buying BTP is not holding this asset.</p>
 
@@ -1059,9 +1060,10 @@ added, about 7.5% of net pay (section 7). On that base the same pension is
 <code>ITALY_CALIBRATION</code>. Before this revision the model applied 66% to
 the wage with the TFR, which paid about 71% of net pay.</p>
 
-<p><strong>Why that row.</strong> The model retires everyone at 67, because
-Choi fitted his coefficients there and the age cannot be moved from outside
-them, and 2050 is within two years of when today's 45-year-old reaches 67. The
+<p><strong>Why that row.</strong> Choi fitted his coefficients on retirement
+at 67, and the page retires everyone there unless a different working life is
+typed year by year; 2050 is within two years of when today's 45-year-old
+reaches 67. The
 same table gives 63% to 64% for its other cases near 67 and 73% for an old-age
 retirement at 69, so 66% sits where a retirement at 67 falls.</p>
 
@@ -1140,9 +1142,9 @@ own INPS pension had it counted twice, once typed and once imputed, which
 raised the answer by 12 to 21 points in the cases tried.</p>
 
 <p><strong>A pension that does not rise with prices</strong> is valued as if it
-did, as on the American page and in Choi's spreadsheet: typed at its amount, it
-is held constant in real terms, and the page offers no shortcut (American
-methodology, section 5.3). On this variant's benefit discount rates, with prices
+did, as on the American page and in the Wage imputed tab of Choi's
+spreadsheet: typed at its amount, it is held constant in real terms, and the
+page offers no shortcut (American methodology, section 5.3). On this variant's benefit discount rates, with prices
 rising at the market's expected 2.29% a year, the break-even of section 5, such
 a pension is worth 0.712 of its amount to someone of 60 already drawing it,
 0.757 at 70 and 0.814 at 80, and 0.595 to a 55-year-old if it starts at 65.
@@ -1162,10 +1164,12 @@ imputed on today's wage, added to an unticked pension and replaced by a ticked
 one. A partner has the same three fields.</p>
 
 <p>Choi, Liu and Liu's paper has no such field. It takes Cocco, Gomes and
-Maenhout's measure of income, which counts the pensions and transfers a
-household receives while it works as labour income (their footnote 5), so such
-a pension rides on the wage process there and is discounted at the wage rate.
-Here it is riskless, the way Bodie, Merton and Samuelson (1992) value a
+Maenhout's measure of income, which counts Social Security and other transfers
+a household receives while it works as labour income (footnote 5 of Choi, Liu
+and Liu's paper), so in the paper such income rides on the wage process and is
+discounted at the wage rate. Their spreadsheet, which does have a pension
+field, discounts every year that carries a benefit at the benefit rate
+(American methodology, Table 21). Here a pension in the field is riskless, the way Bodie, Merton and Samuelson (1992) value a
 riskless income. For a pension of 10,000 euro paid while working, the riskless
 reading gives about 4 to 8 points more equity than the wage-rate one for a
 45-year-old on 30,000 euro with fifteen to thirty years of pay saved, more
@@ -1263,8 +1267,9 @@ less equity than the model wants for its whole wealth. The page now speaks of
 money meant to last the rest of your life, with no fixed date to spend it, and
 its savings hint tells a retiree to include what they will draw down over the
 years and leave out only what they will take from savings this year beyond
-their pension, and money for a dated goal. That is Choi, Liu and Liu's
-accounting. The wealth their rule applies to is what the household holds plus
+their pension, and money for a dated goal. The first is Choi, Liu and Liu's
+accounting; the second is this project's own rule, since their guide counts all
+non-housing assets less non-mortgage debt. The wealth their rule applies to is what the household holds plus
 this year's income, less this year's spending: cash on hand less consumption,
 equation 5 and section 1.3 of their paper. That equals what the household holds
 whenever this year's income pays for this year's spending, and the drawing down
@@ -1274,10 +1279,13 @@ in later years is the model's own consumption.</p>
 
 <p><strong>The Italian answer reads the market figures as they are, and this
 section says why.</strong> Choi, Liu and Liu do not model tax: their variables
-are "implicitly after-tax where relevant". The guide to their spreadsheet has
-one tax rule, to cut the safe rate by the marginal tax rate when bonds are held
-in a taxable account. For an American saving in a 401(k) or an IRA the market
-figures are close to after-tax ones and the rule does not apply. For Italy the
+are "implicitly after-tax where relevant". The guide to their spreadsheet adjusts
+one market input for tax: a reader whose bonds are mostly in a taxable account
+"may want to" cut the safe rate by their marginal tax rate. Its other tax rules
+put savings, wages and employer contributions on an after-tax basis, and
+section 7 applies them to Italy. For an American saving in a 401(k) or an IRA
+the market figures are close to after-tax ones and the safe-rate rule does not
+apply. For Italy the
 rule is not applied, because it does not describe Italian law. The law taxes
 both funds, not only the bonds, and at sale rather than every year:
 <strong>26%</strong> on the gain of an equity fund, <strong>12.5%</strong> on
@@ -1288,7 +1296,7 @@ Both rates fall on the nominal gain and only when units are sold, death counts
 as a sale (Circolare 19/E of 2013, section 2.4), and a loss on one fund cannot
 be set against a gain on another.</p>
 
-<p><strong>The guide's rule would move the answer the wrong way.</strong>
+<p><strong>The guide's suggestion would move the answer the wrong way.</strong>
 Cutting only the safe rate, by the 12.5% a government bond fund pays, takes it
 from 1.4709% to 1.2870% and <em>raises</em> the answer. For an uncapped
 household aged 45 to 65 at risk 5 it adds up to about 7 or 8 points just above
@@ -1436,7 +1444,7 @@ the American safe rate is high, 2.98% real on 30-year TIPS, and the euro one is
 low, 1.47%. Take away the part of each drift that only pays for volatility and
 the gap is wider: the log premium Choi's discount rates read is 1.98 points in
 euro against 0.41. The world fund also swings less, 16.45% a year against
-18.50% for the S&amp;P 500, the long-run figure Choi uses, and Merton's share
+18.50% for the whole American market, the long-run figure Choi uses, and Merton's share
 falls with volatility. At risk 5 the share is 24.7% in Italy
 against 12.4%. The same low rates value future pay more highly through Choi's
 discount rates: on its own, the euro market takes human capital at 45 from 10.0
@@ -1485,10 +1493,10 @@ opening household to 100%, so whichever comes third shows nothing.</p>
 <p><strong>It is the answer the literature gives.</strong> Cocco, Gomes and
 Maenhout (2005) find the optimal equity share highest early in working life,
 because labour income stands in for safe assets, and falling towards Merton's
-share as savings grow. Choi, Liu and Liu's own worked example, an American
-graduate with risk aversion 7 and a log equity premium of 2%, holds 100% at
-45 until savings reach 1.6 times permanent income, and is not down to 55%
-until 3.8 times (section 1.3 of their paper). Its premium is about the Italian
+share as savings grow. In the example of Choi, Liu and Liu's Figure 1, an
+American graduate with risk aversion 7 and a log equity premium of 2%, the full
+model holds 100% at 45 until savings reach 1.6 times permanent income, and is
+not down to 55% until 3.8 times (section 1.3 of their paper). Its premium is about the Italian
 one, 1.98%. The Italian page has the same shape further out because at risk 5
 and 16.45% volatility Merton's share is larger, 24.7% against 15.5% in the
 example, and its future pay is worth more, reasons 1 and 2, not because it does

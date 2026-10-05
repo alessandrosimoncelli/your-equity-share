@@ -54,17 +54,19 @@ RETIREMENT_AGE = 67
 class Calibration:
     """Values fixed inside the fitted approximation.
 
-    These are not user inputs. The defaults are the Cocco, Gomes and Maenhout
-    calibration to United States household earnings for the average **college
-    graduate**, which Choi's spreadsheet uses. The paper solves separately for
-    other education levels.
+    These are not user inputs. The earnings defaults are Cocco, Gomes and
+    Maenhout's estimates for the average American **college graduate**, which
+    Choi's spreadsheet uses; the 18.5% volatility and the 40% replacement rate
+    are Choi, Liu and Liu's. The paper's discount rates take the earnings shock
+    variances as inputs, fitted over the values for three education levels.
     """
 
     stock_volatility: float = 0.185
     permanent_shock_volatility: float = 0.13
     temporary_shock_volatility: float = 0.242
     # One quantity, used twice: it sets the retirement benefit as a
-    # share of the final wage, and it is a regressor in equation (12).
+    # share of the final wage, and it is a regressor in the wage discount
+    # rate (the paper's Table 1; equation (12) of the methodology).
     # This carried a second copy called wage_equity_beta, described as a
     # labour income to equity beta. The paper has no such regressor: its
     # Table 1 row is the retirement income replacement rate, and its
@@ -72,7 +74,7 @@ class Calibration:
     benefit_replacement_rate: float = 0.40
     # The earnings profile: the coefficients on age, age squared and age
     # cubed in log earnings, which project a career from one salary. It is
-    # not a regressor in equation (12); it only sets the expected wages that
+    # not a regressor in the wage discount rate; it only sets the wages that
     # the fitted rates discount.
     age_profile: tuple[float, float, float] = (0.3194, -0.00577, 0.000033)
     # The largest pension the model imputes, a year of it after tax, or None
@@ -82,7 +84,8 @@ class Calibration:
 
 
 # Social Security's largest benefit at full retirement age in 2026, $4,152 a
-# month (SSA, 2026 cost-of-living adjustment), after tax at the guide's 0.8:
+# month (SSA, 2026 cost-of-living adjustment), after tax at 0.8, the factor
+# the guide uses for pre-tax retirement money:
 # up to 85% of benefits are taxable, so a high earner keeps about 80% of it.
 # Choi's spreadsheet has no limit, and its 40% of the final wage would give a
 # household earning $200,000 after tax a pension of about $76,000 a year,
@@ -94,8 +97,9 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 
 # The Italian variant: an Italian private-sector employee's career and pension.
 #
-# THE PENSION. Choi's equation (12) takes the replacement rate as a regressor,
-# fitted over 0.4, 0.6 and 0.8, so Italy's rate sits inside the grid. It starts
+# THE PENSION. Choi's wage discount rate (the paper's Table 1; equation (12) of
+# the methodology) takes the replacement rate as a regressor, fitted over 0.4,
+# 0.6 and 0.8, so Italy's rate sits inside the grid. It starts
 # from the Italian Treasury's projected net replacement rate for a private
 # employee retiring in 2050 at 66 years and 2 months with 38 years of
 # contributions, 66%: Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
@@ -121,7 +125,8 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 # Permanent variance 0.015156, which they report inside the confidence
 # interval of Jappelli and Pistaferri (2010): 12.3%, inside the 10.2% to
 # 13.0% Choi fitted over. Transitory 0.023609: 15.4%, below his 24.2% to
-# 32.5%, but it enters equation (12) through a coefficient of 0.028 and moves
+# 32.5%, but it enters the wage discount rate through a coefficient of 0.028
+# and moves
 # the discount rate by a tenth of a point. The age profile is not a regressor,
 # and Choi's own worked example, section 3.3 of the paper, uses an earnings
 # path outside his fitted set and lands within 3 points of the full solution.
@@ -146,7 +151,8 @@ def _log_excess_drift(
     calibration: Calibration,
     volatility: float | None = None,
 ) -> float:
-    """The regressor Choi writes as pi: the log risk premium of the risky asset.
+    """The regressor Choi calls the log equity premium (r minus r_f in the paper,
+    pi in the methodology): the log risk premium of the risky asset.
 
     Choi defines it as the asset's expected log return over the safe rate. The
     arithmetic mean the model is handed was converted from a compound return
@@ -224,7 +230,8 @@ def benefit_discount_rate(
     # Floored at the safe rate, which binds only outside the ages Choi fitted.
     #
     # He fits this equation on retirement years alone: 63 parameter sets times
-    # 34 years, and 34 years is age 67 to 100. Evaluated at 30 it returns
+    # 34 years, his Table 2's ages 66 to 99, which are the rates applied to
+    # income received at 67 to 100. Evaluated at 30 it returns
     # -2.7%, which values a future payment above its face amount. The page
     # reaches that, because it offers a pension field to everybody and a
     # thirty-year-old on a disability pension is not exotic.
@@ -324,7 +331,7 @@ class Person:
         if not 20 <= self.current_age <= 99:
             raise ValueError(
                 f"current age {self.current_age} is outside the 20 to 99 range "
-                f"the approximation was fitted over"
+                f"Choi's guide accepts"
             )
         if self.current_wage < 0 or self.current_benefit < 0:
             raise ValueError("wages and benefits cannot be negative")
@@ -414,8 +421,9 @@ def human_capital(
 
     A certain pension, already being paid or fixed by an earlier job, is
     riskless, so it is divided by the benefit rates from today rather than
-    carried on the wage chain. Choi's income process counts such transfers as
-    labour income (his footnote 5), which would put them on the wage rate;
+    carried on the wage chain. Choi's income process counts Social Security
+    and other transfers as labour income (his footnote 5), which would put such
+    a pension paid while working on the wage rate;
     the American methodology's Table 21 measures the difference. A state
     pension entered as an estimate rides the chain, like the imputed one. For
     a retiree, whose whole path is on the benefit rate, the two are the same.

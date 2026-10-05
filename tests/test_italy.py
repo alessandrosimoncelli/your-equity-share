@@ -98,7 +98,8 @@ def test_the_italian_replacement_rate_is_the_treasury_figure() -> None:
 def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
     """This is why the swap is legitimate rather than an extrapolation.
 
-    Equation (12) takes the replacement rate as a regressor, fitted over 0.4,
+    The wage discount rate (the paper's Table 1; equation (12) of the
+    methodology) takes the replacement rate as a regressor, fitted over 0.4,
     0.6 and 0.8. Italy's 61.4% is between the second and third, so the
     coefficient is being interpolated rather than used outside its range. The
     American 40% sits on the bottom edge of the same grid.
@@ -868,7 +869,7 @@ def test_the_three_reasons_quote_the_model() -> None:
         f"against {drift(us) * 100:.2f} in the United States",
         f"{us[1]:.2%} real on 30-year TIPS",
         f"low, {it[1]:.2%}.",
-        f"{it[2]:.2%} a year against {us[2]:.2%} for the S&amp;P 500",
+        f"{it[2]:.2%} a year against {us[2]:.2%} for the whole American market",
         f"the share is {merton(it):.1%} in Italy against {merton(us):.1%}",
         f"human capital at 45 from {years(us, CGM_CALIBRATION):.1f} years of pay "
         f"to {years(it, CGM_CALIBRATION):.1f}",

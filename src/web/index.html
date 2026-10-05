@@ -1190,9 +1190,8 @@ function pathText(person) {
 // preselected. Then a check: the sure amount those choices imply, which the
 // person confirms or adjusts, so that one careless click cannot fix the
 // answer. The coin pays what the household lives on now, after tax, or half
-// of it: the guide's $100,000 and $50,000 are the paper's example wage and
-// half of it, and only that ratio matters under the model's constant
-// relative risk aversion. The guide's conditions come with it: the whole
+// of it: the guide's coin pays $100,000 or $50,000, and only that ratio
+// matters under the model's constant relative risk aversion. The guide's conditions come with it: the whole
 // amount is spent and nothing can be borrowed.
 //
 // The self-assessment never changes the number, because nothing converts its
@@ -1429,8 +1428,9 @@ function readInputs() {
       : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. They replace the wage and pension above until you press Reset to projection.`;
   }
   const wealth = Math.max(1, nonNegative($("wealth"), 1000));
-  // Choi's input is investable net worth above zero; the guide says the model
-  // has no solution when it is negative. A minus sign or a zero says so.
+  // Choi's input is investable net worth above zero; the guide's footnote 2
+  // says its authors do not have the model's solutions when it is negative.
+  // A minus sign or a zero says so.
   const typedWealth = String($("wealth").value).trim();
   const noSavings = NEGATIVE.test(typedWealth) ||
     (typedWealth !== "" && readMoney($("wealth"), 1) === 0);
@@ -1484,9 +1484,9 @@ function render() {
     `The tool's own estimate is ${pct2.format(compoundShown())}.`;
 
   // The answer as a sentence, with both sides of the split named. The other
-  // side is just safe assets: Choi does not tell a reader where to put it. His
-  // guide's footnote 4 says a 30-year TIPS locks in the model's constant rate,
-  // which Exhibit 5 shows; that describes the asset, it does not prescribe it.
+  // side is just safe assets: Choi gives no instruction on where to put it.
+  // His guide's footnote 5 says a 30-year TIPS locks in a rate for 30 years,
+  // the yield Exhibit 5 shows; that describes the asset, not a prescription.
   $("verdict-figure").textContent = noSavings ? "" : pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
     `of your ${money.format(r.financialWealth)} in stocks, or <b>${money.format(r.equityDollars)}</b>.` +

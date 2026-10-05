@@ -12,9 +12,9 @@
  * formula is wrong it is wrong in src/your_equity_share/ first, and the fixture
  * is regenerated from there.
  *
- * Only the model is ported. Fetching market data, parsing providers, estimating
- * volatility and the expected return, and the frozen spreadsheet baseline all
- * stay in Python, because they run on the author's machine and not the reader's.
+ * Only the model is ported. Fetching market data, parsing providers and
+ * estimating volatility and the expected return stay in Python, because they
+ * run on the author's machine and not the reader's.
  *
  * No dependencies, no imports, no build step.
  */
@@ -22,23 +22,28 @@
 // --- calibration ------------------------------------------------------------
 
 /**
- * Values fixed inside the fitted approximation. Not user inputs. The defaults
- * are the Cocco, Gomes and Maenhout calibration to United States household
- * earnings, for the average college graduate.
+ * Values fixed inside the fitted approximation. Not user inputs. The earnings
+ * defaults are Cocco, Gomes and Maenhout's estimates for the average American
+ * college graduate; the 18.5% volatility and the 40% replacement rate are Choi,
+ * Liu and Liu's, and the cap is this project's.
  */
 export const CGM_CALIBRATION = Object.freeze({
   stockVolatility: 0.185,
   permanentShockVolatility: 0.13,
   temporaryShockVolatility: 0.242,
   // One quantity, used twice: it sets the retirement benefit as a share
-  // of the final wage, and it is a regressor in equation (12). A second
-  // copy called wageEquityBeta described a labour income to equity beta
-  // the paper does not have; its Table 1 row is the replacement rate.
+  // of the final wage, and it is a regressor in the wage discount rate
+  // (the paper's Table 1; equation (12) of the methodology). A second copy
+  // called wageEquityBeta described a labour income to equity beta. The
+  // paper has no such regressor: its beta belongs to the extension of its
+  // section 5, equation (19), which neither the spreadsheet nor this model
+  // uses, and its Table 1 row is the replacement rate.
   benefitReplacementRate: 0.4,
   // The earnings profile: age, age squared and age cubed in log earnings.
   ageProfile: Object.freeze([0.3194, -0.00577, 0.000033]),
   // Social Security's largest benefit at full retirement age in 2026, $4,152
-  // a month, after tax at the guide's 0.8. Applied to the imputed pension
+  // a month, after tax at 0.8, the factor the guide uses for pre-tax
+  // retirement money. Applied to the imputed pension
   // only; human_capital.py says why.
   benefitCap: 0.8 * 4152.0 * 12,
 });
@@ -71,8 +76,8 @@ export const GUIDE_GAMBLE_LOW = 50000.0;
 export const CHOI_FITTED_LOG_PREMIUM_RANGE = Object.freeze([0.02, 0.04]);
 
 // The other half of the same grid: log real risk-free rates of 0, 0.01 and
-// 0.02. Choi's guide tells a reader to enter the 30-year TIPS yield, which is
-// above all three. The regressor carries +1.132 against -0.267 on the premium.
+// 0.02. Choi's guide suggests the 30-year TIPS yield as a reasonable number
+// to enter, which is above all three. The regressor carries +1.132 against -0.267 on the premium.
 export const CHOI_FITTED_LOG_RISK_FREE_RANGE = Object.freeze([0.0, 0.02]);
 
 // And the third axis. The paper solves at 4, 5, 6, 7, 8, 9 and 10; the guide
@@ -117,7 +122,8 @@ export function mertonShare(expectedStockRealReturn, realRiskFree, riskAversion,
 // --- layer two: human capital -----------------------------------------------
 
 /**
- * The regressor Choi writes as pi: the log risk premium of the risky asset.
+ * The regressor Choi calls the log equity premium (r minus r_f in the paper,
+ * pi in the methodology): the log risk premium of the risky asset.
  *
  * The arithmetic mean was converted from a compound return at the held
  * asset's volatility, so it is undone at that same volatility, which recovers
@@ -188,8 +194,9 @@ export function benefitDiscountRate(
     0.893 * Math.log(1.0 + realRiskFree) +
     0.476 * x -
     0.295 * x ** 2;
-  // Floored at the safe rate. Choi fits this on retirement years only, ages 67
-  // to 100, and at 30 it returns -2.7%, which values a future payment above
+  // Floored at the safe rate. Choi fits this on retirement years only (his
+  // Table 2: rates at 66 to 99, applied to income received at 67 to 100),
+  // and at 30 it returns -2.7%, which values a future payment above
   // its face amount. A government indexed annuity cannot be worth more than a
   // risk-free bond paying the same schedule. See benefit_discount_rate in
   // human_capital.py for the measurement.
@@ -239,7 +246,7 @@ export function makePerson(currentAge, currentWage, currentBenefit = 0.0, wages 
                            { benefitStart = null, benefitIsState = false, claimsSpousal = false } = {}) {
   if (!(currentAge >= 20 && currentAge <= 99)) {
     throw new RangeError(
-      `current age ${currentAge} is outside the 20 to 99 range the approximation was fitted over`,
+      `current age ${currentAge} is outside the 20 to 99 range Choi's guide accepts`,
     );
   }
   if (currentWage < 0 || currentBenefit < 0) {
@@ -324,8 +331,10 @@ export function projectEarnings(person, calibration = CGM_CALIBRATION) {
 /**
  * Present value today of one person's future wages and benefits.
  *
- * One discount path, as in Choi: the wage rate through the last year with
- * wages, the benefit rate after it. A pension already being paid while the
+ * One discount path, as in Choi's paper: the wage rate through the last year
+ * with wages, the benefit rate after it. His spreadsheet switches in every
+ * year a benefit is entered instead, which gives the same path when the
+ * benefit starts the year after the last wage. A pension already being paid while the
  * person still works is riskless, so it is divided by the benefit rates from
  * today instead. See human_capital in human_capital.py.
  */
@@ -537,7 +546,7 @@ export function makeHousehold(investableNetWorth, adults, riskAversion = 5.0) {
   }
   if (!adults || adults.length === 0) throw new RangeError("a household needs at least one adult");
   if (adults.length > 2) {
-    throw new RangeError("the approximation was fitted for households of one or two adults");
+    throw new RangeError("Choi's spreadsheet takes households of one or two adults");
   }
   if (!(riskAversion >= 1.0 && riskAversion <= 10.0)) {
     throw new RangeError(

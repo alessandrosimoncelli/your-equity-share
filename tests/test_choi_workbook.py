@@ -66,7 +66,8 @@ def test_projected_wages_match_the_workbook(book, adults, who) -> None:
     assert len(ours) == len(expected)
     for (age, wage, _benefit), year in zip(expected, ours):
         assert year.age == age
-        # The workbook stores six significant figures, so a cent is the bar.
+        # The workbook stores about ten significant figures; five cents is
+        # the bar.
         assert year.wage == pytest.approx(wage, abs=0.05)
 
 

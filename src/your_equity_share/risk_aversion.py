@@ -12,8 +12,9 @@ it is used here in place of a scored questionnaire. Higher risk aversion means a
 lower X: someone who would accept $54,000 to avoid the coin flip dislikes risk
 far more than someone who holds out for $70,000.
 
-The published table is reproduced by `guide_table()` to the dollar, so the
-numbers a user sees here are the numbers in the guide.
+The published table is reproduced by `guide_table()` to the dollar; the
+guide's first row, $70,710, truncates the exact $70,710.68, which this rounds
+to $70,711.
 
 THE PAGE ASKS IT AS FIVE CHOICES, not as one amount to state. Each choice is
 the coin or a sure amount, the amounts are never shown as a range, and each

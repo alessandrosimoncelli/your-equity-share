@@ -28,7 +28,8 @@ def test_fitted_range_check() -> None:
     low, high = CHOI_FITTED_LOG_PREMIUM_RANGE
     assert (low, high) == (0.02, 0.04)
     assert within_fitted_range(0.0707, 0.0298)
-    # Choi's own guide defaults fall below the range his model was fitted over
+    # The guide's 5% default, with the 2.5% TIPS yield it cites, falls below the
+    # range his model was fitted over
     assert not within_fitted_range(0.05, 0.025)
 
 

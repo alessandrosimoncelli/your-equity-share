@@ -1,9 +1,10 @@
 """Estimating the expected real return on equities.
 
 This is the input the recommendation is most sensitive to and the one nobody can
-observe. Choi treats it as the user's best guess and defaults to 5%, justified as
-"what current valuation ratios imply if those ratios stay constant and growth
-matches its long-run average". That is a construction, not a number, and this
+observe. Choi treats it as the user's best guess and defaults to 5%, which his
+guide calls "roughly equal to what is implied by current stock market valuation
+ratios if those ratios stay constant and future dividend or earnings growth
+equals its long-run historical average". That is a construction, not a number, and this
 module builds it the way that sentence reads: the dividend yield compounded with
 long-run real growth in earnings per share, with repricing at zero. Section 3
 of the American methodology compares it, once, with three other estimators and
@@ -49,14 +50,13 @@ __all__ = [
 # "even a 2% log equity premium results in optimal equity allocations that are
 # frequently 100%. Therefore, any approximation that accurately fits the
 # solution for log equity premia of 4% or less should be accurate for log
-# equity premia above 4%." Below 2% he says nothing, because AQR's 1.9%
-# forecast was the low end of what looked plausible when he wrote.
+# equity premia above 4%." Below 2% he says nothing.
 CHOI_FITTED_LOG_PREMIUM_RANGE = (0.02, 0.04)
 
 # The other half of the same grid, and the one that went unchecked here for
-# longer. Log real risk-free rates of 0, 0.01 and 0.02, calibrated in the paper
-# to "the five-year TIPS real yield in 2024". The guide then tells a reader to
-# enter the THIRTY-year yield, which in September 2026 was 2.98% a year and sat above
+# longer. Log real risk-free rates of 0, 0.01 and 0.02; the paper notes that
+# its 2% example rate, the top of the grid, approximately equals "the five-year
+# TIPS real yield in 2024". The guide then suggests the THIRTY-year yield, which in September 2026 was 2.98% a year and sat above
 # every value the coefficients were fitted on. The regressor carries +1.132
 # against -0.267 for the premium, so a point of extrapolation here costs four
 # times what a point of premium extrapolation costs.

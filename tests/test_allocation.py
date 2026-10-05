@@ -330,7 +330,7 @@ def test_rejects_risk_aversion_outside_the_guide_scale() -> None:
         _household(risk_aversion=12.0)
 
 
-def test_rejects_an_age_outside_the_fitted_range() -> None:
+def test_rejects_an_age_outside_the_accepted_range() -> None:
     with pytest.raises(ValueError, match="20 to 99"):
         Person(19, 50_000.0)
     with pytest.raises(ValueError, match="20 to 99"):
@@ -540,8 +540,9 @@ def test_an_estimate_ticked_as_social_security_is_valued_like_the_imputed_one() 
 
 def test_the_spousal_switch_pays_half_the_earner_s_pension_from_62() -> None:
     """Choi's switch: the second adult claims half of the first adult's Social
-    Security from 62, has no pension of their own, and the half rides the
-    earner's chain, because it moves with the earner's career."""
+    Security from 62 and has no pension of their own. This tool, unlike his
+    spreadsheet, values the half on the earner's chain, because it moves with
+    the earner's career."""
     args = (0.05167, 0.0296, 0.185)
     earner = Person(45, 100_000.0)
     plain = recommend(Household(500_000.0, [earner, Person(43, 0.0)], 5.0), *args)

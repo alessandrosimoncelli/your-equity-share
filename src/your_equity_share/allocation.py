@@ -88,7 +88,7 @@ class Household:
             raise ValueError("a household needs at least one adult")
         if len(self.adults) > 2:
             raise ValueError(
-                "the approximation was fitted for households of one or two adults"
+                "Choi's spreadsheet takes households of one or two adults"
             )
         if not 1.0 <= self.risk_aversion <= 10.0:
             raise ValueError(
@@ -158,7 +158,9 @@ def recommend(
     )
 
     # Choi's spousal switch: the second adult claims half of the first adult's
-    # Social Security once they are 62, valued with the pension it is half of.
+    # Social Security once they are 62. Valuing it with the pension it is half
+    # of, on the earner's chain, is this tool's choice; his spreadsheet uses the
+    # second adult's own chain.
     spousal_from = None
     if len(household.adults) == 2 and household.adults[1].claims_spousal:
         earner, partner = household.adults

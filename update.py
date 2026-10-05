@@ -458,8 +458,8 @@ def main(argv: list[str]) -> int:
             print("      Choi's own stated rationale for his 5% default: what")
             print("      current valuation ratios imply if those ratios hold")
             print("      and growth matches its long-run average. It is also")
-            print("      the method behind AQR's 1.9%, the figure he anchors")
-            print("      his own 2% log premium to.")
+            print("      one of the two methods behind AQR's 1.9%, the")
+            print("      forecast he calls similar to his own 2% log premium.")
             if history_as_of:
                 y, m, _d = (int(x) for x in history_as_of.split("-"))
                 today = datetime.now(timezone.utc).date()
@@ -510,16 +510,16 @@ def main(argv: list[str]) -> int:
                   f"{log_risk_free(real_rf):>8.2%}")
             print(f"    {log_risk_free(real_rf) - rf_high:.2%} above the "
                   f"{rf_low:.0%} to {rf_high:.0%} band the approximation was")
-            print(f"    fitted over. The paper calibrates its safe rate to the")
-            print(f"    FIVE year TIPS yield; the guide asks for the THIRTY")
-            print(f"    year yield, which has been above the band throughout.")
+            print(f"    fitted over. The paper's 2% example rate is about the")
+            print(f"    FIVE year TIPS yield of 2024; the guide suggests the")
+            print(f"    THIRTY year yield, above the band throughout.")
             print(f"    The coefficient on this regressor is 1.132, against")
             print(f"    0.267 on the drift, so this is the larger liberty.")
 
         pi = log_premium(expected, real_rf)
         low, high = CHOI_FITTED_LOG_PREMIUM_RANGE
         print()
-        print(f"  log excess drift (Choi's pi)     {pi:>8.2%}")
+        print(f"  log excess drift                 {pi:>8.2%}")
         if within_fitted_range(expected, real_rf):
             print(f"    inside the {low:.0%} to {high:.0%} band the approximation was")
             print(f"    fitted over.")
@@ -529,8 +529,8 @@ def main(argv: list[str]) -> int:
             print(f"    {distance:.2%} {side} the {low:.0%} to {high:.0%} band the")
             print(f"    approximation was fitted over.")
             if pi > high:
-                print(f"    Choi notes allocations saturate at 100% by {high:.0%}, so")
-                print(f"    being above the band is benign.")
+                print(f"    Choi notes even a 2% log premium often gives 100%,")
+                print(f"    so being above the band is benign.")
             else:
                 print(f"    Below the band is the unvalidated side: he does not")
                 print(f"    address it. Today's high real rates compress the premium,")

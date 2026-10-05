@@ -10,12 +10,11 @@ the same definitions and changes the sources, and its methodology,
 
 ## Risk aversion
 
-One question, from the guide, which the page asks in three short steps.
-
-> A coin is flipped. Heads, you live on $100,000 for the next year. Tails, you
-> live on $50,000. You must spend the whole amount and cannot borrow. A genie
-> offers to cancel the gamble and hand you a guaranteed $X instead. What value
-> of X leaves you exactly indifferent?
+One question, from the guide, which the page asks in three short steps. In
+short: a coin is flipped. Heads, you live on $100,000 for the next year; tails,
+on $50,000. You must spend the whole amount and cannot borrow. A genie offers
+to take away the gamble and give you a guaranteed $X instead. What value of X
+leaves you exactly indifferent?
 
 | Your answer | Risk aversion |
 | --- | --- |
@@ -48,9 +47,10 @@ questions are answered.
    can be borrowed.
 3. A check: the sure amount your choices imply, which you confirm or adjust.
 
-Both percentages are the guide's: its $100,000 is the wage of the paper's
-worked example and its $50,000 half of that, and the Health and Retirement
-Study frames its own income gambles on current family income the same way.
+The ratio is the guide's: its coin pays $100,000 or $50,000, and only the
+ratio matters. Its $100,000 is also the wage in the paper's worked example.
+Framing the coin on the household's own income is this project's choice, the
+way the Health and Retirement Study frames its income gambles.
 The table still applies, as shares of the good outcome (70.7% means 1, 58.6%
 means 5, 54.0% means 10), because only the ratio of the two outcomes matters.
 Each sure amount is the coin's worth at the middle of the range the answers
@@ -79,7 +79,8 @@ Then reduce it by tax that will be owed when the assets are sold and spent:
 
 - Roth 401(k) and Roth IRA: no adjustment.
 - Ordinary taxable accounts: a small adjustment in principle, since the cost
-  basis is not taxed again. The guide says leaving it alone is tolerable.
+  basis is not taxed again. The guide says it may be tolerable to leave it
+  alone, for simplicity.
 - Pre-tax 401(k) and traditional IRA: the whole balance is taxable on
   withdrawal. Multiply by 0.8 if you have no better estimate of the rate,
   which is the guide's own default and what the page's hint says.
@@ -92,9 +93,10 @@ savings are zero or debts exceed them, the page says the model has no answer
 instead of showing a share.
 
 **Retired, or drawing on it?** Include what you will draw down over the years.
-Leave out only what you will take from savings this year beyond your pension,
-and money set aside for a goal with a date. That is Choi's own accounting. In
-his model the money invested this year is cash on hand less this year's
+Leave out only what you will take from savings this year beyond your pension.
+That is Choi's own accounting. Money set aside for a goal with a date is left
+out too, by this project's own rule: the model has no dated goals. In his
+model the money invested this year is cash on hand less this year's
 spending, and cash on hand is what you hold plus this year's income (the
 paper's section 1.1, equation 5). A retiree's pension this year pays for part
 of this year's spending, so only the rest comes out of savings. When this
@@ -123,8 +125,9 @@ Include employer retirement contributions such as a 401(k) match. Where those
 go in before tax, which is usual, multiply them by 0.8 for the same reason as
 above.
 
-Figures run to age 100. In the guide's words, enter income as if alive in
-each year; the calculations allow for United States mortality. They do so
+Figures run to age 100. As the guide says, enter income "assuming you are
+still alive in each future year"; its calculations allow for United States
+mortality. They do so
 inside Choi's fitted discount rates, which were solved with the American life
 table: the income itself is not weighted by the chance of being alive to
 receive it, because the paper's expectations are conditional on surviving.
@@ -178,8 +181,8 @@ today, from the age it starts, rather than carried on the same discount chain
 as the wage. An estimate of your own Social Security for a later claim is
 different: the rest of your career still moves it, so, ticked, it is
 discounted like the 40% estimate it replaces, on the wage rates until your
-wage stops. That
-departs from Choi's spreadsheet and from his paper (methodology section 7.6).
+wage stops. Treating a fixed pension as riskless departs from Choi's
+spreadsheet and from his paper (this project's methodology, section 7.6).
 The model holds every pension constant in real terms, as Choi's spreadsheet
 does, so a pension that does not rise with prices, typed at its amount, is
 overvalued. The page offers no shortcut, as his spreadsheet offers none;
@@ -227,10 +230,11 @@ and `--partner-spousal` for the spousal benefit. It runs the American variant.
 ## Expected stock market real return
 
 The input the recommendation is most sensitive to, and the one nobody can
-observe. Choi makes it a user input and offers a default of 5%, justified as
-"what is implied by current stock market valuation ratios if those ratios stay
-constant and future dividend or earnings growth equals its long-run historical
-average". He specifies no estimator.
+observe. Choi makes it a user input and offers a default of 5%, which the
+guide calls "roughly equal to what is implied by current stock market valuation
+ratios if those ratios stay constant and future dividend or earnings growth
+equals its long-run historical average", pointing in its footnote 4 to AQR's
+2025 capital market assumptions as an example. He specifies no formula.
 
 **One estimator is used**, and it is that sentence written as arithmetic. The
 figures on this page are those of 3 September 2026, the data the methodology
@@ -347,9 +351,9 @@ the variance.
 
 ### A cross-check worth making once a year: AQR
 
-Choi anchors his own 2% figure to AQR's year-end 2023 forecast of **1.9%** for
-US large-cap equities' log excess return over cash, from their Capital Market
-Assumptions. The publication is free but arrives as an annual PDF, so it is
+Choi's paper notes that the 2% log equity premium of its example investor is
+similar to AQR's year-end 2023 forecast of **1.9%** for US large-cap equities'
+log excess return over cash, from their Capital Market Assumptions. The publication is free but arrives as an annual PDF, so it is
 compared by hand rather than fetched.
 
 AQR's forecast has the same three terms as this tool's: a yield, real growth
@@ -390,8 +394,10 @@ rates the two differ by 1.80 points, which is half the variance, 1.71, plus
 0.09 from taking logs. At today's real rate of about 3%, an expected return
 below roughly 6.9% puts the log drift **below** the range the coefficients
 were fitted over, and the 30-year real rate sits above the 0% to 2% range
-fitted for the safe rate as well. Choi's own guide defaults, 5% and 2.5%, sit
-outside it too. The answer is then an extrapolation.
+fitted for the safe rate as well. The guide's own figures sit outside it
+too: its 5% default with the 30-year TIPS yield it suggests, about 2.5% in
+December 2025, gives a log drift of 0.7%, and even the spreadsheet's own 2%
+default rate gives 1.2%. The answer is then an extrapolation.
 
 `update.py` says so every time it refreshes, and the page mentions the range
 beside the risk question only when risk aversion is below 4, where it is out of
@@ -405,7 +411,7 @@ measures the formula's error there.
 The return on the safe asset, above inflation. The guide suggests the **30-year
 TIPS yield**, which is a real yield directly and needs no inflation adjustment.
 It is the rate the model assumes the safe part of the answer earns. The
-guide's footnote 4 gives the reason for the 30-year yield: the model's rate is
+guide's footnote 5 gives the reason for the 30-year yield: the model's rate is
 constant forever, and a 30-year TIPS locks one in for 30 years, at least on the
 amount first invested. That describes the asset the answer assumes; it is not
 an instruction to buy it, and the page says only that the rest goes in safe
@@ -432,12 +438,14 @@ and the difference between them is neither a 3-month nor a 10-year real rate.
 
 ## What the model assumes about you
 
-Two assumptions are built into the fitted coefficients and cannot be changed
-from the interface.
+Two assumptions are fixed in the formula and cannot be changed from the
+interface.
 
-**Your earnings are as risky as an average college graduate's.** The paper
-solves separately for other education levels; the spreadsheet this project
-follows uses the college-graduate calibration.
+**Your earnings are as risky as an average college graduate's.** The paper's
+discount rates take the variances of permanent and temporary earnings shocks
+as inputs, fitted over Cocco, Gomes and Maenhout's values for three education
+levels; the spreadsheet this project follows fixes them at the college-graduate
+values, as its guide says.
 
 **Your equity holding is well diversified**, an index fund rather than a handful
 of positions. The guide is explicit that the recommendation does not hold

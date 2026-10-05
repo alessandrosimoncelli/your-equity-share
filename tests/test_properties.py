@@ -27,7 +27,8 @@ RF = 0.0296
 VOL = 0.171808
 
 # Choi fits the retirement regression on retirement years alone: 63 parameter
-# sets by 34 years, and 34 years is age 67 to 100.
+# sets by 34 years, his Table 2's ages 66 to 99, which are the rates applied to
+# income received at 67 to 100.
 FITTED_BENEFIT_AGES = range(67, 101)
 
 
@@ -119,7 +120,7 @@ def test_a_wage_is_discounted_harder_than_a_benefit(age) -> None:
 
 @pytest.mark.parametrize("age", range(21, 101))
 def test_a_benefit_is_never_discounted_below_the_safe_rate(age) -> None:
-    """The regression behind this rate is fitted on ages 67 to 100 only.
+    """The regression behind this rate is fitted on retirement years only.
 
     Evaluated at 30 it returned minus 2.7%, which values a future payment above
     its face amount, and the page reaches that because it offers a pension

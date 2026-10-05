@@ -16,7 +16,8 @@ from your_equity_share.risk_aversion import (
     guide_table,
 )
 
-# Transcribed from "User guide for Practical Finance", Choi, Liu and Liu,
+# Transcribed from the user guide for the "Practical Finance: An Approximate
+# Solution to Lifecycle Portfolio Choice" spreadsheet, Choi, Liu and Liu,
 # 24 December 2025, the risk aversion section.
 PUBLISHED = {
     1: 70_710,

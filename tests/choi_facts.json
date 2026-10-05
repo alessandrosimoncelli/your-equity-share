@@ -6,7 +6,7 @@
     "workbook": "Chai - Yale.xlsx, tabs Disclaimer, Full inputs and Wage imputed."
   },
   "calibration": {
-    "where": "paper section 1.2",
+    "where": "paper section 1.2; the regression ages are from the captions of Tables 1 and 2 and section 3.1",
     "stock_volatility": 0.185,
     "stock_volatility_definition": "annualized standard deviation of the CRSP value-weighted market index log monthly return in excess of the 1-month Treasury log return, July 1926 to July 2024",
     "time_discount_factor": 0.96,
@@ -68,7 +68,7 @@
     "stated_equity_share": 0.30
   },
   "welfare_losses": {
-    "where": "paper Table 4, from the perspective of a 22-year-old",
+    "where": "paper Table 4, from the perspective of a 22-year-old; equations_9_and_19 is from the text of section 5",
     "columns": ["our rule", "0% equity", "60% equity", "100% equity", "(100 - age)% equity"],
     "all_parameter_sets": [0.0006, 0.0786, 0.0375, 0.1175, 0.0200],
     "risk_aversion_4": [0.0003, 0.0793, 0.0158, 0.0056, 0.0211],
@@ -92,7 +92,7 @@
       "value": 0.019,
       "description": "log excess return over cash for U.S. large-cap equities, year-end 2023, from dividend and payout discount models",
       "source": "Portfolio Solutions Group (2024), AQR Capital Management",
-      "where": "paper section 1.2"
+      "where": "paper section 1.3"
     },
     "realized_log_premium": {
       "value": 0.065,
