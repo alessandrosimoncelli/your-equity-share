@@ -370,16 +370,16 @@ it = '''} from "../model.js";'''
 # --- the script: drawing ----------------------------------------------------
 
 [[t]]
-en = '''`${pct0.format(eq)} equities, ${pct0.format(1 - eq)} safe asset`'''
-it = '''`${pct0.format(eq)} azioni, ${pct0.format(1 - eq)} attività sicura`'''
+en = '''`${pct0.format(eq)} stocks, ${pct0.format(1 - eq)} safe assets`'''
+it = '''`${pct0.format(eq)} azioni, ${pct0.format(1 - eq)} attività sicure`'''
 
 [[t]]
 en = '''<span>Stocks</span>'''
 it = '''<span>Azioni</span>'''
 
 [[t]]
-en = '''<span>Safe bonds</span>'''
-it = '''<span>Attività sicura</span>'''
+en = '''<span>Safe assets</span>'''
+it = '''<span>Attività sicure</span>'''
 
 # --- the script: the risk question ------------------------------------------
 
@@ -498,8 +498,8 @@ en = '''`of your ${money.format(r.financialWealth)} in stocks, or <b>${money.for
 it = '''`dei tuoi ${money.format(r.financialWealth)} in azioni, cioè <b>${money.format(r.equityDollars)}</b>.`'''
 
 [[t]]
-en = '''` The other ${pct0.format(r.bondShare)} goes in inflation-protected US Treasury bonds (TIPS).`'''
-it = '''` L'altro ${pct0.format(r.bondShare)} va in titoli di Stato indicizzati all'inflazione con rating AAA, come il Bund€i (non i BTP).`'''
+en = '''` The other ${pct0.format(r.bondShare)} goes in safe assets.`'''
+it = '''` L'altro ${pct0.format(r.bondShare)} va in attività sicure.`'''
 
 [[t]]
 en = '''`<b>The formula asks for ${pct0.format(r.uncappedShare)}</b>, which would mean borrowing to invest, so the answer stops at 100%.`'''

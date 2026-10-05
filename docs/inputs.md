@@ -362,9 +362,9 @@ fits a hundred-year trend. Section 8.3 of the methodology sets the two side by
 side, beside eight other published forecasts.
 
 Compare the total real return, as that section does, rather than a premium.
-AQR's premium is over cash and this tool's safe asset is a 30-year TIPS, and a
-premium quoted in one year sits on that year's real rate, so two premiums from
-different years or over different safe assets do not measure the same thing.
+AQR's premium is over cash and this tool's is over the 30-year TIPS yield, and
+a premium quoted in one year sits on that year's real rate, so two premiums from
+different years or over different safe rates do not measure the same thing.
 
 ### To override
 
@@ -401,8 +401,10 @@ measures the formula's error there.
 
 The return on the safe asset, above inflation. The guide suggests the **30-year
 TIPS yield**, which is a real yield directly and needs no inflation adjustment.
-The safe part of the answer means TIPS held to maturity, or a ladder of them,
-which is what the page names.
+It is the rate the model assumes the safe part of the answer earns, not
+advice to hold TIPS: Choi does not say which safe asset to hold, and his guide's
+only example of one is "a U.S. Treasury bond". So the page says only that the
+rest goes in safe assets.
 
 **It is annualised first.** Like the Treasury's other par yields it is quoted on a
 semiannual basis, and the model reads annual rates, as the Italian variant's

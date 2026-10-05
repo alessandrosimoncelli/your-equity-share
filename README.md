@@ -20,7 +20,7 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 
 **For** money you have invested and do not need on any particular date, meant
 to last the rest of a life. Two variants share one model. The **United
-States** variant holds the S&P 500 against 30-year TIPS. The **Italian**
+States** variant holds the S&P 500 against the 30-year TIPS yield. The **Italian**
 variant holds a global equity fund against the euro real safe rate of AAA
 government bonds, for an Italian private-sector employee: Daminato and
 Padula's (2024) earnings process, estimated on the Bank of Italy's household

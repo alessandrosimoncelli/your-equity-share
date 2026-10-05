@@ -1043,13 +1043,13 @@ function drawSplit(svg, key, r) {
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.setAttribute("height", H);
   svg.setAttribute("aria-label",
-    `${pct0.format(eq)} equities, ${pct0.format(1 - eq)} safe asset`);
+    `${pct0.format(eq)} stocks, ${pct0.format(1 - eq)} safe assets`);
   svg.innerHTML =
     `<rect x="0" y="0" width="${wEq}" height="${H}" fill="var(--green)"/>` +
     `<rect x="${wEq + gap}" y="0" width="${wSf}" height="${H}" fill="var(--tint-2)"/>`;
   key.innerHTML =
     `<i style="background:var(--green)"></i><span>Stocks</span><span class="v">${pct0.format(eq)} &middot; ${money.format(r.equityDollars)}</span>` +
-    `<i style="background:var(--tint-2)"></i><span>Safe bonds</span><span class="v">${pct0.format(1 - eq)} &middot; ${money.format(r.financialWealth - r.equityDollars)}</span>`;
+    `<i style="background:var(--tint-2)"></i><span>Safe assets</span><span class="v">${pct0.format(1 - eq)} &middot; ${money.format(r.financialWealth - r.equityDollars)}</span>`;
 }
 
 /**
@@ -1485,16 +1485,14 @@ function render() {
     `The model reads it as <b>${pct2.format(expected)}</b>, the same return as a simple yearly average. ` +
     `The tool's own estimate is ${pct2.format(compoundShown())}.`;
 
-  // The answer as a sentence. Both sides of the split are named here, which
-  // is what the meter used to do.
-  // The answer is a comparison, and the thing it is compared against is
-  // currently paying an unusually good real rate. A reader who does not know
-  // that reads a low equity share as pessimism about stocks.
+  // The answer as a sentence, with both sides of the split named. The other
+  // side is just safe assets: Choi does not say which safe asset to hold, and
+  // TIPS enter his paper and guide only as its rate, which Exhibit 5 shows.
   $("verdict-figure").textContent = noSavings ? "" : pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
     `of your ${money.format(r.financialWealth)} in stocks, or <b>${money.format(r.equityDollars)}</b>.` +
     (r.bondShare >= 0.005
-      ? ` The other ${pct0.format(r.bondShare)} goes in inflation-protected US Treasury bonds (TIPS).`
+      ? ` The other ${pct0.format(r.bondShare)} goes in safe assets.`
       : "");
 
   if (noSavings) {
