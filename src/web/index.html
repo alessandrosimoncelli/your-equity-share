@@ -643,7 +643,8 @@ td.why { min-width: 15rem; }
         <span class="hint">A pension you already receive, or a fixed one that starts later (enter the
         age). Your own Social Security is already counted: tick the box only if this
         pension is your Social Security, or your estimate of it. If it does not rise
-        with prices, enter about four fifths of it.</span>
+        with prices, enter about four fifths of it, or about half if it starts 20
+        years from now.</span>
       </div>
 
       <div class="field span-2">
@@ -804,7 +805,7 @@ td.why { min-width: 15rem; }
           <span class="verdict-text" id="verdict-text"></span>
         </p>
         <p class="note" id="cap-flag"></p>
-        <p class="note">Check again once a year and rebalance, using new savings first.</p>
+        <p class="note">Check again once a year and rebalance to the new share.</p>
       </div>
       <div class="split" id="split">
         <svg id="split-chart" role="img" aria-label="How the portfolio divides"></svg>
@@ -1355,7 +1356,7 @@ function renderRisk(gamma) {
     : phase === "done" ? `Your risk aversion is <b>${num1.format(gamma)}</b> out of 10. ` +
       `1 is relaxed about risk, 10 is very cautious.${below}${clash}`
     : phase === "check" ? `Your choices put your risk aversion at <b>${num1.format(gamma)}</b> out of 10.`
-    : `Until you answer, the tool uses <b>5</b>, a middle value.`;
+    : `Until you answer, the tool uses <b>5</b>, the default in Choi's spreadsheet.`;
 
   $("risk-restart").hidden = phase === "own" || risk.willingness === null;
   $("risk-own-toggle").textContent = phase === "own" || !$("risk-own").hidden
@@ -1486,8 +1487,9 @@ function render() {
     `The tool's own estimate is ${pct2.format(compoundShown())}.`;
 
   // The answer as a sentence, with both sides of the split named. The other
-  // side is just safe assets: Choi does not say which safe asset to hold, and
-  // TIPS enter his paper and guide only as its rate, which Exhibit 5 shows.
+  // side is just safe assets: Choi does not tell a reader where to put it. His
+  // guide's footnote 4 says a 30-year TIPS locks in the model's constant rate,
+  // which Exhibit 5 shows; that describes the asset, it does not prescribe it.
   $("verdict-figure").textContent = noSavings ? "" : pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
     `of your ${money.format(r.financialWealth)} in stocks, or <b>${money.format(r.equityDollars)}</b>.` +

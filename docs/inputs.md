@@ -31,7 +31,8 @@ One question, from the guide, which the page asks in three short steps.
 | $53,991 | 10 |
 
 A lower answer means you dislike risk more. Economists generally work in the 1
-to 10 range.
+to 10 range. Choi's spreadsheet starts at 5, and so does the page until the
+questions are answered.
 
 **On the page it is three short steps.**
 
@@ -108,10 +109,10 @@ tax, and it belongs to the safe share. Pension funds, including TFR paid into
 one, count at about nine tenths, because their benefits are taxed at 15%,
 falling to 9% after 35 years of membership (D.Lgs. 252/2005, art. 11(6)).
 
-**Run it again once a year**, and rebalance to the new figure, using new
-savings first. The rule is meant to be applied at every age (the paper's
-section 4): the share falls as savings grow against future earnings, and a mix
-set once and left alone drifts above it.
+**Run it again once a year**, and rebalance to the new figure. The rule is
+meant to be applied at every age (the paper's section 4): the share falls as
+savings grow against future earnings, and a mix set once and left alone drifts
+above it.
 
 ## Wages and retirement benefits
 
@@ -180,7 +181,10 @@ discounted like the 40% estimate it replaces, on the wage rates until your
 wage stops. That
 departs from Choi's spreadsheet and from his paper (methodology section 7.6).
 A pension that does not rise with prices goes in at about four fifths of its
-amount.
+amount if it is already being paid, and at about half if it starts 20 years
+from now, because the model holds every pension constant in real terms
+(methodology section 5.3 gives the calculation). On the Italian page the first
+figure is about three quarters.
 
 **The second adult** has the same field, start age and tick. On the American
 page they have one more tick: **They will claim the spousal benefit, half of
@@ -401,10 +405,12 @@ measures the formula's error there.
 
 The return on the safe asset, above inflation. The guide suggests the **30-year
 TIPS yield**, which is a real yield directly and needs no inflation adjustment.
-It is the rate the model assumes the safe part of the answer earns, not
-advice to hold TIPS: Choi does not say which safe asset to hold, and his guide's
-only example of one is "a U.S. Treasury bond". So the page says only that the
-rest goes in safe assets.
+It is the rate the model assumes the safe part of the answer earns. The
+guide's footnote 4 gives the reason for the 30-year yield: the model's rate is
+constant forever, and a 30-year TIPS locks one in for 30 years, at least on the
+amount first invested. That describes the asset the answer assumes; it is not
+an instruction to buy it, and the page says only that the rest goes in safe
+assets.
 
 **It is annualised first.** Like the Treasury's other par yields it is quoted on a
 semiannual basis, and the model reads annual rates, as the Italian variant's
