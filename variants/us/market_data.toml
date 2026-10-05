@@ -8,7 +8,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-10-05T04:23:47+00:00"
+generated_at = "2026-10-05T12:17:39+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
