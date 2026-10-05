@@ -109,10 +109,10 @@ tax, and it belongs to the safe share. Pension funds, including TFR paid into
 one, count at about nine tenths, because their benefits are taxed at 15%,
 falling to 9% after 35 years of membership (D.Lgs. 252/2005, art. 11(6)).
 
-**Run it again once a year**, and rebalance to the new figure. The rule is
-meant to be applied at every age (the paper's section 4): the share falls as
-savings grow against future earnings, and a mix set once and left alone drifts
-above it.
+**The answer is for today.** The paper evaluates the rule as one re-read at
+every age (its section 4): the share falls as savings grow against future
+earnings, so a mix set once and left alone drifts above it. Neither the paper
+nor the guide says when to rebalance, and the page does not either.
 
 ## Wages and retirement benefits
 
@@ -180,11 +180,10 @@ different: the rest of your career still moves it, so, ticked, it is
 discounted like the 40% estimate it replaces, on the wage rates until your
 wage stops. That
 departs from Choi's spreadsheet and from his paper (methodology section 7.6).
-A pension that does not rise with prices goes in at about four fifths of its
-amount if it is already being paid, and at about half if it starts 20 years
-from now, because the model holds every pension constant in real terms
-(methodology section 5.3 gives the calculation). On the Italian page the first
-figure is about three quarters.
+The model holds every pension constant in real terms, as Choi's spreadsheet
+does, so a pension that does not rise with prices, typed at its amount, is
+overvalued. The page offers no shortcut, as his spreadsheet offers none;
+methodology section 5.3 measures what it costs.
 
 **The second adult** has the same field, start age and tick. On the American
 page they have one more tick: **They will claim the spousal benefit, half of

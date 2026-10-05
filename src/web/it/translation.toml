@@ -106,14 +106,11 @@ it = '''<span>È la mia pensione INPS di vecchiaia</span>'''
 [[t]]
 en = '''A pension you already receive, or a fixed one that starts later (enter the
         age). Your own Social Security is already counted: tick the box only if this
-        pension is your Social Security, or your estimate of it. If it does not rise
-        with prices, enter about four fifths of it, or about half if it starts 20
-        years from now.'''
+        pension is your Social Security, or your estimate of it.'''
 it = '''Netta e con la tredicesima: una pensione che ricevi già, o una fissa che
         parte più avanti (indica l'età). La pensione INPS che maturi lavorando è già
         calcolata: spunta la casella solo se questa è la tua pensione INPS di
-        vecchiaia, o la sua stima (La mia pensione futura). Se non si rivaluta con i
-        prezzi, inseriscine circa i tre quarti, o circa la metà se parte tra 20 anni.'''
+        vecchiaia, o la sua stima (La mia pensione futura).'''
 
 [[t]]
 en = '''id="risk-label">How much you dislike risk</span>'''
@@ -463,10 +460,6 @@ it = '''`Finché non rispondi, lo strumento usa <b>5</b>, il valore predefinito 
 [[t]]
 en = '''? "Answer the questions instead" : "Enter my own number";'''
 it = '''? "Rispondi invece alle domande" : "Inserisco io il numero";'''
-
-[[t]]
-en = '''Check again once a year and rebalance to the new share.'''
-it = '''Ricontrolla una volta l'anno e riporta il portafoglio alla nuova quota.'''
 
 # --- the script: reading the controls ---------------------------------------
 
