@@ -390,9 +390,9 @@ were fitted over, and the 30-year real rate sits above the 0% to 2% range
 fitted for the safe rate as well. Choi's own guide defaults, 5% and 2.5%, sit
 outside it too. The answer is then an extrapolation.
 
-`update.py` says so every time it refreshes. The page shows the drift in its
-inputs table, Exhibit 5, and mentions the range beside the risk question only
-when risk aversion is below 4, where it is out of range too. Section 3.6 of the
+`update.py` says so every time it refreshes, and the page mentions the range
+beside the risk question only when risk aversion is below 4, where it is out of
+range too. Section 3.6 of the
 methodology sets out what being outside the range affects, which is the value
 of future wages, and what it does not, which is the Merton share, and it
 measures the formula's error there.

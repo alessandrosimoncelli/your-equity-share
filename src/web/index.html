@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Your Equity Share</title>
-<meta name="description" content="How much of your portfolio belongs in equities. Merton (1969) with the human capital adjustment of Choi, Liu and Liu (2025). Runs entirely in your browser.">
+<meta name="description" content="How much of your long-term savings to keep in stocks, following Choi, Liu and Liu (2025). Runs entirely in your browser.">
 <style>
 /*
   Two colours and one typeface.
@@ -596,12 +596,10 @@ td.why { min-width: 15rem; }
 
 <header class="masthead">
   <h1>Your Equity Share</h1>
-  <p class="lede">How much of your portfolio belongs in equities. Merton (1969),
-  with the human capital adjustment of Choi, Liu and Liu (2025).</p>
-  <p class="scope">Money meant to last the rest of your life, with no fixed date
-  to spend it. United States only, calibrated for a college-educated household whose
-  Social Security will replace about 40% of final pay, with the equities in a
-  broad index fund rather than a handful of shares.</p>
+  <p class="lede">How much of your long-term savings to keep in stocks.</p>
+  <p class="scope">For money meant to last the rest of your life, in a broad index fund.
+  Based on Choi, Liu and Liu (2025), calibrated for a college-educated household
+  in the United States. <a href="./methodology.html">How it works</a></p>
 </header>
 
 <div id="boot" class="boot">Loading the market data.</div>
@@ -620,20 +618,17 @@ td.why { min-width: 15rem; }
       <div class="field">
         <label class="lbl" for="wage">After-tax annual wage</label>
         <input type="text" inputmode="numeric" id="wage" value="100000">
-        <span class="hint">In today's money, with any employer retirement
-        contribution, counted at 0.8 if it goes in before tax. The model assumes
-        it does not move with the market, so it overstates the answer if a
-        meaningful part of your pay is company stock.</span>
+        <span class="hint">After tax, in today's money. Include any employer retirement
+        contribution, counting a pre-tax one at 0.8.</span>
       </div>
 
       <div class="field">
         <label class="lbl" for="wealth">Investable net worth</label>
         <input type="text" inputmode="numeric" id="wealth" value="500000">
-        <span class="hint">Non-housing assets less non-mortgage debt, after tax
-        on withdrawal: count pre-tax 401(k) and IRA balances at 0.8. Retired?
-        Include what you will draw down over the years; leave out only what you
-        will take from savings this year beyond your pension, and money for a
-        dated goal.</span>
+        <span class="hint">Savings and investments, not your home, minus debts other than the
+        mortgage. Count pre-tax 401(k) and IRA balances at 0.8. Leave out money
+        for a planned purchase and, if you are retired, this year's spending
+        beyond your pension.</span>
       </div>
 
       <div class="field">
@@ -645,16 +640,10 @@ td.why { min-width: 15rem; }
           <label class="check"><input type="checkbox" id="benefit-state">
             <span>It is my Social Security</span></label>
         </div>
-        <span class="hint">One already paid, even if you still work, or a fixed
-        one from a later age: survivor's, disability, military, or a company
-        pension from an earlier job. Your
-        wage is projected through 66 (this year is the last if you are 66 or
-        older), and from the year after the tool adds your Social Security at
-        40% of your last wage, up to its legal maximum. If the pension here is
-        your Social Security, a Social Security disability or survivor's benefit
-        included, or your own estimate of it with the age you will claim, tick
-        the box: it then replaces that estimate. A pension that does
-        not rise with prices: enter about four fifths of it.</span>
+        <span class="hint">A pension you already receive, or a fixed one that starts later (enter the
+        age). Your own Social Security is already counted: tick the box only if this
+        pension is your Social Security, or your estimate of it. If it does not rise
+        with prices, enter about four fifths of it.</span>
       </div>
 
       <div class="field span-2">
@@ -721,12 +710,10 @@ td.why { min-width: 15rem; }
         <label class="lbl">Market assumptions</label>
         <label class="check"><input type="checkbox" id="override">
           <span>Set the expected return myself</span></label>
-        <span class="hint">The expected <b>real</b> return on <b>United States</b>
-        equities, above inflation, over a lifetime. Enter it the way forecasts
-        are published: as a <b>compound</b> rate. The figure below is a dividend
-        yield compounded with long-run growth in earnings per share. If your equities are a
-        world index fund, Exhibit 5 shows the same construction on a world index,
-        and you can enter that instead.</span>
+        <span class="hint">The tool's estimate of the yearly return on <b>US</b> stocks after inflation,
+        from today's dividend yield and a century of earnings growth. Tick to enter
+        your own forecast instead, as a <b>real, compound</b> rate. For a world index
+        fund, Exhibit 5 shows the world figure.</span>
         <div id="override-field" hidden>
           <label class="visually-hidden" for="mu">Expected real return on equities, compound</label>
           <div class="slider-value" id="mu-value"></div>
@@ -744,8 +731,8 @@ td.why { min-width: 15rem; }
           <label class="check"><input type="checkbox" id="custom-path">
             <span>Enter earnings year by year</span></label>
         </div>
-        <span class="hint">Year by year lets you type each year's earnings
-        instead of projecting them from your salary.</span>
+        <span class="hint">Year by year: type your own future earnings, for example to plan an early
+        retirement or a career break.</span>
       </div>
 
       <div id="partner-fields" class="paths span-all" hidden>
@@ -773,10 +760,8 @@ td.why { min-width: 15rem; }
       </div>
 
       <div id="path-fields" class="span-all" hidden>
-        <p class="sub" style="margin-top:0">One line per year, under the headings
-          below. Edit the years that differ and leave the rest; a year you delete
-          keeps its projected value. Separate the columns with spaces; dollar
-          signs and thousands commas are ignored.</p>
+        <p class="sub" style="margin-top:0">One line per year: age, wage, benefit. Change the years that differ; the
+          others keep the projection.</p>
         <div class="paths">
           <div class="field">
             <div class="path-head">
@@ -819,8 +804,7 @@ td.why { min-width: 15rem; }
           <span class="verdict-text" id="verdict-text"></span>
         </p>
         <p class="note" id="cap-flag"></p>
-        <p class="note">This is today's answer. Run it again once a year and
-        rebalance to the new figure, using new savings first.</p>
+        <p class="note">Check again once a year and rebalance, using new savings first.</p>
       </div>
       <div class="split" id="split">
         <svg id="split-chart" role="img" aria-label="How the portfolio divides"></svg>
@@ -835,19 +819,19 @@ td.why { min-width: 15rem; }
     <div class="exhibit-grid">
 
     <section>
-      <p class="exhibit">Exhibit 1. Your wealth, and how much of it can be traded</p>
+      <p class="exhibit">Exhibit 1. Your total wealth</p>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Component</th><th class="n">Amount</th><th class="n">Share</th></tr></thead>
           <tbody id="wealth-rows"></tbody>
         </table>
       </div>
-      <p class="sub" id="wealth-note">Most of what you own is not in the account. That is the
-        whole reason the answer is not simply the Merton share.</p>
+      <p class="sub" id="wealth-note">Most of your wealth is your future earnings. They behave more like a bond
+        than a stock, so your savings can hold more stocks.</p>
     </section>
 
     <section>
-      <p class="exhibit">Exhibit 2. How the recommendation is reached</p>
+      <p class="exhibit">Exhibit 2. How the answer is reached</p>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Step</th><th class="n">Equity share</th></tr></thead>
@@ -858,33 +842,27 @@ td.why { min-width: 15rem; }
     </section>
 
     <section>
-      <p class="exhibit">Exhibit 3. Sensitivity to the expected return</p>
+      <p class="exhibit">Exhibit 3. If stocks return more or less</p>
       <div class="figure">
         <svg class="chart" id="sensitivity" role="img"
              aria-label="Recommended equity share against the expected real return on equities"></svg>
         <div class="tip" id="sensitivity-tip"></div>
       </div>
       <p class="sub" id="sensitivity-note"></p>
-      <p class="sub">The least certain input in the model, and the one the
-        answer moves most with.</p>
     </section>
 
     <section>
-      <p class="exhibit">Exhibit 4. The recommendation at every level of savings</p>
+      <p class="exhibit">Exhibit 4. With more or less savings</p>
       <div class="figure">
         <svg class="chart" id="glide" role="img"
              aria-label="Recommended equity share against investable net worth, age and salary held fixed"></svg>
         <div class="tip" id="glide-tip"></div>
       </div>
       <p class="sub" id="glide-note"></p>
-      <p class="sub">Age and salary are held fixed here. Both enter only through what
-        your future earnings are worth (Future earnings, in Exhibit 1), so two
-        households of different ages whose future earnings are worth the same
-        multiple of their savings receive the same answer exactly.</p>
     </section>
 
     <section class="span-all">
-      <p class="exhibit">Exhibit 5. Inputs, and where each comes from</p>
+      <p class="exhibit">Exhibit 5. The market inputs</p>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Input</th><th class="n">Value</th><th>Source</th></tr></thead>
@@ -911,7 +889,6 @@ import {
   offerStep,
   compoundFromArithmetic,
   projectEarnings,
-  logPremium,
   makeHousehold,
   makePerson,
   recommend,
@@ -1071,8 +1048,8 @@ function drawSplit(svg, key, r) {
     `<rect x="0" y="0" width="${wEq}" height="${H}" fill="var(--green)"/>` +
     `<rect x="${wEq + gap}" y="0" width="${wSf}" height="${H}" fill="var(--tint-2)"/>`;
   key.innerHTML =
-    `<i style="background:var(--green)"></i><span>Equities</span><span class="v">${pct0.format(eq)} &middot; ${money.format(r.equityDollars)}</span>` +
-    `<i style="background:var(--tint-2)"></i><span>Safe asset</span><span class="v">${pct0.format(1 - eq)} &middot; ${money.format(r.financialWealth - r.equityDollars)}</span>`;
+    `<i style="background:var(--green)"></i><span>Stocks</span><span class="v">${pct0.format(eq)} &middot; ${money.format(r.equityDollars)}</span>` +
+    `<i style="background:var(--tint-2)"></i><span>Safe bonds</span><span class="v">${pct0.format(1 - eq)} &middot; ${money.format(r.financialWealth - r.equityDollars)}</span>`;
 }
 
 /**
@@ -1318,11 +1295,11 @@ function riskSource() {
   if (phase === "own") return "the number you entered";
   if (phase === "done") {
     return risk.adjusted !== null
-      ? "your choices about the coin flip, adjusted at the final check"
-      : "your choices about the coin flip, confirmed at the final check";
+      ? "your answers, adjusted at the check"
+      : "your answers";
   }
-  if (phase === "check") return "your choices about the coin flip";
-  return "the value Choi's spreadsheet comes set to, until you answer the questions";
+  if (phase === "check") return "your answers so far";
+  return "the default, until you answer the questions";
 }
 
 function answerRisk(tookSure) {
@@ -1366,7 +1343,7 @@ function renderRisk(gamma) {
   // Choi solved his model at 4 to 10; below 4 the answer is extrapolated, on
   // the side where it tends to reach 100% anyway (methodology section 3.6).
   const below = (phase === "done" || phase === "own") && gamma < 4
-    ? " Choi solved his model for risk aversion of 4 to 10, so below 4 the answer is an extrapolation; today's safe rate and premium are outside his range too (methodology 3.6)."
+    ? " Below 4 the answer is less reliable: the model was fitted on values from 4 to 10."
     : "";
   const clash = phase === "done" && answersDisagree(risk.willingness, gamma)
     ? ` You rated your willingness to take financial risks ${risk.willingness} out of 10, ` +
@@ -1378,7 +1355,7 @@ function renderRisk(gamma) {
     : phase === "done" ? `Your risk aversion is <b>${num1.format(gamma)}</b> out of 10. ` +
       `1 is relaxed about risk, 10 is very cautious.${below}${clash}`
     : phase === "check" ? `Your choices put your risk aversion at <b>${num1.format(gamma)}</b> out of 10.`
-    : `Until you answer, the model uses <b>5</b>, the value Choi's spreadsheet comes set to.`;
+    : `Until you answer, the tool uses <b>5</b>, a middle value.`;
 
   $("risk-restart").hidden = phase === "own" || risk.willingness === null;
   $("risk-own-toggle").textContent = phase === "own" || !$("risk-own").hidden
@@ -1451,7 +1428,7 @@ function readInputs() {
       ? `Projected from the fields above, and it follows them until you change a year.`
       : parsed.bad.length
       ? `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. Could not read line${parsed.bad.length > 1 ? "s" : ""} ${parsed.bad.join(", ")}; those years keep their projected value.`
-      : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read from what you typed. They replace the wage and pension above until Reset to projection. The pension fields stay locked and still say which pension is fixed; with none entered there, a benefit in the first year counts as one already being paid.`;
+      : `<b>${parsed.used}</b> year${parsed.used === 1 ? "" : "s"} read. They replace the wage and pension above until you press Reset to projection.`;
   }
   const wealth = Math.max(1, nonNegative($("wealth"), 1000));
   // Choi's input is investable net worth above zero; the guide says the model
@@ -1505,9 +1482,8 @@ function render() {
   renderRisk(gamma);
   $("mu-value").textContent = pct2.format(Number($("mu").value)) + " compound";
   $("mu-readout").innerHTML =
-    `That is <b>${pct2.format(expected)}</b> as an arithmetic mean, which is what ` +
-    `the model uses; the difference is the volatility drag. ` +
-    `The fetched figure is ${pct2.format(compoundShown())} compound.`;
+    `The model reads it as <b>${pct2.format(expected)}</b>, the same return as a simple yearly average. ` +
+    `The tool's own estimate is ${pct2.format(compoundShown())}.`;
 
   // The answer as a sentence. Both sides of the split are named here, which
   // is what the meter used to do.
@@ -1516,12 +1492,14 @@ function render() {
   // that reads a low equity share as pessimism about stocks.
   $("verdict-figure").textContent = noSavings ? "" : pct0.format(r.equityShare);
   $("verdict-text").innerHTML =
-    `of your ${money.format(r.financialWealth)} portfolio belongs in equities, or <b>${money.format(r.equityDollars)}</b>. The rest, ${pct0.format(r.bondShare)}, goes to the safe asset: inflation-linked Treasury bonds (TIPS) held to maturity, or a ladder of them, at the rate in Exhibit 5.`;
+    `of your ${money.format(r.financialWealth)} in stocks, or <b>${money.format(r.equityDollars)}</b>.` +
+    (r.bondShare >= 0.005
+      ? ` The other ${pct0.format(r.bondShare)} goes in inflation-protected US Treasury bonds (TIPS).`
+      : "");
 
   if (noSavings) {
     $("verdict-text").innerHTML =
-      `Choi's model has no answer when savings are zero or debts exceed them: ` +
-      `his guide says it has no solutions for a negative net worth.`;
+      `The model needs savings above zero: it has no answer when debts are larger than savings.`;
   }
   // With no savings there is no answer, so nothing to draw and nothing to cap.
   $("split").hidden = noSavings;
@@ -1529,7 +1507,7 @@ function render() {
   $("wealth-note").hidden = r.humanCapital <= r.financialWealth;
 
   $("cap-flag").innerHTML = r.isCapped && !noSavings
-    ? `<b>The model asks for ${pct0.format(r.uncappedShare)}</b>, meaning it would borrow to invest. The 100% cap is the no-borrowing rule of the model the formula approximates; the formula alone goes above it.`
+    ? `<b>The formula asks for ${pct0.format(r.uncappedShare)}</b>, which would mean borrowing to invest, so the answer stops at 100%.`
     : "";
 
   const total = r.financialWealth + r.humanCapital;
@@ -1545,26 +1523,22 @@ function render() {
   const multiple = 1 + r.humanCapitalRatio;
   const steps = [
     ["Equity share of <b>total</b> wealth<sup>a</sup>", pct1.format(r.mertonShare)],
-    [`Times <b>${num2.format(multiple)}</b>, wealth over its tradeable part<sup>b</sup>`,
+    [`Times <b>${num2.format(multiple)}</b>, total wealth over savings<sup>b</sup>`,
      pct1.format(r.uncappedShare)],
   ];
   const notes = [
-    "Merton (1969). The reward for risk, divided by risk and by how much you dislike it. " +
-      `It applies to everything you own, all ${money.format(total)} of it.`,
+    "Merton (1969): the share of all your wealth, " +
+      `${money.format(total)}, that belongs in stocks.`,
     r.humanCapital > 0
-      ? `Only ${money.format(r.financialWealth)} of that ${money.format(total)} can be ` +
-        `bought and sold. Future earnings cannot be sold or borrowed against, so ` +
-        `the tradeable part has to carry the whole equity position, and its share ` +
-        `rises by the ratio between the two figures, ${num2.format(multiple)}.`
-      : "You have no future earnings left to count, so everything you own is " +
-        "tradeable and the share is unchanged.",
+      ? `Only your savings, ${money.format(r.financialWealth)}, can hold stocks, so their share is ` +
+        `scaled up by total wealth over savings, ${num2.format(multiple)}.`
+      : "You have no future earnings left, so the share is unchanged.",
   ];
   if (r.isCapped) {
     steps.push(["Capped at 100%<sup>c</sup>", pct1.format(r.equityShare)]);
     notes.push(
-      `The model asked for ${pct1.format(r.uncappedShare)}, which would mean ` +
-      `borrowing to buy equities. The model the formula approximates rules ` +
-      `that out, so the answer is held at 100%.`);
+      `The formula asks for ${pct1.format(r.uncappedShare)}, which would mean ` +
+      `borrowing to buy stocks, so the answer stops at 100%.`);
   }
   $("steps-rows").innerHTML =
     steps.map(([k, v]) => row([[k, "k"], [v, "n"]])).join("");
@@ -1603,9 +1577,8 @@ function render() {
     height: 300,
   });
   $("sensitivity-note").textContent =
-    `The marker is where you are now: ${pct2.format(shownCompound)} compound, ` +
-    `which is ${pct2.format(expected)} as an arithmetic mean, giving ` +
-    `${pct0.format(r.equityShare)} in equities.`;
+    `The marker is today's estimate, ${pct2.format(shownCompound)} a year, which gives ` +
+    `${pct0.format(r.equityShare)}. No input is less certain, or moves the answer more.`;
 
   // Against savings, with the household itself unchanged. Age used to be on
   // this axis, which needed a caption apologising for holding wealth fixed for
@@ -1633,11 +1606,10 @@ function render() {
     height: 300,
   });
   $("glide-note").innerHTML =
-    `Your household, its ages and salaries unchanged, at every level of savings. `
+    `Same household, other savings. `
     + `At ${money.format(r.financialWealth)} the answer is ${pct0.format(r.equityShare)}; `
-    + `the same household with ${money.format(Math.min(HI, r.financialWealth * 10))} would be told `
-    + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma, VARIANT.calibration).equityShare)}. `
-    + `Nothing about the people changed.`;
+    + `with ${money.format(Math.min(HI, r.financialWealth * 10))} it would be `
+    + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma, VARIANT.calibration).equityShare)}.`;
 
   // The same construction, run on a global index, printed beside the American
   // number. Not a second recommendation: the model would also need the Italian
@@ -1653,39 +1625,29 @@ function render() {
     if (!g || g.dividend_yield_gross == null || g.real_growth == null) return "";
     // Before withholding, as the S&P figure above is: an American world fund
     // pays none on the American part of the index.
-    return row([[`&nbsp;&nbsp;the same estimator on ${g.index}`, "k"],
+    return row([[`&nbsp;&nbsp;the same, for a world index fund`, "k"],
                 [pct2.format((1 + g.dividend_yield_gross) * (1 + g.real_growth) - 1), "n"],
-                [`${pct2.format(g.dividend_yield_gross)} yield before withholding, ` +
-                 `as the S&P figure is, compounded with ${pct2.format(g.real_growth)} growth, ${g.as_of}`,
-                 "why"]]);
+                [`${g.index}`, "why"]]);
   }
 
   // The inputs, with where each came from.
-  // At the volatility in use, which is what the model's regressor reads.
-  const pi = logPremium(expected, rf, sigma);
   const prov = market.provenance || {};
-  const label = { "building blocks": "dividend yield compounded with long-run growth",
-                  consensus: "median of three estimators",
-                  implied: "market implied",
+  const label = { "building blocks": "dividend yield and a century of earnings growth",
                   fixed: "set by hand" }[(prov.expected_return_method || "").split(",")[0].trim()]
                 || "set by hand";
 
   $("inputs-rows").innerHTML =
-    row([["Expected real return, compound", "k"], [pct2.format(shownCompound), "n"],
+    row([["Expected return, after inflation", "k"], [pct2.format(shownCompound), "n"],
          [$("override").checked ? "you set this" : label, "why"]]) +
-    row([["&nbsp;&nbsp;the same, as an arithmetic mean", "k"],
+    row([["&nbsp;&nbsp;the same, as a simple yearly average", "k"],
          [pct2.format(expected), "n"],
-         [`what the model uses, +${((expected - shownCompound) * 100).toFixed(2)} ` +
-          `points for the volatility drag`, "why"]]) +
+         ["the form the model uses", "why"]]) +
     globalRow(market) +
-    row([["Real risk-free rate", "k"], [pct2.format(rf), "n"],
-         ["30-year TIPS yield before tax, the rate Choi's guide suggests, from the Treasury's real yield curve (FRED's DFII30), annualised from its semiannual quote, which his spreadsheet does not do (methodology 3.3). If most of your bonds sit in a taxable account, his guide multiplies it by one minus your income tax rate; this page does not, so read the answer as low (methodology 3.3)", "why"]]) +
-    row([["Stock volatility", "k"], [pct2.format(sigma), "n"],
-         ["Choi's 18.5%, monthly CRSP returns 1926 to 2024, held fixed rather than re-measured each week", "why"]]) +
-    row([["Your risk aversion", "k"], [num1.format(gamma), "n"], [riskSource(), "why"]]) +
-    row([["Log excess drift", "k"], [pct2.format(pi), "n"],
-         ["the return and the safe rate above, in logs, less half the " +
-          "variance of the volatility above", "why"]]);
+    row([["Safe rate, after inflation", "k"], [pct2.format(rf), "n"],
+         ["30-year TIPS yield, US Treasury, before tax", "why"]]) +
+    row([["Stock market risk (volatility)", "k"], [pct2.format(sigma), "n"],
+         ["US stocks, 1926 to 2024, held fixed", "why"]]) +
+    row([["Your risk aversion", "k"], [num1.format(gamma), "n"], [riskSource(), "why"]]);
 
   // The extrapolation is section 3.6 of the methodology. It was a paragraph
   // here, then a line, and it belonged in neither: a caveat printed beside
@@ -1721,35 +1683,27 @@ async function boot() {
 
   const days = ageOfData(market.as_of);
   const fresh = days <= 90;
-  // Two different vintages, and saying only the first would overstate the
-  // freshness of the answer. The rate and the volatility are days old; the
-  // long history behind two of the three expected-return estimators runs
-  // months behind, because prices arrive promptly and the earnings a
-  // cyclically adjusted ratio needs do not.
+  // The earnings behind the expected return always arrive months after the
+  // prices, so the history's age is worth a word only when it is unusually late.
   const hist = (market.provenance || {}).history_as_of;
   let histNote = "";
   if (hist) {
     const [hy, hm] = hist.split("-").map(Number);
     const now = new Date();
     const months = (now.getFullYear() - hy) * 12 + (now.getMonth() + 1 - hm);
-    const src = (market.provenance || {}).history_source;
-    histNote =
-      ` The long history behind the expected return runs to <b>${hist}</b>, ` +
-      `<span class="${months > 12 ? "stale" : "ok"}">${months} months behind</span>` +
-      (src ? `, from ${src}` : "") + ". " +
-      (months > 12
-        ? "Earnings arrive after the prices they belong to, but this is further behind than that explains."
-        : "Earnings always arrive after the prices they belong to, so a few months is normal.");
+    if (months > 12) {
+      histNote = ` <span class="stale">The earnings history behind the expected return is ${months} months old, more than usual.</span>`;
+    }
   }
   $("foot").innerHTML =
     `Market data as of <b>${market.as_of}</b>, ` +
     `<span class="${fresh ? "ok" : "stale"}">${days} day${days === 1 ? "" : "s"} old</span>` +
     `${fresh ? "" : ", past the 90 day limit"}.` + histNote + " " +
-    `Everything on this page is computed in your browser; nothing you enter is sent anywhere. ` +
-    `Read the <a href="./methodology.html">methodology</a>, the ` +
-    `<a href="./it/index.html">Italian version</a> with ` +
-    `<a href="./it/methodology.html">its methodology</a>, and the ` +
-    `<a href="./further-work.html">further work</a>. ` +
+    `Computed in your browser: nothing you enter is sent anywhere. ` +
+    `<a href="./methodology.html">Methodology</a> · ` +
+    `<a href="./it/index.html">Italian version</a> · ` +
+    `<a href="./it/methodology.html">Italian methodology</a> · ` +
+    `<a href="./further-work.html">Further work</a>. ` +
     `Not investment advice.`;
 
   // Money fields reformat when focus leaves them, never while typing, so the
