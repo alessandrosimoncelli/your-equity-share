@@ -422,7 +422,7 @@ def test_the_safe_rate_is_not_italian_paper(italy) -> None:
     Booking it as a risk-free return would raise the rate and lower the
     recommendation while looking prudent.
     """
-    text = Path("variants/it/market_data.toml").read_text(encoding="utf-8")
+    text = IT_CONFIG.read_text(encoding="utf-8")
     assert "NOT holding this asset" in text
     assert "0.56 points" in text
 
