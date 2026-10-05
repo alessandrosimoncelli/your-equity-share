@@ -114,22 +114,11 @@ TREASURY_SOURCE = "US Treasury daily par real yield curve, 30 years"
 # measured yet, so an unknown variant is refused rather than rebuilt.
 KNOWN_VARIANTS = {"us"}
 
-# For reporting only. A 3-month bill and a 10-year breakeven do not describe
-# the same horizon, so their difference is a rough real cash rate rather than a
-# precise one, which is all it needs to be: it exists to show that part of the
-# distance from Choi's fitted band is the choice of safe asset. Measured this
-# way in September 2026 it came to 1.37% against AQR's own 1.30% estimate.
-FRED_SHORT_NOMINAL = "DTB3"
-FRED_BREAKEVEN = "T10YIE"
-
 # Sent with every request. It was added because the price endpoint, since
 # removed, rejected the default urllib agent string, and the sources left have
 # not been tried without it.
 USER_AGENT = "Mozilla/5.0 (compatible; your-equity-share/0.1; research tool)"
 TIMEOUT_SECONDS = 40
-# For downloads that only feed a printed comparison, so a provider that does
-# not answer costs a quarter of a minute rather than two thirds of one.
-REPORTING_TIMEOUT_SECONDS = 15
 
 
 def _get(url: str, timeout: float = TIMEOUT_SECONDS) -> bytes:
@@ -282,12 +271,6 @@ def render_config(**f) -> str:
             if f.get("real_risk_free_quoted") is not None
             else []
         ),
-        # Not an input. See the constant for what it is for.
-        *(
-            [f"real_cash = {f['real_cash']:.6f}"]
-            if f.get("real_cash") is not None
-            else []
-        ),
         'expected_return_source = "dividend yield compounded with long-run real growth in '
         'earnings per share, no repricing; see variants/us/methodology.html section 3"'
         if f["method"] == "building blocks"
@@ -438,24 +421,6 @@ def main(argv: list[str]) -> int:
     try:
         print("\nFetching...")
 
-        try:
-            _, short_nominal = parse_fred_csv(
-                _get(FRED_URL.format(series=FRED_SHORT_NOMINAL),
-                     timeout=REPORTING_TIMEOUT_SECONDS).decode(
-                    "utf-8", "replace"
-                ),
-                FRED_SHORT_NOMINAL,
-            )
-            _, breakeven = parse_fred_csv(
-                _get(FRED_URL.format(series=FRED_BREAKEVEN),
-                     timeout=REPORTING_TIMEOUT_SECONDS).decode("utf-8", "replace"),
-                FRED_BREAKEVEN,
-            )
-            real_cash = (1.0 + short_nominal) / (1.0 + breakeven) - 1.0
-        except (DataUnavailable, urllib.error.URLError, OSError, ValueError):
-            # Reporting only, so a failure here must not stop a refresh.
-            real_cash = None
-
         rf_date, quoted_rf, rf_source = fetch_real_risk_free()
         # Treasury yields, TIPS included, are quoted on a semiannual
         # bond-equivalent basis. The model reads annual rates, as the Italian
@@ -598,7 +563,6 @@ def main(argv: list[str]) -> int:
         as_of=rf_date,
         history_as_of=history_as_of,
         history_source=history_source,
-        real_cash=real_cash,
         dividend_yield=dividend_yield,
         real_growth=real_growth,
         growth_window=GROWTH_WINDOW_YEARS,

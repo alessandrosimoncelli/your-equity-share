@@ -75,9 +75,6 @@ def refresh(tmp_path, monkeypatch):
         if "daily-treasury-rates.csv" in url:
             return (f'Date,"5 YR","10 YR","20 YR","30 YR"\n'
                     f'{yesterday:%m/%d/%Y},2.10,2.40,2.90,{QUOTE * 100:.2f}\n').encode()
-        for series, value in (("DTB3", "3.90"), ("T10YIE", "2.35")):
-            if f"id={series}" in url:
-                return f"observation_date,{series}\n{yesterday},{value}\n".encode()
         if url == SHILLER_URL:
             return b"the workbook"
         raise DataUnavailable(f"not stubbed: {url}")
