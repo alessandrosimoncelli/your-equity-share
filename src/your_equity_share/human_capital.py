@@ -100,30 +100,38 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 # THE PENSION. Choi's wage discount rate (the paper's Table 1; equation (12) of
 # the methodology) takes the replacement rate as a regressor, fitted over 0.4,
 # 0.6 and 0.8, so Italy's rate sits inside the grid. It starts
-# from the Italian Treasury's projected net replacement rate for a private
-# employee retiring in 2050 at 66 years and 2 months with 38 years of
-# contributions, 66%: Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
+# from the Ragioneria Generale dello Stato's projected net replacement rate for
+# a private employee on the average wage, with no dependent spouse, retiring in
+# 2050 at 66 years and 2 months with 38 years of contributions, 66%: Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
 # Table 6.3.a, base case. That is a share of the final net pay WITHOUT the
 # TFR, and the page asks for the wage with the yearly TFR accrual added, about
 # 7.5% of net pay after its separate tax. On that base the same pension is
-# 0.66 / 1.075 = 61.4% of the wage the model projects. The model retires everyone at 67, where Choi fitted his coefficients,
-# and today's 45-year-old reaches 67 in 2048, close to that row; the table's other cases near
-# 67 give 63% to 64%, and its old-age case at 69 gives 73%. It replaced the
+# 0.66 / 1.075 = 61.4% of the wage the model projects. Choi fitted his
+# coefficients on retirement at 67, where the model retires everyone unless a
+# working life is typed, and today's 45-year-old reaches 67 in 2048, close to
+# that row; the table's other cases near 67 from 2050 on give 63% to 65%, and
+# its old-age case at about 69 gives 73%. The 2026 edition, Rapporto n. 27,
+# gives 66.4% for the same case; tools/maintenance.py lists the update. It replaced the
 # OECD's 79% in October 2026, a figure for 48 years of contributions ending at
 # 70: Italian pensions are contributory, so retiring at 67 pays less.
 #
-# THE CAREER. Daminato and Padula (2024, Journal of the European Economic
-# Association), Table 7 of the working paper, CSEF 585: the earnings process
-# of Italian private-sector employees, estimated on the Bank of Italy's Survey
-# on Household Income and Wealth, 1986 to 2008, in Cocco, Gomes and Maenhout's
-# own form, a cubic in age plus permanent and transitory shocks, for a
-# life-cycle model of saving and portfolio choice of the same family as
-# Choi's. Earnings are after income tax, the definition of Jappelli and
-# Pistaferri (2010), as the page's wage is. The sample is married household
-# heads employed in the private or public sector, aged about 25 to 60.
+# THE CAREER. Daminato and Padula, Table 7 of the 2020 working paper, CSEF
+# 585 (published 2024 in the Journal of the European Economic Association,
+# whose own estimates are in an online appendix): the earnings process of
+# Italian private-sector employees, estimated on the Bank of Italy's Survey on
+# Household Income and Wealth, 1986 to 2008, with the ingredients of Cocco,
+# Gomes and Maenhout's form, a cubic in age and the variances of permanent and
+# transitory shocks, for a life-cycle model of saving and portfolio choice of
+# the same family as Choi's. Their own model keeps only the permanent shock
+# and treats the transitory one as mostly measurement error. They use Jappelli
+# and Pistaferri's (2010) definition of earnings, which is after income tax, as
+# the page's wage is, though their model section says gross labour earnings.
+# The sample is married household heads employed in the private or public
+# sector, of working age.
 #
-# Permanent variance 0.015156, which they report inside the confidence
-# interval of Jappelli and Pistaferri (2010): 12.3%, inside the 10.2% to
+# Permanent variance 0.015156, which the working paper reports inside the
+# 95% bands of Jappelli and Pistaferri (2010), a chart for household
+# disposable income: 12.3%, inside the 10.2% to
 # 13.0% Choi fitted over. Transitory 0.023609: 15.4%, below his 24.2% to
 # 32.5%, but it enters the wage discount rate through a coefficient of 0.028
 # and moves
@@ -132,8 +140,8 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 # path outside his fitted set and lands within 3 points of the full solution.
 #
 # The age coefficients are imprecise one by one, so the shape was checked
-# against INPS's 2024 Osservatorio on private employees, whose daily pay by
-# age also keeps rising into the early sixties, by 10% from 45-49 to 60-64
+# against INPS's 2024 Osservatorio on private employees, whose gross pay per
+# paid day by age also keeps rising into the early sixties, by 10% from 45-49 to 60-64
 # for men. The American graduate's profile instead peaks at 45 and falls.
 #
 # Mortality stays American: it is inside the fitted discount rates.

@@ -397,7 +397,8 @@ recommendation does not hold for a portfolio of only a few shares. The page's
 masthead says the same.</p>
 
 <p><strong>Every number below is checked against something outside this
-project</strong>, and section 2 is that list in one table. Where a figure
+project</strong>, except the pension's replacement rate, which is its source
+restated, and section 2 is that list in one table. Where a figure
 cannot be checked, section 11 says so rather than dressing it up.</p>
 
 <h2 id="s2">2. Every number, and what checks it</h2>
@@ -416,8 +417,8 @@ against</caption>
 <tr><td>Volatility, euro, fixed</td><td class="num">16.4545%</td><td>J.P. Morgan, 2026 Long-Term Capital Market Assumptions, euro, AC World Equity</td><td class="num">14.38%</td></tr>
 <tr><td>Real safe rate</td><td class="num">1.4709%</td><td>Bund/euro-i 2046 traded real yield</td><td class="num">1.4906%</td></tr>
 <tr><td>Nominal 30-year par yield, annualised</td><td class="num">3.7595%</td><td>German 30-year Bund, 9 September</td><td class="num">3.886%</td></tr>
-<tr><td>Permanent pay shocks, standard deviation</td><td class="num">12.3%</td><td>Daminato and Padula (2024), Italian private employees, Bank of Italy survey 1986 to 2008</td><td class="num">inside the 95% band of Jappelli and Pistaferri (2010)</td></tr>
-<tr><td>Benefit replacement rate, on the wage with the TFR</td><td class="num">61.4%</td><td>Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, private employee retiring in 2050, net, on pay without the TFR</td><td class="num">66.0%</td></tr>
+<tr><td>Permanent pay shocks, standard deviation</td><td class="num">12.3%</td><td>Daminato and Padula, Table 7 of working paper CSEF 585 (2020), Italian private employees, Bank of Italy survey 1986 to 2008</td><td class="num">inside the 95% band of Jappelli and Pistaferri (2010), as Daminato and Padula report</td></tr>
+<tr><td>Benefit replacement rate, on the wage with the TFR</td><td class="num">61.4%</td><td>Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, private employee on the average wage retiring in 2050, net, on pay without the TFR; the source restated, not an independent check</td><td class="num">66.0%</td></tr>
 </tbody>
 </table>
 </div>
@@ -461,10 +462,12 @@ out how the figure used is measured. The safe rate sits 0.02 points below the
 traded bond, for reasons section 5 sets out. The nominal yield sits 0.13 below
 the German 30-year Bund, which is quoted a day later: the curve itself rose 0.03
 points that day, and the remaining tenth is the difference between a curve
-fitted to every AAA issuer and one German bond. The replacement rate is the Treasury's 66.0% restated
+fitted to every AAA issuer and one German bond. The replacement rate is the Ragioneria's 66.0% restated
 on the wage the page asks for, which includes the TFR: 0.66 / 1.075 = 61.4%
-(section 7.2). The permanent pay shock is checked against a band rather than a
-point, because Jappelli and Pistaferri publish theirs as a chart. The other rows
+(section 7.2); nothing outside the Ragioneria's table checks it. The permanent
+pay shock is checked only at second hand: Daminato and Padula report that it
+falls inside the 95% bands of Jappelli and Pistaferri (2010), which are for
+household disposable income and are published only as a chart. The other rows
 are within a tenth of a point of their checks.</p>
 
 <h2 id="s3">3. The equity sleeve</h2>
@@ -955,8 +958,10 @@ Under article 2120 of the codice civile the employer sets aside each year the
 year's pay divided by 13.5, which is 6.91% of gross pay once the 0.5%
 contribution of law 297 of 1982 comes off it, revalues it every year at 1.5%
 plus three quarters of inflation, and pays it when the job ends, when it is
-taxed separately (TUIR, articles 17 and 19). Daminato and Padula measure the wages received in each year and
-the Treasury's 66% is the public pension alone, so both leave it out. The page
+taxed separately (TUIR, articles 17 and 19). Daminato and Padula do not mention the TFR: their earnings
+are each year's pay as reported in the Bank of Italy survey, which this
+document takes to exclude the accrual, and the Ragioneria's 66% is the public
+pension alone, on pay without the TFR. The page
 asks for it twice: the year's accrual after its tax goes in the wage, about
 7.5% of net pay, and what has already accrued goes in savings, counted at
 about three quarters for the tax still to come. Because the wage then carries
@@ -976,15 +981,19 @@ euro would raise the answer by up to about 3 points.</p>
 
 <h3 id="s7-1">7.1 The career</h3>
 
-<p><strong>From Daminato and Padula (2024)</strong>, in the <em>Journal of the
-European Economic Association</em>: the earnings process of Italian
-private-sector employees, estimated on the Bank of Italy's Survey on Household
-Income and Wealth from 1986 to 2008, for a life-cycle model of saving and
-portfolio choice of the same family as Choi's. They estimate it in Cocco, Gomes
-and Maenhout's own form, a cubic in age plus permanent and transitory shocks,
-which is the form this model takes. Earnings are after income tax, the
-definition of Jappelli and Pistaferri (2010), the same basis as the after-tax
-wage the page asks for.</p>
+<p><strong>From Daminato and Padula</strong>, published in the <em>Journal of
+the European Economic Association</em> (2024), with the estimates used here
+from Table 7 of the 2020 working paper version, CSEF 585; the journal puts its
+own in an online appendix. It is the earnings process of Italian private-sector
+employees, estimated on the Bank of Italy's Survey on Household Income and
+Wealth from 1986 to 2008, for a life-cycle model of saving and portfolio choice
+of the same family as Choi's. They estimate the ingredients of Cocco, Gomes and
+Maenhout's form, a cubic in age and the variances of permanent and transitory
+shocks, which is the form this model takes; their own model keeps only the
+permanent shock and treats the transitory one as mostly measurement error.
+They say they use Jappelli and Pistaferri's (2010) definition of earnings,
+which is after income tax, the same basis as the after-tax wage the page asks
+for, though their model section calls the variable gross labour earnings.</p>
 
 <div class="tablewrap">
 <table>
@@ -998,8 +1007,8 @@ wage the page asks for.</p>
 </table>
 </div>
 
-<p class="src">Sources: Daminato and Padula (2024), Table 7 of working paper
-CSEF 585, private employees; Cocco, Gomes and Maenhout (2005), college
+<p class="src">Sources: Daminato and Padula, Table 7 of working paper CSEF 585
+(2020), private employees; Cocco, Gomes and Maenhout (2005), college
 graduates.</p>
 
 <p><strong>Why it fits this model.</strong> The permanent shock enters Choi's
@@ -1020,17 +1029,19 @@ snapshot, puts the formula within about 5 points of it at every age from 25 to
 points high. With fifteen or more years of pay saved it runs 2 to 5.5 points
 low.</p>
 
-<p><strong>The checks.</strong> Daminato and Padula report that their
-permanent variance falls inside the confidence interval of Jappelli and
-Pistaferri (2010), estimated on the same survey with the same definition of
-earnings.</p>
+<p><strong>The checks.</strong> In the working paper, Daminato and Padula
+report that their permanent variance falls inside the 95% bands of Jappelli
+and Pistaferri (2010), estimated on the same survey. Those bands are for
+household disposable income and are published only as a chart, so this check
+rests on their reading.</p>
 
 <p><strong>The age profile is the weaker part.</strong> Their age coefficients
 are imprecise one by one, and the cube is printed to one significant digit,
 &minus;0.000006. Checked against the INPS Osservatorio on private employees for
 2024, which counts contributions rather than surveying households, it rises
 about twice as fast: <strong>+19.7%</strong> from 47 to 62 on their profile,
-against <strong>+10.2%</strong> in men's daily gross pay from 45-49 to 60-64.
+against <strong>+10.2%</strong> in men's gross pay per paid day (annual pay
+over paid days, Prospetto 2) from 45-49 to 60-64.
 The two are not the same object, since INPS is one year's cross-section of
 gross pay rather than one generation's pay after tax, but both rise where the
 American graduate's pay falls. So the direction is settled and the slope is
@@ -1040,7 +1051,8 @@ for savings near where the answer leaves 100%, about 5.6 to 6.7 times pay, and
 less above that. Below about 5.3 times pay the answer is 100% either way.</p>
 
 <p><strong>Whom it describes.</strong> Married household heads employed in the
-private or public sector, aged about 25 to 60, of every education level; this
+private or public sector, of working age (25 to 58 in the published sample;
+the working paper drops heads over 60), of every education level; this
 variant uses the private-sector estimates, the larger group. The
 self-employed, whose income is riskier, are outside it, and so is any split by
 education.</p>
@@ -1048,12 +1060,19 @@ education.</p>
 <h3 id="s7-2">7.2 The pension</h3>
 
 <p><strong>61%</strong> of the wage the page asks for, 61.4% exactly. It is the
-Italian Treasury's projected net replacement rate, 66%, for a private employee
-who retires in 2050 at 66 years and 2 months with 38 years of contributions:
+Ragioneria Generale dello Stato's projected net replacement rate, 66%, for a
+private employee on the average wage with no dependent spouse, who retires in
+2050 at 66 years and 2 months with 38 years of contributions:
 Ragioneria Generale dello Stato, <em>Le tendenze di medio-lungo periodo del
 sistema pensionistico e socio-sanitario</em>, Rapporto n. 26 (2025), Table
 6.3.a, base case. Net means after tax and contributions, the basis of the
-after-tax wage the page asks for. But the 66% is a share of the final net pay
+after-tax wage the page asks for. The net rate rises with pay from half the
+average to one and a half times it and is roughly stable above that; the
+report gives that only as a chart, so the page uses the average earner's rate
+for everyone. The report's 2026 edition, Rapporto n. 27, online since 22
+September 2026, after this document's figures were fixed, gives 66.4% for the
+same case, which would move the answer by at most 0.4 points; it is the next
+update. And the 66% is a share of the final net pay
 without the TFR, and the page asks for the wage with the year's TFR accrual
 added, about 7.5% of net pay (section 7). On that base the same pension is
 0.66 / 1.075 = 61.4% of the wage the model projects, and that is the rate in
@@ -1064,15 +1083,18 @@ the wage with the TFR, which paid about 71% of net pay.</p>
 at 67, and the page retires everyone there unless a different working life is
 typed year by year; 2050 is within two years of when today's 45-year-old
 reaches 67. The
-same table gives 63% to 64% for its other cases near 67 and 73% for an old-age
-retirement at 69, so 66% sits where a retirement at 67 falls.</p>
+same table gives 63% to 65% for its other cases near 67 from 2050 on, and 73%
+for an old-age retirement at about 69, so 66% is within a few points of what a
+retirement at 67 would get; the table has no such case.</p>
 
 <p><strong>Whom it understates.</strong> The same row of Table 6.3.a gives
-77.0% for a retirement in 2030 and 67.4% for one in 2040, which are 71.6% and
-62.7% on the page's base. The model uses 61.4% for everyone, so it understates
+77.0% for a retirement in 2030 at 67 years and 5 months and 67.4% for one in
+2040 at 65 years and 4 months, which are 71.6% and 62.7% on the page's base. The model uses 61.4% for everyone, so it understates
 the pension of anyone retiring before about 2040. For an uncapped household at
 risk 5 that understates the answer by up to about 9 points for a retirement in
-2030, falling to under a point by 2040. Someone within ten years of retirement
+2030. The 2040 case retires two years before the model does, and a retirement
+at 67 that year would get more, so the understatement fades after 2040 rather
+than by it. Someone within ten years of retirement
 can do better than any table, and the page's pension hint says so: INPS's own
 estimate, "La mia pensione futura", converted to net, is more precise than 61%.
 It goes in the pension field with the age it starts from and the tick for the
@@ -1101,12 +1123,12 @@ would wrongly cut their answers.</p>
 <p><strong>A career that outpaces average pay gets less.</strong> The 66% is
 for a worker whose pay grows with average pay (Table 6.3, note 1). In a
 contributory system a career that rises faster gets a smaller pension against
-its final wage, and the Treasury's own Table 6.2.a shows it: a career 0.5
+its final wage, and the Ragioneria's own Table 6.2.a shows it: a career 0.5
 points a year faster takes the 2050 gross rate from 60.3% to 55.9%. The
 Daminato and Padula profile rises about 1.45% a year from 29 to 66. If
 all of that were a career outpacing average pay, the pension would be about 0.82
 of the model's, 50% of the wage rather than 61.4%, by the calculation that
-gives 0.913 for the Treasury's case where its table gives 0.927. The answer
+gives 0.913 for the Ragioneria's case where its table gives 0.927. The answer
 would then be about 1 to 2 points lower for workers aged 40 to 50 with ten
 years of pay saved, and up to about 4 lower just below 100%; at the flatter
 slope of the INPS data (section 7.1) about half that. How much of the profile
@@ -1571,7 +1593,7 @@ month-end's 13.99%, 50.9% at 16.62%, 46.8% at 17.87% and 45.1% at Choi's
 18.5%.</p>
 
 <p><strong>The pension's career slope is declared, not corrected.</strong> The
-61.4% is the Treasury's rate for a career that keeps pace with average pay,
+61.4% is the Ragioneria's rate for a career that keeps pace with average pay,
 restated on the wage with the TFR. If the whole rise of Daminato and Padula's
 profile were a career outpacing average pay, the contributory pension would be
 about 0.82 of it, and the answer about 1 to 2 points lower for workers aged 40

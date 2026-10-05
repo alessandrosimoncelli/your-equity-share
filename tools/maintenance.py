@@ -36,6 +36,21 @@ ITEMS = (
         source="SSA's cost-of-living adjustment fact sheet, published each "
                "October for the next January",
     ),
+    Item(
+        what="The Italian pension's replacement rate: the Ragioneria Generale "
+             "dello Stato's 66.0% net, Rapporto n. 26 (2025), Table 6.3.a, base "
+             "case 2050",
+        due=date(2026, 9, 22),
+        where="benefit_replacement_rate in ITALY_CALIBRATION "
+              "(src/your_equity_share/human_capital.py) and benefitReplacementRate "
+              "in src/js/model.js, both 0.66 / 1.075; the Italian methodology "
+              "(sections 2 and 7.2 and every figure derived from 61.4%), the "
+              "Italian market files, docs/inputs.md, tests/test_italy.py, and the "
+              "due date here",
+        source="the Ragioneria's yearly report on the pension system, Table "
+               "6.3.a; Rapporto n. 27, dated July 2026 and online since 22 "
+               "September 2026, gives 66.4%",
+    ),
 )
 
 

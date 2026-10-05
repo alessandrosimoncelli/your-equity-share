@@ -27,8 +27,9 @@ it = '''content="Quanta parte dei tuoi risparmi di lungo periodo tenere in azion
 # --- masthead and inputs ----------------------------------------------------
 #
 # Three entries change a default rather than a word: the Italian page opens
-# on a salary near the Italian average, 30,000 net, 50,000 of savings, and a
-# partner on the same 30,000.
+# on a salary of 30,000 net, 50,000 of savings, and a partner on the same
+# 30,000. INPS's 2024 average for a permanent private employee is 29,594
+# gross, so 30,000 net is above the average.
 
 [[t]]
 en = '''How much of your long-term savings to keep in stocks.'''

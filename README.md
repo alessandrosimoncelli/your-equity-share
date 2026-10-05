@@ -23,9 +23,10 @@ to last the rest of a life. Two variants share one model. The **United
 States** variant holds the S&P 500 against the 30-year TIPS yield. The **Italian**
 variant holds a global equity fund against the euro real safe rate of AAA
 government bonds, for an Italian private-sector employee: Daminato and
-Padula's (2024) earnings process, estimated on the Bank of Italy's household
-survey, and the Italian Treasury's projected pension, 66% of final net pay
-without the TFR. What neither variant changes is the
+Padula's earnings process (working paper 2020, published 2024), estimated on
+the Bank of Italy's household survey, and the projected pension of the
+Ragioneria Generale dello Stato, 66% of final net pay without the TFR for an
+average earner. What neither variant changes is the
 mortality table, American in both, because it sits inside the numerical
 solution Choi fitted his coefficients to. Section 11 of the Italian
 methodology lists what that leaves American.
