@@ -33,16 +33,16 @@
 # under a tenth from twelve, and ignoring it costs under two basis points a year. Italian methodology,
 # section 8; tools/tax_check.py.
 #
-# The REPLACEMENT RATE is the Ragioneria Generale dello Stato's 66% of final
+# The REPLACEMENT RATE is the Ragioneria Generale dello Stato's 66.4% of final
 # net pay without TFR, for a private employee on the average wage retiring in
-# 2050 at 66 years and 2 months (RGS 2025, Table 6.3.a), which is 61.4% of the
+# 2050 at 66 years and 3 months (RGS 2026, Table 6.3.a), which is 61.8% of the
 # wage with TFR the page asks for; 40% in the American variant. Like the rest
 # of the human capital half, it is set in ITALY_CALIBRATION rather than here.
 #
 # The HUMAN CAPITAL CALIBRATION is an Italian private-sector employee:
 # Daminato and Padula's earnings process (Table 7 of CSEF working paper 585,
 # 2020; published 2024), estimated on the Bank of Italy's household survey,
-# with the 66% pension. Mortality stays American,
+# with the 66.4% pension. Mortality stays American,
 # because it is inside Choi's fitted coefficients.
 #
 # EVERY NUMBER HERE IS MEASURED. The file shipped with a safe rate and a
@@ -224,6 +224,6 @@ equity_index = "MSCI All Country World"
 real_risk_free_source = "ECB AAA euro area central government bond curve, 30-year par yield, 3.6788% continuously compounded on 2026-10-02, which is 3.7473% a year, less the MARKET break-even inflation rate of 2.2845% on DE0001030575, the longest German inflation-linked federal bond at 19.5 years, which gives 1.4628%. Subtracted because the Finanzagentur defines the break-even as a simple yield difference; annualised first because the ECB compounds continuously and the model reads annual rates. It clears three bars at once: constant maturity, which is what FRED's DFII30 is and a single bond cannot be; no survey, because a break-even is the rate at which the linker and a nominal bond pay the same and is therefore a price; and the same kind of object as DFII30, a traded real yield rather than a nominal yield with an opinion subtracted. Checked against itself: the break-even comes from that bond, so this should come close to its traded real yield of 1.6447%, and it lands 0.182 points away, the rest being a thirty-year nominal leg against a shorter inflation leg. The ECB Survey of Professional Forecasters expects 2.0369% for 2026-Q3; deflated by that instead the rate would be 1.6763%, +0.21 points away."
 volatility_source = "MSCI All Country World in euro, gross: the annualised standard deviation of monthly log returns from January 2001 to August 2026, run from every day of the month 1 to 28 and averaged, 16.4545% (tools/italy_volatility.py; month-end alone gives 13.99%, the lowest of the 28). Held fixed, as Choi holds his 18.5%, rather than re-measured each week: a trailing window moved the answer whenever a crash entered or left it."
 volatility_currency = "EUR, unhedged"
-replacement_rate_source = "Ragioneria Generale dello Stato, Rapporto n. 26 (2025), Table 6.3.a, base case: a projected net replacement rate of 66.0% for a private employee on the average wage retiring in 2050 at 66 years and 2 months with 38 years of contributions. Choi fitted his coefficients on retirement at 67; the table's other cases near 67 from 2050 on give 63% to 65%, and its old-age case at about 69 gives 73%. The 2026 edition, Rapporto n. 27, gives 66.4% for the same case. It replaced the OECD's 79%, which assumes 48 years of contributions and retirement at 70"
+replacement_rate_source = "Ragioneria Generale dello Stato, Rapporto n. 27 (2026), Table 6.3.a, base case: a projected net replacement rate of 66.4% for a private employee on the average wage retiring in 2050 at 66 years and 3 months with 38 years of contributions. Choi fitted his coefficients on retirement at 67; the table's other cases near 67 from 2050 on give 63% to 65%, and its old-age case at 69 gives 73.5%. It replaced the 2025 edition's 66.0% in October 2026, and the OECD's 79% before that, which assumes 48 years of contributions and retirement at 70"
 retirement_age_source = "OECD, Pensions at a Glance 2025: statutory 67 and early 64 today, both linked to life expectancy; future normal retirement age 70 for a career starting at 22 in 2024"
-human_capital_calibration = "An Italian private-sector employee: the earnings process of Daminato and Padula, Table 7 of CSEF working paper 585 (2020; published 2024), estimated on the Bank of Italy's Survey on Household Income and Wealth 1986 to 2008 (permanent variance 0.015156, transitory 0.023609, a cubic in age), and the 66% replacement rate of the Ragioneria Generale dello Stato. United States mortality stays, because it is inside Choi's fitted coefficients. Set in ITALY_CALIBRATION, not here."
+human_capital_calibration = "An Italian private-sector employee: the earnings process of Daminato and Padula, Table 7 of CSEF working paper 585 (2020; published 2024), estimated on the Bank of Italy's Survey on Household Income and Wealth 1986 to 2008 (permanent variance 0.015156, transitory 0.023609, a cubic in age), and the 66.4% replacement rate of the Ragioneria Generale dello Stato. United States mortality stays, because it is inside Choi's fitted coefficients. Set in ITALY_CALIBRATION, not here."

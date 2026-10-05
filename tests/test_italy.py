@@ -4,7 +4,7 @@ The Italian tool changes the equity sleeve from the S&P 500 to a global
 index, the safe asset from a 30-year TIPS to a euro inflation-linked bond, and
 the household from an American college graduate to an Italian private-sector
 employee: Daminato and Padula's earnings process, estimated on the Bank of
-Italy's household survey, and the Ragioneria Generale dello Stato's 66%
+Italy's household survey, and the Ragioneria Generale dello Stato's 66.4%
 pension. Mortality
 stays American, because it is inside Choi's fitted discount rates.
 
@@ -82,19 +82,19 @@ def test_the_italian_career_keeps_rising_where_the_american_one_falls() -> None:
 
 
 def test_the_italian_replacement_rate_is_the_treasury_figure() -> None:
-    """66% net, the Ragioneria Generale dello Stato's projection for a private
-    employee on the average wage retiring in 2050 at 66 years and 2 months
+    """66.4% net, the Ragioneria Generale dello Stato's projection for a private
+    employee on the average wage retiring in 2050 at 66 years and 3 months
     with 38 years of contributions (Rapporto
-    n. 26, 2025, Table 6.3.a), restated on the base the page asks for. The 66%
+    n. 27, 2026, Table 6.3.a), restated on the base the page asks for. The 66.4%
     is a share of the final net pay without the TFR; the page asks for the
     wage with the yearly TFR accrual added, about 7.5% of net pay, so the same
-    pension is 0.66 / 1.075 of it. The model retires at 67.
+    pension is 0.664 / 1.075 of it. The model retires at 67.
 
     It was the OECD's 79% until October 2026, a figure for 48 years of
     contributions ending at 70. Italian pensions are contributory, so a
     retirement at 67 earns less, and 79% paid from 67 overstated the pension.
     """
-    assert ITALY_CALIBRATION.benefit_replacement_rate == pytest.approx(0.66 / 1.075, abs=5e-4)
+    assert ITALY_CALIBRATION.benefit_replacement_rate == pytest.approx(0.664 / 1.075, abs=5e-4)
 
 
 def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
@@ -102,7 +102,7 @@ def test_the_italian_rate_sits_inside_the_grid_choi_solved_over() -> None:
 
     The wage discount rate (the paper's Table 1; equation (12) of the
     methodology) takes the replacement rate as a regressor, fitted over 0.4,
-    0.6 and 0.8. Italy's 61.4% is between the second and third, so the
+    0.6 and 0.8. Italy's 61.8% is between the second and third, so the
     coefficient is being interpolated rather than used outside its range. The
     American 40% sits on the bottom edge of the same grid.
     """

@@ -99,21 +99,21 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 #
 # THE PENSION. Choi's wage discount rate (the paper's Table 1; equation (12) of
 # the methodology) takes the replacement rate as a regressor, fitted over 0.4,
-# 0.6 and 0.8, so Italy's rate sits inside the grid. It starts
-# from the Ragioneria Generale dello Stato's projected net replacement rate for
-# a private employee on the average wage, with no dependent spouse, retiring in
-# 2050 at 66 years and 2 months with 38 years of contributions, 66%: Ragioneria Generale dello Stato, Rapporto n. 26 (2025),
-# Table 6.3.a, base case. That is a share of the final net pay WITHOUT the
-# TFR, and the page asks for the wage with the yearly TFR accrual added, about
-# 7.5% of net pay after its separate tax. On that base the same pension is
-# 0.66 / 1.075 = 61.4% of the wage the model projects. Choi fitted his
-# coefficients on retirement at 67, where the model retires everyone unless a
-# working life is typed, and today's 45-year-old reaches 67 in 2048, close to
-# that row; the table's other cases near 67 from 2050 on give 63% to 65%, and
-# its old-age case at about 69 gives 73%. The 2026 edition, Rapporto n. 27,
-# gives 66.4% for the same case; tools/maintenance.py lists the update. It replaced the
-# OECD's 79% in October 2026, a figure for 48 years of contributions ending at
-# 70: Italian pensions are contributory, so retiring at 67 pays less.
+# 0.6 and 0.8, so Italy's rate sits inside the grid. It starts from the
+# Ragioneria Generale dello Stato's projected net replacement rate for a
+# private employee on the average wage, with no dependent spouse, retiring in
+# 2050 at 66 years and 3 months with 38 years of contributions, 66.4%:
+# Rapporto n. 27 (2026), Table 6.3.a, base case. That is a share of the final
+# net pay WITHOUT the TFR, and the page asks for the wage with the yearly TFR
+# accrual added, about 7.5% of net pay after its separate tax. On that base the
+# same pension is 0.664 / 1.075 = 61.8% of the wage the model projects. Choi
+# fitted his coefficients on retirement at 67, where the model retires
+# everyone unless a working life is typed, and today's 45-year-old reaches 67
+# in 2048, close to that row; the table's other cases near 67 from 2050 on
+# give 63% to 65%, and its old-age case at 69 gives 73.5%. It replaced the
+# 2025 edition's 66.0% in October 2026, and the OECD's 79% before that, a
+# figure for 48 years of contributions ending at 70: Italian pensions are
+# contributory, so retiring at 67 pays less.
 #
 # THE CAREER. Daminato and Padula, Table 7 of the 2020 working paper, CSEF
 # 585 (published 2024 in the Journal of the European Economic Association,
@@ -148,7 +148,7 @@ CGM_CALIBRATION = Calibration(benefit_cap=SOCIAL_SECURITY_MAXIMUM)
 ITALY_CALIBRATION = Calibration(
     permanent_shock_volatility=math.sqrt(0.015156),
     temporary_shock_volatility=math.sqrt(0.023609),
-    benefit_replacement_rate=0.614,
+    benefit_replacement_rate=0.618,
     age_profile=(-0.001022, 0.000613, -0.000006),
 )
 

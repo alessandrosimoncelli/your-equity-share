@@ -16,8 +16,7 @@ from your_equity_share.human_capital import SOCIAL_SECURITY_MAXIMUM  # noqa: E40
 
 
 def test_nothing_is_due_before_its_date_and_everything_after() -> None:
-    # The day before the Ragioneria's 2026 report went online.
-    assert maintenance.due(date(2026, 9, 21)) == []
+    assert maintenance.due(date(2026, 10, 5)) == []
     assert len(maintenance.due(date(2030, 1, 1))) == len(maintenance.ITEMS)
 
 

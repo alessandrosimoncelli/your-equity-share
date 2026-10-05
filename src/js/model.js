@@ -50,15 +50,15 @@ export const CGM_CALIBRATION = Object.freeze({
 
 /**
  * An Italian private-sector employee, as human_capital.py documents: the
- * earnings process Daminato and Padula (2024) estimate on the Bank of Italy's
- * household survey, and the Italian Treasury's 66% pension, restated on the
- * wage-plus-TFR the page asks for: 0.66 / 1.075 = 0.614.
+ * earnings process Daminato and Padula estimate on the Bank of Italy's
+ * household survey, and the Ragioneria Generale dello Stato's 66.4% pension,
+ * restated on the wage-plus-TFR the page asks for: 0.664 / 1.075 = 0.618.
  */
 export const ITALY_CALIBRATION = Object.freeze({
   stockVolatility: 0.185,
   permanentShockVolatility: Math.sqrt(0.015156),
   temporaryShockVolatility: Math.sqrt(0.023609),
-  benefitReplacementRate: 0.614,
+  benefitReplacementRate: 0.618,
   ageProfile: Object.freeze([-0.001022, 0.000613, -0.000006]),
   benefitCap: null,
 });

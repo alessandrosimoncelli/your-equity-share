@@ -68,7 +68,7 @@ fund would take the American answer for that household from 20.7% to 20.4%.
 | safe asset | US Treasury 30-year real yield, which FRED republishes as DFII30, annualised from its semiannual quote | ECB AAA 30-year par yield, annualised, less the market break-even of the Bund€i |
 | volatility | Choi's 18.5%, CRSP monthly 1926 to 2024, fixed | 16.45%, MSCI ACWI in euro, monthly log returns 2001 to 2026 from every day of the month, averaged and fixed (`tools/italy_volatility.py`) |
 | earnings | an American college graduate, Cocco, Gomes and Maenhout | an Italian private-sector employee, Daminato and Padula, Table 7 of working paper CSEF 585 (2020; published 2024) |
-| pension | 40% of the final wage, up to Social Security's maximum of $39,859 a year after tax | 61.4% of the final wage with the TFR, which is the Ragioneria Generale dello Stato's 66% of final net pay without it, projected for an average earner retiring in 2050 at 66 years and 2 months |
+| pension | 40% of the final wage, up to Social Security's maximum of $39,859 a year after tax | 61.8% of the final wage with the TFR, which is the Ragioneria Generale dello Stato's 66.4% of final net pay without it, projected for an average earner retiring in 2050 at 66 years and 3 months |
 | spousal benefit | Choi's switch: half of the earner's Social Security, from the partner's 62 | none, as the switch is Social Security's |
 | tax | not modelled, as in Choi | not modelled either: measured in section 8 of the Italian methodology, `tools/tax_check.py` |
 

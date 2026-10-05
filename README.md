@@ -25,7 +25,7 @@ variant holds a global equity fund against the euro real safe rate of AAA
 government bonds, for an Italian private-sector employee: Daminato and
 Padula's earnings process (working paper 2020, published 2024), estimated on
 the Bank of Italy's household survey, and the projected pension of the
-Ragioneria Generale dello Stato, 66% of final net pay without the TFR for an
+Ragioneria Generale dello Stato, 66.4% of final net pay without the TFR for an
 average earner. What neither variant changes is the
 mortality table, American in both, because it sits inside the numerical
 solution Choi fitted his coefficients to. Section 11 of the Italian

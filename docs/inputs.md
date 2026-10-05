@@ -148,8 +148,8 @@ typed there, with wages after it, pays none of this pension during the break:
 it starts after the last year with a wage.
 
 On the Italian page the wage includes the TFR that accrues each year, about
-7.5% of net pay after its tax, and the imputed pension is 61.4% of the last
-such wage, which is the Ragioneria Generale dello Stato's 66% of final net
+7.5% of net pay after its tax, and the imputed pension is 61.8% of the last
+such wage, which is the Ragioneria Generale dello Stato's 66.4% of final net
 pay without the TFR, the rate it projects for an average earner.
 
 **A pension whose amount is already fixed** goes in the pension field, a year
