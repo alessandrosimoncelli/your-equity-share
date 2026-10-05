@@ -24,6 +24,26 @@ it = '''<title>Your Equity Share, Italia</title>'''
 en = '''content="How much of your long-term savings to keep in stocks, following Choi, Liu and Liu (2025). Runs entirely in your browser."'''
 it = '''content="Quanta parte dei tuoi risparmi di lungo periodo tenere in azioni, secondo Choi, Liu e Liu (2025). Funziona interamente nel tuo browser."'''
 
+[[t]]
+en = '''<meta property="og:locale" content="en_US">'''
+it = '''<meta property="og:locale" content="it_IT">'''
+
+[[t]]
+en = '''<meta property="og:title" content="Your Equity Share">'''
+it = '''<meta property="og:title" content="Your Equity Share, Italia">'''
+
+[[t]]
+en = '''<meta property="og:description" content="The share of your savings to hold in stocks, by Choi, Liu and Liu's life-cycle rule, computed in your browser.">'''
+it = '''<meta property="og:description" content="La quota dei risparmi da tenere in azioni, con la regola del ciclo di vita di Choi, Liu e Liu, calcolata nel tuo browser.">'''
+
+[[t]]
+en = '''<meta property="og:url" content="https://alessandrosimoncelli.github.io/your-equity-share/">'''
+it = '''<meta property="og:url" content="https://alessandrosimoncelli.github.io/your-equity-share/it/">'''
+
+[[t]]
+en = '''<meta property="og:image" content="https://alessandrosimoncelli.github.io/your-equity-share/og.png">'''
+it = '''<meta property="og:image" content="https://alessandrosimoncelli.github.io/your-equity-share/it/og.png">'''
+
 # --- masthead and inputs ----------------------------------------------------
 #
 # Three entries change a default rather than a word: the Italian page opens

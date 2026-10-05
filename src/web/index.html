@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Your Equity Share</title>
 <meta name="description" content="How much of your long-term savings to keep in stocks, following Choi, Liu and Liu (2025). Runs entirely in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='19' height='32' fill='%2306402B'/%3E%3Crect x='21' width='11' height='32' fill='%23D7E0DD'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="Your Equity Share">
+<meta property="og:description" content="The share of your savings to hold in stocks, by Choi, Liu and Liu's life-cycle rule, computed in your browser.">
+<meta property="og:url" content="https://alessandrosimoncelli.github.io/your-equity-share/">
+<meta property="og:image" content="https://alessandrosimoncelli.github.io/your-equity-share/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 /*
   Two colours and one typeface.
@@ -13,8 +23,10 @@
   carried by size and weight, which is what a typeset document does, rather
   than by fading text out.
 
-  Five type sizes and no more. A page with eleven sizes reads as generated
-  because nothing in it was decided; a page with five reads as set.
+  Six type sizes and no more. A page with eleven sizes reads as generated
+  because nothing in it was decided; a page with six reads as set. The sixth
+  is the section heading, so Inputs, Results and Exhibits stand clear of the
+  labels inside them.
 
   The page is three stacked sections: the title, the form, the answer, and
   then the working. The form carries a border because it is the part you touch
@@ -40,6 +52,7 @@
   --t-small:  0.875rem;
   --t-body:   1rem;
   --t-head:   1.125rem;
+  --t-section: 1.375rem;
   --t-title:  1.875rem;
   --t-figure: 2.75rem;
 }
@@ -337,10 +350,10 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
 .readout b { color: var(--green); }
 
 .eyebrow {
-  font-size: var(--t-small);
+  font-size: var(--t-section);
   font-weight: 700;
   color: var(--green);
-  margin: 0 0 1.1rem;
+  margin: 0 0 1.2rem;
 }
 
 .slider-value {

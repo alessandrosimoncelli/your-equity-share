@@ -61,6 +61,20 @@ COPIED = {
     "docs/further-work.html": "further-work.html",
 }
 
+# Pictures, copied byte for byte: the preview a shared link shows, drawn by
+# tools/make_share_image.py.
+PICTURES = {
+    "src/web/og.png": "og.png",
+    "src/web/it/og.png": "it/og.png",
+}
+
+# The tab icon of every page: the answer's bar, green beside its tint. The
+# tool's own page carries the same line in its head; this is for the
+# documents, which get their head here.
+ICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E"
+        "%3Crect width='19' height='32' fill='%2306402B'/%3E"
+        "%3Crect x='21' width='11' height='32' fill='%23D7E0DD'/%3E%3C/svg%3E")
+
 CONFIG = ROOT / "variants" / "us" / "market_data.toml"
 
 # The Italian variant, read only so the page can print its expected return
@@ -125,6 +139,7 @@ def _shell(title: str, body: str) -> str:
         "<head>\n"
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f'<link rel="icon" href="{ICON}">\n'
         f"<title>{title}</title>\n"
         "</head>\n"
         "<body>\n"
@@ -288,6 +303,14 @@ def main() -> int:
             body = as_document(body, TITLES.get(name))
         (OUT / name).parent.mkdir(parents=True, exist_ok=True)
         (OUT / name).write_text(body, encoding="utf-8")
+        written.append(name)
+
+    for source, name in PICTURES.items():
+        src = ROOT / source
+        if not src.exists():
+            raise SystemExit(f"missing: {source}")
+        (OUT / name).parent.mkdir(parents=True, exist_ok=True)
+        (OUT / name).write_bytes(src.read_bytes())
         written.append(name)
 
     (OUT / "market.json").write_text(build_market_json(), encoding="utf-8")

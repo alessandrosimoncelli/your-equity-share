@@ -25,6 +25,8 @@ ZIP = ROOT / "your-equity-share-site.zip"
 EXPECTED = {"index.html", "model.js", "market.json", "methodology.html",
             "it/index.html", "it/market.json", "it/methodology.html",
             "further-work.html"}
+# Published too, but pictures: the preview a shared link shows.
+PICTURES = {"og.png", "it/og.png"}
 
 
 @pytest.fixture(scope="module")
@@ -41,7 +43,7 @@ def test_the_folder_holds_exactly_the_published_files(built: Path) -> None:
     """Walked recursively, so a file in a subfolder cannot hide from the check."""
     found = {p.relative_to(built).as_posix() for p in built.rglob("*")
              if p.is_file()}
-    assert found == EXPECTED
+    assert found == EXPECTED | PICTURES
 
 
 def test_the_model_is_javascript_and_not_a_web_page(built: Path) -> None:
@@ -233,4 +235,4 @@ def test_the_archive_serves_from_its_root(built: Path) -> None:
     index.html has to sit there rather than inside a folder."""
     with zipfile.ZipFile(ZIP) as archive:
         names = set(archive.namelist())
-    assert names == EXPECTED
+    assert names == EXPECTED | PICTURES
