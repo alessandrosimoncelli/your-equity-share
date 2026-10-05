@@ -15,8 +15,9 @@ Repository = "https://github.com/alessandrosimoncelli/your-equity-share"
 
 [project.optional-dependencies]
 # Nothing here has runtime dependencies: not the model, not the refresh
-# script, not the browser build. The only extra is the test runner.
-dev = ["pytest>=8"]
+# script, not the browser build. The extras are the test runner and numpy,
+# which only the Italian tax check (tools/tax_check.py) uses.
+dev = ["pytest>=8", "numpy"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -77,10 +77,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The model has no runtime dependencies. pytest runs the checks, and
-      # certifi is used by the refresh scripts when present.
+      # The model has no runtime dependencies. pytest runs the checks, numpy
+      # is used by one of them (the Italian tax check, tools/tax_check.py),
+      # and certifi is used by the refresh scripts when present.
       - name: Install the test runner
-        run: python -m pip install --upgrade pip pytest certifi
+        run: python -m pip install --upgrade pip pytest numpy certifi
 
       # Which sources answer GitHub's servers today. The refresh stops at the
       # first source that fails, which hides every source after it; this asks
