@@ -39,10 +39,14 @@ it = '''Quanta parte dei tuoi risparmi di lungo periodo tenere in azioni.'''
 [[t]]
 en = '''For money meant to last the rest of your life, in a broad index fund.
   Based on Choi, Liu and Liu (2025), calibrated for a college-educated household
-  in the United States. <a href="./methodology.html">How it works</a>'''
+  in the United States.'''
 it = '''Per denaro che deve durare tutta la vita, in un fondo indicizzato ampio.
   Basato su Choi, Liu e Liu (2025), calibrato per un dipendente del settore privato
-  in Italia. <a href="./methodology.html">Come funziona</a> (in inglese)'''
+  in Italia.'''
+
+[[t]]
+en = '''href="./methodology.html">Consult the methodology</a>'''
+it = '''href="./methodology.html">Consulta la metodologia (in inglese)</a>'''
 
 [[t]]
 en = '''class="boot">Loading the market data.</div>'''
