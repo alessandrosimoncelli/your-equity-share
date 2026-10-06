@@ -31,23 +31,24 @@ body {
   color: var(--text);
   font-family: var(--body);
   font-size: var(--t-body);
-  line-height: 1.58;
+  line-height: 1.7;
 }
 
 /*
-  One column, with the contents at the top. The text used to run 46rem wide
-  in 16px type between two side panels. The panels are gone and their width
-  goes to the type and the column together, so a line still holds about a
-  hundred characters. That is the longest line studies of reading on screen
-  have tested, where it was read fastest with no loss of comprehension
-  (Dyson and Kipping 1998; Shaikh and Chaparro 2005). The same column at
-  the old size would hold some 130, beyond anything tested.
+  One column, with the contents at the top, filling most of a laptop
+  screen: at most 75rem, which on a 1536px window leaves about a tenth of
+  it on each side. A line then holds about 140 characters, more than the
+  hundred or so that studies of reading on screen have tested (Dyson and
+  Kipping 1998; Shaikh and Chaparro 2005). Long lines need more space
+  between them for the eye to find the start of the next one, which is
+  what Paterson and Tinker's measurements of line length against line
+  spacing set out (Tinker 1963), so the body's line height is 1.7.
 */
 .doc {
   box-sizing: content-box;
-  max-width: 54rem;
+  max-width: 75rem;
   margin: 0 auto;
-  padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 5vw, 3rem) 5rem;
+  padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 5vw, 4rem) 5rem;
 }
 
 h1 {
@@ -124,6 +125,9 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 .contents a:hover { text-decoration: underline; }
 @media (min-width: 48rem) {
   .contents { columns: 2; column-gap: 2.5rem; }
+}
+@media (min-width: 72rem) {
+  .contents { columns: 3; }
 }
 
 .totop { margin: 1.8rem 0 0; font-size: var(--t-small); text-align: right; }
