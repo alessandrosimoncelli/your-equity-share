@@ -49,8 +49,11 @@ The construction was checked against itself on the snapshot of 8 September
 2026: the break-even is derived from the 2046, so subtracting it from a
 nominal yield came within two hundredths of a point of that bond's own traded
 real yield, the rest being a thirty-year nominal leg against a nineteen-year
-inflation leg (Italian methodology, section 5). The weekly refresh does not
-repeat that check. The inflation leg shortens a year every year, and the refresh
+inflation leg (Italian methodology, section 5). The weekly refresh repeats
+the check and records the gap in the safe rate's provenance. It never stops
+the refresh: when the gap passes SAFE_RATE_GAP_LIMIT, or the bond's real yield
+cannot be read, the workflow turns the run red after the data are published,
+so GitHub's e-mail arrives and both pages still update. The inflation leg shortens a year every year, and the refresh
 refuses it below ten years.
 
 The ECB's survey of forecasters is not used. When it sits below the
@@ -116,6 +119,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
 import ssl
 import sys
@@ -267,6 +271,43 @@ def breakeven_inflation() -> tuple[str, float, float, date]:
     return linker_chart("Break-even")
 
 
+def traded_real_yield() -> tuple[str, float, float, date]:
+    """The same bond's own traded real yield, off the page's other chart."""
+    return linker_chart("Real yield")
+
+
+# How far the safe rate may land from the linker's own traded real yield
+# before the run says so. The break-even comes from that bond, so the two
+# should be close: 0.02 points on the snapshot of 8 September 2026, 0.18 on
+# 2 October and 0.04 on 7 October, the rest being a thirty-year nominal leg
+# against a nineteen-year inflation leg. A misread chart, a real yield taken
+# for the break-even, would put the rate about 0.6 points off.
+SAFE_RATE_GAP_LIMIT = 0.003
+
+
+def safe_rate_check(real: float, traded: float | None, isin: str,
+                    traded_isin: str | None) -> tuple[str, float | None]:
+    """"ok" or "wide", with the gap as a rate, or "unavailable".
+
+    Unavailable when the real yield could not be read, or belongs to another
+    bond than the break-even, so that nothing is compared that should not be.
+    """
+    if traded is None or traded_isin != isin:
+        return "unavailable", None
+    gap = real - traded
+    return ("wide" if abs(gap) > SAFE_RATE_GAP_LIMIT else "ok"), gap
+
+
+def report_to_github(status: str, gap: float | None) -> None:
+    """Hand the check to the workflow, which turns the run red unless "ok"."""
+    target = os.environ.get("GITHUB_OUTPUT")
+    if not target:
+        return
+    with open(target, "a", encoding="utf-8") as out:
+        out.write("safe_rate_check=%s\n" % status)
+        out.write("safe_rate_gap=%s\n" % ("" if gap is None else "%.3f" % (gap * 100)))
+
+
 # MSCI serve their own end-of-day index levels, one currency and one variant
 # per request. Nothing here needs a login and nothing is scraped: the levels
 # come back as JSON. The free history starts in 1997, which is far too short to
@@ -408,11 +449,34 @@ def main(argv: list[str]) -> int:
     deflated = aaa - breakeven
     real = deflated
 
+    # The check, which warns and never stops: the bond's own traded real yield,
+    # off the same page. Read failures are caught here, because a check that
+    # cannot run must not cost both pages their weekly data.
+    try:
+        traded_isin, _, traded, traded_date = traded_real_yield()
+    except (SystemExit, OSError, ValueError) as exc:
+        traded_isin, traded, traded_date = None, None, None
+        print(f"  the linker's traded real yield could not be read: {exc}")
+    status, gap = safe_rate_check(real, traded, isin, traded_isin)
+    report_to_github(status, gap)
+
     print(f"  AAA euro area government, 30y par, nominal {aaa:>8.4%}   "
           f"{aaa_date}, {aaa_continuous:.4%} continuously compounded")
     print(f"  break-even inflation, {isin}   "
           f"{breakeven:>8.4%}   {breakeven_years:.1f} years")
     print(f"  less the break-even                      {deflated:>8.4%}")
+    if status == "unavailable":
+        print("  WARNING: the check against the linker's own traded real yield")
+        print("  could not run. The rate is still written; on GitHub the run")
+        print("  turns red so that somebody looks.")
+    else:
+        print(f"  check: {isin}'s own traded real yield  {traded:>8.4%}   "
+              f"{traded_date}, {abs(gap) * 100:.2f} points away, "
+              f"limit {SAFE_RATE_GAP_LIMIT * 100:.1f}")
+        if status == "wide":
+            print("  WARNING: further from the bond than the limit. The rate is")
+            print("  still written; on GitHub the run turns red so that somebody")
+            print("  checks the German finance agency's page before trusting it.")
     print("  USED AS THE SAFE RATE, and it clears three bars at once.")
     print()
     print("  CONSTANT MATURITY, which is what FRED's DFII30 is. DFII30 is not")
@@ -548,7 +612,8 @@ def main(argv: list[str]) -> int:
             raise SystemExit(f"{CONFIG.name} has no line for {field}")
     text = re.sub(r'^real_risk_free_source = ".*"$',
                   lambda _: 'real_risk_free_source = "%s"' % safe_rate_note(
-                      aaa_continuous, aaa_date, breakeven, isin, breakeven_years),
+                      aaa_continuous, aaa_date, breakeven, isin, breakeven_years,
+                      (status, gap, traded, traded_date)),
                   text, count=1, flags=re.M)
     text = re.sub(r'^expected_return_source = ".*"$',
                   lambda _: 'expected_return_source = "%s"' % expected_return_note(
@@ -561,10 +626,24 @@ def main(argv: list[str]) -> int:
 
 
 def safe_rate_note(aaa_continuous: float, aaa_date, breakeven: float, isin: str,
-                   breakeven_years: float) -> str:
-    """The provenance sentence for the safe rate, with its own arithmetic."""
+                   breakeven_years: float, check=None) -> str:
+    """The provenance sentence for the safe rate, with its own arithmetic and
+    the week's check against the bond's traded real yield."""
     aaa = math.expm1(aaa_continuous)
     real = aaa - breakeven
+    checked = ""
+    if check is not None:
+        status, gap, traded, traded_date = check
+        if status == "unavailable":
+            checked = (" The check against that bond's own traded real yield "
+                       "could not run this time.")
+        else:
+            checked = (" Checked against itself: the break-even comes from that "
+                       "bond, so the rate should come close to its own traded "
+                       "real yield, %.4f%% on %s, and it lands %.3f points away; "
+                       "above %.1f the weekly run turns red."
+                       % (traded * 100, traded_date, abs(gap) * 100,
+                          SAFE_RATE_GAP_LIMIT * 100))
     return (
         "ECB AAA euro area central government bond curve, 30-year par yield, "
         "%.4f%% continuously compounded on %s, which is %.4f%% a year, less the "
@@ -579,7 +658,7 @@ def safe_rate_note(aaa_continuous: float, aaa_date, breakeven: float, isin: str,
         "price; and the same kind of object as DFII30, a traded real yield "
         "rather than a nominal yield with an opinion subtracted."
         % (aaa_continuous * 100, aaa_date, aaa * 100, breakeven * 100, isin,
-           breakeven_years, real * 100))
+           breakeven_years, real * 100)) + checked
 
 
 def expected_return_note(gross: float, net: float, first, last, growth: float,

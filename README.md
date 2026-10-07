@@ -60,6 +60,11 @@ It is built to be left alone:
 - **New data is committed only after the checks pass.** The commits also keep
   the schedule alive: GitHub switches off scheduled runs in a repository with
   no commits for sixty days.
+- **The Italian safe rate checks itself.** It is a 30-year yield less the
+  break-even of the German 2046 inflation-linked bond, so it should land close
+  to that bond's own real yield. The refresh records the gap every week; above
+  0.3 points, or when the bond's yield cannot be read, the run turns red after
+  the data are published, as a warning rather than a stop.
 
 The tool shows the date of its data on its own face, and warns under the
 answer once the data are more than three weeks old, which would mean the

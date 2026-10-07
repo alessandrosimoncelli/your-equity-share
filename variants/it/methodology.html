@@ -719,7 +719,10 @@ a composite of AAA issuers against Germany alone. A third, a zero-coupon rate
 against a coupon bond's yield, went with the spot rate. Nothing is fitted to
 close the gap. <strong>The check is external</strong>: the 1.4906% is the
 issuer's own published figure, from the Deutsche Finanzagentur, not a number
-this project computed.</p>
+this project computed. The weekly refresh repeats it and records the gap in the
+market file. When the gap passes 0.3 points, or the bond's yield cannot be
+read, the run turns red, which GitHub reports by e-mail, while the week's data
+are still published.</p>
 
 <p><strong>AAA rather than every euro area government</strong>, whose par yield
 is 0.56 points higher at the same maturity. That spread is compensation for a

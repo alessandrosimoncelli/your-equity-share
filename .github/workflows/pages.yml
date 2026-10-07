@@ -64,6 +64,10 @@ jobs:
     outputs:
       us: ${{ steps.us.outcome }}
       it: ${{ steps.it.outcome }}
+      # The Italian safe rate's weekly check: "ok", "wide" or "unavailable",
+      # and the gap in points. Written by tools/refresh_italy.py.
+      it_check: ${{ steps.it.outputs.safe_rate_check }}
+      it_gap: ${{ steps.it.outputs.safe_rate_gap }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -254,7 +258,18 @@ jobs:
             echo "::error::Both refreshes worked, but a check, the build or the deploy failed, so nothing new was published."
             exit 1
           fi
-          echo "Both refreshes succeeded and the site was published."
+          # The Italian safe rate against its own bond. A warning that never
+          # held the data back: they are published by now; the red run is the
+          # e-mail asking somebody to look.
+          if [ "${{ needs.build.outputs.it_check }}" = "wide" ]; then
+            echo "::error::The Italian safe rate lands ${{ needs.build.outputs.it_gap }} points from the 2046 linker's own traded real yield, more than the 0.3 allowed. The new data were published; check the German finance agency's page and variants/it/market_data.toml."
+            exit 1
+          fi
+          if [ "${{ needs.build.outputs.it_check }}" = "unavailable" ]; then
+            echo "::error::The Italian safe rate could not be checked against the 2046 linker's own traded real yield. The new data were published; check the German finance agency's page."
+            exit 1
+          fi
+          echo "Both refreshes succeeded, the Italian safe rate is ${{ needs.build.outputs.it_gap }} points from its bond, and the site was published."
 
   # A few figures come from annual publications and nothing refreshes them.
   # When one is out of date this job fails, after the site is published, so

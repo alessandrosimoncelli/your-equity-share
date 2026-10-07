@@ -31,8 +31,13 @@ GROSS, NET = 0.0156, 0.0122
 GROWTH = 0.02286
 
 
+# The linker's own traded real yield, two hundredths of a point from the
+# rate the stubbed sources give, as on the snapshot.
+TRADED = math.expm1(PAR_CC) - BREAKEVEN + 0.0002
+
+
 def _stub(monkeypatch, tmp_path, *, par=PAR_CC, breakeven_date=date(2026, 9, 30),
-          msci_end=20260930, linker_years=19.5, net_window=None):
+          msci_end=20260930, linker_years=19.5, net_window=None, traded=TRADED):
     config = tmp_path / "market_data.toml"
     shutil.copy(ROOT / "variants" / "it" / "market_data.toml", config)
     monkeypatch.setattr(refresh_italy, "CONFIG", config)
@@ -44,6 +49,9 @@ def _stub(monkeypatch, tmp_path, *, par=PAR_CC, breakeven_date=date(2026, 9, 30)
     monkeypatch.setattr(refresh_italy, "observe", observe)
     monkeypatch.setattr(refresh_italy, "breakeven_inflation",
                         lambda: ("DE0001030575", linker_years, BREAKEVEN, breakeven_date))
+    monkeypatch.setattr(refresh_italy, "traded_real_yield",
+                        lambda: ("DE0001030575", linker_years, traded, breakeven_date))
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     def trailing(variant):
         if variant == "NETR" and net_window:
             return (NET, *net_window)
@@ -144,3 +152,53 @@ def test_the_chart_is_chosen_by_its_label_not_its_place(monkeypatch) -> None:
     assert (isin, years) == ("DE0001030575", 19.5)
     assert value == pytest.approx(0.0223)
     assert when == date(2026, 10, 1)
+    # and the check reads the other chart, by its label too
+    isin, years, value, when = refresh_italy.traded_real_yield()
+    assert (isin, years, when) == ("DE0001030575", 19.5, date(2026, 10, 1))
+    assert value == pytest.approx(0.0164)
+
+
+# --- the check against the linker's own traded real yield --------------------
+
+def _outputs(path: Path) -> dict:
+    return dict(line.split("=", 1) for line in path.read_text(encoding="utf-8").splitlines())
+
+
+def test_the_check_is_recorded_and_handed_to_the_workflow(monkeypatch, tmp_path) -> None:
+    config = _stub(monkeypatch, tmp_path)
+    outputs = tmp_path / "github_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(outputs))
+    assert refresh_italy.main(["refresh_italy.py", "--write"]) == 0
+    note = _written(config)["real_risk_free_source"]
+    assert "lands 0.020 points away" in note and "turns red" in note
+    assert _outputs(outputs) == {"safe_rate_check": "ok", "safe_rate_gap": "-0.020"}
+
+
+@pytest.mark.parametrize("traded, status", [
+    (math.expm1(PAR_CC) - BREAKEVEN - 0.006, "wide"),   # a misread chart: 0.6 points
+    (None, "unavailable"),                              # the yield could not be read
+])
+def test_a_failed_check_warns_but_never_stops_the_refresh(monkeypatch, tmp_path,
+                                                          traded, status) -> None:
+    """Stopping would cost both pages their weekly data, since the workflow
+    keeps the two variants together; the run turns red instead."""
+    config = _stub(monkeypatch, tmp_path, traded=traded or 0.0)
+    if traded is None:
+        def unreadable():
+            raise SystemExit("no chart on the page is labelled 'Real yield'")
+        monkeypatch.setattr(refresh_italy, "traded_real_yield", unreadable)
+    outputs = tmp_path / "github_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(outputs))
+    assert refresh_italy.main(["refresh_italy.py", "--write"]) == 0
+    written = _written(config)
+    assert written["real_risk_free"] == pytest.approx(math.expm1(PAR_CC) - BREAKEVEN, abs=5e-7)
+    assert _outputs(outputs)["safe_rate_check"] == status
+
+
+def test_the_limit_is_three_tenths_of_a_point_either_way() -> None:
+    check = refresh_italy.safe_rate_check
+    assert check(0.0150, 0.0121, "DE1", "DE1")[0] == "ok"
+    assert check(0.0150, 0.0119, "DE1", "DE1")[0] == "wide"
+    assert check(0.0150, 0.0181, "DE1", "DE1")[0] == "wide"
+    # another bond's yield is no check at all
+    assert check(0.0150, 0.0150, "DE1", "DE2") == ("unavailable", None)

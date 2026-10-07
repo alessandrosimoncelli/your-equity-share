@@ -178,8 +178,10 @@ expected_stock_real_return = 0.049416
 # the break-even as a simple yield difference, so it is subtracted. On the
 # snapshot of 8 September 2026 the result landed two hundredths of a point
 # from the 2046's own traded real yield, the rest being a 30-year nominal leg
-# against a 19.6-year inflation leg; the weekly refresh does not repeat that
-# check. The safe rate rests on the break-even because it is a
+# against a 19.6-year inflation leg. The weekly refresh repeats that check
+# and records the gap in real_risk_free_source; above 0.3 points, or when the
+# bond's real yield cannot be read, the run turns red without holding the
+# data back. The safe rate rests on the break-even because it is a
 # price, not on a survey of forecasters.
 #
 # AAA rather than all euro area government bonds, which yielded 0.56 points

@@ -397,7 +397,8 @@ def test_the_safe_rate_reproduces_a_bond_that_exists() -> None:
     both are worth stopping for.
     """
     # Read from the snapshot, which records the check and the bond it used.
-    # The weekly refresh no longer repeats the check, and it takes whichever
+    # The weekly refresh repeats the check as a warning (tests/test_refresh_italy.py),
+    # and it takes whichever
     # linker is longest outstanding, so a new issue would change the bond in
     # the live file without anything being wrong.
     snapshot = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
