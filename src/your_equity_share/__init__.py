@@ -62,4 +62,4 @@ __all__ = [
     "recommend",
     "wage_discount_rate",
 ]
-__version__ = "0.3.0"
+__version__ = "1.1.0"

@@ -147,9 +147,10 @@ To work longer or stop sooner, type the years in the year-by-year box. A break
 typed there, with wages after it, pays none of this pension during the break:
 it starts after the last year with a wage.
 
-On the Italian page the wage includes the TFR that accrues each year, about
-7.5% of net pay after its tax, and the imputed pension is 61.8% of the last
-such wage, which is the Ragioneria Generale dello Stato's 66.4% of final net
+On the Italian page the career follows Daminato and Padula's path for an
+Italian private-sector employee, which keeps rising into the sixties. The wage
+includes the TFR that accrues each year, about 7.5% of net pay after its tax,
+and the imputed pension is 61.8% of the last such wage, with no ceiling, which is the Ragioneria Generale dello Stato's 66.4% of final net
 pay without the TFR, the rate it projects for an average earner.
 
 **A pension whose amount is already fixed** goes in the pension field, a year
@@ -269,14 +270,15 @@ The correct alternative pairing, a payout yield with *aggregate* earnings
 growth, is unavailable rather than rejected: aggregate growth needs a share
 count and the S&P earnings history is per share.
 
-Three others were measured once, in September 2026, and are **not used**:
-Damodaran's
-implied premium plus the real safe rate (7.07%, the outlier, embedding near-term analyst growth
-forecasts and quoted against the wrong maturity), a regression of realised
-30-year returns on valuation (5.32%, R2 of 0.19 on about four independent
-periods), and an earnings anchor built the way AQR builds theirs, a cyclically
-adjusted earnings yield at a 50% payout plus 1.8% equilibrium growth (3.12%).
-Section 3.1 of the methodology gives the full reasoning.
+Four others were measured once, in September 2026, and are **not used**:
+Damodaran's implied premium plus the real safe rate (7.07%, the outlier,
+embedding near-term analyst growth forecasts and quoted against the wrong
+maturity), a regression of realised 30-year returns on valuation (5.32%, R2
+of 0.19 on about four independent periods), the trailing earnings yield
+(3.96%) and the cyclically adjusted earnings yield (2.42%). An earnings anchor
+built the way AQR builds theirs, a cyclically adjusted earnings yield at a 50%
+payout plus 1.8% equilibrium growth (3.12%), is reported beside them. Section
+3.1 of the methodology gives the full reasoning.
 
 The choice matters more than any other in the tool: across the five estimators
 Table 5 of the methodology compares, from the cyclically adjusted earnings
@@ -286,8 +288,9 @@ runs from 20% to 100%.
 ### Why the horizon of the regression matters
 
 The relation between valuation and subsequent return weakens sharply as the
-horizon lengthens. Fitted on the same data, the slope falls from 0.86 at ten
-years to 0.24 at thirty, and today's stretched valuation therefore predicts:
+horizon lengthens. Fitted once, in September 2026, on the same data, the slope
+falls from 0.86 at ten years to 0.24 at thirty, and that month's stretched
+valuation therefore predicted:
 
 | Horizon | Predicted real return |
 | --- | --- |
@@ -308,10 +311,10 @@ less than 4 is extrapolation, though on the side where the answer saturates at
 
 ### The statistical caveat that matters
 
-The regression uses overlapping windows, so its 1,387 observations contain only
-about **four independent** thirty-year periods. The reported error divides the
-residual spread by the square root of that number, not of 1,387. It is roughly
-0.7 percentage points, and that is generous.
+The regression used overlapping windows, so its 1,387 observations contain
+only about **four independent** thirty-year periods. Its standard error, worked
+out then, divides the residual spread by the square root of that number, not
+of 1,387. It is roughly 0.7 percentage points, and that is generous.
 
 ### Compound is not arithmetic, and the gap is 1.8 points
 
@@ -445,7 +448,9 @@ interface.
 discount rates take the variances of permanent and temporary earnings shocks
 as inputs, fitted over Cocco, Gomes and Maenhout's values for three education
 levels; the spreadsheet this project follows fixes them at the college-graduate
-values, as its guide says.
+values, as its guide says. On the Italian page they are an Italian
+private-sector employee's, from Daminato and Padula's estimates on the Bank of
+Italy's household survey.
 
 **Your equity holding is well diversified**, an index fund rather than a handful
 of positions. The guide is explicit that the recommendation does not hold
@@ -456,9 +461,10 @@ otherwise, because the model's single risky asset is the market.
 **Equity portfolio share.** The percentage of your financial portfolio the model
 puts in the stock market.
 
-**Human capital value.** The present value of future wages and benefits. For
-information only.
+**Future earnings** (Exhibit 1). The present value of future wages and
+benefits, which the spreadsheet calls human capital. For information only.
 
-**Equity share without human capital.** The Merton (1969) answer for someone
-with no future earnings. For information only, and useful mainly to show how
-much of the recommendation the human capital adjustment is responsible for.
+**Equity share of total wealth** (Exhibit 2). The Merton (1969) answer, which
+is also the answer for someone with no future earnings. For information only,
+and useful mainly to show how much of the recommendation the human capital
+adjustment is responsible for.

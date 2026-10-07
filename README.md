@@ -46,8 +46,10 @@ the argument.
 ## The data refreshes itself
 
 **Every Monday** GitHub Actions refreshes the market data of both variants,
-runs every check in the project, commits the new figures here, and republishes
-the site. The workflow is [.github/workflows/pages.yml](.github/workflows/pages.yml).
+runs the tests, the check of the JavaScript against the Python and the
+verifier, commits the new figures here, and republishes the site.
+`tools/analysis.py`, which recomputes the measured tables in the methodology,
+runs on your own machine (see Use below). The workflow is [.github/workflows/pages.yml](.github/workflows/pages.yml).
 It is built to be left alone:
 
 - **Both or neither.** The two variants share their growth term, so a week in
@@ -111,12 +113,15 @@ fixed 18.5%. The Italian sources are in
 | --- | --- | --- |
 | real risk-free rate | US Treasury daily real yield curve, 30 years | a real yield already, annualised from its semiannual quote; FRED's DFII30 is the same series, used if the Treasury does not answer |
 | stock volatility | Choi, Liu and Liu (2025), section 1.2 | 18.5%, monthly CRSP log excess returns 1926 to 2024, held fixed rather than re-measured |
-| expected stock return | Shiller: dividend yield compounded with 100-year real growth in earnings per share | Choi's own stated rationale, written as arithmetic |
+| expected stock return | Shiller: dividend yield compounded with 100-year real growth in earnings per share | Choi's own stated rationale, written as a formula |
 
 The expected return is the number the answer is most sensitive to and the one
-nobody can observe. Section 3 of the methodology compares the estimator with
-three others, which disagree with it by several points, and says why it is the
-one used. Override it with `--fixed-return 0.05` if you prefer your own view.
+nobody can observe. Section 3.1 of the methodology compares it with four
+other estimators, which put the default household anywhere from 20% to 100% in
+equities, and says why it is the one used. Override it with
+`--fixed-return 0.05` if you prefer your own view: the flag takes an
+arithmetic mean, the form the model uses, unlike the page's slider, which
+takes a compound rate and converts it.
 See [docs/inputs.md](docs/inputs.md) for why buybacks are deliberately not
 added to the yield.
 
@@ -206,8 +211,9 @@ Nothing is published unless the tests, the check of the JavaScript against the
 Python and the verifier have all passed first.
 
 `python tools/build_web.py` writes the same thing locally to `web/`: the tool,
-its model and its market data, about 105 KB, and with the Italian page and the
-three documents about 550 KB in all. The Italian page in `web/it/` is not a
+its model and its market data, about 110 KB, and with the Italian page, the
+three documents and the two pictures a shared link shows, about 620 KB in
+all. The Italian page in `web/it/` is not a
 second copy of the tool. The build writes it from `src/web/index.html`, swapping the page's VARIANT
 block (currency, number format, calibration) for the Italian one and
 translating the words with `src/web/it/translation.toml`. Every English
@@ -250,11 +256,22 @@ git history keeps it. The four defects:
 
 ## Use
 
+Python 3.11 or later. Node.js too, if you want the checks that run the
+browser's copy of the model; without it those tests skip.
+
 ```bash
 python -m venv .venv
 .venv/Scripts/python -m pip install -e ".[dev]"
 .venv/Scripts/python -m pytest
 ```
+
+That is Windows; on macOS and Linux the interpreter is `.venv/bin/python`.
+Two more checks need files the repository does not carry, because they are
+other people's: `python tools/verify_model.py` checks the model against
+Choi's spreadsheet when `CHOI_WORKBOOK` points at it, and
+`python tools/analysis.py` recomputes the methodology's measured tables from
+Shiller's workbook, which `update.py` saves to `data/`, or wherever
+`SHILLER_WORKBOOK` points. Without the files, those parts skip and say so.
 
 Then ask it the question. There are two ways in.
 
@@ -265,14 +282,16 @@ python tools/build_web.py
 python -m http.server 8600 --directory web
 ```
 
-Then open http://localhost:8600. A self-assessment, five quick choices and a
-check set your risk aversion, and a slider for the expected return shows by
+Then open http://localhost:8600. Five quick choices and a check set your
+risk aversion, and a 0 to 10 self-assessment beside them points out answers
+that contradict each other. A slider for the expected return shows by
 dragging how much the answer depends on it. Each adult's pension takes the
 age it starts and a tick for Social Security, which then replaces the tool's
 estimate instead of adding to it, and a second adult can take the spousal
-benefit instead of a pension of their own (docs/inputs.md). The
-recommendation with its working, a sensitivity curve, the answer at every level
-of savings, and a box for typing your earnings year by year.
+benefit instead of a pension of their own (docs/inputs.md). The page shows
+the recommendation with its working, a sensitivity curve and the answer at
+every level of savings, and has a box for typing your earnings year by
+year.
 
 The same folder is what GitHub Pages serves. The build also packs it as
 `your-equity-share-site.zip`, for any other static host that takes an upload.
@@ -356,7 +375,8 @@ regression baseline for stage 3:
 
 MIT, in [LICENSE](LICENSE). The model is the work of Choi, Liu and Liu (2025)
 and, behind it, Cocco, Gomes and Maenhout (2005); this licence covers the
-implementation and grants no rights in their papers.
+implementation and grants no rights in their papers or in the spreadsheet
+that accompanies theirs. It is not a substitute for the disclaimer below.
 
 ## Sources
 
@@ -364,6 +384,10 @@ implementation and grants no rights in their papers.
 - Bodie, Z., Merton, R. C. and Samuelson, W. F. (1992). Labor Supply Flexibility and Portfolio Choice in a Life Cycle Model. *JEDC*, 16.
 - Cocco, J. F., Gomes, F. J. and Maenhout, P. J. (2005). Consumption and Portfolio Choice over the Life Cycle. *RFS*, 18(2).
 - Choi, J. J., Liu, C. and Liu, P. (2025). Practical Finance: An Approximate Solution to Lifecycle Portfolio Choice.
+
+The full lists are in the two methodologies: section 9 of the American one,
+and section 2 of the Italian one, which names the source each Italian figure
+is checked against.
 
 ## Disclaimer
 

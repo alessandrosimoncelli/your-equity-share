@@ -14,8 +14,7 @@
   --mono: Consolas, "Courier New", monospace;
 
   /* The tool's sizes, one step up, because this is read at length and the
-     tool is not. The larger type is also what lets the column be wider
-     without each line holding more words (see .doc). */
+     tool is not. */
   --t-small:  1rem;
   --t-body:   1.125rem;
   --t-head:   1.375rem;
@@ -96,7 +95,7 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 
 /*
   The contents open the document, after the title, in a ruled box like the
-  tool's form: two columns where there is room, one on a phone. Every
+  tool's form: two or three columns where there is room, one on a phone. Every
   section ends with a link back to them, which does the work a panel beside
   the text did by staying on screen.
 */
@@ -263,12 +262,12 @@ h4 {
 methodology</a>, which describes what the model <em>does</em> do.</p>
 <p class="docmeta"><strong>Every Italian figure here is as of 8 September
 2026</strong>, the data the Italian methodology was written with, and is
-recomputed by the tools named beside it. Equity shares are for the default
-household of the methodology: age 45, 1,500,000 of financial wealth, 100,000
-of salary, risk aversion 5, on the Italian configuration, which recommends
-<strong>54.5%</strong>, before tax as the model works (Italian methodology,
-section 8). American figures are on the data of 3 September 2026, the
-American methodology's.</p>
+recomputed by the tools named beside it. Equity shares are for the reference
+household of the Italian methodology: age 45, 1,500,000 of financial wealth,
+100,000 of salary, risk aversion 5, on the Italian configuration, which
+recommends <strong>54.5%</strong>, before tax as the model works (Italian
+methodology, section 8). American figures are for the same household, on the
+data of 3 September 2026, the American methodology's.</p>
 <hr class="titlerule">
 
 <nav class="contents-panel" id="contents" aria-label="Contents">
@@ -312,7 +311,7 @@ absent it is because measuring it is itself part of the work.</p>
 
 <div class="tablewrap" id="t1">
 <table>
-<caption>Table 1. What each omission is worth for the default household, in
+<caption>Table 1. What each omission is worth for the reference household, in
 points of equity share unless the row says otherwise</caption>
 <thead><tr><th>Item</th><th>Variant</th><th class="num">What it moves</th></tr></thead>
 <tbody>
@@ -427,7 +426,7 @@ growing half a point a year faster takes the 2050 rate from 60.5% to 56.1% of
 gross pay (Ragioneria Generale dello Stato, 2026, Table 6.2.a). If
 the whole rise in Daminato and Padula's age profile were individual career
 growth, the rate would be about 51% rather than 61.8%, which lowers the answer
-by about 1 point for the default household, by about 1 to 2 points for
+by about 1 point for the reference household, by about 1 to 2 points for
 workers aged 40 to 50 with ten years of pay saved, and by up to about 4 just
 below 100% (Italian methodology, section 7.2). That is the size if the whole slope is a career effect.
 How much of it is, the survey data cannot say precisely, which is why it is
@@ -482,7 +481,7 @@ fund's own costs take about as much back: over five to seven years to August
 (Italian methodology, section 4.1). So the Italian figure is in effect after
 the fund's costs, while the American one is before any fund's costs, as in
 Choi's guide. A 0.03% index fund would take the American answer for the
-default household from 20.7% to 20.4%. Kept here so the numbering of the items
+reference household from 20.7% to 20.4%. Kept here so the numbering of the items
 after it does not move.</p>
 
 <h3 id="s1-9">1.9 The Italian methodology</h3>
@@ -514,9 +513,9 @@ estimates, the growth term is too high by between <strong>0.10
 points</strong>, on AQR's pair, and <strong>1.48</strong>, on MSCI from 2002 to
 2024, a short window of unusual American outperformance. This project reads it
 as a tenth to half a point, which is a judgement and not a measurement. Each
-0.1 point of growth is worth about 1.7 points of equity share for the default
+0.1 point of growth is worth about 1.7 points of equity share for the reference
 household, and 1.2 to 2.2 points for the other uncapped Italian households
-tried: half a point would take the default household from 54.5% to 46.0%, and
+tried: half a point would take the reference household from 54.5% to 46.0%, and
 the full 1.48 points to 29.8%.</p>
 
 <p>AQR's figure is a <em>lower</em> bound rather than a best guess, because
@@ -672,7 +671,7 @@ Every week the history stays stale, both pages keep the safe rates of the last
 good week.</p>
 
 <p>What it costs is the safe rate's own movement while it lasts. On the
-American snapshot each tenth of a point of TIPS yield moves the default
+American snapshot each tenth of a point of TIPS yield moves the reference
 household by about 1 point of equity share, and the page's own default, 45 on
 $100,000 with $500,000 saved, by about 2. The third of a point the yield rose
 between 3 and 29 September 2026 is worth 3.4 points to the first and 6.5 to
