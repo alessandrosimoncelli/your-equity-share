@@ -21,3 +21,7 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+    # Assigned to the owner, which is what sends the e-mail: GitHub tells a
+    # repository's watchers about a new pull request, and this one has none.
+    assignees:
+      - "alessandrosimoncelli"
