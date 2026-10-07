@@ -65,6 +65,12 @@ It is built to be left alone:
   to that bond's own real yield. The refresh records the gap every week; above
   0.3 points, or when the bond's yield cannot be read, the run turns red after
   the data are published, as a warning rather than a stop.
+- **Its own parts are kept current.** The workflow is built from actions that
+  GitHub publishes and retires every so often. Once a month Dependabot
+  ([.github/dependabot.yml](.github/dependabot.yml)) proposes any newer
+  versions as one pull request, and
+  [.github/workflows/checks.yml](.github/workflows/checks.yml) runs the tests
+  and the build on it before it is merged. Nothing changes until it is merged.
 
 The tool shows the date of its data on its own face, and warns under the
 answer once the data are more than three weeks old, which would mean the
@@ -216,8 +222,8 @@ Python and the verifier have all passed first.
 
 `python tools/build_web.py` writes the same thing locally to `web/`: the tool,
 its model and its market data, about 110 KB, and with the Italian page, the
-three documents and the two pictures a shared link shows, under 600 KB in
-all. The Italian page in `web/it/` is not a
+three documents and the two pictures a shared link shows, a little over
+600 KB in all. The Italian page in `web/it/` is not a
 second copy of the tool. The build writes it from `src/web/index.html`, swapping the page's VARIANT
 block (currency, number format, calibration) for the Italian one and
 translating the words with `src/web/it/translation.toml`. Every English

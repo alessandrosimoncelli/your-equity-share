@@ -1,0 +1,60 @@
+# The checks a proposed change gets before it is merged.
+#
+# A pull request into main, which is how Dependabot proposes a new version of
+# an action (.github/dependabot.yml), runs the checks the weekly workflow runs
+# before it publishes: the tests, the JavaScript against the Python, the
+# verifier and the build, on the data as committed. It refreshes nothing,
+# commits nothing and publishes nothing, so a proposal that breaks something
+# fails here and never reaches the site.
+#
+# Three of the five actions the weekly workflow uses are tried here, at the
+# versions the proposal sets: checkout, setup-python and upload-pages-artifact,
+# whose upload becomes a file to download from the run's page instead of a
+# new site. The other two, configure-pages and deploy-pages, act on the live
+# site, so only the run that follows the merge tries them, and it turns red,
+# which GitHub reports by e-mail, if either fails.
+
+name: Check a proposed change
+
+on:
+  pull_request:
+    branches: [main]
+  # The same checks on demand, from the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # As in the weekly workflow: pytest runs the checks, numpy is used by
+      # the Italian tax check, certifi by the refresh scripts when present.
+      - name: Install the test runner
+        run: python -m pip install --upgrade pip pytest numpy certifi
+
+      - name: Tests
+        run: python -m pytest -q
+
+      - name: JavaScript against Python
+        run: node tools/check_golden.mjs
+
+      # Part four compares against Choi's spreadsheet, which is not in the
+      # repository, so it skips here as it does in the weekly workflow.
+      - name: Verifier
+        run: python tools/verify_model.py
+
+      - name: Build
+        run: python tools/build_web.py
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web

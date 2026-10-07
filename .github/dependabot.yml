@@ -1,0 +1,23 @@
+# Dependabot keeps the workflows' actions current.
+#
+# The weekly workflow is built from actions GitHub publishes, and GitHub
+# retires their old versions every so often: in October 2026 the move to
+# Node.js 24 meant updating four of them by hand. Once a month Dependabot looks
+# for newer versions and proposes them as a pull request. Nothing changes until
+# that pull request is merged, and .github/workflows/checks.yml runs the tests
+# and the build on it first.
+#
+# Python packages are not listed: the workflow installs the newest pytest,
+# numpy and certifi on every run, so there is no pinned version to update.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    # The repository root: Dependabot reads every file in .github/workflows.
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    # Every update in one pull request a month rather than one each: the
+    # actions tend to move together, and one proposal is one decision.
+    groups:
+      actions:
+        patterns: ["*"]
