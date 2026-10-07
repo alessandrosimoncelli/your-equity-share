@@ -50,7 +50,6 @@ ZIP = ROOT / "your-equity-share-site.zip"
 # Source on the left, name in the built site on the right. Copied as they are
 # except that a fragment is given a document shell; see `as_document`.
 # The tool and its documentation should be distinguishable in a browser tab.
-# build_artifact.py makes the same substitution for the artifact copy.
 TITLES = {"methodology.html": "Equity Share Methodology"}
 
 COPIED = {

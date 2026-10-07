@@ -28,8 +28,7 @@ did until October 2026, cut the share by a little more than the law at three
 years and by two to four times as much beyond seven. tools/tax_check.py measures it; section 8 of the
 Italian methodology sets it out.
 
-The rates are kept here for the tools that simulate the law: tax_check.py and
-backtest.py.
+The rates are kept here for tools/tax_check.py, which simulates the law.
 """
 
 from __future__ import annotations
