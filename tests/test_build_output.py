@@ -78,6 +78,9 @@ def test_each_page_is_a_whole_document(built: Path, name: str) -> None:
     assert body.count("<html") == 1
     assert 'charset="utf-8"' in body.lower()
     assert 'name="viewport"' in body
+    # And the language it is written in: the Italian methodology is in Italian.
+    lang = "it" if name.startswith("it/") else "en"
+    assert f'<html lang="{lang}">' in body
     assert body.count("<title>") == 1
 
 

@@ -14,7 +14,8 @@ because the folder already says it and saying it twice is how two files drift
 apart.
 
 Both documents are published beside the tool, the American one at
-`/methodology.html` and the Italian one at `/it/methodology.html`.
+`/methodology.html` and the Italian one, written in Italian, at
+`/it/methodology.html`.
 
 ## Live data and frozen data
 

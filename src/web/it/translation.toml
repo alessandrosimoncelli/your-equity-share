@@ -66,7 +66,7 @@ it = '''Per denaro che deve durare tutta la vita, in un fondo indicizzato ampio.
 
 [[t]]
 en = '''href="./methodology.html">Consult the methodology</a>'''
-it = '''href="./methodology.html">Consulta la metodologia (in inglese)</a>'''
+it = '''href="./methodology.html">Consulta la metodologia</a>'''
 
 [[t]]
 en = '''class="boot">Loading the market data.</div>'''
@@ -707,7 +707,7 @@ en = '''`Computed in your browser: nothing you enter is sent anywhere. ` +
     `<a href="./further-work.html">Further work</a>. ` +
     `Not investment advice.`'''
 it = '''`Calcolato nel tuo browser: nulla di ciò che inserisci viene inviato altrove. ` +
-    `<a href="./methodology.html">Metodologia</a> (in inglese) · ` +
+    `<a href="./methodology.html">Metodologia</a> · ` +
     `<a href="../index.html">Versione americana</a> · ` +
     `<a href="../further-work.html">Lavoro ancora da fare</a> (in inglese). ` +
     `Non è una consulenza finanziaria.`'''

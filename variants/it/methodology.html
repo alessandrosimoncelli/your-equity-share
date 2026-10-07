@@ -1,4 +1,4 @@
-<title>Your Equity Share, Italy</title>
+<title>Your Equity Share, Italia</title>
 
 <style>
 :root {
@@ -307,47 +307,47 @@ h4 {
 
 <div class="doc">
 
-<h1>Your Equity Share, Italy</h1>
-<p class="subtitle">What the Italian variant does differently, and what checks each number</p>
-<p class="docmeta">Version 1.1, October 2026. Companion to the <a href="../methodology.html">technical
-methodology</a>, which describes the model itself. This document does not restate
-Merton (1969), Choi, Liu and Liu (2025), the human capital layer or the
-derivation of the equity share. Those are shared between the two variants and
-are argued there.</p>
-<p class="docmeta"><strong>Every market figure here is as of 8 September
-2026</strong> and will have moved. The Python tool and the Italian page
-recompute them from the market data they ship with, refreshed every
-Monday, except the volatility, which is fixed (section 6).</p>
+<h1>Your Equity Share, Italia</h1>
+<p class="subtitle">Che cosa fa di diverso la variante italiana, e che cosa verifica ogni numero</p>
+<p class="docmeta">Versione 1.1, ottobre 2026. Accompagna la <a href="../methodology.html">metodologia
+tecnica</a> (in inglese), che descrive il modello vero e proprio. Questo documento non
+riprende Merton (1969), Choi, Liu e Liu (2025), lo strato del capitale umano né la
+derivazione della quota in azioni: sono comuni alle due varianti e sono
+argomentati lì.</p>
+<p class="docmeta"><strong>Tutti i dati di mercato di questo documento sono aggiornati all'8 settembre
+2026</strong> e nel frattempo saranno cambiati. Lo strumento in Python e la pagina
+italiana li ricalcolano dai dati di mercato con cui sono distribuiti, aggiornati ogni
+lunedì, tranne la volatilità, che è fissa (sezione 6).</p>
 <hr class="titlerule">
 
-<nav class="contents-panel" id="contents" aria-label="Contents">
+<nav class="contents-panel" id="contents" aria-label="Indice">
 <details open>
-<summary class="contents-head">Contents</summary>
+<summary class="contents-head">Indice</summary>
 <ol class="contents">
-  <li><a href="#s1">1. What this document is</a></li>
-  <li><a href="#s2">2. Every number, and what checks it</a></li>
-  <li><a href="#s3">3. The equity sleeve</a></li>
-  <li><a href="#s4">4. The expected return</a>
+  <li><a href="#s1">1. Che cosa è questo documento</a></li>
+  <li><a href="#s2">2. Ogni numero, e che cosa lo verifica</a></li>
+  <li><a href="#s3">3. La componente azionaria</a></li>
+  <li><a href="#s4">4. Il rendimento atteso</a>
     <ol>
-      <li><a href="#s4-1">4.1 The dividend yield</a></li>
-      <li><a href="#s4-2">4.2 The growth term</a></li>
-      <li><a href="#s4-3">4.3 Why not AQR's own figure</a></li>
-      <li><a href="#s4-4">4.4 Is the pairing sound</a></li>
+      <li><a href="#s4-1">4.1 Il rendimento da dividendi</a></li>
+      <li><a href="#s4-2">4.2 Il termine di crescita</a></li>
+      <li><a href="#s4-3">4.3 Perché non il dato di AQR</a></li>
+      <li><a href="#s4-4">4.4 L'abbinamento regge?</a></li>
     </ol>
   </li>
-  <li><a href="#s5">5. The safe asset</a></li>
-  <li><a href="#s6">6. Volatility</a></li>
-  <li><a href="#s7">7. The career and the pension</a>
+  <li><a href="#s5">5. L'attività sicura</a></li>
+  <li><a href="#s6">6. La volatilità</a></li>
+  <li><a href="#s7">7. La carriera e la pensione</a>
     <ol>
-      <li><a href="#s7-1">7.1 The career</a></li>
-      <li><a href="#s7-2">7.2 The pension</a></li>
-      <li><a href="#s7-3">7.3 Retirees</a></li>
+      <li><a href="#s7-1">7.1 La carriera</a></li>
+      <li><a href="#s7-2">7.2 La pensione</a></li>
+      <li><a href="#s7-3">7.3 I pensionati</a></li>
     </ol>
   </li>
-  <li><a href="#s8">8. Tax</a></li>
-  <li><a href="#s9">9. Currency</a></li>
-  <li><a href="#s10">10. Why the answer is so often 100%</a></li>
-  <li><a href="#s11">11. What is not validated</a></li>
+  <li><a href="#s8">8. Le imposte</a></li>
+  <li><a href="#s9">9. La valuta</a></li>
+  <li><a href="#s10">10. Perché la risposta è così spesso 100%</a></li>
+  <li><a href="#s11">11. Che cosa non è validato</a></li>
 </ol>
 </details>
 </nav>
@@ -369,1118 +369,1140 @@ Monday, except the volatility, which is fixed (section 6).</p>
 })();
 </script>
 
-<h2 id="s1">1. What this document is</h2>
+<h2 id="s1">1. Che cosa è questo documento</h2>
 
-<p>One model, two countries. Both variants take their dividend yield from their own
-index, net of withholding tax at source where a holder suffers any (MSCI's net
-index for the world fund, none for an American holding American stock), both take
-real growth in earnings per share from the same hundred-year trend through
-Shiller, and both assume no repricing.</p>
+<p>Un modello, due paesi. Entrambe le varianti prendono il rendimento da dividendi dal
+proprio indice, al netto della ritenuta alla fonte dove chi detiene le azioni la subisce
+(l'indice net di MSCI per il fondo globale, nessuna ritenuta per un americano che detiene
+azioni americane), entrambe prendono la crescita reale degli utili per azione dallo stesso
+trend secolare stimato sui dati di Shiller, ed entrambe assumono che i multipli non
+cambino.</p>
 
-<p>That is deliberate and it is the point of the whole arrangement. <strong>The
-gap between a 20.7% American answer and a 54.5% Italian one is the country and
-not the method.</strong> That is the reference household used throughout: 45
-years old, 100,000 a year after tax, 1,500,000 saved, risk aversion 5. Neither
-variant applies tax, which Choi's model does not contain, and for Italy section
-8 measures why that is right and why the guide's suggested cut to the safe
-rate is not applied either.</p>
+<p>È voluto, ed è lo scopo dell'intera impostazione. <strong>La distanza tra le due
+risposte, 20,7% per quella americana e 54,5% per quella italiana, dipende dal paese e
+non dal metodo.</strong> Sono le risposte per la famiglia di riferimento usata in tutto il
+documento: 45 anni, 100.000 l'anno al netto delle imposte, 1.500.000 di risparmi, avversione al
+rischio 5. Nessuna delle due varianti applica le imposte, che il modello di Choi non
+contiene, e per l'Italia la sezione 8 misura perché è corretto e perché non si applica
+nemmeno il taglio del tasso sicuro suggerito dalla guida.</p>
 
-<p>The equities are assumed to be held in a broad index fund. Choi, Liu and
-Liu's guide says so: the model it rests on assumes a well-diversified stock
-market investment, such as an index fund, and the guide warns that its
-recommendation does not hold for a portfolio of only a few shares. The page's
-masthead says the same.</p>
+<p>Si assume che le azioni siano detenute tramite un fondo indicizzato ampio. Lo dice
+la guida di Choi, Liu e Liu: il modello su cui si basa assume un investimento azionario
+ben diversificato, come un fondo indicizzato, e la guida avverte che la sua
+raccomandazione non vale per un portafoglio di poche azioni. Lo dice anche
+l'intestazione della pagina.</p>
 
-<p><strong>Every number below is checked against something outside this
-project</strong>, except the pension's replacement rate, which is its source
-restated, and section 2 is that list in one table. Where a figure
-cannot be checked, section 11 says so rather than dressing it up.</p>
+<p><strong>Ogni numero che segue è confrontato con qualcosa di esterno a questo
+progetto</strong>, tranne il tasso di sostituzione della pensione, che riprende la sua
+fonte, e la sezione 2 raccoglie questo elenco in una tabella. Dove un dato non si può
+verificare, la sezione 11 lo dice invece di mascherarlo.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s2">2. Every number, and what checks it</h2>
+<h2 id="s2">2. Ogni numero, e che cosa lo verifica</h2>
 
 <div class="tablewrap" id="t1">
 <table>
-<caption>Table 1. Each input, its value, and the external source it is measured
-against</caption>
-<thead><tr><th>Input</th><th class="num">Used</th><th>Checked against</th><th class="num">Their figure</th></tr></thead>
+<caption>Tabella 1. Ogni dato, il suo valore e la fonte esterna con cui è
+confrontato</caption>
+<thead><tr><th>Dato</th><th class="num">Usato</th><th>Confrontato con</th><th class="num">Il loro valore</th></tr></thead>
 <tbody>
-<tr><td>Dividend yield, MSCI ACWI in euro, net of withholding</td><td class="num">1.1917%</td><td>AQR, Global All Country, dividend yield at 31 December 2025, gross; ours gross at that date is 1.7370%</td><td class="num">1.5%</td></tr>
-<tr><td>Real growth in earnings per share</td><td class="num">2.2860%</td><td>AQR, Global All Country, combined growth</td><td class="num">2.6%</td></tr>
-<tr><td>Repricing</td><td class="num">0.0000%</td><td>AQR, stated assumption</td><td class="num">0.00%</td></tr>
-<tr><td>Expected real return, compound</td><td class="num">3.5049%</td><td>AQR, Global All Country, gross of withholding</td><td class="num">4.20%</td></tr>
-<tr><td>The same, against a payout-neutral measure</td><td class="num">3.5049%</td><td>iShares ACWI earnings yield, less the same withholding</td><td class="num">3.573%</td></tr>
-<tr><td>Volatility, euro, fixed</td><td class="num">16.4545%</td><td>J.P. Morgan, 2026 Long-Term Capital Market Assumptions, euro, AC World Equity</td><td class="num">14.38%</td></tr>
-<tr><td>Real safe rate</td><td class="num">1.4709%</td><td>Bund/euro-i 2046 traded real yield</td><td class="num">1.4906%</td></tr>
-<tr><td>Nominal 30-year par yield, annualised</td><td class="num">3.7595%</td><td>German 30-year Bund, 9 September</td><td class="num">3.886%</td></tr>
-<tr><td>Permanent pay shocks, standard deviation</td><td class="num">12.3%</td><td>Daminato and Padula, Table 7 of working paper CSEF 585 (2020), Italian private employees, Bank of Italy survey 1986 to 2008</td><td class="num">inside the 95% band of Jappelli and Pistaferri (2010), as Daminato and Padula report</td></tr>
-<tr><td>Benefit replacement rate, on the wage with the TFR</td><td class="num">61.8%</td><td>Ragioneria Generale dello Stato, Rapporto n. 27 (2026), Table 6.3.a, private employee on the average wage retiring in 2050, net, on pay without the TFR; the source restated, not an independent check</td><td class="num">66.4%</td></tr>
+<tr><td>Rendimento da dividendi, MSCI ACWI in euro, al netto delle ritenute</td><td class="num">1,1917%</td><td>AQR, Global All Country, rendimento da dividendi al 31 dicembre 2025, lordo; il nostro, lordo alla stessa data, è 1,7370%</td><td class="num">1,5%</td></tr>
+<tr><td>Crescita reale degli utili per azione</td><td class="num">2,2860%</td><td>AQR, Global All Country, crescita combinata</td><td class="num">2,6%</td></tr>
+<tr><td>Variazione dei multipli</td><td class="num">0,0000%</td><td>AQR, ipotesi dichiarata</td><td class="num">0,00%</td></tr>
+<tr><td>Rendimento reale atteso, composto</td><td class="num">3,5049%</td><td>AQR, Global All Country, al lordo delle ritenute</td><td class="num">4,20%</td></tr>
+<tr><td>Lo stesso, rispetto a una misura neutrale alla distribuzione</td><td class="num">3,5049%</td><td>rendimento degli utili di iShares ACWI, meno la stessa ritenuta</td><td class="num">3,573%</td></tr>
+<tr><td>Volatilità, euro, fissa</td><td class="num">16,4545%</td><td>J.P. Morgan, 2026 Long-Term Capital Market Assumptions, euro, AC World Equity</td><td class="num">14,38%</td></tr>
+<tr><td>Tasso sicuro reale</td><td class="num">1,4709%</td><td>rendimento reale di mercato del Bund/euro-i 2046</td><td class="num">1,4906%</td></tr>
+<tr><td>Rendimento nominale alla pari a 30 anni, annualizzato</td><td class="num">3,7595%</td><td>Bund tedesco a 30 anni, 9 settembre</td><td class="num">3,886%</td></tr>
+<tr><td>Shock permanenti alla retribuzione, deviazione standard</td><td class="num">12,3%</td><td>Daminato e Padula, Tabella 7 del working paper CSEF 585 (2020), dipendenti privati italiani, indagine della Banca d'Italia dal 1986 al 2008</td><td class="num">dentro la banda al 95% di Jappelli e Pistaferri (2010), come riportano Daminato e Padula</td></tr>
+<tr><td>Tasso di sostituzione della pensione, sullo stipendio con il TFR</td><td class="num">61,8%</td><td>Ragioneria Generale dello Stato, Rapporto n. 27 (2026), Tabella 6.3.a, dipendente privato con retribuzione media che va in pensione nel 2050, netto, sulla retribuzione senza TFR; la fonte ripresa, non una verifica indipendente</td><td class="num">66,4%</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">Sources in full: AQR, <em>Alternative Thinking</em> 2026 Issue 1,
-Exhibits 3A and A1, as of 31 December 2025. iShares ACWI and IVV fund pages, 8
-September 2026. J.P. Morgan Asset Management, <em>2026 Long-Term Capital Market
-Assumptions</em>, assumption matrix in euro. MSCI end-of-day index levels.
-Deutsche Finanzagentur, the
-issuer's own published real yields and break-even rates. ECB Data Portal,
-series YC.B.U2.EUR.4F.G_N_A.SV_C_YM.PY_30Y, and the ECB's technical notes on
-its yield curves. Ragioneria Generale dello Stato, Rapporto n. 27 (2026), chapter 6. OECD, <em>Pensions at a Glance 2025</em>,
-Italy country note. Daminato and Padula (2024), <em>Journal of the European
-Economic Association</em>, with the estimates in Table 7 of working paper CSEF
+<p class="src">Fonti complete: AQR, <em>Alternative Thinking</em> 2026 Issue 1,
+Exhibit 3A e A1, al 31 dicembre 2025. Pagine dei fondi iShares ACWI e IVV, 8
+settembre 2026. J.P. Morgan Asset Management, <em>2026 Long-Term Capital Market
+Assumptions</em>, matrice delle ipotesi in euro. Livelli di chiusura giornalieri degli
+indici MSCI. Deutsche Finanzagentur, rendimenti reali e tassi di break-even pubblicati
+dall'emittente stesso. ECB Data Portal,
+serie YC.B.U2.EUR.4F.G_N_A.SV_C_YM.PY_30Y, e note tecniche della BCE sulle sue
+curve dei rendimenti. Ragioneria Generale dello Stato, Rapporto n. 27 (2026), capitolo 6. OCSE, <em>Pensions at a Glance 2025</em>,
+scheda paese sull'Italia. Daminato e Padula (2024), <em>Journal of the European
+Economic Association</em>, con le stime della Tabella 7 del working paper CSEF
 585. INPS, Osservatorio sui lavoratori dipendenti del settore privato,
 2024.</p>
 
-<p><strong> Two rows are well away from their checks, the expected return and the
-volatility.</strong> The expected return is 0.70 points below AQR's, and
-withholding is half of it, 0.35: AQR quote gross, and this variant uses the
-yield net of it, which is what the fund delivers after its costs (section
-4.1). Measured gross, as theirs is, the estimate is the other 0.35 below. The
-growth term is 0.31 of that: theirs is a five to ten year figure built to
-narrow the differences between countries, and this one carries no horizon
-(sections 4.2 and 4.3). The yield term is 0.07, and it is not like for like:
-AQR's 1.6% is the average of their dividend yield and an earnings-based payout
-yield that counts buybacks too, at the end of 2025, while ours is a dividend
-yield eight months later. Compounding the two terms (section 4) takes 0.035
-back, the gross yield times the growth.</p>
+<p><strong>Due righe sono ben lontane dalle loro verifiche: il rendimento atteso e la
+volatilità.</strong> Il rendimento atteso è 0,70 punti sotto quello di AQR, e metà
+della distanza, 0,35, è la ritenuta: AQR indica dati lordi, mentre questa variante usa
+il rendimento al netto della ritenuta, cioè quello che il fondo consegna dopo i suoi
+costi (sezione 4.1). Misurata al lordo, come quella di AQR, la stima resta sotto di
+altri 0,35. Di questi, 0,31 vengono dal termine di crescita: quello di AQR è un dato su
+un orizzonte da cinque a dieci anni costruito per ridurre le differenze tra paesi,
+mentre questo non ha orizzonte (sezioni 4.2 e 4.3). Il termine del rendimento pesa
+0,07, e il confronto non è omogeneo: l'1,6% di AQR è la media del suo rendimento da
+dividendi e di un rendimento di distribuzione basato sugli utili che conta anche i
+riacquisti di azioni proprie, a fine 2025, mentre il nostro è un rendimento da
+dividendi di otto mesi dopo. Comporre i due termini (sezione 4) restituisce 0,035, il
+rendimento lordo moltiplicato per la crescita.</p>
 
-<p><strong>The
-volatility is the row furthest from its check</strong>, 2.07 points above J.P.
-Morgan's 14.38%. Their volatilities run below a century of American history as
-well: their figure for American large caps with the currency hedged, close to a
-dollar figure, is 16.52%, against Choi's 18.5%. Put on Choi's scale by their
-own ratio of the two, their world figure in euro would be 16.1%. Section 6 sets
-out how the figure used is measured. The nominal yield sits 0.13 below
-the German 30-year Bund, which is quoted a day later: the curve itself rose 0.03
-points that day, and the remaining tenth is the difference between a curve
-fitted to every AAA issuer and one German bond. The other rows
-are within a tenth of a point of their checks.</p>
+<p><strong>La volatilità è la riga più lontana dalla sua verifica</strong>, 2,07 punti
+sopra il 14,38% di J.P. Morgan. Le sue volatilità sono più basse anche di quelle di un
+secolo di storia americana: il suo dato per le large cap americane con il cambio coperto, vicino
+a un dato in dollari, è 16,52%, contro il 18,5% di Choi. Riportato sulla scala di Choi
+con il rapporto tra questi due dati, il suo dato mondiale in euro sarebbe 16,1%. La
+sezione 6 spiega come si misura il dato usato. Il rendimento nominale sta 0,13 punti
+sotto il Bund tedesco a 30 anni, quotato un giorno dopo: quel giorno la curva stessa è
+salita di 0,03 punti, e il decimo restante è la differenza tra una curva stimata su
+tutti gli emittenti AAA e un solo titolo tedesco. Le altre righe sono entro un decimo
+di punto dalle loro verifiche.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s3">3. The equity sleeve</h2>
+<h2 id="s3">3. La componente azionaria</h2>
 
-<p>Global, not Italian. An Italian investor buying a home index would hold
-about <strong>0.8%</strong> of world market capitalisation, which is Italy's
-weight in MSCI World. The implementation assumed is FTSE All-World through an
-accumulating UCITS share class, which is what most European retail investors
-actually hold.</p>
+<p>Globale, non italiana. Un investitore italiano che comprasse un indice domestico
+deterrebbe circa lo <strong>0,8%</strong> della capitalizzazione di borsa mondiale, cioè
+il peso dell'Italia nell'MSCI World. Lo strumento ipotizzato è il FTSE All-World
+tramite una classe di quote UCITS ad accumulazione, che è ciò che la maggior parte dei
+risparmiatori europei detiene davvero.</p>
 
-<p><strong>The check is that this is the standard finding rather than a
-preference.</strong> Home bias is one of the most documented anomalies in
-international finance: French and Poterba (1991) measured investors holding
-overwhelmingly domestic portfolios against what diversification implies, and
-Coeurdacier and Rey (2013) survey three decades of work finding the same thing
-persists. No part of the literature recommends concentrating a lifetime
-portfolio in a market that is 0.8% of world capitalisation.</p>
+<p><strong>La verifica è che questo è il risultato consolidato, non una
+preferenza.</strong> La preferenza per il mercato domestico (home bias) è una delle
+anomalie più documentate della finanza internazionale: French e Poterba (1991) hanno
+misurato quanto i portafogli degli investitori fossero concentrati sul mercato
+domestico rispetto a ciò che implicherebbe la diversificazione, e Coeurdacier e Rey
+(2013) passano in rassegna tre decenni di studi secondo cui il fenomeno persiste.
+Nessuna parte della letteratura raccomanda di concentrare il portafoglio di una vita
+in un mercato che vale lo 0,8% della capitalizzazione mondiale.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s4">4. The expected return</h2>
+<h2 id="s4">4. Il rendimento atteso</h2>
 
 <div class="eqn">
-  <div class="body">1 + E[R<sub>real</sub>] = (1 + dividend yield)(1 + real growth in earnings per share)(1 + repricing)</div>
+  <div class="body">1 + E[R<sub>reale</sub>] = (1 + rendimento da dividendi)(1 + crescita reale degli utili per azione)(1 + variazione dei multipli)</div>
   <div class="no">(5)</div>
 </div>
 
-<p>The same three terms the American variant uses, combined the same way, which
-is what makes the two answers comparable. Today: <strong>(1 + 1.1917%)(1 +
-2.2860%)(1 + 0) &minus; 1 = 3.5049% compound</strong>, which is 4.9157% as an
-arithmetic mean at this volatility. The yield is net of the withholding tax the
-fund suffers at source; gross it is 1.5339% (section 4.1).</p>
+<p>Gli stessi tre termini della variante americana, combinati nello stesso modo: è
+questo che rende confrontabili le due risposte. Oggi: <strong>(1 + 1,1917%)(1 +
+2,2860%)(1 + 0) &minus; 1 = 3,5049% composto</strong>, cioè 4,9157% come media
+aritmetica a questa volatilità. Il rendimento è al netto della ritenuta che il fondo
+subisce alla fonte; al lordo è 1,5339% (sezione 4.1).</p>
 
-<h3 id="s4-1">4.1 The dividend yield</h3>
+<h3 id="s4-1">4.1 Il rendimento da dividendi</h3>
 
-<p>Measured, from MSCI's own index levels rather than from anyone's forecast.
-The gross index reinvests dividends and the price index does not, so the gap
-between their returns over a month is that month's dividend, and twelve of
-those over the price at the end are a trailing yield.</p>
+<p>Misurato sui livelli degli indici di MSCI, non preso dalla previsione di qualcuno.
+L'indice gross reinveste i dividendi e l'indice di prezzo no, quindi la differenza tra
+i loro rendimenti in un mese è il dividendo di quel mese, e dodici di questi divisi per
+il prezzo finale danno un rendimento sugli ultimi dodici mesi.</p>
 
-<p><strong>Over the price at the end, and the denominator is worth a third of a
-point.</strong> Three constructions all sound like a trailing twelve-month
-yield and this year they disagree badly, because the index rose 22% across the
-window. Measured gross: dividends over the price a year ago give 1.87%, each
-month's dividend over that month's own starting price gives 1.70%, and
-dividends over today's price give 1.53%. The third is used, for two reasons.
-Shiller's dividend column is a trailing annual rate divided by his last price,
-so it is the object the two variants must share. And it is the yield the
-identity behind equation (5) asks for, the dividend just paid over today's
-price (American methodology, section 3.1).</p>
+<p><strong>Diviso per il prezzo finale: il denominatore vale un terzo di punto.</strong> Tre
+costruzioni sembrano tutte un rendimento sugli ultimi dodici mesi, e quest'anno
+divergono parecchio, perché nella finestra l'indice è salito del 22%. Al lordo: i
+dividendi divisi per il prezzo di un anno prima danno 1,87%, il dividendo di ogni mese
+diviso per il prezzo d'inizio dello stesso mese dà 1,70%, e i dividendi divisi per il
+prezzo di oggi danno 1,53%. Si usa il terzo, per due ragioni. La colonna dei dividendi
+di Shiller è un tasso annuo sugli ultimi dodici mesi diviso per il suo ultimo prezzo,
+quindi è la grandezza che le due varianti devono condividere. Ed è il rendimento che
+chiede l'identità dietro l'equazione (5): il dividendo appena pagato diviso per il
+prezzo di oggi (metodologia americana, sezione 3.1).</p>
 
-<p><strong>The check.</strong> AQR's own dividend yield for this index is 1.5%
-at 31 December 2025, gross. At that date the same construction gives
-<strong>1.7370%</strong>, and the other two denominators 1.85% and 1.87%, so
-the one used is also the nearest to theirs, though 0.24 points above it. AQR say
-only that their figures are based on MSCI indices, so the gap is reported, not
-explained. Their headline yield of 1.6% is a different object: it is the average
-of that dividend yield and an earnings-based payout yield of 1.7%, which counts
-buybacks as well as dividends (their footnote 2).</p>
+<p><strong>La verifica.</strong> Il rendimento da dividendi di AQR per questo indice è
+1,5% al 31 dicembre 2025, al lordo. Alla stessa data la stessa costruzione dà
+<strong>1,7370%</strong>, e gli altri due denominatori 1,85% e 1,87%, quindi quello
+usato è anche il più vicino al dato di AQR, pur restando 0,24 punti sopra. AQR dice
+solo che i suoi dati si basano sugli indici MSCI, quindi la distanza viene riportata,
+non spiegata. Il suo rendimento principale, 1,6%, è un'altra grandezza: è la media di
+quel rendimento da dividendi e di un rendimento di distribuzione basato sugli utili,
+1,7%, che conta i riacquisti di azioni proprie oltre ai dividendi (la sua nota 2).</p>
 
-<p><strong>Net of withholding tax, 1.1917%, and that is the figure
-used.</strong> The country a company is based in taxes the dividend it pays
-abroad before the money leaves, so a world fund receives its dividends already
-reduced. MSCI's net index reinvests them after that withholding, and over the
-same twelve months it takes <strong>0.3422 points</strong> off the gross yield.
-No holder of the fund ever receives the money withheld: VWCE's net asset value
-is already net of what the fund pays, which is about a third less than MSCI
-deducts (next paragraph). It is a property of the fund, like its price, and not
-the household's own tax, which the model leaves out (section 8). An American
-holding American stock suffers none, which is why the American variant's gross
-Shiller column is the same measurement there. The page's hint for a
-reader's own forecast asks for the same basis: net of the withholding, so about
-0.3 points below a gross forecast such as AQR's.</p>
+<p><strong>Al netto della ritenuta, 1,1917%, ed è questo il dato usato.</strong> Il
+paese in cui ha sede una società tassa il dividendo che paga all'estero prima che il
+denaro esca, quindi un fondo globale riceve i dividendi già ridotti. L'indice net di
+MSCI li reinveste dopo quella ritenuta, e negli stessi dodici mesi toglie
+<strong>0,3422 punti</strong> al rendimento lordo. Nessun detentore del fondo riceve
+mai il denaro trattenuto: il valore patrimoniale netto di VWCE è già al netto di quanto
+paga il fondo, che è circa un terzo in meno di quanto deduce MSCI (paragrafo seguente).
+È una proprietà del fondo, come il suo prezzo, e non un'imposta della famiglia, che il
+modello lascia fuori (sezione 8). Un americano che detiene azioni americane non ne
+subisce, ed è per questo che nella variante americana la colonna lorda di Shiller è la
+stessa misura. Il suggerimento della pagina per chi inserisce una propria previsione
+chiede la stessa base: al netto della ritenuta, quindi circa 0,3 punti sotto una
+previsione lorda come quella di AQR.</p>
 
-<p><strong>The net index is the right input because the fund delivers it, not
-because its withholding rates are the fund's.</strong> MSCI deducts withholding
-at the rate a non-resident institution pays without the benefit of a tax
-treaty, the most a fund can suffer: measured on MSCI's own indices over the
-same twelve months, 30.1% of American dividends and 17.4% of the rest of the
-world's. A fund domiciled where treaties apply pays less: VWCE, in Ireland,
-pays 15% on American dividends rather than 30%, and American companies paid
-45.8% of the world index's dividends, so the fund suffers about 0.24 to 0.25
-points of withholding where MSCI deducts 0.34, a quarter to a third less. It also pays its own
-costs, and the two roughly cancel. Over the five, six and seven
-years to August 2026, VWCE's price on Xetra rose 0.06 to 0.07 points a year
-less than MSCI ACWI in euro net, and about 0.58 points a year less than the
-gross index. VWCE tracks FTSE All-World rather than MSCI ACWI, so part of that
-small gap is the difference between the two indices.</p>
+<p><strong>L'indice net è il dato giusto perché è ciò che il fondo consegna, non perché
+le sue aliquote di ritenuta siano quelle del fondo.</strong> MSCI deduce la ritenuta
+all'aliquota che paga un'istituzione non residente senza il beneficio di una
+convenzione fiscale, il massimo che un fondo possa subire: misurata sugli indici di
+MSCI negli stessi dodici mesi, il 30,1% dei dividendi americani e il 17,4% di quelli del
+resto del mondo. Un fondo domiciliato dove valgono le convenzioni paga meno: VWCE, in
+Irlanda, paga il 15% sui dividendi americani invece del 30%, e le società americane
+hanno pagato il 45,8% dei dividendi dell'indice mondiale, quindi il fondo subisce tra
+0,24 e 0,25 punti circa di ritenuta dove MSCI ne deduce 0,34, da un quarto a un terzo
+in meno. Il fondo paga anche i propri costi, e le due cose più o meno si compensano.
+Nei cinque, sei e sette anni fino ad agosto 2026, il prezzo di VWCE su Xetra è salito
+tra 0,06 e 0,07 punti l'anno meno dell'MSCI ACWI net in euro, e circa 0,58 punti l'anno
+meno dell'indice gross. VWCE replica il FTSE All-World e non l'MSCI ACWI, quindi parte
+di quella piccola distanza è la differenza tra i due indici.</p>
 
-<p><strong>So the Italian figure is in effect after the fund's costs, and the
-American one is not.</strong> The American variant uses the S&amp;P 500's own
-yield, before any fund's costs, as the premium in Choi, Liu and Liu's paper is. The difference is stated rather than removed.</p>
+<p><strong>Quindi il dato italiano è di fatto al netto dei costi del fondo, e quello
+americano no.</strong> La variante americana usa il rendimento dell'S&amp;P 500, prima
+dei costi di qualsiasi fondo, come lo è il premio nell'articolo di Choi, Liu e Liu. La differenza viene dichiarata, non eliminata.</p>
 
-<h3 id="s4-2">4.2 The growth term</h3>
+<h3 id="s4-2">4.2 Il termine di crescita</h3>
 
-<p>The American variant's own hundred-year ordinary least squares trend through
-Shiller's real earnings per share, used unchanged as the global rate. This is
-the largest judgement in the variant and it has three checks, one of which is a
-measurement of what it costs.</p>
+<p>Il trend secolare stimato con i minimi quadrati ordinari sugli utili reali per azione
+di Shiller, lo stesso della variante americana, usato senza modifiche come tasso
+globale. È la scelta di giudizio più importante della variante e ha tre verifiche, una
+delle quali misura quanto costa.</p>
 
-<p><strong>AQR publish a growth figure for both</strong>: 2.7% real EPS growth for
-United States large cap against <strong>2.6%</strong> for Global All Country,
-a tenth of a point apart. It is a forecast built to narrow the differences
-between countries rather than a measurement of them. Each country's own growth
-is moved halfway to the global average, then a third of the way to forecast
-GDP growth, and the result is averaged with an equilibrium rate of 1.8% that
-is the same for every developed large-cap market (the methodology pages and
-Exhibit A1 of their report). So it says little about the size of the gap, and
-in Table 2 it is the lower end.</p>
+<p><strong>AQR pubblica un dato di crescita per entrambi</strong>: 2,7% di crescita
+reale degli utili per azione per le large cap degli Stati Uniti contro il
+<strong>2,6%</strong> per Global All Country, un decimo di punto di distanza. È una
+previsione costruita per ridurre le differenze tra paesi, non una loro misura. La
+crescita di ciascun paese viene spostata a metà strada verso la media globale, poi di
+un terzo verso la crescita prevista del PIL, e il risultato viene mediato con un tasso
+di equilibrio dell'1,8% uguale per ogni mercato large cap sviluppato (le pagine di
+metodologia e l'Exhibit A1 del rapporto). Quindi dice poco sull'ampiezza della
+distanza, e nella Tabella 2 ne è l'estremo inferiore.</p>
 
-<p><strong>Theory expects the gap to be small.</strong> Long-run real growth in
-earnings per share is a return on retained capital net of share issuance, not a national
-characteristic, and nothing in a border makes retained euros compound
-differently from retained dollars over a lifetime.</p>
+<p><strong>La teoria si aspetta una distanza piccola.</strong> La crescita reale di
+lungo periodo degli utili per azione è un rendimento sul capitale reinvestito al netto
+delle nuove emissioni di azioni, non una caratteristica nazionale, e nessun confine fa
+crescere gli euro reinvestiti in modo diverso dai dollari reinvestiti nell'arco di una
+vita.</p>
 
-<p><strong>And the alternative was tried and failed.</strong>
-<code>tools/global_growth.py</code> rebuilds global real dividend growth from
-the Jorda-Schularick-Taylor Macrohistory Database, eighteen advanced economies
-from 1870. The answer depends on the weighting scheme far more than on the
-data: weights pinned at today give 0.89% to 1.52%, pinned at the start of the
-window 1.86% to 3.04%, GDP shares each year 2.77% to 5.43%. An envelope 4.5
-points wide against 0.25 points for the American estimator. The cause is
-structural: a fixed basket of countries is not an index, because an index
-reconstitutes and JST publishes country index returns rather than the world
-index's constituents.</p>
+<p><strong>E l'alternativa è stata provata ed è fallita.</strong>
+<code>tools/global_growth.py</code> ricostruisce la crescita reale globale dei
+dividendi dal Jorda-Schularick-Taylor Macrohistory Database, diciotto economie avanzate
+dal 1870. Il risultato dipende dallo schema di ponderazione molto più che dai dati:
+pesi fissati a oggi danno dallo 0,89% all'1,52%, fissati all'inizio della finestra
+dall'1,86% al 3,04%, le quote del PIL di ogni anno dal 2,77% al 5,43%. Un intervallo
+largo 4,5 punti, contro 0,25 punti per lo stimatore americano. La causa è strutturale:
+un paniere fisso di paesi non è un indice, perché un indice si ricompone, e il JST
+pubblica i rendimenti degli indici nazionali, non i componenti dell'indice
+mondiale.</p>
 
-<p><strong>What the substitution costs, measured.</strong>
-<code>tools/us_vs_global.py</code> puts the question to ex-US data, because
-comparing the S&amp;P 500 with a world index is largely comparing the United
-States with itself.</p>
+<p><strong>Quanto costa la sostituzione, misurato.</strong>
+<code>tools/us_vs_global.py</code> pone la domanda ai dati esclusi gli Stati Uniti,
+perché confrontare l'S&amp;P 500 con un indice mondiale significa in gran parte
+confrontare gli Stati Uniti con se stessi.</p>
 
 <div class="tablewrap" id="t2">
 <table>
-<caption>Table 2. What an American growth rate costs when used globally</caption>
-<thead><tr><th>Estimate of the gap</th><th class="num">US minus rest</th><th class="num">Cost on the global rate</th></tr></thead>
+<caption>Tabella 2. Quanto costa un tasso di crescita americano usato a livello globale</caption>
+<thead><tr><th>Stima della distanza</th><th class="num">USA meno resto del mondo</th><th class="num">Costo sul tasso globale</th></tr></thead>
 <tbody>
-<tr><td>AQR's published pair, implied</td><td class="num">0.28 points</td><td class="num">0.10 points</td></tr>
-<tr><td>MSCI, local currency, 2002 to 2024</td><td class="num">4.10 points</td><td class="num">1.48 points</td></tr>
-<tr><td>Jorda-Schularick-Taylor, 1870 onward</td><td class="num">not resolvable</td><td class="num">-</td></tr>
+<tr><td>Coppia pubblicata da AQR, implicita</td><td class="num">0,28 punti</td><td class="num">0,10 punti</td></tr>
+<tr><td>MSCI, valuta locale, dal 2002 al 2024</td><td class="num">4,10 punti</td><td class="num">1,48 punti</td></tr>
+<tr><td>Jorda-Schularick-Taylor, dal 1870</td><td class="num">non determinabile</td><td class="num">-</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">The global index is about 64% American, so an American growth
-rate is only wrong on the other 36%, and a gap of d points costs 0.36d on the
-global rate.</p>
+<p class="src">L'indice globale è americano per circa il 64%, quindi un tasso di
+crescita americano è sbagliato solo sull'altro 36%, e una distanza di d punti costa
+0,36d sul tasso globale.</p>
 
-<p><strong>The direction is settled and the size is not.</strong> Every
-estimate not built on a biased construction says the United States grew faster,
-so <strong>this growth term is too high</strong>. By how much, the two
-measurements in Table 2 put between 0.10 points, from AQR's pair, a lower bound
-because their construction narrows the gap, and 1.48 points, from MSCI's indices
-over 2002 to 2024, a short window in which the United States outgrew the rest by
-an unusual margin. This project reads the bias as a tenth to half a point, and
-that reading is a judgement, not a measurement. It matters: each tenth of a
-point of growth is worth about 1 to 3 points of equity share for an uncapped
-household at risk 5. The household of section 6, 45 years old with 30,000 euro
-of pay, 500,000 saved and risk 5, holds 51.5%; with the growth term a tenth of a
-point lower it would hold 49.9%, half a point lower 43.5%, and 1.48 points lower
-28.2%.</p>
+<p><strong>La direzione è certa, l'ampiezza no.</strong> Ogni stima che non poggia su
+una costruzione distorta dice che gli Stati Uniti sono cresciuti più in fretta, quindi
+<strong>questo termine di crescita è troppo alto</strong>. Di quanto, le due misure
+della Tabella 2 lo collocano tra 0,10 punti, dalla coppia di AQR, un limite inferiore
+perché la sua costruzione riduce la distanza, e 1,48 punti, dagli indici MSCI dal 2002
+al 2024, una finestra breve in cui gli Stati Uniti sono cresciuti più del resto del
+mondo con un margine insolito. Questo progetto stima la distorsione tra un decimo e
+mezzo punto, e questa stima è un giudizio, non una misura. Conta: ogni decimo di punto
+di crescita vale da 1 a 3 punti circa di quota in azioni per una famiglia con
+avversione 5 e risposta sotto il 100%. La famiglia della sezione 6, con 45 anni, 30.000
+euro di retribuzione, 500.000 di risparmi e avversione 5, detiene il 51,5%; con il
+termine di crescita più basso di un decimo di punto deterrebbe il 49,9%, di mezzo punto
+il 43,5%, e di 1,48 punti il 28,2%.</p>
 
-<p><strong>It is not corrected, and that is a decision rather than an
-oversight.</strong> Scaling by AQR's ratio looks principled and is not: they
-publish to one decimal place, and propagating that rounding through the 64%
-weight puts the implied gap anywhere between 0 and 0.56 points, which is 0 to
-0.20 points on the global rate. An adjustment less reliable than the thing it
-adjusts is not an improvement. One consolation is real: measured gross, as AQR
-measure theirs, the estimate this produces is already 0.35 points below their
-published figure for the same index, so the uncorrected growth term does not
-put it above the number the firms publish.</p>
+<p><strong>Non viene corretto, ed è una decisione, non una svista.</strong> Riscalare
+con il rapporto di AQR sembra rigoroso e non lo è: AQR pubblica con un solo decimale, e
+propagare quell'arrotondamento attraverso il peso del 64% colloca la distanza implicita
+in un punto qualsiasi tra 0 e 0,56 punti, cioè tra 0 e 0,20 punti sul tasso globale. Una
+correzione meno affidabile di ciò che corregge non è un miglioramento. Una consolazione
+c'è davvero: misurata al lordo, come AQR misura la sua, la stima che ne risulta è già
+0,35 punti sotto il dato che AQR pubblica per lo stesso indice, quindi il termine di
+crescita non corretto non la porta sopra il numero che pubblicano le società di
+gestione.</p>
 
-<h3 id="s4-3">4.3 Why not AQR's own figure</h3>
+<h3 id="s4-3">4.3 Perché non il dato di AQR</h3>
 
-<p>AQR's own figure, 4.20%, is not used, for a reason they give themselves:</p>
+<p>Il dato di AQR, 4,20%, non viene usato, per una ragione che AQR stessa indica:</p>
 
-<blockquote><p>We present local real (inflation-adjusted) and nominal annual
-compound rates of return <strong>for a horizon of 5 to 10 years</strong>. Over
-such intermediate horizons, starting valuations tend to be useful inputs. For
-multi-decade forecast horizons their impact is diluted, so theory and long-term
-historical averages may matter more in judging expected returns.</p></blockquote>
+<blockquote><p>Presentiamo tassi di rendimento annui composti, reali (corretti per
+l'inflazione) e nominali, in valuta locale, <strong>per un orizzonte da 5 a 10
+anni</strong>. Su questi orizzonti intermedi le valutazioni di partenza tendono a essere
+dati utili. Per orizzonti di previsione di più decenni il loro effetto si diluisce,
+quindi nel giudicare i rendimenti attesi possono contare di più la teoria e le medie
+storiche di lungo periodo.</p></blockquote>
 
-<p><strong>Both halves of their number are built to ten years, not to
-thirty.</strong> The payout half uses "a country-specific estimate of
-next-10-year real EPS growth". The earnings half multiplies the cyclically
-adjusted earnings yield by 1 + (g x 5) explicitly "to account for earnings
-growth during the 10-year window".</p>
+<p><strong>Entrambe le metà del suo numero sono costruite su dieci anni, non su
+trenta.</strong> La metà basata sulla distribuzione usa "una stima, specifica per paese,
+della crescita reale degli utili per azione nei prossimi 10 anni". La metà basata sugli
+utili moltiplica il rendimento degli utili corretto per il ciclo per 1 + (g x 5),
+esplicitamente "per tenere conto della crescita degli utili nella finestra di 10
+anni".</p>
 
-<p>A current yield compounded with a long-run growth rate, with no repricing,
-<strong>carries no horizon at all</strong>, because nothing in it forecasts when
-anything happens. It is the same number at ten years or at thirty. And Table 7
-of the American methodology shows it is also the one with the lowest error at
-thirty years, 2.25 root mean square error against 3.31 for the trailing
-earnings yield, which wins at ten and twenty and loses at thirty.</p>
+<p>Un rendimento corrente composto con un tasso di crescita di lungo periodo, senza
+variazione dei multipli, <strong>non ha alcun orizzonte</strong>, perché nulla in esso
+prevede quando accade qualcosa. È lo stesso numero a dieci anni o a trenta. E la
+Tabella 7 della metodologia americana mostra che è anche quello con l'errore più basso
+a trent'anni, con una radice dell'errore quadratico medio di 2,25 contro 3,31 per il
+rendimento degli utili degli ultimi dodici mesi, che vince a dieci e a vent'anni e perde
+a trenta.</p>
 
-<p><strong>A ten-year figure is also likely to be the lower one.</strong> Horizon Actuarial, who survey about
-forty advisors and split the answers into ten-year and twenty-year horizons,
-report that returns "are expected to be lower in the short term compared to the
-long term", with differences "relatively large for equities". Vanguard, the one
-firm publishing both horizons off a single model run, has its thirty-year
-United States forecast 0.9 points above its ten-year.</p>
+<p><strong>È anche probabile che un dato a dieci anni sia il più basso.</strong> Horizon
+Actuarial, che interpella una quarantina di consulenti e divide le risposte tra
+orizzonti a dieci e a vent'anni, riporta che i rendimenti "dovrebbero essere più bassi
+nel breve periodo che nel lungo", con differenze "relativamente ampie per le azioni".
+Vanguard, l'unica società che pubblica entrambi gli orizzonti da un'unica esecuzione del
+modello, ha la previsione a trent'anni per gli Stati Uniti 0,9 punti sopra quella a
+dieci.</p>
 
-<p>AQR's two headline halves, their combined payout yield and their combined
-growth, are compared with ours in section 2, from their report as of 31
-December 2025.</p>
+<p>Le due metà principali di AQR, il rendimento di distribuzione combinato e la crescita
+combinata, sono confrontate con le nostre nella sezione 2, dal suo rapporto al 31
+dicembre 2025.</p>
 
-<h3 id="s4-4">4.4 Is the pairing sound</h3>
+<h3 id="s4-4">4.4 L'abbinamento regge?</h3>
 
-<p>This variant pairs a <em>global</em> dividend yield with an
-<em>American</em> growth trend, and payout policy trades one against the other:
-a market that pays more of its earnings as dividends has a higher yield and
-correspondingly lower per-share growth. Mixing them would count the difference
-twice. It is the buyback double-count of the American document's section 3.1,
-one market over instead of one term over.</p>
+<p>Questa variante abbina un rendimento da dividendi <em>globale</em> a un trend di
+crescita <em>americano</em>, e la politica di distribuzione scambia l'uno con l'altro:
+un mercato che distribuisce come dividendi una parte maggiore degli utili ha un
+rendimento più alto e una crescita per azione corrispondentemente più bassa.
+Mescolarli conterebbe la differenza due volte. È il doppio conteggio dei riacquisti
+della sezione 3.1 del documento americano, spostato di un mercato invece che di un
+termine.</p>
 
-<p><strong>The earnings yield settles it, because E/P does not care how
-earnings are split</strong> between dividends, buybacks and retention. iShares,
-same provider and same methodology on both sides, 8 September 2026. The global
-earnings yield is taken net of the same 0.342 points of withholding as the
-estimate, so the two compare like with like; an American holder suffers none,
-so nothing comes off the American side:</p>
+<p><strong>Il rendimento degli utili risolve la questione, perché a E/P non importa
+come si dividono gli utili</strong> tra dividendi, riacquisti e utili trattenuti.
+iShares, stesso fornitore e stessa metodologia da entrambe le parti, 8 settembre 2026.
+Il rendimento degli utili globale è preso al netto degli stessi 0,342 punti di ritenuta
+della stima, così il confronto è omogeneo; un detentore americano non subisce ritenute,
+quindi dal lato americano non si toglie nulla:</p>
 
 <div class="tablewrap" id="t3">
 <table>
-<caption>Table 3. A payout-neutral check on a payout-sensitive construction</caption>
-<thead><tr><th></th><th class="num">Global, ACWI</th><th class="num">United States, IVV</th><th class="num">Gap</th></tr></thead>
+<caption>Tabella 3. Una verifica neutrale alla distribuzione su una costruzione sensibile alla distribuzione</caption>
+<thead><tr><th></th><th class="num">Globale, ACWI</th><th class="num">Stati Uniti, IVV</th><th class="num">Distanza</th></tr></thead>
 <tbody>
-<tr><td>Earnings yield, E/P</td><td class="num">3.915%</td><td class="num">3.278%</td><td class="num">+0.638</td></tr>
-<tr><td>The same, net of withholding</td><td class="num">3.573%</td><td class="num">3.278%</td><td class="num">+0.296</td></tr>
-<tr><td>This model's estimate, net</td><td class="num">3.505%</td><td class="num">3.408%</td><td class="num">+0.097</td></tr>
-<tr><td>Ours minus E/P, both net</td><td class="num">&minus;0.068</td><td class="num">+0.130</td><td class="num"></td></tr>
-<tr><td>Dividend payout ratio</td><td class="num">36.5%</td><td class="num">33.3%</td><td class="num"></td></tr>
+<tr><td>Rendimento degli utili, E/P</td><td class="num">3,915%</td><td class="num">3,278%</td><td class="num">+0,638</td></tr>
+<tr><td>Lo stesso, al netto della ritenuta</td><td class="num">3,573%</td><td class="num">3,278%</td><td class="num">+0,296</td></tr>
+<tr><td>Stima di questo modello, netta</td><td class="num">3,505%</td><td class="num">3,408%</td><td class="num">+0,097</td></tr>
+<tr><td>La nostra meno E/P, entrambe nette</td><td class="num">&minus;0,068</td><td class="num">+0,130</td><td class="num"></td></tr>
+<tr><td>Quota degli utili distribuita come dividendi</td><td class="num">36,5%</td><td class="num">33,3%</td><td class="num"></td></tr>
 </tbody>
 </table>
 </div>
 
-<p><strong>The concern is real and it is small, and it runs the other
-way.</strong> Global does pay out more of its earnings as dividends, 36.5%
-against 33.3%, so part of its yield advantage is policy rather than value:
-splitting the 0.340 point gap between the two funds' quoted yields, 1.43% and
-1.09%, gives 0.212 to valuation and 0.128 to payout policy. But on the payout-neutral measure, net of withholding, global
-offers 0.296 points more than the United States and this estimate credits it
-only 0.097, so <strong>the construction understates the global advantage by
-0.20 points rather than inflating it</strong>. Before withholding the two gaps
-are 0.638 and 0.447, and the difference is 0.19, nearly the same, because
-withholding comes off both global figures: 0.342 off the earnings yield, and
-0.350 off the estimate, where the yield is compounded with growth. On iShares'
-figures each variant also lands within 0.13 points of its own market's earnings
-yield, which is what soundness looks like: equation (5) and E/P coincide when
-retained earnings earn the cost of equity. That holds for one provider, not for
-every measure of earnings: the American methodology's own trailing earnings
-yield, from Shiller, is 3.96%, 0.56 points above the American estimate (its
-Table 5).
-So the comparison is offered within one provider and one date, which is what
-Table 3 is for.</p>
+<p><strong>Il problema è reale ed è piccolo, e va nella direzione opposta.</strong> Il
+mercato globale distribuisce davvero come dividendi una parte maggiore degli utili,
+36,5% contro 33,3%, quindi parte del suo vantaggio di rendimento è politica di
+distribuzione e non valore: dividendo la distanza di 0,340 punti tra i rendimenti
+dichiarati dei due fondi, 1,43% e 1,09%, 0,212 vanno alla valutazione e 0,128 alla
+politica di distribuzione. Ma sulla misura neutrale alla distribuzione, al netto della
+ritenuta, il mercato globale offre 0,296 punti più degli Stati Uniti e questa stima
+gliene riconosce solo 0,097, quindi <strong>la costruzione sottostima il vantaggio
+globale di 0,20 punti invece di gonfiarlo</strong>. Prima della ritenuta le due
+distanze sono 0,638 e 0,447, e la differenza è 0,19, quasi la stessa, perché la
+ritenuta si toglie da entrambi i dati globali: 0,342 dal rendimento degli utili e 0,350
+dalla stima, dove il rendimento è composto con la crescita. Sui dati di iShares,
+inoltre, ogni variante cade entro 0,13 punti dal rendimento degli utili del proprio
+mercato, ed è così che appare una costruzione solida: l'equazione (5) ed E/P coincidono
+quando gli utili trattenuti rendono quanto il costo del capitale proprio. Questo vale
+per un solo fornitore, non per ogni misura degli utili: il rendimento degli utili degli
+ultimi dodici mesi della metodologia americana, da Shiller, è 3,96%, 0,56 punti sopra
+la stima americana (la sua Tabella 5).
+Il confronto è quindi proposto entro un solo fornitore e una sola data, ed è a questo
+che serve la Tabella 3.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s5">5. The safe asset</h2>
+<h2 id="s5">5. L'attività sicura</h2>
 
-<p>The ECB's AAA euro area government curve at thirty years, read as a par
-yield, less the market break-even inflation rate of the longest German linker,
-the Bund/euro-i 2046.
-<strong>1.4709%</strong>. Why the rate is the AAA curve's, and why BTP are not the asset it
-describes, is set out below.</p>
+<p>La curva BCE dei titoli di Stato con rating AAA dell'area dell'euro a trent'anni, letta
+come rendimento alla pari, meno l'inflazione di break-even di mercato del titolo tedesco
+indicizzato all'inflazione più lungo, il Bund/euro-i 2046.
+<strong>1,4709%</strong>. Perché il tasso è quello della curva AAA, e perché i BTP non
+sono l'attività che descrive, è spiegato qui sotto.</p>
 
 <div class="tablewrap" id="t4">
 <table>
-<caption>Table 4. Three ways to build a euro real safe rate</caption>
-<thead><tr><th>Construction</th><th class="num">Rate</th><th>Constant 30 years</th><th>Free of forecasts</th></tr></thead>
+<caption>Tabella 4. Tre modi di costruire un tasso sicuro reale in euro</caption>
+<thead><tr><th>Costruzione</th><th class="num">Tasso</th><th>30 anni costanti</th><th>Senza previsioni</th></tr></thead>
 <tbody>
-<tr><td>Bund/euro-i 2046, traded real yield</td><td class="num">1.4906%</td><td>no, 19.6 years</td><td>yes</td></tr>
-<tr><td>ECB curve deflated by the SPF survey</td><td class="num">1.6883%</td><td>yes</td><td>no</td></tr>
-<tr><td colspan="4" class="sub">The two deflators, on the same nominal curve,
-a thirty-year par yield of 3.6906% continuously compounded and 3.7595% a
-year: market break-even <strong>2.2886%</strong>, ECB Survey of Professional
-Forecasters <strong>2.0369%</strong>. Today the break-even is the higher, by
-0.25 points. That order is a state of the market and not a rule: the gap is an
-inflation risk premium less a discount for the linker's thinner trading, and
-either can be the larger.</td></tr>
-<tr><td><strong>ECB curve less the market break-even</strong></td><td class="num"><strong>1.4709%</strong></td><td>yes</td><td>yes</td></tr>
+<tr><td>Bund/euro-i 2046, rendimento reale di mercato</td><td class="num">1,4906%</td><td>no, 19,6 anni</td><td>sì</td></tr>
+<tr><td>Curva BCE deflazionata con l'indagine SPF</td><td class="num">1,6883%</td><td>sì</td><td>no</td></tr>
+<tr><td colspan="4" class="sub">I due deflatori, sulla stessa curva nominale, con un
+rendimento alla pari a trent'anni del 3,6906% a capitalizzazione continua e del 3,7595%
+su base annua: break-even di mercato <strong>2,2886%</strong>, indagine della BCE presso
+i previsori professionali (Survey of Professional Forecasters, SPF)
+<strong>2,0369%</strong>. Oggi il break-even è il più alto, di 0,25 punti. Quest'ordine
+è uno stato del mercato e non una regola: la distanza è un premio per il rischio di
+inflazione meno uno sconto per i minori scambi del titolo indicizzato, e l'uno o l'altro
+può essere il maggiore.</td></tr>
+<tr><td><strong>Curva BCE meno il break-even di mercato</strong></td><td class="num"><strong>1,4709%</strong></td><td>sì</td><td>sì</td></tr>
 </tbody>
 </table>
 </div>
 
-<p><strong>Two conventions are matched before anything is subtracted.</strong>
-The ECB publishes its curves continuously compounded. Its technical notes say
-so, "The continuous method is used to compound interest rates", and give the
-par yield continuously compounded too. The model reads annual rates, so the
-thirty-year par yield of 3.6906% is first annualised, to 3.7595%. The American
-variant annualises DFII30 for the same reason, from the Treasury's semiannual
-quote. The Deutsche
-Finanzagentur defines its break-even as a simple yield difference between the
-linker and a conventional Bund, so it comes off by subtraction rather than
-being divided out: 3.7595% less 2.2886% is 1.4709%.</p>
+<p><strong>Due convenzioni vengono allineate prima di sottrarre qualsiasi cosa.</strong>
+La BCE pubblica le sue curve a capitalizzazione continua. Lo dicono le sue note
+tecniche, "per la capitalizzazione dei tassi di interesse si usa il metodo continuo", che
+danno a capitalizzazione continua anche il rendimento alla pari. Il modello legge tassi
+annui, quindi il rendimento alla pari a trent'anni del 3,6906% viene prima annualizzato,
+al 3,7595%. La variante americana annualizza DFII30 per la stessa ragione, partendo dalla
+quotazione semestrale del Tesoro americano. La Deutsche
+Finanzagentur definisce il suo break-even come una semplice differenza di rendimento tra
+il titolo indicizzato e un Bund ordinario, quindi va tolto per sottrazione e non per
+divisione: 3,7595% meno 2,2886% fa 1,4709%.</p>
 
-<p><strong>A par yield, not the spot rate.</strong> A par yield is the coupon
-a thirty-year bond priced at par would pay. It is the same kind of rate as
-DFII30, the thirty-year point of the Treasury's par real curve, and as the
-yields of the two bonds whose difference is the break-even. The spot rate, the zero-coupon rate, sits above the par yield
-whenever the long end of the curve slopes up: on this date by 0.07 points,
-3.7617% against 3.6906% continuously compounded. Read from the spot, the safe
-rate would be 1.5447% and the reference household's answer 1.6 points lower.</p>
+<p><strong>Un rendimento alla pari, non il tasso spot.</strong> Il rendimento alla pari
+è la cedola che pagherebbe un titolo a trent'anni quotato alla pari. È lo stesso tipo di
+tasso di DFII30, il punto a trent'anni della curva reale alla pari del Tesoro americano,
+e dei rendimenti dei due titoli la cui differenza è il break-even. Il tasso spot, cioè
+il tasso zero coupon, sta sopra il rendimento alla pari
+ogni volta che la parte lunga della curva sale: a questa data di 0,07 punti, 3,7617%
+contro 3,6906% a capitalizzazione continua. Letto dallo spot, il tasso sicuro sarebbe
+1,5447% e la risposta della famiglia di riferimento 1,6 punti più bassa.</p>
 
-<p><strong>Constant maturity is the property that matters</strong>, and it is
-the property FRED's DFII30 has. DFII30 is not a bond: it is the thirty-year
-point read off the TIPS curve every day, so it describes the same horizon at
-every refresh. The 2046 has 19.6 years left and one fewer every year, so within
-a decade it would have been quoting a fifteen-year horizon under a thirty-year
-label.</p>
+<p><strong>La proprietà che conta è la scadenza costante</strong>, ed è la proprietà
+che ha il DFII30 di FRED. DFII30 non è un titolo: è il punto a trent'anni letto ogni
+giorno sulla curva dei TIPS, quindi descrive lo stesso orizzonte a ogni aggiornamento.
+Al 2046 restano 19,6 anni, uno in meno ogni anno, quindi entro un decennio si
+troverebbe a quotare un orizzonte di quindici anni sotto l'etichetta dei trenta.</p>
 
-<p><strong>A break-even is a price, not a forecast.</strong> It is the rate at
-which holding the linker and holding a nominal bond pay the same. The Survey of
-Professional Forecasters is an opinion, and deflating by it puts an opinion
-inside a market rate. Divided out, the way a forecast of inflation is, it would
-give 1.6883% today, 0.22 points above the rate used and above the 2046's
-traded real yield, and it would lower the reference household's answer by 4.6
-points. On another day the survey could sit above the
-break-even and the error would run the other way; the reason to refuse it is
-the same either way.</p>
+<p><strong>Un break-even è un prezzo, non una previsione.</strong> È il tasso al quale
+detenere il titolo indicizzato e detenere un titolo nominale rendono lo stesso.
+L'indagine presso i previsori professionali è un'opinione, e deflazionare con essa
+mette un'opinione dentro un tasso di mercato. Tolta per divisione, come si fa con una
+previsione di inflazione, darebbe oggi 1,6883%, 0,22 punti sopra il tasso usato e sopra
+il rendimento reale di mercato del 2046, e abbasserebbe di 4,6 punti la risposta della
+famiglia di riferimento. Un altro giorno l'indagine potrebbe stare sopra il
+break-even e l'errore andrebbe nell'altro verso; la ragione per rifiutarla è la stessa
+in entrambi i casi.</p>
 
-<p><strong>The construction checks against itself, and comes close.</strong>
-The break-even is derived from the 2046, so subtracting it from a nominal yield
-should land near that bond's own traded real yield of 1.4906%. It gives
-1.4709%, about two hundredths of a point below. Because the break-even is a
-conventional Bund's yield less the 2046's real yield, what is left is the gap
-between the curve's thirty-year par yield and that Bund's yield, and that gap
-is two things: a thirty-year nominal leg against a 19.6-year inflation leg, and
-a composite of AAA issuers against Germany alone. A third, a zero-coupon rate
-against a coupon bond's yield, went with the spot rate. Nothing is fitted to
-close the gap. <strong>The check is external</strong>: the 1.4906% is the
-issuer's own published figure, from the Deutsche Finanzagentur, not a number
-this project computed. The weekly refresh repeats it and records the gap in the
-market file. When the gap passes 0.3 points, or the bond's yield cannot be
-read, the run turns red, which GitHub reports by e-mail, while the week's data
-are still published.</p>
+<p><strong>La costruzione si confronta con se stessa, e ci va vicino.</strong>
+Il break-even è ricavato dal 2046, quindi sottrarlo da un rendimento nominale dovrebbe
+dare un valore vicino al rendimento reale di mercato di quel titolo, 1,4906%. Dà
+1,4709%, circa due centesimi di punto sotto. Poiché il break-even è il rendimento di un
+Bund ordinario meno il rendimento reale del 2046, ciò che resta è la distanza tra il
+rendimento alla pari a trent'anni della curva e il rendimento di quel Bund, e quella
+distanza è fatta di due cose: una componente nominale a trent'anni contro una
+componente di inflazione a 19,6 anni, e un insieme di emittenti AAA contro la sola
+Germania. Una terza, un tasso zero coupon contro il rendimento di un titolo con cedola,
+è sparita insieme al tasso spot. Nulla viene stimato per chiudere la distanza.
+<strong>La verifica è esterna</strong>: l'1,4906% è il dato pubblicato dall'emittente
+stesso, la Deutsche Finanzagentur, non un numero calcolato da questo progetto.
+L'aggiornamento settimanale la ripete e registra la distanza nel file dei dati di
+mercato. Quando la distanza supera 0,3 punti, o il rendimento del titolo non si riesce a
+leggere, l'esecuzione diventa rossa, e GitHub lo segnala via e-mail, mentre i dati
+della settimana vengono comunque pubblicati.</p>
 
-<p><strong>AAA rather than every euro area government</strong>, whose par yield
-is 0.56 points higher at the same maturity. That spread is compensation for a
-government not paying; Merton's share, equation (4) of the American
-methodology, cannot represent default risk, and booking
-a credit premium as a risk-free return would lower the recommendation while
-looking prudent. An Italian household buying BTP is not holding this asset.</p>
+<p><strong>AAA, non tutti i governi dell'area dell'euro</strong>, il cui rendimento
+alla pari è 0,56 punti più alto alla stessa scadenza. Quello spread compensa il rischio
+che un governo non paghi; la quota di Merton, equazione (4) della metodologia
+americana, non può rappresentare il rischio di insolvenza, e registrare un premio per il
+rischio di credito come rendimento privo di rischio abbasserebbe la raccomandazione pur
+sembrando prudente. Una famiglia italiana che compra BTP non detiene questa
+attività.</p>
 
-<p><strong>Two honest weaknesses.</strong> The curve is a composite of all
-AAA-rated euro area governments rather than one issuer, and its membership
-changes with ratings, so it is not a constant object across time. And it tracks
-euro area HICP rather than Italian: only BTP Italia follows Italian inflation,
-at five years and retail.</p>
+<p><strong>Due debolezze, dichiarate apertamente.</strong> La curva è un insieme di tutti
+i governi dell'area dell'euro con rating AAA, non un solo emittente, e la sua
+composizione cambia con i rating, quindi non è un oggetto costante nel tempo. E segue
+l'IAPC dell'area dell'euro, non l'inflazione italiana: solo il BTP Italia segue
+l'inflazione italiana, a cinque anni e per i risparmiatori.</p>
 
-<p><strong>How much the answer moves with it.</strong> Each tenth of a point of
-the safe rate, the expected return held where it is, moves the answer by about
-4% of itself: 2 points on an answer near 50%, about 1 on one near 25%. The
-American answer moves by about 5% of itself, so the Italian one is not the more
-sensitive; it moves more points only because it is larger. Most of the move is
-Merton's: the share is proportional to the premium, and a tenth of a point on
-the safe rate is a tenth of a point off the premium. A direct solution of the
-full Cocco, Gomes and Maenhout model run for this project (not published), on
-this variant's calibration and the snapshot of 8 September, moves by the same
-amount: within 0.2 points on average at a risk aversion of 5 and 0.1 at 8,
-across sixteen households aged 30 to 62 with ten to thirty years of pay saved.</p>
+<p><strong>Quanto si muove la risposta con il tasso.</strong> Ogni decimo di punto di
+tasso sicuro, a rendimento atteso invariato, muove la risposta di circa il 4% del suo
+valore: 2 punti su una risposta vicina al 50%, circa 1 su una vicina al 25%. La
+risposta americana si muove di circa il 5% del suo valore, quindi quella italiana non è
+la più sensibile; si muove di più punti solo perché è più grande. Gran parte del
+movimento viene da Merton: la quota è proporzionale al premio, e un decimo di punto in
+più sul tasso sicuro è un decimo di punto in meno sul premio. Una soluzione diretta del
+modello completo di Cocco, Gomes e Maenhout calcolata per questo progetto (non
+pubblicata), sulla calibrazione di questa variante e sui dati dell'8 settembre, si
+muove della stessa quantità: in media entro 0,2 punti con avversione al rischio 5 ed
+entro 0,1 con avversione 8, su sedici famiglie tra i 30 e i 62 anni con da dieci a
+trenta anni di retribuzione risparmiati.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s6">6. Volatility</h2>
+<h2 id="s6">6. La volatilità</h2>
 
-<p><strong>16.4545%, fixed.</strong> Choi, Liu and Liu's estimator, the
-annualised standard deviation of monthly log returns, on MSCI All Country World
-in euro, gross, from January 2001 to August 2026, run from every day of the
-month and averaged. Each of the days 1 to 28 gives one series of monthly
-returns, each month's level being the last one on or before that day; the
-figure used is the square root of the average of the 28 variances.
-<code>tools/italy_volatility.py</code> computes it from MSCI's daily index
-levels. Choi's 18.5% is that estimator on month-end CRSP value-weighted log
-returns from July 1926 to July 2024; theirs are in excess of the one-month
-Treasury bill and this one is on total rather than excess returns. Like theirs
-it is one number for a whole life, which is how they and Cocco, Gomes and
-Maenhout treat volatility. It is priced in euro, so it already carries the
-currency risk an unhedged global fund gives a euro investor without anything
-further being done to it.</p>
+<p><strong>16,4545%, fissa.</strong> Lo stimatore di Choi, Liu e Liu, la deviazione
+standard annualizzata dei rendimenti logaritmici mensili, sull'MSCI All Country World
+in euro, gross, da gennaio 2001 ad agosto 2026, calcolato partendo da ogni giorno del
+mese e poi mediato. Ciascuno dei giorni da 1 a 28 dà una serie di rendimenti mensili,
+in cui il livello di ogni mese è l'ultimo disponibile in quel giorno o prima; il dato
+usato è la radice quadrata della media delle 28 varianze.
+<code>tools/italy_volatility.py</code> lo calcola dai livelli giornalieri degli indici
+MSCI. Il 18,5% di Choi è quello stimatore applicato ai rendimenti logaritmici di fine
+mese dell'indice CRSP ponderato per capitalizzazione, da luglio 1926 a luglio 2024; i
+loro sono in eccesso rispetto al Treasury bill a un mese, mentre questo è calcolato sui
+rendimenti totali e non in eccesso. Come il loro, è un solo numero per tutta la vita, ed è
+così che loro e Cocco, Gomes e Maenhout trattano la volatilità. È espresso in euro,
+quindi contiene già il rischio di cambio che un fondo globale senza copertura dà a un
+investitore in euro, senza bisogno di altri interventi.</p>
 
-<p><strong>Why every day of the month.</strong> On this index over these
-twenty-five years the day matters. The 28 figures run from 14.32% (day 1) to
-18.40% (day 23). Month-end to month-end gives 13.99%, lower than any of them,
-because the crashes of 2008 and 2020 each fell across two month-ends. Read from one
-month-end to the next, the fall of February and March 2020 is two months of
-&minus;7.2% and &minus;13.3%, with the rebound at the end of March already
-inside the second; read from the 23rd, it is one month of &minus;32.2%. The fall
-of September and October 2008 is &minus;8.2% and &minus;11.2% at month-end, and
-&minus;19.7% in one month from the 16th. No day is a better place to start than
-another, so the average is used. Over a long sample the choice hardly matters:
-on the S&amp;P 500 from 1928 to 2026, month-end gives 18.5% and the average of
-the 28 days 18.8%, which is why Choi's figure needs no such treatment.</p>
+<p><strong>Perché ogni giorno del mese.</strong> Su questo indice e in questi
+venticinque anni il giorno conta. I 28 dati vanno dal 14,32% (giorno 1) al 18,40%
+(giorno 23). Da fine mese a fine mese si ottiene 13,99%, meno di tutti, perché i crolli
+del 2008 e del 2020 sono caduti ciascuno a cavallo di due fine mese. Letto da una fine
+mese all'altra, il crollo di febbraio e marzo 2020 è fatto di due mesi, &minus;7,2% e
+&minus;13,3%, con il rimbalzo di fine marzo già dentro il secondo; letto dal 23, è un
+solo mese di &minus;32,2%. Il crollo di settembre e ottobre 2008 è &minus;8,2% e
+&minus;11,2% a fine mese, e &minus;19,7% in un solo mese partendo dal 16. Nessun giorno
+è un punto di partenza migliore di un altro, quindi si usa la media. Su un campione
+lungo la scelta conta poco: sull'S&amp;P 500 dal 1928 al 2026, la fine mese dà 18,5% e
+la media dei 28 giorni 18,8%, ed è per questo che il dato di Choi non ha bisogno di
+questo trattamento.</p>
 
-<p><strong>Why fixed.</strong> A volatility measured over a trailing five-year window jumps when a crash enters or leaves it. In
-February and March 2025 the crash of February and March 2020 left the window:
-the five-year figure fell from 16.7% to 14.6% in five weeks, with no change in
-long-run risk.
-On this document's market figures that alone moves the answer for an uncapped
-household (45 years old, 30,000 euro of pay, 500,000 saved, risk 5) by nine
-points, from 50.6% to 59.8%.</p>
+<p><strong>Perché fissa.</strong> Una volatilità misurata su una finestra mobile di
+cinque anni salta quando un crollo entra o esce dalla finestra. A febbraio e marzo 2025
+il crollo di febbraio e marzo 2020 è uscito dalla finestra: il dato a cinque anni è
+sceso dal 16,7% al 14,6% in cinque settimane, senza alcun cambiamento nel rischio di
+lungo periodo.
+Con i dati di mercato di questo documento, questo da solo sposta di nove punti la
+risposta di una famiglia sotto il 100% (45 anni, 30.000 euro di retribuzione, 500.000
+di risparmi, avversione 5), dal 50,6% al 59,8%.</p>
 
-<p><strong>Against published assumptions it sits in the middle.</strong>
-Horizon Actuarial's 2024 survey of 41 advisors gives 16.5% for United States
-large cap and 18.1% for non-US developed, both in dollars. J.P. Morgan's 2026
-assumptions for a euro investor give 14.38% for AC World. Those figures differ
-by currency and by window, so the effect of each was measured on one set of
-indices over one period:</p>
+<p><strong>Rispetto alle ipotesi pubblicate sta nel mezzo.</strong> L'indagine 2024 di
+Horizon Actuarial su 41 consulenti dà 16,5% per le large cap degli Stati Uniti e 18,1%
+per i mercati sviluppati esclusi gli Stati Uniti, entrambi in dollari. Le ipotesi 2026
+di J.P. Morgan per un investitore in euro danno 14,38% per l'AC World. Questi dati
+differiscono per valuta e per finestra, quindi l'effetto di ciascuna è stato misurato
+su un solo insieme di indici in un solo periodo:</p>
 
 <div class="tablewrap" id="t5">
 <table>
-<caption>Table 5. Annualised volatility of MSCI monthly gross total returns,
-measured from every day of the month and averaged, by currency and window, with
-month-end alone beside it</caption>
-<thead><tr><th>Index and currency</th><th class="num">Every day, 2001 to 2026</th><th class="num">Every day, last 20 years</th><th class="num">Every day, last 5 years</th><th class="num">Month-end only, 2001 to 2026</th></tr></thead>
+<caption>Tabella 5. Volatilità annualizzata dei rendimenti totali mensili gross degli
+indici MSCI, misurata partendo da ogni giorno del mese e mediata, per valuta e finestra,
+con accanto la sola fine mese</caption>
+<thead><tr><th>Indice e valuta</th><th class="num">Ogni giorno, dal 2001 al 2026</th><th class="num">Ogni giorno, ultimi 20 anni</th><th class="num">Ogni giorno, ultimi 5 anni</th><th class="num">Solo fine mese, dal 2001 al 2026</th></tr></thead>
 <tbody>
-<tr><td><strong>ACWI in euro</strong></td><td class="num"><strong>16.45%</strong></td><td class="num">16.07%</td><td class="num">13.21%</td><td class="num">13.99%</td></tr>
-<tr><td>ACWI in dollars</td><td class="num">17.26%</td><td class="num">17.60%</td><td class="num">14.58%</td><td class="num">15.72%</td></tr>
-<tr><td>MSCI USA in euro</td><td class="num">17.54%</td><td class="num">16.96%</td><td class="num">15.29%</td><td class="num">14.93%</td></tr>
-<tr><td>MSCI USA in dollars</td><td class="num">17.03%</td><td class="num">17.16%</td><td class="num">15.64%</td><td class="num">15.32%</td></tr>
+<tr><td><strong>ACWI in euro</strong></td><td class="num"><strong>16,45%</strong></td><td class="num">16,07%</td><td class="num">13,21%</td><td class="num">13,99%</td></tr>
+<tr><td>ACWI in dollari</td><td class="num">17,26%</td><td class="num">17,60%</td><td class="num">14,58%</td><td class="num">15,72%</td></tr>
+<tr><td>MSCI USA in euro</td><td class="num">17,54%</td><td class="num">16,96%</td><td class="num">15,29%</td><td class="num">14,93%</td></tr>
+<tr><td>MSCI USA in dollari</td><td class="num">17,03%</td><td class="num">17,16%</td><td class="num">15,64%</td><td class="num">15,32%</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">MSCI's daily gross index levels. The windows end in August 2026;
-the last 20 and 5 years are 240 and 60 monthly returns. The figure used is the
-first cell, 16.4545% before rounding.</p>
+<p class="src">Livelli giornalieri gross degli indici MSCI. Le finestre finiscono ad
+agosto 2026; gli ultimi 20 e 5 anni sono 240 e 60 rendimenti mensili. Il dato usato è la
+prima cella, 16,4545% prima dell'arrotondamento.</p>
 
-<p><strong>Three things follow, and all are measurements.</strong> Month-end is
-the low outlier on every series: each month-end figure is below all 28 of that
-series' figures from single days of the month. The currency takes 0.81 points off the world index for a euro
-holder, 16.45% against 17.26% in dollars, so the dollar tends to rise against
-the euro when world equities fall; month-end returns make that look like 1.73
-points. For the American index alone the offset is smaller than the currency's
-own swings, and it is 0.51 points more volatile in euro than in dollars. And
-the long window is the one to use: twenty and twenty-five years give 16.07% and
-16.45%, while the last five, which were calm, give 13.21%, three points lower.
-How much rests on the level itself, and why it is a judgement rather than a
-measurement anyone can check, is in section 11.</p>
+<p><strong>Ne seguono tre cose, e sono tutte misure.</strong> La fine mese è il valore
+anomalo verso il basso su ogni serie: ogni dato di fine mese è sotto tutti i 28 dati
+della stessa serie calcolati partendo dai singoli giorni del mese. La valuta toglie 0,81
+punti all'indice mondiale per chi investe in euro, 16,45% contro 17,26% in dollari, quindi
+il dollaro tende a salire rispetto all'euro quando le azioni mondiali scendono; con i
+rendimenti di fine mese sembrerebbero 1,73 punti. Per il solo indice americano la
+compensazione è più piccola delle oscillazioni della valuta stessa, e in euro è 0,51
+punti più volatile che in dollari. E la finestra da usare è quella lunga: venti e
+venticinque anni danno 16,07% e 16,45%, mentre gli ultimi cinque, che sono stati
+tranquilli, danno 13,21%, tre punti in meno. Quanto dipende dal livello stesso, e perché
+è un giudizio e non una misura che chiunque possa verificare, è nella sezione 11.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s7">7. The career and the pension</h2>
+<h2 id="s7">7. La carriera e la pensione</h2>
 
-<p><strong>The household is an Italian private-sector employee.</strong>
-Valuing future earnings takes three things: how pay moves with age, how much it
-can move by surprise, and the pension at the end. All three are Italian
-estimates of that one person, set in <code>ITALY_CALIBRATION</code> rather than
-in the market data because they belong to the household and the state, not to
-the market.</p>
+<p><strong>La famiglia è un lavoratore dipendente italiano del settore privato.</strong>
+Per dare un valore ai redditi futuri servono tre cose: come cambia la retribuzione con
+l'età, quanto può cambiare per sorpresa e la pensione alla fine. Tutte e tre sono stime
+italiane per quella persona, fissate in <code>ITALY_CALIBRATION</code> e non nei dati
+di mercato perché appartengono alla famiglia e allo Stato, non al mercato.</p>
 
-<p><strong>The TFR is in neither estimate, so the page asks for it.</strong>
-Under article 2120 of the codice civile the employer sets aside each year the
-year's pay divided by 13.5, which is 6.91% of gross pay once the 0.5%
-contribution of law 297 of 1982 comes off it, revalues it every year at 1.5%
-plus three quarters of inflation, and pays it when the job ends, when it is
-taxed separately (TUIR, articles 17 and 19). Daminato and Padula do not mention the TFR: their earnings
-are each year's pay as reported in the Bank of Italy survey, which this
-document takes to exclude the accrual, and the Ragioneria's 66.4% is the public pension alone, on pay without the TFR. The page
-asks for it twice: the year's accrual after its tax goes in the wage, about
-7.5% of net pay, and what has already accrued goes in savings, counted at
-about three quarters for the tax still to come. Because the wage then carries
-the accrual, the pension is restated on that base, 0.664 / 1.075 = 61.8% of it
-(section 7.2). TFR left with the employer is part of the safe share, so the
-percentage applies to the total and all the equity goes in the rest. This is the rule of Choi, Liu and Liu's guide for an employer's
-retirement contributions, which go in the wage, applied to Italy, and an
-employer's contribution to a pension fund goes in the wage the same way, at
-the nine tenths the next paragraph explains.</p>
+<p><strong>Il TFR non è in nessuna delle due stime, quindi la pagina lo chiede.</strong>
+In base all'articolo 2120 del codice civile il datore di lavoro accantona ogni anno la
+retribuzione dell'anno divisa per 13,5, cioè il 6,91% della retribuzione lorda una volta
+tolto il contributo dello 0,5% della legge 297 del 1982, lo rivaluta ogni anno dell'1,5%
+più tre quarti dell'inflazione e lo paga alla fine del rapporto di lavoro, quando è
+soggetto a tassazione separata (TUIR, articoli 17 e 19). Daminato e Padula non menzionano il TFR: i loro redditi
+sono la retribuzione di ogni anno come riportata nell'indagine della Banca d'Italia, che
+questo documento assume escluda l'accantonamento, e il 66,4% della Ragioneria è la sola pensione pubblica, sulla retribuzione senza TFR. La pagina
+lo chiede due volte: l'accantonamento dell'anno al netto della sua imposta va nello
+stipendio, circa il 7,5% del netto, e quanto già maturato va nel patrimonio, contato per
+circa tre quarti per l'imposta ancora da pagare. Poiché lo stipendio comprende allora
+l'accantonamento, la pensione viene riespressa su quella base, 0,664 / 1,075 = 61,8%
+(sezione 7.2). Il TFR lasciato in azienda fa parte della quota sicura, quindi la
+percentuale si applica al totale e tutte le azioni vanno nel resto. È la regola della guida di Choi, Liu e Liu per i contributi
+previdenziali del datore di lavoro, che vanno nello stipendio, applicata all'Italia, e
+un contributo del datore di lavoro a un fondo pensione va nello stipendio allo stesso
+modo, ai nove decimi spiegati nel paragrafo seguente.</p>
 
-<p><strong>Pension funds count at about nine tenths</strong>, and so does TFR
-paid into one. Their benefits are taxed at 15%, less 0.3 points for each year
-of membership beyond the fifteenth, down to 9% (D.Lgs. 252/2005, article 11,
-paragraph 6), and only on the part not already taxed inside the fund. Counted at three quarters instead, a fund of 60,000 to 150,000
-euro would raise the answer by up to about 3 points.</p>
+<p><strong>I fondi pensione contano per circa nove decimi</strong>, e così il TFR
+versato in un fondo. Le loro prestazioni sono tassate al 15%, meno 0,3 punti per ogni
+anno di partecipazione oltre il quindicesimo, fino al 9% (D.Lgs. 252/2005, articolo 11,
+comma 6), e solo sulla parte non già tassata dentro il fondo. Contato invece per tre quarti, un fondo da 60.000 a 150.000
+euro alzerebbe la risposta fino a circa 3 punti.</p>
 
-<h3 id="s7-1">7.1 The career</h3>
+<h3 id="s7-1">7.1 La carriera</h3>
 
-<p><strong>From Daminato and Padula</strong>, published in the <em>Journal of
-the European Economic Association</em> (2024), with the estimates used here
-from Table 7 of the 2020 working paper version, CSEF 585; the journal puts its
-own in an online appendix. It is the earnings process of Italian private-sector
-employees, estimated on the Bank of Italy's Survey on Household Income and
-Wealth from 1986 to 2008, for a life-cycle model of saving and portfolio choice
-of the same family as Choi's. They estimate the ingredients of Cocco, Gomes and
-Maenhout's form, a cubic in age and the variances of permanent and transitory
-shocks, which is the form this model takes; their own model keeps only the
-permanent shock and treats the transitory one as mostly measurement error.
-They say they use Jappelli and Pistaferri's (2010) definition of earnings,
-which is after income tax, the same basis as the after-tax wage the page asks
-for, though their model section calls the variable gross labour earnings.</p>
+<p><strong>Da Daminato e Padula</strong>, pubblicato nel <em>Journal of the European
+Economic Association</em> (2024), con le stime usate qui prese dalla Tabella 7 della
+versione working paper del 2020, CSEF 585; la rivista riporta le proprie in
+un'appendice online. È il processo dei redditi da lavoro dei dipendenti italiani del
+settore privato, stimato sull'Indagine sui bilanci delle famiglie italiane della Banca
+d'Italia dal 1986 al 2008, per un modello del ciclo di vita del risparmio e delle scelte
+di portafoglio della stessa famiglia di quello di Choi. Gli autori stimano gli
+ingredienti della forma di Cocco, Gomes e Maenhout, un polinomio di terzo grado nell'età
+e le varianze degli shock permanenti e transitori, che è la forma che prende questo
+modello; il loro modello conserva solo lo shock permanente e tratta quello transitorio
+come in gran parte errore di misura. Dicono di usare la definizione di reddito di
+Jappelli e Pistaferri (2010), che è al netto dell'imposta sul reddito, la stessa base
+dello stipendio netto che chiede la pagina, anche se la sezione del loro modello chiama
+la variabile reddito da lavoro lordo.</p>
 
 <div class="tablewrap">
 <table>
-<caption>Table 6. The career, Italian against American</caption>
-<thead><tr><th></th><th class="num">Italian private employee</th><th class="num">American college graduate</th></tr></thead>
+<caption>Tabella 6. La carriera, italiana contro americana</caption>
+<thead><tr><th></th><th class="num">Dipendente privato italiano</th><th class="num">Laureato americano</th></tr></thead>
 <tbody>
-<tr><td>Permanent pay shocks, standard deviation</td><td class="num">12.3%</td><td class="num">13.0%</td></tr>
-<tr><td>Temporary pay shocks, standard deviation</td><td class="num">15.4%</td><td class="num">24.2%</td></tr>
-<tr><td>Typical pay from 45 to 60</td><td class="num">+22%</td><td class="num">&minus;16%</td></tr>
+<tr><td>Shock permanenti alla retribuzione, deviazione standard</td><td class="num">12,3%</td><td class="num">13,0%</td></tr>
+<tr><td>Shock temporanei alla retribuzione, deviazione standard</td><td class="num">15,4%</td><td class="num">24,2%</td></tr>
+<tr><td>Retribuzione tipica dai 45 ai 60 anni</td><td class="num">+22%</td><td class="num">&minus;16%</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">Sources: Daminato and Padula, Table 7 of working paper CSEF 585
-(2020), private employees; Cocco, Gomes and Maenhout (2005), college
-graduates.</p>
+<p class="src">Fonti: Daminato e Padula, Tabella 7 del working paper CSEF 585
+(2020), dipendenti privati; Cocco, Gomes e Maenhout (2005), laureati.</p>
 
-<p><strong>Why it fits this model.</strong> The permanent shock enters Choi's
-discount rate as a regressor, and 12.3% sits inside the 10.2% to 13.0% he
-fitted over. The temporary shock is below his range, but its coefficient is
-0.028 and it moves the rate by a tenth of a point. The age profile is not a
-regressor: it sets the wages being discounted. It still shapes the rates
-indirectly, because Choi fitted them on three American profiles that rise far
-faster when young, 3.5% to 9.3% a year at 25 against 1.8% for the Italian one,
-and his footnote 10 reports that a flat profile gives flat discount rates in
-the first half of working life. Choi's own worked example, section 3.3 of the
-paper, uses an earnings path outside his fitted set and lands within 3 points
-of the full solution. For the Italian process the same test was run: a direct
-solution of the full Cocco, Gomes and Maenhout model run for this project (not
-published), with Daminato and Padula's earnings process and this document's
-snapshot, puts the formula within about 5 points of it at every age from 25 to
-65 and at risk 5 and 8, except just below 100%, where it runs up to about 7
-points high. With fifteen or more years of pay saved it runs 2 to 5.5 points
-low.</p>
+<p><strong>Perché si adatta a questo modello.</strong> Lo shock permanente entra nel
+tasso di sconto di Choi come regressore, e il 12,3% sta dentro l'intervallo dal 10,2% al
+13,0% su cui Choi ha stimato. Lo shock temporaneo è sotto il suo intervallo, ma il suo
+coefficiente è 0,028 e muove il tasso di un decimo di punto. Il profilo per età non è un
+regressore: determina i salari che vengono scontati. Influisce comunque sui tassi in
+modo indiretto, perché Choi li ha stimati su tre profili americani che crescono molto
+più in fretta da giovani, dal 3,5% al 9,3% l'anno a 25 anni contro l'1,8% di quello
+italiano, e la sua nota 10 riporta che un profilo piatto dà tassi di sconto piatti nella
+prima metà della vita lavorativa. L'esempio svolto dallo stesso Choi, nella sezione 3.3
+dell'articolo, usa un percorso dei redditi fuori dall'insieme su cui ha stimato e arriva
+entro 3 punti dalla soluzione completa. Per il processo italiano si è fatta la stessa
+prova: una soluzione diretta del modello completo di Cocco, Gomes e Maenhout calcolata
+per questo progetto (non pubblicata), con il processo dei redditi di Daminato e Padula e
+i dati di questo documento, colloca la formula entro circa 5 punti da essa a ogni età
+dai 25 ai 65 anni e con avversione 5 e 8, tranne appena sotto il 100%, dove la formula
+sta fino a circa 7 punti sopra. Con quindici o più anni di retribuzione risparmiati sta
+da 2 a 5,5 punti sotto.</p>
 
-<p><strong>The checks.</strong> In the working paper, Daminato and Padula
-report that their permanent variance falls inside the 95% bands of Jappelli
-and Pistaferri (2010), estimated on the same survey. Those bands are for
-household disposable income and are published only as a chart, so this check
-rests on their reading.</p>
+<p><strong>Le verifiche.</strong> Nel working paper, Daminato e Padula riportano che la
+loro varianza permanente cade dentro le bande al 95% di Jappelli e Pistaferri (2010),
+stimate sulla stessa indagine. Quelle bande riguardano il reddito disponibile delle
+famiglie e sono pubblicate solo come grafico, quindi questa verifica si basa sulla loro
+lettura.</p>
 
-<p><strong>The age profile is the weaker part.</strong> Their age coefficients
-are imprecise one by one, and the cube is printed to one significant digit,
-&minus;0.000006. Checked against the INPS Osservatorio on private employees for
-2024, which counts contributions rather than surveying households, it rises
-about twice as fast: <strong>+19.7%</strong> from 47 to 62 on their profile,
-against <strong>+10.2%</strong> in men's gross pay per paid day (annual pay
-over paid days, Prospetto 2) from 45-49 to 60-64.
-The two are not the same object, since INPS is one year's cross-section of
-gross pay rather than one generation's pay after tax, but both rise where the
-American graduate's pay falls. So the direction is settled and the slope is
-less certain. It matters most to the young: at risk 5 a profile half as steep
-lowers the answer by up to about 10 points at 25 and 4 points at 49, the most
-for savings near where the answer leaves 100%, about 5.6 to 6.7 times pay, and
-less above that. Below about 5.3 times pay the answer is 100% either way.</p>
+<p><strong>Il profilo per età è la parte più debole.</strong> I loro coefficienti
+dell'età sono imprecisi uno per uno, e il termine cubico è stampato con una sola cifra
+significativa, &minus;0,000006. Confrontato con l'Osservatorio INPS sui dipendenti
+privati per il 2024, che conta i contributi invece di intervistare famiglie, cresce
+circa il doppio: <strong>+19,7%</strong> dai 47 ai 62 anni sul loro profilo, contro
+<strong>+10,2%</strong> nella retribuzione lorda degli uomini per giornata retribuita
+(retribuzione annua divisa per le giornate retribuite, Prospetto 2) dalla classe 45-49
+alla classe 60-64.
+Le due non sono la stessa grandezza, perché quella dell'INPS è una sezione trasversale
+di un solo anno di retribuzioni lorde e non la retribuzione netta di una generazione, ma
+entrambe salgono dove la retribuzione del laureato americano scende. Quindi la direzione
+è certa e la pendenza meno. Conta soprattutto per i giovani: con avversione 5 un profilo
+con metà della pendenza abbassa la risposta fino a circa 10 punti a 25 anni e 4 punti a
+49, di più per risparmi vicini al punto in cui la risposta scende dal 100%, circa da 5,6
+a 6,7 volte la retribuzione, e di meno oltre. Sotto circa 5,3 volte la retribuzione la
+risposta è 100% in entrambi i casi.</p>
 
-<p><strong>Whom it describes.</strong> Married household heads employed in the
-private or public sector, of working age (25 to 58 in the published sample;
-the working paper drops heads over 60), of every education level; this
-variant uses the private-sector estimates, the larger group. The
-self-employed, whose income is riskier, are outside it, and so is any split by
-education.</p>
+<p><strong>A chi si riferisce.</strong> Capifamiglia sposati, dipendenti del settore privato o
+pubblico, in età lavorativa (dai 25 ai 58 anni nel campione pubblicato; il working paper
+esclude i capifamiglia sopra i 60 anni), di ogni livello di istruzione; questa variante
+usa le stime per il settore privato, il gruppo più numeroso. I lavoratori autonomi, il
+cui reddito è più rischioso, ne restano fuori, e così qualsiasi distinzione per livello
+di istruzione.</p>
 
-<h3 id="s7-2">7.2 The pension</h3>
+<h3 id="s7-2">7.2 La pensione</h3>
 
-<p><strong>62%</strong> of the wage the page asks for, 61.8% exactly. It is the
-Ragioneria Generale dello Stato's projected net replacement rate, 66.4%, for a
-private employee on the average wage with no dependent spouse, who retires in
-2050 at 66 years and 3 months with 38 years of contributions:
+<p><strong>62%</strong> dello stipendio che chiede la pagina, 61,8% per l'esattezza. È
+il tasso di sostituzione netto previsto dalla Ragioneria Generale dello Stato, 66,4%,
+per un dipendente privato con retribuzione media, senza coniuge a carico, che va in
+pensione nel 2050 a 66 anni e 3 mesi con 38 anni di contributi:
 Ragioneria Generale dello Stato, <em>Le tendenze di medio-lungo periodo del
-sistema pensionistico e socio-sanitario</em>, Rapporto n. 27 (2026), Table
-6.3.a, base case. Net means after tax and contributions, the basis of the
-after-tax wage the page asks for. The net rate rises with pay from half the
-average to one and a half times it and is roughly stable above that; the
-report gives that only as a chart, so the page uses the average earner's rate
-for everyone. And the 66.4% is a share of the final net pay
-without the TFR, and the page asks for the wage with the year's TFR accrual
-added, about 7.5% of net pay (section 7). On that base the same pension is
-0.664 / 1.075 = 61.8% of the wage the model projects, and that is the rate in
+sistema pensionistico e socio-sanitario</em>, Rapporto n. 27 (2026), Tabella
+6.3.a, scenario base. Netto significa al netto di imposte e contributi, la base dello
+stipendio netto che chiede la pagina. Il tasso netto sale con la retribuzione da metà
+della media a una volta e mezza la media ed è più o meno stabile oltre; il rapporto lo
+mostra solo in un grafico, quindi la pagina usa per tutti il tasso del lavoratore con
+retribuzione media. Inoltre il 66,4% è una quota dell'ultima retribuzione netta
+senza TFR, mentre la pagina chiede lo stipendio con l'accantonamento TFR dell'anno,
+circa il 7,5% del netto (sezione 7). Su quella base la stessa pensione è
+0,664 / 1,075 = 61,8% dello stipendio che il modello proietta, ed è questo il tasso in
 <code>ITALY_CALIBRATION</code>.</p>
 
-<p><strong>Why that row.</strong> Choi fitted his coefficients on retirement
-at 67, and the page retires everyone there unless a different working life is
-typed year by year; 2050 is within two years of when today's 45-year-old
-reaches 67. The
-same table gives 63% to 65% for its other cases near 67 from 2050 on, and 73.5%
-for an old-age retirement at 69, so 66.4% is within a few points of what a
-retirement at 67 would get; the table has no such case.</p>
+<p><strong>Perché quella riga.</strong> Choi ha stimato i suoi coefficienti con il
+pensionamento a 67 anni, e la pagina manda tutti in pensione a quell'età, a meno che non
+si inserisca anno per anno una vita lavorativa diversa; il 2050 è entro due anni da
+quando chi oggi ha 45 anni compirà 67 anni. La
+stessa tabella dà dal 63% al 65% per gli altri suoi casi vicini ai 67 anni dal 2050 in
+poi, e il 73,5% per una pensione di vecchiaia a 69 anni, quindi il 66,4% è entro pochi
+punti da ciò che otterrebbe un pensionamento a 67 anni; la tabella non ha questo
+caso.</p>
 
-<p><strong>Whom it understates.</strong> The same row of Table 6.3.a gives
-77.5% for a retirement in 2030 at 67 years and 6 months and 67.9% for one in
-2040 at 65 years and 5 months, which are 72.1% and 63.2% on the page's base.
-The model uses 61.8% for everyone, so it understates
-the pension of anyone retiring before about 2040. For an uncapped household at
-risk 5 that understates the answer by up to about 9 points for a retirement in
-2030. The 2040 case retires two years before the model does, and a retirement
-at 67 that year would get more, so the understatement fades after 2040 rather
-than by it. Someone within ten years of retirement
-can do better than any table, and the page's pension hint says so: INPS's own
-estimate, "La mia pensione futura", converted to net, is more precise than 62%.
-It goes in the pension field with the age it starts from and the tick for the
-INPS old-age pension, so it replaces the imputed one. It is still an estimate
-that the rest of the career can move, so it is discounted as the imputed
-pension is, on the wage rates until work ends: at the same amount it leaves the
-answer where it was, and what it improves is the amount.</p>
+<p><strong>Per chi la pensione è sottostimata.</strong> La stessa riga della Tabella 6.3.a dà il 77,5% per
+un pensionamento nel 2030 a 67 anni e 6 mesi e il 67,9% per uno nel 2040 a 65 anni e 5
+mesi, che sulla base della pagina sono 72,1% e 63,2%.
+Il modello usa il 61,8% per tutti, quindi sottostima la pensione di chiunque vada in
+pensione prima del 2040 circa. Per una famiglia con avversione 5 e risposta sotto il
+100%, questo sottostima la risposta fino a circa 9 punti per un pensionamento nel 2030.
+Il caso del 2040 va in pensione due anni prima del modello, e un pensionamento a 67
+anni in quell'anno otterrebbe di più, quindi la sottostima si attenua dopo il 2040 e non
+entro il 2040. Chi è a meno di dieci anni dalla pensione
+può fare meglio di qualsiasi tabella, e il suggerimento della pagina sulla pensione lo
+dice: la stima dell'INPS stessa, "La mia pensione futura", convertita al netto, è più
+precisa del 62%. Va nel campo della pensione con l'età da cui parte e la spunta per la
+pensione INPS di vecchiaia, così sostituisce quella imputata. Resta una stima che il
+resto della carriera può cambiare, quindi viene scontata come la pensione imputata, ai
+tassi dei salari fino alla fine del lavoro: a parità di importo lascia la risposta
+dov'era, e ciò che migliora è l'importo.</p>
 
-<p><strong>Whom it overstates.</strong> The model puts no ceiling on the
-pension. For workers first insured from 1996, or who chose the contributory
-method, INPS counts pay only up to 122,295 euro of gross pay in 2026 (law 335
-of 1995, article 2, paragraph 18; INPS circular 6 of 30 January 2026, section
-6), so for
-someone paid more than that the model overstates the pension, and with it the
-equity share. The ceiling is on gross pay, and the pension it allows after tax
-depends on the career and on tax, so its size here is a range rather than a
-figure. If the largest pension it allows is 45,000 to 55,000 euro a year after
-tax, it binds at 45 from a net wage of about 49,000 to 60,000 euro. For a
-worker aged 40 to 50 with ten years of pay saved it would lower the answer by
-up to about 2.5 points on 60,000 euro of net pay, 2 to 4.5 on 80,000 and 5 to
-7.5 on 120,000, and by up to about 14 just below 100%. It is measured and
-declared rather than coded, because workers in the mixed system, insured before
-1996 and mostly over about 50 today, have no ceiling, and one cap for everyone
-would wrongly cut their answers.</p>
+<p><strong>Per chi la pensione è sovrastimata.</strong> Il modello non mette alcun massimale alla pensione.
+Per i lavoratori assicurati per la prima volta dal 1996, o che hanno optato per il
+metodo contributivo, l'INPS conta la retribuzione solo fino a 122.295 euro lordi nel 2026
+(legge 335 del 1995, articolo 2, comma 18; circolare INPS n. 6 del 30 gennaio 2026,
+paragrafo 6), quindi per
+chi guadagna di più il modello sovrastima la pensione, e con essa la quota in azioni. Il
+massimale riguarda la retribuzione lorda, e la pensione netta che consente dipende dalla
+carriera e dalle imposte, quindi qui la sua entità è un intervallo e non un numero. Se
+la pensione più alta che consente è tra 45.000 e 55.000 euro netti l'anno, a 45 anni
+diventa vincolante da uno stipendio netto tra circa 49.000 e 60.000 euro. Per un
+lavoratore tra i 40 e i 50 anni con dieci anni di retribuzione risparmiati abbasserebbe
+la risposta fino a circa 2,5 punti con 60.000 euro di retribuzione netta, da 2 a 4,5 con
+80.000 e da 5 a 7,5 con 120.000, e fino a circa 14 appena sotto il 100%. Viene misurato
+e dichiarato invece che inserito nel codice, perché i lavoratori del sistema misto,
+assicurati prima del 1996 e oggi per lo più sopra i 50 anni circa, non hanno massimale,
+e un unico tetto per tutti taglierebbe a torto le loro risposte.</p>
 
-<p><strong>A career that outpaces average pay gets less.</strong> The 66.4% is
-for a worker whose pay grows with average pay (Table 6.3, note 1). In a
-contributory system a career that rises faster gets a smaller pension against
-its final wage, and the Ragioneria's own Table 6.2.a shows it: a career 0.5
-points a year faster takes the 2050 gross rate from 60.5% to 56.1%. The
-Daminato and Padula profile rises about 1.45% a year from 29 to 66. If
-all of that were a career outpacing average pay, the pension would be about 0.82
-of the model's, 51% of the wage rather than 61.8%, by the calculation that
-gives 0.913 for the Ragioneria's case where its table gives 0.927. The answer
-would then be about 1 to 2 points lower for workers aged 40 to 50 with ten
-years of pay saved, and up to about 4 lower just below 100%; at the flatter
-slope of the INPS data (section 7.1) about half that. How much of the profile
-is a career rather than the general rise in pay is not known, so the effect is
-declared and measured, not coded (section 11).</p>
+<p><strong>Una carriera che cresce più della retribuzione media ottiene meno.</strong>
+Il 66,4% vale per un lavoratore la cui retribuzione cresce con la retribuzione media
+(Tabella 6.3, nota 1). In un sistema contributivo una carriera che cresce più in fretta
+ottiene una pensione più piccola rispetto all'ultimo stipendio, e lo mostra la stessa
+Tabella 6.2.a della Ragioneria: una carriera più veloce di 0,5 punti l'anno porta il
+tasso lordo del 2050 dal 60,5% al 56,1%. Il profilo di Daminato e Padula cresce di circa
+l'1,45% l'anno dai 29 ai 66 anni. Se tutto questo fosse una carriera che supera la
+retribuzione media, la pensione sarebbe circa 0,82 di quella del modello, il 51% dello
+stipendio invece del 61,8%, secondo il calcolo che dà 0,913 per il caso della Ragioneria
+dove la sua tabella dà 0,927. La risposta sarebbe allora più bassa di circa 1 o 2 punti
+per i lavoratori tra i 40 e i 50 anni con dieci anni di retribuzione risparmiati, e fino
+a circa 4 punti appena sotto il 100%; con la pendenza più piatta dei dati INPS (sezione
+7.1), circa la metà. Quanta parte del profilo sia carriera e quanta la crescita generale
+delle retribuzioni non è noto, quindi l'effetto viene dichiarato e misurato, non
+inserito nel codice (sezione 11).</p>
 
-<p><strong>Why not the OECD's 79%.</strong> It is the future net rate for an average earner in <em>Pensions at a Glance
-2025</em>, Italy country note. The figure is right, but it describes a worker
-who contributes for 48 years, from 22 to the future normal retirement age of
-70. Italian pensions are contributory: the pension is the contributions paid,
-revalued, times a conversion coefficient that rises with the age at
-retirement. Retiring at 67 means fewer contributions and a smaller
-coefficient, so paying 79% from 67 overstated the pension.</p>
+<p><strong>Perché non il 79% dell'OCSE.</strong> È il tasso netto futuro per un lavoratore con retribuzione media in <em>Pensions at a Glance
+2025</em>, scheda paese sull'Italia. Il dato è corretto, ma descrive un lavoratore che
+versa contributi per 48 anni, dai 22 anni alla futura età normale di pensionamento di 70.
+Le pensioni italiane sono contributive: la pensione è il montante dei contributi
+versati, rivalutati, moltiplicato per un coefficiente di trasformazione che cresce con
+l'età al pensionamento. Andare in pensione a 67 anni significa meno contributi e un
+coefficiente più piccolo, quindi pagare il 79% dai 67 anni sovrastimava la pensione.</p>
 
-<p><strong>What the page asks for.</strong> Each adult has a pension field, a year of the pension after tax with the tredicesima, an age it starts from and a tick, "È la mia pensione INPS di vecchiaia". The rules are the American page's (American methodology, section 7.4): a pension already paid, or fixed by an earlier job, is riskless; a ticked estimate of the INPS pension for a later start is discounted like the imputed pension it replaces; unticked, a pension is added to the one the person's own work will pay, and ticked, it replaces it. A pension fund still being built goes in the savings field, at about nine tenths.</p>
+<p><strong>Che cosa chiede la pagina.</strong> Ogni adulto ha un campo per la pensione, un anno di pensione netta con la tredicesima, un'età da cui parte e una spunta, "È la mia pensione INPS di vecchiaia". Le regole sono quelle della pagina americana (metodologia americana, sezione 7.4): una pensione già pagata, o fissata da un lavoro precedente, è priva di rischio; una stima spuntata della pensione INPS che parte più avanti viene scontata come la pensione imputata che sostituisce; senza spunta, una pensione si aggiunge a quella che pagherà il lavoro della persona, e con la spunta la sostituisce. Un fondo pensione ancora in costruzione va nel campo del patrimonio investibile, per circa nove decimi.</p>
 
-<p><strong>A pension that does not rise with prices</strong> is valued as if it
-did, as on the American page and in the Wage imputed tab of Choi's
-spreadsheet: typed at its amount, it is held constant in real terms, and the
-page offers no shortcut (American methodology, section 5.3). On this variant's benefit discount rates, with prices
-rising at the market's expected 2.29% a year, the break-even of section 5, such
-a pension is worth 0.712 of its amount to someone of 60 already drawing it,
-0.757 at 70 and 0.814 at 80, and 0.595 to a 55-year-old if it starts at 65.
-Typed at its full amount, it puts the answer 2.2 to 9.1 points too high in the
-cases tried below the cap, more than on the American page mainly because the
-Italian Merton share is about twice the American one.</p>
+<p><strong>Una pensione che non cresce con i prezzi</strong> viene valutata come se
+crescesse, come nella pagina americana e nella scheda Wage imputed del foglio di calcolo
+di Choi: inserita al suo importo, è tenuta costante in termini reali, e la pagina non
+offre scorciatoie (metodologia americana, sezione 5.3). Con i tassi di sconto delle pensioni di questa variante, e prezzi
+che crescono al 2,29% l'anno atteso dal mercato, il break-even della sezione 5, una
+pensione così vale 0,712 del suo importo per chi a 60 anni la riceve già, 0,757 a 70 e
+0,814 a 80, e 0,595 per chi ha 55 anni se parte a 65.
+Inserita al suo importo pieno, porta la risposta da 2,2 a 9,1 punti troppo in alto nei
+casi provati sotto il 100%, più che nella pagina americana soprattutto perché la quota
+di Merton italiana è circa il doppio di quella americana.</p>
 
-<p>The pension the current job will pay is not typed. It is imputed at 61.8%
-of the wage in the last year of work, fixed then, and paid from the year after;
-a break typed in the middle of a career pays none of it.</p>
+<p>La pensione che pagherà il lavoro attuale non si inserisce. Viene imputata al 61,8%
+dello stipendio dell'ultimo anno di lavoro, fissata in quel momento e pagata dall'anno
+seguente; una pausa inserita a metà carriera non ne paga nessuna parte.</p>
 
-<p>A pension in the field is read as riskless, as on the American page, where section 7.4 compares that reading with the paper's and the spreadsheet's. For a pension of 10,000 euro paid while working, the riskless reading gives about 4 to 8 points more equity than the wage-rate one for a 45-year-old on 30,000 euro with fifteen to thirty years of pay saved, more nearer 100%, and 1 to 4 points at 60.</p>
+<p>Una pensione inserita nel campo è letta come priva di rischio, come nella pagina americana, dove la sezione 7.4 confronta questa lettura con quella dell'articolo e del foglio di calcolo. Per una pensione di 10.000 euro pagata mentre si lavora, la lettura senza rischio dà da 4 a 8 punti circa di azioni in più di quella ai tassi dei salari per una persona di 45 anni con 30.000 euro e da quindici a trenta anni di retribuzione risparmiati, di più vicino al 100%, e da 1 a 4 punti a 60 anni.</p>
 
-<p>Every year is entered as Choi, Liu and Liu's guide asks, "assuming you are
-still alive in each future year": the calculations already allow for the chance
-of dying, at United States rates (section 11).</p>
+<p>Ogni anno si inserisce come chiede la guida di Choi, Liu e Liu, "supponendo di essere
+ancora in vita in ogni anno futuro": i calcoli tengono già conto della probabilità di
+morire, ai tassi degli Stati Uniti (sezione 11).</p>
 
-<h3 id="s7-3">7.3 Retirees</h3>
+<h3 id="s7-3">7.3 I pensionati</h3>
 
-<p>A retired household's answer carries four known errors. They point different ways and partly offset, and none
-is corrected.</p>
+<p>La risposta per una famiglia di pensionati porta con sé quattro errori noti. Vanno in direzioni diverse e in parte si compensano, e nessuno
+viene corretto.</p>
 
-<p><strong>Near 100%: too much equity, and with more saved, too
-little.</strong> A direct solution of the full Cocco, Gomes and Maenhout model
-run for this project (not published), on this document's snapshot, for a
-retiree with a pension of 20,000 euro, finds the formula too high where its
-answer comes down from 100%: at risk 5 by 3 to 9 points, with 6 to 7 years of
-pension saved at 67 and 4 to 5 at 85, and at risk 8 by up to 11 points with 2
-to 4 years. With more saved it runs low, by about 2 to 5 points with 12 to 20
-years of pension at risk 5. In the benchmark, as in Cocco, Gomes and Maenhout's
-model and in the tool's discount rates, the retiree lives on a riskless pension
-and dies at American rates. Where the corner falls moves with risk aversion
-and with the market, so no fixed amount of savings marks it.</p>
+<p><strong>Vicino al 100%: troppe azioni, e con più risparmi, troppo poche.</strong>
+Una soluzione diretta del modello completo di Cocco, Gomes e Maenhout calcolata per
+questo progetto (non pubblicata), sui dati di questo documento, per un pensionato con
+una pensione di 20.000 euro, trova la formula troppo alta dove la sua risposta scende
+dal 100%: con avversione 5 da 3 a 9 punti, con risparmi pari a 6-7 anni di pensione a
+67 anni e a 4-5 anni a 85, e con avversione 8 fino a 11 punti con 2-4 anni. Con più
+risparmi sta sotto, di circa 2-5 punti con 12-20 anni di pensione e avversione 5. Nel
+modello di confronto, come in quello di Cocco, Gomes e Maenhout e nei tassi di sconto
+dello strumento, il pensionato vive di una pensione priva di rischio e muore ai tassi
+americani. Il punto in cui la risposta si stacca dal 100% si sposta con l'avversione al
+rischio e con il mercato, quindi nessun importo fisso di risparmi lo segna.</p>
 
-<p><strong>The thirty-year rate: too little equity.</strong> The riskless
-asset that matches a retiree's spending is a ladder of inflation-linked bonds
-running to about 100. With spending that falls with age, as it does in Cocco,
-Gomes and Maenhout's model, its duration is about 14 years at 67, 11 at 75 and
-7 at 85, and the euro real curve sits lower there than at thirty years. On this
-document's date the construction of section 5, with the break-even read
-between the 2033 and 2046 linkers, gives 1.17% at ten years against 1.4709% at
-thirty, and the Finanzagentur's 2033 linker yields 0.99% real against 1.49%
-for the 2046. At the rate of each age's ladder, the retired households with a
-pension that were tried would hold about 2 to 4 points more equity between 67
-and 75, about 4.5 more at 80 and 6 at 85. The American methodology (section 8.6)
-weights each year by the chance of being alive in it instead. On the euro curve
-that gives about 11 years at 67, 8 at 75 and 5 at 85, and about 4 to 7 points
-more equity between 67 and 75, 6.5 at 80 and 8.5 at 85. The two weightings
-bracket the effect.</p>
+<p><strong>Il tasso a trent'anni: troppo poche azioni.</strong> L'attività priva di
+rischio che corrisponde alle spese di un pensionato è una scala di titoli indicizzati
+all'inflazione con scadenze fino ai 100 anni di età circa. Con spese che calano con
+l'età, come nel modello di Cocco, Gomes e Maenhout, la sua duration è di circa 14 anni a
+67 anni, 11 a 75 e 7 a 85, e lì la curva reale dell'euro sta più in basso che a
+trent'anni. Alla data di questo documento la costruzione della sezione 5, con il
+break-even letto tra i titoli indicizzati 2033 e 2046, dà 1,17% a dieci anni contro
+1,4709% a trenta, e il titolo indicizzato 2033 della Finanzagentur rende 0,99% reale
+contro 1,49% del 2046. Al tasso della scala di ciascuna età, le famiglie di pensionati
+con pensione che sono state provate terrebbero circa 2-4 punti di azioni in più tra i
+67 e i 75 anni, circa 4,5 in più a 80 e 6 a 85. La metodologia americana (sezione 8.6)
+pesa invece ogni anno con la probabilità di essere in vita. Sulla curva dell'euro questo
+dà circa 11 anni a 67, 8 a 75 e 5 a 85, e circa 4-7 punti di azioni in più tra i 67 e
+i 75 anni, 6,5 a 80 e 8,5 a 85. Le due ponderazioni delimitano l'effetto.</p>
 
-<p><strong>The two together: mostly too little.</strong> Solved at the rate
-of each age's ladder rather than at thirty years, the same direct solution of
-the full model leaves the formula within about 3 points of it where the answer
-comes down from 100%
-at 67 to 75, and below it everywhere else at risk 5: by up to 7 to 9 points at
-67 to 75 and up to 11 at 85, and by up to 15 with the ladder weighted by
-survival. At risk 8 the formula is up to 5 points high near 100% and up to 11
-points low with more saved.</p>
+<p><strong>I due insieme: per lo più troppo poche.</strong> Risolta al tasso della
+scala di ciascuna età invece che a trent'anni, la stessa soluzione diretta del modello
+completo lascia la formula entro circa 3 punti da essa dove la risposta scende dal 100%
+tra i 67 e i 75 anni, e sotto di essa ovunque altrove con avversione 5: fino a 7-9 punti
+tra i 67 e i 75 anni e fino a 11 a 85, e fino a 15 con la scala pesata per la
+sopravvivenza. Con avversione 8 la formula sta fino a 5 punti sopra vicino al 100% e
+fino a 11 punti sotto con più risparmi.</p>
 
-<p><strong>Couples: too much equity.</strong> The model counts both pensions
-for as long as either spouse lives, and Choi's spreadsheet sums the two adults
-the same way. Under Italian rules a surviving spouse keeps their own pension
-and 60% of the other's, the reversibilit&agrave;, and less when their own income is
-high. With that rule at the full 60%, a retired couple's pension wealth is
-about 8 to 10% lower than the model counts in the couples tried, aged 65 to 80
-with pensions of 12,000 to 24,000 euro each, more for older couples, about 12%
-for two people of 80, and lower still where the survivor's own income cuts the
-60%. So the part of the answer above the no-pension share, 24.7% at risk 5, is
-too high by about that proportion: 1.2 to 4.7 points in the couples tried, the
-most where savings are small against the pensions.</p>
+<p><strong>Le coppie: troppe azioni.</strong> Il modello conta entrambe le pensioni
+finché vive uno dei due coniugi, e il foglio di calcolo di Choi somma i due adulti allo
+stesso modo. Con le regole italiane il coniuge superstite tiene la propria pensione e il
+60% di quella dell'altro, la reversibilità, e meno quando il suo reddito è alto. Con
+questa regola al 60% pieno, la ricchezza pensionistica di una coppia di pensionati è
+circa l'8-10% più bassa di quella che conta il modello nelle coppie provate, tra i 65 e
+gli 80 anni con pensioni da 12.000 a 24.000 euro ciascuna, di più per le coppie più
+anziane, circa il 12% per due persone di 80 anni, e ancora più bassa dove il reddito del
+superstite riduce il 60%. Quindi la parte della risposta sopra la quota senza pensione,
+il 24,7% con avversione 5, è troppo alta di circa quella proporzione: da 1,2 a 4,7 punti
+nelle coppie provate, di più dove i risparmi sono piccoli rispetto alle pensioni.</p>
 
-<p><strong>Tax while spending down: too much equity.</strong> Section 8 holds
-the money to one date. A retiree sells some of both funds every year, so part
-of the money is taxed after only a few years, where tax lowers the right share
-most. A simulation run for this revision on this document's snapshot, and not
-kept in the repository, of retirees aged 67 to 75 who spend their savings over
-14 to 20 years and rebalance every year puts the right share 5% to 11% below
-the model's answer: about 2.5 to 4.5 points too much equity.</p>
+<p><strong>Le imposte mentre si consumano i risparmi: troppe azioni.</strong> La
+sezione 8 tiene il denaro fino a una sola data. Un pensionato vende ogni anno una parte
+di entrambi i fondi, quindi parte del denaro è tassata dopo pochi anni, dove le imposte
+abbassano di più la quota giusta. Una simulazione eseguita per questa revisione sui dati
+di questo documento, e non conservata nel repository, su pensionati tra i 67 e i 75 anni
+che spendono i risparmi in 14-20 anni e ribilanciano ogni anno, colloca la quota giusta
+dal 5% all'11% sotto la risposta del modello: circa 2,5-4,5 punti di azioni di
+troppo.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s8">8. Tax</h2>
+<h2 id="s8">8. Le imposte</h2>
 
-<p><strong>The Italian answer reads the market figures as they are, and this
-section says why.</strong> Choi, Liu and Liu do not model tax: their variables
-are "implicitly after-tax where relevant". The guide to their spreadsheet adjusts
-one market input for tax: a reader whose bonds are mostly in a taxable account
-"may want to" cut the safe rate by their marginal tax rate. Its other tax rules
-put savings, wages and employer contributions on an after-tax basis, and
-section 7 applies them to Italy. For an American saving in a 401(k) or an IRA
-the market figures are close to after-tax ones and the safe-rate rule does not
-apply. For Italy the
-rule is not applied, because it does not describe Italian law. The law taxes
-both funds, not only the bonds, and at sale rather than every year:
-<strong>26%</strong> on the gain of an equity fund, <strong>12.5%</strong> on
-a fund of government bonds of Italy and white-list states, in proportion to
-what it holds in them (Agenzia delle Entrate, Circolare 19/E of 2014, section
-5), and <strong>0.2%</strong> a year of imposta di bollo on the value of each.
-Both rates fall on the nominal gain and only when units are sold, death counts
-as a sale (Circolare 19/E of 2013, section 2.4), and a loss on one fund cannot
-be set against a gain on another.</p>
+<p><strong>La risposta italiana legge i dati di mercato così come sono, e questa
+sezione dice perché.</strong> Choi, Liu e Liu non modellano le imposte: le loro
+variabili sono "implicitamente al netto delle imposte dove rilevante". La guida al loro
+foglio di calcolo corregge per le imposte un solo dato di mercato: chi tiene le
+obbligazioni per lo più in un conto tassato "potrebbe voler" ridurre il tasso sicuro
+della propria aliquota marginale. Le altre sue regole fiscali mettono risparmi,
+stipendi e contributi del datore di lavoro su base netta, e la sezione 7 le applica
+all'Italia. Per un americano che risparmia in un 401(k) o in un IRA i dati di mercato
+sono vicini a quelli netti e la regola sul tasso sicuro non si applica. Per l'Italia la
+regola non si applica, perché non descrive la legge italiana. La legge tassa entrambi i
+fondi, non solo le obbligazioni, e alla vendita invece che ogni anno:
+<strong>26%</strong> sulla plusvalenza di un fondo azionario, <strong>12,5%</strong>
+su un fondo di titoli di Stato italiani e di Stati della white list, in proporzione a
+quanto ne detiene (Agenzia delle Entrate, Circolare 19/E del 2014, paragrafo
+5), e <strong>0,2%</strong> l'anno di imposta di bollo sul valore di ciascuno.
+Entrambe le aliquote colpiscono la plusvalenza nominale e solo quando le quote vengono
+vendute, la morte conta come una vendita (Circolare 19/E del 2013, paragrafo 2.4), e una
+perdita su un fondo non si può compensare con un guadagno su un altro.</p>
 
-<p><strong>The guide's suggestion would move the answer the wrong way.</strong>
-Cutting only the safe rate, by the 12.5% a government bond fund pays, takes it
-from 1.4709% to 1.2870% and <em>raises</em> the answer. For an uncapped
-household aged 45 to 65 at risk 5 it adds up to about 7 or 8 points just above
-the savings where the answer leaves 100%, and less as savings grow, about 2
-points at fifty times pay (4.1 for the reference household), and slightly more
-for younger households. Taxing the equity fund as well, which
-is what the law does, lowers it, as the rest of this section measures.</p>
+<p><strong>Il suggerimento della guida sposterebbe la risposta nella direzione
+sbagliata.</strong> Tagliare solo il tasso sicuro, del 12,5% che paga un fondo di titoli
+di Stato, lo porta dall'1,4709% all'1,2870% e <em>alza</em> la risposta. Per una
+famiglia tra i 45 e i 65 anni con avversione 5 e risposta sotto il 100%, aggiunge fino a
+circa 7 o 8 punti appena sopra i risparmi a cui la risposta scende dal 100%, e meno man
+mano che i risparmi crescono, circa 2 punti a cinquanta volte la retribuzione (4,1 per la
+famiglia di riferimento), e un po' di più per le famiglie più giovani. Tassare anche il
+fondo azionario, che è ciò che fa la legge, la abbassa, come misura il resto di questa
+sezione.</p>
 
-<p><strong>Tax takes a share of the risk as well as of the return.</strong> A
-fund held for many years is usually in gain when it is sold, 81% of the time
-at seven years and 97% at thirty on this document's snapshot (Table 7), so the
-state takes about a quarter of the gain whether markets did well or badly: it shares
-the swings, not only the average. That is the effect Domar and Musgrave (1944)
-described. Taking tax off the expected return and leaving the volatility as it
-is counts the first half and misses the second.</p>
+<p><strong>Le imposte prendono una parte del rischio oltre che del rendimento.</strong>
+Un fondo tenuto per molti anni è di solito in guadagno quando viene venduto, l'81% delle
+volte a sette anni e il 97% a trenta sui dati di questo documento (Tabella 7), quindi lo
+Stato prende circa un quarto del guadagno sia che i mercati siano andati bene sia che
+siano andati male: condivide le oscillazioni, non solo la media. È l'effetto descritto
+da Domar e Musgrave (1944). Togliere le imposte dal rendimento atteso e lasciare la
+volatilità com'è conta la prima metà e perde la seconda.</p>
 
-<p><strong>Measured directly.</strong> <code>tools/tax_check.py</code> takes the
-two funds through the law as written: the equity fund's price is uncertain,
-26% of its nominal gain is paid on sale with no credit for a loss, 12.5% of the
-bond fund's, and the stamp duty every year. It then finds the equity share a
-household with risk aversion 5 should hold until a given date, with the tax
-and without it, exactly rather than by simulation.</p>
+<p><strong>Misurato direttamente.</strong> <code>tools/tax_check.py</code> fa passare i
+due fondi attraverso la legge così com'è scritta: il prezzo del fondo azionario è
+incerto, il 26% della sua plusvalenza nominale si paga alla vendita senza alcun credito
+per una perdita, il 12,5% di quella del fondo obbligazionario, e l'imposta di bollo ogni
+anno. Poi trova la quota in azioni che una famiglia con avversione al rischio 5
+dovrebbe tenere fino a una certa data, con l'imposta e senza, in modo esatto e non per
+simulazione.</p>
 
 <div class="tablewrap" id="t6">
 <table>
-<caption>Table 7. The best equity share with Italian tax, as a share of the
-best without it, by how long the money is held. Risk aversion 5.</caption>
-<thead><tr><th class="num">Years held</th><th class="num">The law, as it works</th><th class="num">Tax on the expected return only</th><th class="num">Cost of ignoring tax, basis points a year</th><th class="num">Chance the fund is sold at a loss</th></tr></thead>
+<caption>Tabella 7. La quota in azioni ottimale con le imposte italiane, in proporzione
+all'ottimale senza imposte, secondo per quanto tempo si tiene il denaro. Avversione al
+rischio 5.</caption>
+<thead><tr><th class="num">Anni di detenzione</th><th class="num">La legge, come funziona</th><th class="num">Imposta solo sul rendimento atteso</th><th class="num">Costo di ignorare le imposte, punti base l'anno</th><th class="num">Probabilità di vendere il fondo in perdita</th></tr></thead>
 <tbody>
-<tr><td class="num">3</td><td class="num">0.752</td><td class="num">0.723</td><td class="num">1.70</td><td class="num">28.1%</td></tr>
-<tr><td class="num">7</td><td class="num">0.887</td><td class="num">0.747</td><td class="num">0.32</td><td class="num">18.8%</td></tr>
-<tr><td class="num">12</td><td class="num">0.936</td><td class="num">0.775</td><td class="num">0.09</td><td class="num">12.3%</td></tr>
-<tr><td class="num">18</td><td class="num">0.954</td><td class="num">0.804</td><td class="num">0.04</td><td class="num">7.8%</td></tr>
-<tr><td class="num">30</td><td class="num">0.955</td><td class="num">0.849</td><td class="num">0.04</td><td class="num">3.3%</td></tr>
+<tr><td class="num">3</td><td class="num">0,752</td><td class="num">0,723</td><td class="num">1,70</td><td class="num">28,1%</td></tr>
+<tr><td class="num">7</td><td class="num">0,887</td><td class="num">0,747</td><td class="num">0,32</td><td class="num">18,8%</td></tr>
+<tr><td class="num">12</td><td class="num">0,936</td><td class="num">0,775</td><td class="num">0,09</td><td class="num">12,3%</td></tr>
+<tr><td class="num">18</td><td class="num">0,954</td><td class="num">0,804</td><td class="num">0,04</td><td class="num">7,8%</td></tr>
+<tr><td class="num">30</td><td class="num">0,955</td><td class="num">0,849</td><td class="num">0,04</td><td class="num">3,3%</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">Held to a fixed date without rebalancing; on this document's
-snapshot. Risk aversion 3 and 8 give the same column within a hundredth.</p>
+<p class="src">Tenuto fino a una data fissa senza ribilanciare; sui dati di questo
+documento. Con avversione al rischio 3 e 8 la colonna è la stessa entro un
+centesimo.</p>
 
-<p><strong>So the model reads the market figures as they are.</strong> The tax
-lowers the right equity share by about a quarter for money sold at three
-years, by about a ninth at seven years and by under a tenth at twelve years
-and beyond, and a household that ignores it gives up under 2 basis points a
-year of return at three years and under half a basis point from seven years
-on. Taking tax off the expected return alone cut the share by 15% to 28%. At
-three years the two are close, 0.723 of the untaxed share against the law's
-0.752, so there taxing the mean is nearer the law than leaving tax out. From
-seven years on it cuts between two and a little over four times what the law
-does, and there leaving tax out is both the simpler reading and the closer
-one.</p>
+<p><strong>Quindi il modello legge i dati di mercato così come sono.</strong> L'imposta
+abbassa la quota in azioni giusta di circa un quarto per il denaro venduto a tre anni,
+di circa un nono a sette anni e di meno di un decimo da dodici anni in su, e una
+famiglia che la ignora rinuncia a meno di 2 punti base l'anno di rendimento a tre anni
+e a meno di mezzo punto base da sette anni in poi. Togliere le imposte solo dal
+rendimento atteso tagliava la quota dal 15% al 28%. A tre anni le due sono vicine,
+0,723 della quota senza imposte contro lo 0,752 della legge, quindi lì tassare la media
+è più vicino alla legge che lasciare fuori le imposte. Da sette anni in poi taglia tra
+due e poco più di quattro volte quanto fa la legge, e lì lasciare fuori le imposte è
+sia la lettura più semplice sia quella più vicina.</p>
 
-<p><strong>The missing loss credit matters less than it looks.</strong> Losses
-on funds cannot offset gains, so the state shares only the upside, but after three
-years a fund is below cost when sold more than one time in four, after
-seven about one time in five, and after twelve about one time in eight, so the
-upside is most of what there is for money held long.</p>
+<p><strong>La mancata compensazione delle perdite conta meno di quanto sembri.</strong>
+Le perdite sui fondi non possono compensare i guadagni, quindi lo Stato condivide solo
+il rialzo, ma dopo tre anni un fondo è sotto il costo, quando viene venduto, più di una
+volta su quattro, dopo sette circa una volta su cinque e dopo dodici circa una volta su
+otto, quindi per il denaro tenuto a lungo il rialzo è quasi tutto ciò che c'è.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s9">9. Currency</h2>
+<h2 id="s9">9. La valuta</h2>
 
-<p>Three of the four inputs are euro figures by construction. The dividend
-yield is measured on a euro-priced global index, the volatility on a euro-priced
-series, and the safe rate is a euro curve less a euro break-even.</p>
+<p>Tre dei quattro dati sono in euro per costruzione. Il rendimento da dividendi è
+misurato su un indice globale espresso in euro, la volatilità su una serie in euro, e il
+tasso sicuro è una curva in euro meno un break-even in euro.</p>
 
-<p><strong>The growth term is the exception</strong>, and it is one term of
-three. It is real growth in United States earnings per share, used as the
-global real rate. Reading a dollar real growth rate as a euro one needs the
-assumption AQR state for exactly this purpose: "one simple assumption is that
-relative purchasing power is preserved, which implies the expected spot
-currency return is equal to the expected inflation differential. [...] Under
-this assumption, expected real returns are the same regardless of
-currency."</p>
+<p><strong>Il termine di crescita è l'eccezione</strong>, ed è uno dei tre termini. È
+la crescita reale degli utili per azione degli Stati Uniti, usata come tasso reale
+globale. Leggere un tasso di crescita reale in dollari come uno in euro richiede
+l'ipotesi che AQR enuncia proprio a questo scopo: "un'ipotesi semplice è che si conservi
+la parità relativa dei poteri d'acquisto, il che implica che il rendimento atteso della
+valuta a pronti sia uguale al differenziale di inflazione atteso. [...] Con questa
+ipotesi, i rendimenti reali attesi sono gli stessi qualunque sia la valuta."</p>
 
-<p><strong>The literature says when that is safe and when it is not, and the
-answer is a matter of horizon.</strong> Rogoff (1996) describes a "remarkable
-consensus" of three to five year half-lives for deviations from purchasing
-power parity, which is about 13 to 20 per cent reversion a year. Over a
-lifetime, which is what this model prices, several half-lives pass and the
-assumption is reasonable. <strong>Over five years it is not</strong>, and a
-euro investor holding an unhedged world fund can and does experience real
-currency losses for long stretches that nothing in this model represents.</p>
+<p><strong>La letteratura dice quando l'ipotesi regge e quando no, e la risposta è una
+questione di orizzonte.</strong> Rogoff (1996) descrive un "notevole consenso" su
+emivite da tre a cinque anni per le deviazioni dalla parità dei poteri d'acquisto, cioè
+un rientro di circa il 13-20 per cento l'anno. Nell'arco di una vita, che è ciò a cui
+questo modello dà un prezzo, passano diverse emivite e l'ipotesi è ragionevole.
+<strong>Su cinque anni non lo è</strong>, e un investitore in euro che detiene un fondo
+mondiale senza copertura del cambio può subire, e subisce, perdite valutarie reali per
+lunghi periodi che nulla in questo modello rappresenta.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s10">10. Why the answer is so often 100%</h2>
+<h2 id="s10">10. Perché la risposta è così spesso 100%</h2>
 
-<p><strong>With the default risk answer, the Italian page puts all of the
-savings in stocks until they reach 4.3 to 6.7 years of after-tax pay</strong>,
-depending on age, against 1.0 to 2.7 years on the American page (Table 8).
-That is the model's answer and not a fault, and this section shows where it
-comes from. The default is 5, the value Choi, Liu and Liu's spreadsheet comes
-set to: an American value, not an Italian estimate.</p>
+<p><strong>Con la risposta predefinita sul rischio, la pagina italiana mette in azioni
+tutti i risparmi finché non raggiungono una soglia tra 4,3 e 6,7 anni di retribuzione
+netta</strong>, secondo l'età, contro una soglia tra 1,0 e 2,7 anni nella pagina
+americana (Tabella 8). È la risposta del modello e non un difetto, e questa sezione
+mostra da dove viene. Il valore predefinito è 5, quello con cui arriva impostato il
+foglio di calcolo di Choi, Liu e Liu: un valore americano, non una stima italiana.</p>
 
-<p><strong>How the answer is formed.</strong> The model counts two kinds of
-wealth: the savings typed in, and future pay and pension valued today, which
-Choi, Liu and Liu describe as "akin to a fixed income holding". It sets the
-share of the two together to hold in stocks, Merton's share, and then asks how
-much of the savings must be in stocks to reach it. When future pay is large and
-savings are small, all of the savings is not enough, and the page stops at
-100%. That cap is the no-borrowing rule of the model the formula approximates,
-Cocco, Gomes and Maenhout's; the formula alone goes above it, and the page
-shows how far. As savings grow the answer falls: Choi, Liu and Liu measure
-their rule as one followed at every age, re-read each year as age and savings
-change (section 4 of their paper). The page gives no advice of its own on when
-to rebalance.</p>
+<p><strong>Come si forma la risposta.</strong> Il modello conta due tipi di ricchezza:
+i risparmi inseriti, e la retribuzione e la pensione future valutate oggi, che Choi, Liu
+e Liu descrivono come "simili a un investimento a reddito fisso". Fissa la quota del
+totale delle due da tenere in azioni, la quota di Merton, e poi chiede quanta parte dei
+risparmi deve essere in azioni per raggiungerla. Quando la retribuzione futura è grande e
+i risparmi sono piccoli, tutti i risparmi non bastano, e la pagina si ferma al 100%.
+Quel tetto è il divieto di indebitarsi del modello che la formula approssima, quello di
+Cocco, Gomes e Maenhout; la formula da sola va oltre, e la pagina mostra di quanto. Man
+mano che i risparmi crescono la risposta scende: Choi, Liu e Liu misurano la loro regola
+come una regola seguita a ogni età, riletta ogni anno al variare di età e risparmi
+(sezione 4 del loro articolo). La pagina non dà consigli propri su quando
+ribilanciare.</p>
 
-<p><strong>The household the Italian page opens with</strong> is 45 years old,
-earns 21,000 euro a year after tax, has 105,000 saved and answers 5 for risk.
-Its future pay and pension are worth 380,743 euro, 18.1 years of pay. Merton's
-share of the two together is 24.7%, which is 119,790 euro of stocks against
-105,000 to invest. Unconstrained, the model would hold 114% of the savings in
-stocks, borrowing the rest.</p>
+<p><strong>La famiglia con cui si apre la pagina italiana</strong> ha 45 anni,
+guadagna 21.000 euro l'anno al netto delle imposte, ha 105.000 euro di risparmi e
+risponde 5 alla domanda sul rischio. La sua retribuzione e la sua pensione future
+valgono 380.743 euro, 18,1 anni di retribuzione. La quota di Merton sul totale delle due
+è del 24,7%, cioè 119.790 euro di azioni contro 105.000 da investire. Senza vincoli, il
+modello terrebbe in azioni il 114% dei risparmi, prendendo a prestito il resto.</p>
 
 <div class="tablewrap" id="t8">
 <table>
-<caption>Table 8. Savings, in years of after-tax pay, at which the answer
-falls below 100%</caption>
-<thead><tr><th>Age</th><th class="num">Risk 3</th><th class="num">Risk 5, the default</th><th class="num">Risk 8</th><th class="num">American page, risk 5</th></tr></thead>
+<caption>Tabella 8. Risparmi, in anni di retribuzione netta, a cui la risposta scende
+sotto il 100%</caption>
+<thead><tr><th>Età</th><th class="num">Avversione 3</th><th class="num">Avversione 5, il valore predefinito</th><th class="num">Avversione 8</th><th class="num">Pagina americana, avversione 5</th></tr></thead>
 <tbody>
-<tr><td>25</td><td class="num">19.6</td><td class="num">6.7</td><td class="num">2.6</td><td class="num">2.7</td></tr>
-<tr><td>35</td><td class="num">18.3</td><td class="num">6.6</td><td class="num">2.6</td><td class="num">1.8</td></tr>
-<tr><td>45</td><td class="num">15.6</td><td class="num">5.9</td><td class="num">2.5</td><td class="num">1.4</td></tr>
-<tr><td>55</td><td class="num">12.4</td><td class="num">5.1</td><td class="num">2.3</td><td class="num">1.3</td></tr>
-<tr><td>65</td><td class="num">9.2</td><td class="num">4.3</td><td class="num">2.3</td><td class="num">1.0</td></tr>
+<tr><td>25</td><td class="num">19,6</td><td class="num">6,7</td><td class="num">2,6</td><td class="num">2,7</td></tr>
+<tr><td>35</td><td class="num">18,3</td><td class="num">6,6</td><td class="num">2,6</td><td class="num">1,8</td></tr>
+<tr><td>45</td><td class="num">15,6</td><td class="num">5,9</td><td class="num">2,5</td><td class="num">1,4</td></tr>
+<tr><td>55</td><td class="num">12,4</td><td class="num">5,1</td><td class="num">2,3</td><td class="num">1,3</td></tr>
+<tr><td>65</td><td class="num">9,2</td><td class="num">4,3</td><td class="num">2,3</td><td class="num">1,0</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">Below these savings the page shows 100%. Each figure is
-Merton's share times future pay and pension, divided by one minus Merton's
-share and by a year's pay. The Italian columns are on this document's
-snapshot, the American one on the American methodology's of 3 September.</p>
+<p class="src">Sotto questi risparmi la pagina mostra 100%. Ogni dato è la quota di
+Merton moltiplicata per la retribuzione e la pensione future, divisa per uno meno la
+quota di Merton e per un anno di retribuzione. Le colonne italiane sono sui dati di
+questo documento, quella americana sui dati della metodologia americana del 3
+settembre.</p>
 
-<p><strong>Two things put the Italian page there far more often than the
-American one.</strong></p>
+<p><strong>Due cose portano lì la pagina italiana molto più spesso di quella
+americana.</strong></p>
 
-<p><strong>1. The euro market.</strong> Equities beat the safe asset by a
-drift of 3.34 points a year in euro, against 2.12 in the United States, because
-the American safe rate is high, 2.98% real on 30-year TIPS, and the euro one is
-low, 1.47%. Take away the part of each drift that only pays for volatility and
-the gap is wider: the log premium Choi's discount rates read is 1.98 points in
-euro against 0.41. The world fund also swings less, 16.45% a year against
-18.50% for the whole American market, the long-run figure Choi uses, and Merton's share
-falls with volatility. At risk 5 the share is 24.7% in Italy
-against 12.4%. The same low rates value future pay more highly through Choi's
-discount rates: on its own, the euro market takes human capital at 45 from 10.0
-years of pay to 12.3.</p>
+<p><strong>1. Il mercato dell'euro.</strong> Le azioni superano l'attività sicura con
+un drift di 3,34 punti l'anno in euro, contro 2,12 negli Stati Uniti, perché il tasso
+sicuro americano è alto, 2,98% reale sui TIPS a 30 anni, e quello dell'euro è basso,
+1,47%. Togliendo la parte di ciascun drift che paga solo la volatilità la distanza si
+allarga: il premio logaritmico che leggono i tassi di sconto di Choi è 1,98 punti in
+euro contro 0,41. Il fondo mondiale inoltre oscilla meno, 16,45% l'anno contro 18,50%
+per l'intero mercato americano, il dato di lungo periodo che usa Choi, e la quota di
+Merton scende con la volatilità. Con avversione 5 la quota è del 24,7% in Italia contro
+il 12,4%. Gli stessi tassi bassi danno più valore alla retribuzione futura attraverso i
+tassi di sconto di Choi: da solo, il mercato dell'euro porta il capitale umano a 45 anni
+da 10,0 a 12,3 anni di retribuzione.</p>
 
-<p><strong>2. The Italian career and pension.</strong> Italian private-sector
-pay keeps rising into the sixties, by 22% from 45 to 60, where the American
-graduate's falls by 16% (Table 6), and the pension replaces 62% of the final
-wage with the TFR rather than 40%. On its own this takes human capital at 45
-from 10.0 years of pay to 13.8, and with the euro market as well, to 18.1.</p>
+<p><strong>2. La carriera e la pensione italiane.</strong> La retribuzione dei
+dipendenti privati italiani continua a salire fino ai sessant'anni, del 22% dai 45 ai
+60, dove quella del laureato americano scende del 16% (Tabella 6), e la pensione
+sostituisce il 62% dell'ultimo stipendio con il TFR invece del 40%. Da sola, questa
+porta il capitale umano a 45 anni da 10,0 a 13,8 anni di retribuzione, e con anche il
+mercato dell'euro a 18,1.</p>
 
-<p><strong>Not the savings.</strong> Both pages open on the same five years
-of pay: the Italian page opens on savings of 5.0 years of pay, 105,000 euro
-against 21,000 of salary, and the American page on 5 years, 500,000 dollars
-against 100,000. So the first answers a visitor sees differ for the two reasons
-above alone.</p>
+<p><strong>Non i risparmi.</strong> Entrambe le pagine si aprono sugli stessi cinque
+anni di retribuzione: la pagina italiana parte da risparmi pari a 5,0 anni di
+retribuzione, 105.000 euro contro 21.000 di stipendio, e la pagina americana da 5 anni,
+500.000 dollari contro 100.000. Quindi le prime risposte che vede chi visita le pagine
+differiscono solo per le due ragioni precedenti.</p>
 
 <div class="tablewrap" id="t9">
 <table>
-<caption>Table 9. Where the extra equity comes from, in points of equity
-share</caption>
-<thead><tr><th></th><th class="num">The two pages' opening households, 5 years of pay saved</th><th class="num">One household, 15 years of pay saved</th></tr></thead>
+<caption>Tabella 9. Da dove vengono le azioni in più, in punti di quota in
+azioni</caption>
+<thead><tr><th></th><th class="num">Le famiglie di apertura delle due pagine, 5 anni di retribuzione risparmiati</th><th class="num">Una sola famiglia, 15 anni di retribuzione risparmiati</th></tr></thead>
 <tbody>
-<tr><td>American answer</td><td class="num">37.3%</td><td class="num">20.7%</td></tr>
-<tr><td>1. The euro market</td><td class="num">+50.7</td><td class="num">+27.4</td></tr>
-<tr><td>2. The Italian career and pension</td><td class="num">+12.0</td><td class="num">+6.3</td></tr>
-<tr><td>Italian answer</td><td class="num">100.0%</td><td class="num">54.5%</td></tr>
+<tr><td>Risposta americana</td><td class="num">37,3%</td><td class="num">20,7%</td></tr>
+<tr><td>1. Il mercato dell'euro</td><td class="num">+50,7</td><td class="num">+27,4</td></tr>
+<tr><td>2. La carriera e la pensione italiane</td><td class="num">+12,0</td><td class="num">+6,3</td></tr>
+<tr><td>Risposta italiana</td><td class="num">100,0%</td><td class="num">54,5%</td></tr>
 </tbody>
 </table>
 </div>
 
-<p class="src">Each reason's figure is its average effect over both orders in
-which the two changes can be made:
-the Shapley (1953) value, in the form Shorrocks (2013) sets out for dividing a
-total among causes that interact. Both columns are at age 45 and risk 5; the
-second is the reference household of section 1. Figures are rounded, so a
-column can be 0.1 off its total.</p>
+<p class="src">Il dato di ciascuna ragione è il suo effetto medio sui due ordini in cui
+si possono fare i due cambiamenti:
+il valore di Shapley (1953), nella forma che Shorrocks (2013) propone per dividere un
+totale tra cause che interagiscono. Entrambe le colonne sono a 45 anni con avversione 5;
+la seconda è la famiglia di riferimento della sezione 1. I dati sono arrotondati, quindi
+una colonna può discostarsi di 0,1 dal suo totale.</p>
 
-<p><strong>For both households, about four fifths of the extra equity is the
-market and one fifth is the career and pension.</strong> For the opening
-households the cap hides part of both: neither change alone takes the American
-answer to 100%, and the two together take it past it.</p>
+<p><strong>Per entrambe le famiglie, circa quattro quinti delle azioni in più vengono
+dal mercato e un quinto dalla carriera e dalla pensione.</strong> Per le famiglie di
+apertura il tetto nasconde parte di entrambi: nessuno dei due cambiamenti da solo porta
+la risposta americana al 100%, e insieme la portano oltre.</p>
 
-<p><strong>It is the answer the literature gives.</strong> Cocco, Gomes and
-Maenhout (2005) find the optimal equity share highest early in working life,
-because labour income stands in for safe assets, and falling towards Merton's
-share as savings grow. In the example of Choi, Liu and Liu's Figure 1, an
-American graduate with risk aversion 7 and a log equity premium of 2%, the full
-model holds 100% at 45 until savings reach 1.6 times permanent income, and is
-not down to 55% until 3.8 times (section 1.3 of their paper). Its premium is about the Italian
-one, 1.98%. The Italian page has the same shape further out because at risk 5
-and 16.45% volatility Merton's share is larger, 24.7% against 15.5% in the
-example, and its future pay is worth more, reasons 1 and 2, not because it does
-anything differently.</p>
+<p><strong>È la risposta che dà la letteratura.</strong> Cocco, Gomes e Maenhout (2005)
+trovano la quota in azioni ottimale più alta all'inizio della vita lavorativa, perché il
+reddito da lavoro fa le veci delle attività sicure, e in discesa verso la quota di
+Merton man mano che i risparmi crescono. Nell'esempio della Figura 1 di Choi, Liu e Liu,
+un laureato americano con avversione al rischio 7 e un premio azionario logaritmico del
+2%, il modello completo tiene il 100% a 45 anni finché i risparmi non raggiungono 1,6
+volte il reddito permanente, e non scende al 55% prima di 3,8 volte (sezione 1.3 del loro
+articolo). Il suo premio è circa quello italiano, 1,98%. La pagina italiana ha la stessa
+forma, spostata più in là, perché con avversione 5 e volatilità del 16,45% la quota di
+Merton è più grande, 24,7% contro 15,5% nell'esempio, e la sua retribuzione futura vale
+di più, ragioni 1 e 2, non perché faccia qualcosa di diverso.</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
-<h2 id="s11">11. What is not validated</h2>
+<h2 id="s11">11. Che cosa non è validato</h2>
 
-<p>Four things in this variant have no external check, and none is claimed as
-a validated number. They are declared deviations or judgements, and they are
-listed here so a reader does not have to find them.</p>
+<p>Quattro elementi di questa variante non hanno una verifica esterna, e nessuno viene
+presentato come un numero validato. Sono scostamenti dichiarati o giudizi, e sono
+elencati qui perché chi legge non debba cercarli.</p>
 
-<p><strong>Choi's coefficients were fitted on American careers and American
-mortality.</strong> The career and the pension are Italian (section 7), but the
-discount rates that value them are Choi's, fitted on Cocco, Gomes and
-Maenhout's three American earnings processes and the 2019 United States life
-table. Pay and pension are counted as if the person is alive in each year, and
-the coefficients supply the chance of dying, at American rates; that cannot be
-made Italian from outside them. They were also fitted for a stock market
-with 18.5% volatility, and the euro fund's lower volatility, 16.45%, does not
-reach them at all: they read only the log premium, the compound return over the
-safe rate measured in logs, 1.98 points, so they value future pay as though that
-premium came with American risk. That figure is the log excess drift,
-computed as the model computes it, at the 16.45% in use. It is just below
-the 2% to 4% the coefficients were fitted over, by 0.02 points, while the log
-safe rate, 1.46%, is inside the 0% to 2% they were fitted over. Times the
-premium's coefficients, 0.267 in the wage discount rate and 0.217 in the
-benefit rate, the shortfall is an extrapolation of under half a hundredth of a
-point of discount rate. Removing any of this would mean refitting
-the coefficients on Italian data rather than substituting inputs. The premium
-is Choi's own definition, the expected log return over the safe rate. His spreadsheet takes a
-shortcut to it, the arithmetic mean in logs less half of 18.5% squared, which
-is the same number when volatility is 18.5% but here would give 1.63 points and
-lower the reference household's answer by 0.4 points.</p>
+<p><strong>I coefficienti di Choi sono stati stimati su carriere americane e mortalità
+americana.</strong> La carriera e la pensione sono italiane (sezione 7), ma i tassi di
+sconto che le valutano sono quelli di Choi, stimati sui tre processi dei redditi
+americani di Cocco, Gomes e Maenhout e sulla tavola di mortalità degli Stati Uniti del
+2019. Retribuzione e pensione sono contate come se la persona fosse in vita in ogni
+anno, e i coefficienti forniscono la probabilità di morire, ai tassi americani; questo
+non si può rendere italiano dall'esterno dei coefficienti. Sono stati stimati anche per
+un mercato azionario con volatilità del 18,5%, e la volatilità più bassa del fondo in
+euro, 16,45%, non li raggiunge affatto: leggono solo il premio logaritmico, il
+rendimento composto sopra il tasso sicuro misurato in logaritmi, 1,98 punti, quindi
+valutano la retribuzione futura come se quel premio venisse con il rischio americano.
+Quel dato è il drift in eccesso logaritmico, calcolato come lo calcola il modello, al
+16,45% in uso. È appena sotto l'intervallo dal 2% al 4% su cui i coefficienti sono
+stati stimati, di 0,02 punti, mentre il tasso sicuro logaritmico, 1,46%, è dentro
+l'intervallo dallo 0% al 2% della stima. Moltiplicata per i coefficienti del premio,
+0,267 nel tasso di sconto dei salari e 0,217 in quello delle pensioni, la differenza è
+un'estrapolazione di meno di mezzo centesimo di punto di tasso di sconto. Eliminare uno
+qualsiasi di questi limiti vorrebbe dire stimare di nuovo i coefficienti su dati
+italiani, non sostituire dati. Il premio segue la definizione di Choi, il rendimento
+logaritmico atteso sopra il tasso sicuro. Il suo foglio di calcolo vi arriva con una
+scorciatoia, la media aritmetica in logaritmi meno metà del 18,5% al quadrato, che dà
+lo stesso numero quando la volatilità è 18,5% ma qui darebbe 1,63 punti e abbasserebbe
+di 0,4 punti la risposta della famiglia di riferimento.</p>
 
-<p><strong>Leaving tax out rests on a check of one decision, not on the full
-life-cycle model.</strong> Section 8 holds money to one date. Simulations run
-for this revision on this document's snapshot, not kept in the repository,
-take it three steps further. Rebalancing every year leaves the effect about
-where it was, about a hundredth stronger: the taxed share is 0.74, 0.87, 0.93
-and 0.95 of the untaxed one at 3, 7, 12 and 30 years, against 0.752, 0.887,
-0.936 and 0.955 in Table 7. For a
-worker whose future pay, taken as a riskless untaxed claim, is worth one to
-four times their savings, tax moves the right share by about &minus;2% to +4%
-at 15 to 30 years, and still about &minus;9% at 7. The
-full life-cycle model with
-Italian tax has not been solved. The cost of ignoring the tax, under 2 basis
-points a year, is computed for money held to a date three or more years
-away.</p>
+<p><strong>Lasciare fuori le imposte poggia sulla verifica di una sola decisione, non sul
+modello completo del ciclo di vita.</strong> La sezione 8 tiene il denaro fino a una
+sola data. Simulazioni eseguite per questa revisione sui dati di questo documento, non
+conservate nel repository, la portano tre passi più avanti. Ribilanciare ogni anno
+lascia l'effetto più o meno dov'era, più forte di circa un centesimo: la quota con le
+imposte è 0,74, 0,87, 0,93 e 0,95 di quella senza a 3, 7, 12 e 30 anni, contro 0,752,
+0,887, 0,936 e 0,955 della Tabella 7. Per un
+lavoratore la cui retribuzione futura, presa come un credito privo di rischio e non
+tassato, vale da una a quattro volte i suoi risparmi, le imposte spostano la quota giusta
+tra circa &minus;2% e +4% a 15-30 anni, e ancora di circa &minus;9% a 7. Il
+modello completo del ciclo di vita con
+le imposte italiane non è stato risolto. Il costo di ignorare l'imposta, meno di 2 punti
+base l'anno, è calcolato per denaro tenuto fino a una data distante tre o più
+anni.</p>
 
-<p><strong>The level of volatility is a judgement.</strong> 16.45% is Choi's
-estimator, taken from every day of the month, on twenty-five years of one world
-index in euro. Choi's 18.5% is ninety-eight years of the whole American market,
-and the window matters: over the same twenty-five years American stocks in
-dollars give 17.03% by the same estimator (Table 5), so a quarter-century that
-holds 2008 and 2020 but no depression may be a calm sample. Scaling Choi's 18.5%
-by the ratio of the world index in euro to American stocks in dollars over this
-window would give 17.87%, or 16.88% on month-end returns. Twelve-month returns, overlapping,
-on the month-end series give 16.62%. For an uncapped household
-each point of volatility near the figure used is worth about 3.7 points of
-equity share: the household of section 6, 45 years old with 30,000 euro of pay,
-500,000 saved and risk 5, holds 51.5% at 16.45%, and would hold 63.2% at
-month-end's 13.99%, 50.9% at 16.62%, 46.8% at 17.87% and 45.1% at Choi's
-18.5%.</p>
+<p><strong>Il livello della volatilità è un giudizio.</strong> Il 16,45% è lo stimatore
+di Choi, calcolato partendo da ogni giorno del mese, su venticinque anni di un solo
+indice mondiale in euro. Il 18,5% di Choi copre novantotto anni dell'intero mercato
+americano, e la finestra conta: negli stessi venticinque anni le azioni americane in
+dollari danno 17,03% con lo stesso stimatore (Tabella 5), quindi un quarto di secolo che
+contiene il 2008 e il 2020 ma nessuna depressione può essere un campione tranquillo.
+Riscalare il 18,5% di Choi con il rapporto tra l'indice mondiale in euro e le azioni
+americane in dollari su questa finestra darebbe 17,87%, o 16,88% sui rendimenti di fine
+mese. I rendimenti a dodici mesi, sovrapposti, sulla serie di fine mese danno 16,62%.
+Per una famiglia con risposta sotto il 100%,
+ogni punto di volatilità vicino al dato usato vale circa 3,7 punti di quota in azioni:
+la famiglia della sezione 6, con 45 anni, 30.000 euro di retribuzione, 500.000 di
+risparmi e avversione 5, detiene il 51,5% con il 16,45%, e deterrebbe il 63,2% con il
+13,99% della fine mese, il 50,9% con il 16,62%, il 46,8% con il 17,87% e il 45,1% con il
+18,5% di Choi.</p>
 
-<p><strong>The pension's career slope is declared, not corrected.</strong> Section 7.2 measures what a career outpacing average pay would cost; how much of Daminato and Padula's profile is such a career, rather than the general rise in pay, is not known.</p>
+<p><strong>La pendenza della carriera nella pensione è dichiarata, non corretta.</strong> La sezione 7.2 misura quanto costerebbe una carriera che cresce più della retribuzione media; quanta parte del profilo di Daminato e Padula sia una carriera così, e non la crescita generale delle retribuzioni, non è noto.</p>
 
-<p>Everything else in this document is measured against something outside this
-project, and section 2 is the list, with these exceptions. The fund's tracking
-and withholding in section 4.1, the volatility of the three indices other than
-the one used and the sampling checks of sections 6 and 11, the ceiling and
-career-slope sizes of section 7.2, the retiree errors of section 7.3 and the
-tax steps above are this project's own measurements, on data and simulations
-not kept in the repository. The reading of the growth term's bias as a tenth to half a point (section 4.2)
-is a judgement. The figures for Italian workers (section 7.1) and retirees
-(section 7.3) against the full model come from a direct solution of the full
-Cocco, Gomes and Maenhout model run for this project (not published).</p>
+<p>Tutto il resto di questo documento è misurato rispetto a qualcosa di esterno a questo
+progetto, e la sezione 2 ne è l'elenco, con queste eccezioni. La replica dell'indice e la
+ritenuta del fondo nella sezione 4.1, la volatilità dei tre indici diversi da quello
+usato e le verifiche sul campionamento delle sezioni 6 e 11, le stime del massimale e
+della pendenza della carriera nella sezione 7.2, gli errori sui pensionati della sezione
+7.3 e i passi sulle imposte qui sopra sono misure di questo progetto, su dati e
+simulazioni non conservati nel repository. La lettura della distorsione del termine di crescita tra un decimo e mezzo punto (sezione 4.2)
+è un giudizio. I dati sui lavoratori italiani (sezione 7.1) e sui pensionati
+(sezione 7.3) rispetto al modello completo vengono da una soluzione diretta del modello
+completo di Cocco, Gomes e Maenhout calcolata per questo progetto (non pubblicata).</p>
 
-<p class="totop"><a href="#contents">Back to contents</a></p>
+<p class="totop"><a href="#contents">Torna all'indice</a></p>
 
 <div class="footnote">
-<p>This tool and this document are provided for educational and illustrative purposes only. They do not constitute investment, financial, tax or legal advice, and their use creates no advisory or fiduciary relationship. All outputs depend on the assumptions documented above, several of which are estimates that competent practitioners would set differently. Past and simulated results do not predict future outcomes. Consult a qualified professional before making financial decisions.</p>
+<p>Questo strumento e questo documento sono forniti solo a scopo educativo e illustrativo. Non costituiscono consulenza in materia di investimenti, finanziaria, fiscale o legale, e il loro uso non crea alcun rapporto di consulenza o fiduciario. Tutti i risultati dipendono dalle ipotesi documentate sopra, diverse delle quali sono stime che professionisti competenti fisserebbero in modo diverso. I risultati passati e simulati non prevedono quelli futuri. Prima di prendere decisioni finanziarie, rivolgersi a un professionista qualificato.</p>
 </div>
 
 </div>

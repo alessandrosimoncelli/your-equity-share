@@ -52,6 +52,11 @@ ZIP = ROOT / "your-equity-share-site.zip"
 # The tool and its documentation should be distinguishable in a browser tab.
 TITLES = {"methodology.html": "Equity Share Methodology"}
 
+# The language each document is written in, for the shell's <html lang>, so a
+# screen reader reads the Italian methodology with an Italian voice and a
+# browser offers to translate the right pages. English unless named here.
+LANGUAGES = {"it/methodology.html": "it"}
+
 COPIED = {
     "src/web/index.html": "index.html",
     "src/js/model.js": "model.js",
@@ -104,7 +109,8 @@ ITALIAN_VARIANT = """const VARIANT = {
 };"""
 
 
-def as_document(body: str, title_override: str | None = None) -> str:
+def as_document(body: str, title_override: str | None = None,
+                lang: str = "en") -> str:
     """Give an HTML fragment the head a web server needs, and leave a page alone.
 
     Only ever call this on HTML. It once ran over model.js as well, which
@@ -129,14 +135,14 @@ def as_document(body: str, title_override: str | None = None) -> str:
         body = body[: start - len(marker)] + body[end + len("</title>"):]
         body = body.lstrip("\n")
 
-    return _shell(title_override or title, body)
+    return _shell(title_override or title, body, lang)
 
 
-def _shell(title: str, body: str) -> str:
+def _shell(title: str, body: str, lang: str = "en") -> str:
     """The head a static host will not supply and a local file has no source for."""
     return (
         "<!doctype html>\n"
-        '<html lang="en">\n'
+        f'<html lang="{lang}">\n'
         "<head>\n"
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
@@ -301,7 +307,7 @@ def main() -> int:
         # made the browser parse JavaScript as HTML and took the whole site
         # down with "Unexpected token '<'".
         if name.endswith(".html"):
-            body = as_document(body, TITLES.get(name))
+            body = as_document(body, TITLES.get(name), LANGUAGES.get(name, "en"))
         (OUT / name).parent.mkdir(parents=True, exist_ok=True)
         (OUT / name).write_text(body, encoding="utf-8")
         written.append(name)

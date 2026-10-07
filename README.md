@@ -15,7 +15,7 @@ w_fin = clip( [ln(1+mu) - ln(1+r)] / (gamma * sigma^2) * (1 + HC/W), 0, 1 )
 
 - **The tool:** [alessandrosimoncelli.github.io/your-equity-share](https://alessandrosimoncelli.github.io/your-equity-share/), and in Italian at [/it/](https://alessandrosimoncelli.github.io/your-equity-share/it/), market data refreshed every Monday
 - **What each input means:** [docs/inputs.md](docs/inputs.md)
-- **Full derivation and sources:** [United States](https://alessandrosimoncelli.github.io/your-equity-share/methodology.html) and [Italy](https://alessandrosimoncelli.github.io/your-equity-share/it/methodology.html), from `variants/us/` and `variants/it/`
+- **Full derivation and sources:** [United States](https://alessandrosimoncelli.github.io/your-equity-share/methodology.html) and [Italy](https://alessandrosimoncelli.github.io/your-equity-share/it/methodology.html), the Italian one written in Italian, from `variants/us/` and `variants/it/`
 - **What is not done yet:** [further work](https://alessandrosimoncelli.github.io/your-equity-share/further-work.html)
 
 **For** money you have invested and do not need on any particular date, meant

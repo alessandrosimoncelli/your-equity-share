@@ -548,7 +548,7 @@ IT_DOC = ROOT / "variants" / "it" / "methodology.html"
 def _doc() -> str:
     """The document with its line breaks flattened.
 
-    Prose wraps, so "Cocco, Gomes and Maenhout" is a line break in the middle
+    Prose wraps, so "Cocco, Gomes e Maenhout" is a line break in the middle
     of a name as often as not, and a test that searches the raw file fails on
     typography rather than on content.
     """
@@ -558,12 +558,36 @@ def _doc() -> str:
     return " ".join(raw.split())
 
 
+def _it(figure: str) -> str:
+    """A figure as the Italian document prints it, with a decimal comma and a
+    thousands point: "1,500,000" is written "1.500.000" and "24.7%" "24,7%"."""
+    return figure.translate(str.maketrans({",": ".", ".": ","}))
+
+
+# Italian puts an article, or a preposition joined to one, before a figure,
+# and which one depends on how the figure is read aloud: "il 12,4%", but
+# "l'8,1%" (otto) and "lo 0,5%" (zero).
+_ARTICLES = {"il": ("il ", "l'", "lo "), "di": ("del ", "dell'", "dello "),
+             "a": ("al ", "all'", "allo "), "da": ("dal ", "dall'", "dallo ")}
+
+
+def _art(word: str, figure: str) -> str:
+    """`figure`, already in Italian form, with the article `word` before it."""
+    whole = figure.lstrip("+-").split(",")[0]
+    plain, vowel, zero = _ARTICLES[word]
+    if whole == "0":
+        return zero + figure
+    if whole in ("1", "8", "11") or whole.startswith("8"):
+        return vowel + figure
+    return plain + figure
+
+
 def test_the_italian_methodology_quotes_the_configuration() -> None:
     """Every headline figure in the document has to be the one in use.
 
-    Written as percentages to four decimals or fewer, the way the document
-    prints them, so a change to the configuration that is not carried into the
-    prose fails here rather than in a reader's head.
+    Written as percentages to four decimals or fewer, with the decimal comma
+    the document prints them with, so a change to the configuration that is not
+    carried into the prose fails here rather than in a reader's head.
     """
     doc = _doc()
     # The snapshot the document was written with, not the live file, which
@@ -571,15 +595,15 @@ def test_the_italian_methodology_quotes_the_configuration() -> None:
     italy = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
     p = italy.provenance
     expected = {
-        "dividend yield": "%.4f%%" % (float(p["dividend_yield"]) * 100),
-        "growth": "%.4f%%" % (float(p["real_growth"]) * 100),
-        "compound": "%.4f%%" % (float(p["expected_return_compound"]) * 100),
-        "arithmetic": "%.4f%%" % (italy.expected_stock_real_return * 100),
-        "safe rate": "%.4f%%" % (italy.real_risk_free_rate * 100),
-        "volatility": "%.4f%%" % (italy.stock_volatility * 100),
-        "nominal yield": "%.4f%%" % (float(p["nominal_safe_yield"]) * 100),
-        "break-even": "%.4f%%" % (float(p["expected_inflation"]) * 100),
-        "survey": "%.4f%%" % (float(p["expected_inflation_survey"]) * 100),
+        "dividend yield": _it("%.4f%%" % (float(p["dividend_yield"]) * 100)),
+        "growth": _it("%.4f%%" % (float(p["real_growth"]) * 100)),
+        "compound": _it("%.4f%%" % (float(p["expected_return_compound"]) * 100)),
+        "arithmetic": _it("%.4f%%" % (italy.expected_stock_real_return * 100)),
+        "safe rate": _it("%.4f%%" % (italy.real_risk_free_rate * 100)),
+        "volatility": _it("%.4f%%" % (italy.stock_volatility * 100)),
+        "nominal yield": _it("%.4f%%" % (float(p["nominal_safe_yield"]) * 100)),
+        "break-even": _it("%.4f%%" % (float(p["expected_inflation"]) * 100)),
+        "survey": _it("%.4f%%" % (float(p["expected_inflation_survey"]) * 100)),
     }
     missing = [name for name, figure in expected.items() if figure not in doc]
     assert not missing, "the document does not quote: %s" % ", ".join(
@@ -593,16 +617,16 @@ def test_the_italian_methodology_declares_what_it_cannot_check(italy) -> None:
     than one with no validation section, because it reads as complete.
     """
     doc = _doc()
-    assert "What is not validated" in doc
-    assert "Cocco, Gomes and Maenhout" in doc
-    assert "Leaving tax out" in doc
+    assert "Che cosa non è validato" in doc
+    assert "Cocco, Gomes e Maenhout" in doc
+    assert "Lasciare fuori le imposte" in doc
 
 
 def test_the_italian_methodology_names_a_source_for_each_number(italy) -> None:
     """The validation table is the point of the document, so it must be there."""
     doc = _doc()
-    for source in ("AQR", "OECD", "iShares", "MSCI", "Deutsche Finanzagentur",
-                   "Rogoff", "Domar and Musgrave", "Horizon Actuarial"):
+    for source in ("AQR", "OCSE", "iShares", "MSCI", "Deutsche Finanzagentur",
+                   "Rogoff", "Domar e Musgrave", "Horizon Actuarial"):
         assert source in doc, "no citation of %s" % source
 
 
@@ -628,10 +652,16 @@ def test_each_snapshot_matches_the_date_its_document_states(variant) -> None:
     snap = load_market_data(ROOT / "variants" / variant / "snapshot.toml")
     doc = " ".join((ROOT / "variants" / variant / "methodology.html")
                    .read_text(encoding="utf-8").split())
-    stated = re.search(r"as of (\d{1,2}) (\w+) (\d{4})", doc)
+    if variant == "us":
+        stated = re.search(r"as of (\d{1,2}) (\w+) (\d{4})", doc)
+        months = ["January", "February", "March", "April", "May", "June", "July",
+                  "August", "September", "October", "November", "December"]
+    else:
+        # "aggiornati al 7 ottobre", or "all'8 settembre" before a vowel.
+        stated = re.search(r"aggiornati al(?:l'| )(\d{1,2}) (\w+) (\d{4})", doc)
+        months = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+                  "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
     assert stated, "the document does not state an as-of date"
-    months = ["January", "February", "March", "April", "May", "June", "July",
-              "August", "September", "October", "November", "December"]
     day = date(int(stated.group(3)), months.index(stated.group(2)) + 1,
                int(stated.group(1)))
     assert snap.as_of == day
@@ -714,7 +744,8 @@ def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
     us = recommend(household, american.expected_stock_real_return,
                    american.real_risk_free_rate, american.stock_volatility,
                    CGM_CALIBRATION).equity_share
-    assert f"between a {us:.1%} American answer and a {share:.1%} Italian one" in doc
+    assert (f"{_it(f'{us:.1%}')} per quella americana e "
+            f"{_it(f'{share:.1%}')} per quella italiana") in doc
 
 
 # --- section 10, why the answer is so often 100% ----------------------------
@@ -804,11 +835,11 @@ def test_the_100_percent_table_is_the_model_s() -> None:
         default_column.append(cells[1])
         american_column.append(american)
         row = (f'<tr><td>{age}</td>'
-               + "".join(f'<td class="num">{c:.1f}</td>' for c in cells)
-               + f'<td class="num">{american:.1f}</td></tr>')
+               + "".join(f'<td class="num">{_it(f"{c:.1f}")}</td>' for c in cells)
+               + f'<td class="num">{_it(f"{american:.1f}")}</td></tr>')
         assert row in doc, row
     for column in (default_column, american_column):
-        stated = f"{min(column):.1f} to {max(column):.1f} years"
+        stated = f"tra {_it(f'{min(column):.1f}')} e {_it(f'{max(column):.1f}')} anni"
         assert stated in doc, stated
 
 
@@ -820,13 +851,15 @@ def test_the_opening_household_is_the_model_s() -> None:
                   *_snapshots()["it"]([age]), ITALY_CALIBRATION)
     assert r.equity_share == 1.0, "the section explains a 100% answer"
     stocks = r.merton_share * (r.human_capital + savings)
+    pay_s, savings_s = _it(f"{pay:,.0f}"), _it(f"{savings:,.0f}")
     for stated in (
-        f"is {age} years old, earns {pay:,.0f} euro a year after tax, has "
-        f"{savings:,.0f} saved and answers {gamma:.0f} for risk",
-        f"worth {r.human_capital:,.0f} euro, {r.human_capital / pay:.1f} years of pay",
-        f"together is {r.merton_share:.1%}, which is {stocks:,.0f} euro of stocks "
-        f"against {savings:,.0f} to invest",
-        f"would hold {r.uncapped_share:.0%} of the savings",
+        f"ha {age} anni, guadagna {pay_s} euro l'anno al netto delle imposte, ha "
+        f"{savings_s} euro di risparmi e risponde {gamma:.0f} alla domanda sul rischio",
+        f"valgono {_it(f'{r.human_capital:,.0f}')} euro, "
+        f"{_it(f'{r.human_capital / pay:.1f}')} anni di retribuzione",
+        f"sul totale delle due è {_art('di', _it(f'{r.merton_share:.1%}'))}, cioè "
+        f"{_it(f'{stocks:,.0f}')} euro di azioni contro {savings_s} da investire",
+        f"terrebbe in azioni {_art('il', f'{r.uncapped_share:.0%}')} dei risparmi",
     ):
         assert stated in doc, stated
 
@@ -850,22 +883,26 @@ def test_the_three_reasons_quote_the_model() -> None:
 
     _, it_pay, it_savings, _ = _opening("it")
     _, us_pay, us_savings, _ = _opening("us")
+    american = _it(f"{years(us, CGM_CALIBRATION):.1f}")
     for stated in (
-        f"drift of {drift(it) * 100:.2f} points a year in euro",
-        f"against {drift(us) * 100:.2f} in the United States",
-        f"{us[1]:.2%} real on 30-year TIPS",
-        f"low, {it[1]:.2%}.",
-        f"{it[2]:.2%} a year against {us[2]:.2%} for the whole American market",
-        f"the share is {merton(it):.1%} in Italy against {merton(us):.1%}",
-        f"human capital at 45 from {years(us, CGM_CALIBRATION):.1f} years of pay "
-        f"to {years(it, CGM_CALIBRATION):.1f}",
-        f"human capital at 45 from {years(us, CGM_CALIBRATION):.1f} years of pay "
-        f"to {years(us, ITALY_CALIBRATION):.1f}, and with the euro market as "
-        f"well, to {years(it, ITALY_CALIBRATION):.1f}",
-        f"opens on savings of {it_savings / it_pay:.1f} years of pay, "
-        f"{it_savings:,.0f} euro against {it_pay:,.0f} of salary",
-        f"the American page on {us_savings / us_pay:.0f} years, "
-        f"{us_savings:,.0f} dollars against {us_pay:,.0f}",
+        f"drift di {_it(f'{drift(it) * 100:.2f}')} punti l'anno in euro",
+        f"contro {_it(f'{drift(us) * 100:.2f}')} negli Stati Uniti",
+        f"{_it(f'{us[1]:.2%}')} reale sui TIPS a 30 anni",
+        f"basso, {_it(f'{it[1]:.2%}')}.",
+        f"{_it(f'{it[2]:.2%}')} l'anno contro {_it(f'{us[2]:.2%}')} per l'intero "
+        f"mercato americano",
+        f"la quota è {_art('di', _it(f'{merton(it):.1%}'))} in Italia contro "
+        f"{_art('il', _it(f'{merton(us):.1%}'))}",
+        f"capitale umano a 45 anni da {american} a "
+        f"{_it(f'{years(it, CGM_CALIBRATION):.1f}')} anni di retribuzione",
+        f"capitale umano a 45 anni da {american} a "
+        f"{_it(f'{years(us, ITALY_CALIBRATION):.1f}')} anni di retribuzione, e con "
+        f"anche il mercato dell'euro a {_it(f'{years(it, ITALY_CALIBRATION):.1f}')}",
+        f"parte da risparmi pari a {_it(f'{it_savings / it_pay:.1f}')} anni di "
+        f"retribuzione, {_it(f'{it_savings:,.0f}')} euro contro "
+        f"{_it(f'{it_pay:,.0f}')} di stipendio",
+        f"la pagina americana da {us_savings / us_pay:.0f} anni, "
+        f"{_it(f'{us_savings:,.0f}')} dollari contro {_it(f'{us_pay:,.0f}')}",
     ):
         assert stated in doc, stated
 
@@ -899,24 +936,24 @@ def test_the_split_of_the_extra_equity_is_the_model_s() -> None:
     first = _shapley(("market", "career"), opening)
     second = _shapley(("market", "career"), reference)
     rows = (
-        ("American answer", f"{opening(frozenset()):.1%}",
-         f"{reference(frozenset()):.1%}"),
-        ("1. The euro market", f"{first['market'] * 100:+.1f}",
-         f"{second['market'] * 100:+.1f}"),
-        ("2. The Italian career and pension", f"{first['career'] * 100:+.1f}",
-         f"{second['career'] * 100:+.1f}"),
-        ("Italian answer", f"{opening(italian):.1%}",
-         f"{reference(italian):.1%}"),
+        ("Risposta americana", _it(f"{opening(frozenset()):.1%}"),
+         _it(f"{reference(frozenset()):.1%}")),
+        ("1. Il mercato dell'euro", _it(f"{first['market'] * 100:+.1f}"),
+         _it(f"{second['market'] * 100:+.1f}")),
+        ("2. La carriera e la pensione italiane", _it(f"{first['career'] * 100:+.1f}"),
+         _it(f"{second['career'] * 100:+.1f}")),
+        ("Risposta italiana", _it(f"{opening(italian):.1%}"),
+         _it(f"{reference(italian):.1%}")),
     )
     for label, a, b in rows:
         row = (f'<tr><td>{label}</td><td class="num">{a}</td>'
                f'<td class="num">{b}</td></tr>')
         assert row in doc, row
 
-    # What the prose says about them: "about four fifths of the extra equity is
-    # the market" for both, and for the opening households "neither change
-    # alone takes the American answer to 100%, and the two together take it
-    # past it".
+    # What the prose says about them: "circa quattro quinti delle azioni in
+    # più vengono dal mercato" for both, and for the opening households
+    # "nessuno dei due cambiamenti da solo porta la risposta americana al 100%,
+    # e insieme la portano oltre".
     for split in (first, second):
         assert round(5 * split["market"] / sum(split.values())) == 4
     assert all(opening(frozenset({one})) < 1.0 for one in ("market", "career"))
@@ -948,21 +985,23 @@ def test_the_tax_table_is_the_check_s_output() -> None:
         laws.append(law)
         means.append(mean_only)
         costs.append(cost)
-        row = (f'<tr><td class="num">{years}</td><td class="num">{law:.3f}</td>'
-               f'<td class="num">{mean_only:.3f}</td><td class="num">{cost:.2f}</td>'
-               f'<td class="num">{loss:.1%}</td></tr>')
+        row = (f'<tr><td class="num">{years}</td><td class="num">{_it(f"{law:.3f}")}</td>'
+               f'<td class="num">{_it(f"{mean_only:.3f}")}</td>'
+               f'<td class="num">{_it(f"{cost:.2f}")}</td>'
+               f'<td class="num">{_it(f"{loss:.1%}")}</td></tr>')
         assert row in doc, row
-    assert round(1 - laws[0], 2) == 0.25                      # "about a quarter"
-    assert abs((1 - laws[1]) - 1 / 9) < 0.01                 # "about a ninth"
-    assert all(1 - law < 0.1 for law in laws[2:])            # "under a tenth beyond"
-    assert costs[0] < 2 and max(costs[1:]) < 0.5             # "under 2", "under half"
-    # "about three tenths against the law's quarter ... nearer to it than
-    # leaving tax out", and "between two and a little over four times what
-    # the law does" from seven years.
+    assert round(1 - laws[0], 2) == 0.25                      # "circa un quarto"
+    assert abs((1 - laws[1]) - 1 / 9) < 0.01                 # "circa un nono"
+    assert all(1 - law < 0.1 for law in laws[2:])            # "meno di un decimo"
+    assert costs[0] < 2 and max(costs[1:]) < 0.5             # "meno di 2", "meno di mezzo"
+    # At three years taxing the mean "è più vicino alla legge che lasciare
+    # fuori le imposte", and from seven years it cuts "tra due e poco più di
+    # quattro volte quanto fa la legge".
     assert round(1 - means[0], 1) == 0.3 and laws[0] - means[0] < 1 - laws[0]
     ratios = [(1 - m) / (1 - l) for m, l in zip(means[1:], laws[1:])]
     assert min(ratios) >= 2 and 4 < max(ratios) < 4.25
-    assert f"by {round((1 - max(means)) * 100)}% to {round((1 - min(means)) * 100)}%" in doc
+    low, high = round((1 - max(means)) * 100), round((1 - min(means)) * 100)
+    assert f"tagliava la quota {_art('da', f'{low}%')} {_art('a', f'{high}%')}" in doc
     for gamma in (3.0, 8.0):                                 # "within a hundredth"
         for years, law in zip(tax_check.YEARS, laws):
             assert abs(tax_check.law_ratio(years, gamma) - law) < 0.01
