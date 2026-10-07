@@ -2,16 +2,20 @@
 
     python tools/build_web.py
 
-Any static host serves the folder this produces, and it needs no server. Four
-files, about 120 KB, no runtime to download and nothing to install: the page
-opens immediately.
+Any static host serves the folder this produces, and it needs no server. The
+tool itself is three files, about 110 KB, with no runtime to download and
+nothing to install, so the page opens immediately:
 
-    index.html        the tool, hand written
-    model.js          the model, ported from Python
-    market.json       the three numbers, from variants/us/market_data.toml
-    methodology.html  the technical document the footer links to
-    it/               the Italian page and its market file, written from the
-                      same index.html: see build_italian_page
+    index.html          the tool, hand written
+    model.js            the model, ported from Python
+    market.json         the market data, from variants/us/market_data.toml,
+                        with the world index figure the page prints beside it
+    methodology.html    the technical document the page links to
+    further-work.html   what the model does not do yet
+    og.png              the picture a shared link shows
+    it/                 the Italian page, written from the same index.html
+                        (see build_italian_page), its market file, its
+                        methodology and its picture
 
 The earlier build shipped Streamlit compiled to WebAssembly, which ran the
 Python itself in the browser. It was faithful, and it took about thirty seconds
@@ -21,9 +25,8 @@ arithmetic, so it runs natively instead.
 
 Python remains the reference implementation. `src/js/model.js` is held to it by
 tests/golden.json; see tools/check_golden.mjs. Only the model crossed over.
-Fetching, parsing, volatility, the expected-return estimators and the frozen
-spreadsheet baseline all stay in Python because they run on the author's
-machine, not the reader's.
+Fetching, parsing and the expected-return estimator stay in Python because
+they run on the author's machine, not the reader's.
 
 Nothing a visitor types is transmitted, because there is nowhere to transmit it
 to. That is a property of the architecture rather than a promise.
@@ -77,11 +80,10 @@ ICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0
 
 CONFIG = ROOT / "variants" / "us" / "market_data.toml"
 
-# The Italian variant, read only so the page can print its expected return
-# beside the American one. The tool itself runs on CONFIG; this is context,
-# because "3.38% real" means little until a reader can see what the same
-# construction produces for a global index. Optional on purpose: a checkout
-# without the Italian file still builds.
+# The Italian variant's market file. The Italian page runs on it, and the
+# American page prints its world index figure beside the American estimate,
+# because "3.41% real" means little until a reader can see what the same
+# construction produces for a global index. The build needs it.
 CONFIG_GLOBAL = ROOT / "variants" / "it" / "market_data.toml"
 
 # The Italian page is not a second copy of the tool. It is written from
@@ -246,7 +248,7 @@ def build_market_json() -> str:
 
     The page cannot parse TOML and should not have to. This keeps
     variants/us/market_data.toml the single source that `update.py` writes and that
-    every Python entry point reads, and makes the monthly refresh a matter of
+    every Python entry point reads, and makes the weekly refresh a matter of
     replacing one small file in the deploy.
     """
     if not CONFIG.exists():

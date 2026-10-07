@@ -1,8 +1,8 @@
 /**
  * The equity allocation model, ported from Python.
  *
- * Python is the reference implementation. It is what the 215 tests exercise and
- * what was validated against Choi's own spreadsheet. This file exists only
+ * Python is the reference implementation. It is what the test suite exercises
+ * and what was validated against Choi's own spreadsheet. This file exists only
  * because a browser cannot run it fast enough: a Python interpreter compiled to
  * WebAssembly took about thirty seconds to start, and this takes none.
  *
@@ -13,8 +13,8 @@
  * is regenerated from there.
  *
  * Only the model is ported. Fetching market data, parsing providers and
- * estimating volatility and the expected return stay in Python, because they
- * run on the author's machine and not the reader's.
+ * estimating the expected return stay in Python, because they run on the
+ * author's machine and not the reader's.
  *
  * No dependencies, no imports, no build step.
  */
@@ -70,19 +70,6 @@ const RETIREMENT_AGE = 67;
 // The gamble used in the user guide.
 export const GUIDE_GAMBLE_HIGH = 100000.0;
 export const GUIDE_GAMBLE_LOW = 50000.0;
-
-// The log excess drifts Choi's approximation was fitted over. Outside this the
-// fitted coefficients are an extrapolation with no standing.
-export const CHOI_FITTED_LOG_PREMIUM_RANGE = Object.freeze([0.02, 0.04]);
-
-// The other half of the same grid: log real risk-free rates of 0, 0.01 and
-// 0.02. Choi's guide suggests the 30-year TIPS yield as a reasonable number
-// to enter, which is above all three. The regressor carries +1.132 against -0.267 on the premium.
-export const CHOI_FITTED_LOG_RISK_FREE_RANGE = Object.freeze([0.0, 0.02]);
-
-// And the third axis. The paper solves at 4, 5, 6, 7, 8, 9 and 10; the guide
-// offers a table from 1 to 10. Below 4 is extrapolation, on the benign side.
-export const CHOI_FITTED_RISK_AVERSION_RANGE = Object.freeze([4, 10]);
 
 /** Volatility baked into the fitted coefficients. */
 export const CALIBRATION_VOLATILITY = 0.185;
@@ -441,13 +428,6 @@ export function gammaFromCertaintyEquivalent(
   return 0.5 * (lower + upper);
 }
 
-/** The lookup table printed in the user guide, computed rather than copied. */
-export function guideTable(high = GUIDE_GAMBLE_HIGH, low = GUIDE_GAMBLE_LOW) {
-  const table = {};
-  for (let g = 1; g <= 10; g += 1) table[g] = certaintyEquivalent(g, high, low);
-  return table;
-}
-
 // --- the question as five choices -------------------------------------------
 //
 // The staircase of risk_aversion.py: five choices between the coin and a sure
@@ -650,15 +630,3 @@ export function logRiskFree(realRiskFree) {
   return Math.log(1.0 + realRiskFree);
 }
 
-/** Whether the safe rate sits inside the grid the coefficients were fitted on. */
-export function withinFittedRiskFree(realRiskFree) {
-  const [low, high] = CHOI_FITTED_LOG_RISK_FREE_RANGE;
-  const r = logRiskFree(realRiskFree);
-  return low <= r && r <= high;
-}
-
-export function withinFittedRange(expectedRealReturn, realRiskFree, volatility = CALIBRATION_VOLATILITY) {
-  const [low, high] = CHOI_FITTED_LOG_PREMIUM_RANGE;
-  const pi = logPremium(expectedRealReturn, realRiskFree, volatility);
-  return low <= pi && pi <= high;
-}

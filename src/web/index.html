@@ -527,10 +527,10 @@ ol.notes li { margin-bottom: 0.25rem; }
 .note b { color: var(--green); }
 
 /*
-  The one caveat that changes how much weight the answer deserves, so it is
-  the one thing on the page allowed a border. It sits directly under the
-  result rather than beneath the last table, because a reader who stops at the
-  percentage should still have seen it.
+  The one notice that can stand under the answer: market data that has stopped
+  updating. It is the one thing on the page allowed a border, and it sits
+  directly under the result rather than beneath the last table, because a
+  reader who stops at the percentage should still have seen it.
 */
 .warning {
   font-size: var(--t-body);
@@ -539,11 +539,11 @@ ol.notes li { margin-bottom: 0.25rem; }
   padding: 0.8rem 1rem;
   margin-top: 1.6rem;
 }
-.warning b { color: var(--green); }
 .warning:empty { display: none; }
 
-/* Exhibit 5 runs the width of the page, so its prose should too. */
-.span-all .sub, .span-all .note { max-width: none; }
+/* Fields that run the width of the form, the partner's and the year-by-year
+   box, let their notes run as wide. */
+.span-all .sub { max-width: none; }
 
 /* --- tables -------------------------------------------------------------- */
 /* Rules above and below the body only. No line between every row. */
@@ -566,7 +566,6 @@ thead th {
 }
 
 tbody td { padding: 0.42rem 1.1rem 0.42rem 0; vertical-align: baseline; }
-tbody tr:last-child td { padding-bottom: 0; }
 tbody { border-bottom: 1px solid var(--rule); }
 tbody tr:last-child td { padding-bottom: 0.55rem; }
 
@@ -622,6 +621,8 @@ td.why { min-width: 15rem; }
   margin-right: auto;
 }
 .foot a { color: var(--green); }
+/* Data past its limit, or an earnings history later than usual. */
+.foot .stale { font-weight: 700; }
 .boot { padding: 2.5rem 0; }
 
 .visually-hidden {
@@ -1218,7 +1219,6 @@ function parsePath(text, currentAge) {
   return { wages, benefits, used, bad };
 }
 
-/** The projected path, as the text the user starts editing from. */
 /*
   Money fields.
 
@@ -1694,10 +1694,12 @@ function render() {
     + `${pct0.format(recommend(makeHousehold(Math.min(HI, r.financialWealth * 10), household.adults, gamma), expected, rf, sigma, VARIANT.calibration).equityShare)}.`;
 
   // The same construction, run on a global index, printed beside the American
-  // number. Not a second recommendation: the model would also need the Italian
-  // human capital calibration to produce one. It is here because the American
-  // figure is hard to judge on its own and easy to judge next to what the identical
-  // estimator says about a portfolio most readers could also buy.
+  // number for a reader who holds a world fund. Not a second recommendation:
+  // the answer above keeps the American career and pension, and the Italian
+  // page is the one built for a world fund held from Europe. It is here
+  // because the American figure is hard to judge on its own and easy to judge
+  // next to what the identical estimator says about a portfolio most readers
+  // could also buy.
   //
   // The two differ by the YIELD, not the method. Both use the same 100-year
   // Shiller growth trend and both assume no repricing, so the gap is the price
