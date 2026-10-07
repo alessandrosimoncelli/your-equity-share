@@ -73,8 +73,8 @@ en = '''class="boot">Loading the market data.</div>'''
 it = '''class="boot">Caricamento dei dati di mercato.</div>'''
 
 [[t]]
-en = '''<p class="eyebrow">Inputs</p>'''
-it = '''<p class="eyebrow">Dati</p>'''
+en = '''<h2 class="eyebrow">Inputs</h2>'''
+it = '''<h2 class="eyebrow">Dati</h2>'''
 
 [[t]]
 en = '''for="age">Age</label>'''
@@ -321,16 +321,16 @@ it = '''Spunta <b>Secondo adulto nel nucleo familiare</b>
 # --- results and exhibits ---------------------------------------------------
 
 [[t]]
-en = '''<p class="eyebrow">Results</p>'''
-it = '''<p class="eyebrow">Risultati</p>'''
+en = '''<h2 class="eyebrow">Results</h2>'''
+it = '''<h2 class="eyebrow">Risultati</h2>'''
 
 [[t]]
 en = '''aria-label="How the portfolio divides"'''
 it = '''aria-label="Come si divide il portafoglio"'''
 
 [[t]]
-en = '''<p class="eyebrow">Exhibits</p>'''
-it = '''<p class="eyebrow">Prospetti</p>'''
+en = '''<h2 class="eyebrow">Exhibits</h2>'''
+it = '''<h2 class="eyebrow">Prospetti</h2>'''
 
 [[t]]
 en = '''Exhibit 1. Your total wealth'''
@@ -594,7 +594,7 @@ it = '''`Stessa famiglia, altri risparmi. `'''
 
 [[t]]
 en = '''`At ${money.format(r.financialWealth)} the answer is ${pct0.format(r.equityShare)}; `'''
-it = '''`Con ${money.format(r.financialWealth)} la risposta è ${pct0.format(r.equityShare)}; `'''
+it = '''`Con ${money.format(r.financialWealth)} la risposta è il ${pct0.format(r.equityShare)}; `'''
 
 [[t]]
 en = '''`with ${money.format(Math.min(HI, r.financialWealth * 10))} it would be `'''
@@ -656,8 +656,12 @@ en = '''`market.json returned ${response.status}`'''
 it = '''`market.json ha risposto ${response.status}`'''
 
 [[t]]
-en = '''`<b>Could not load the market data.</b> ${String(error.message || error)}`'''
-it = '''`<b>Non è stato possibile caricare i dati di mercato.</b> ${String(error.message || error)}`'''
+en = '''`<b>Could not load the market data.</b> Check the connection and reload the page.`'''
+it = '''`<b>Non è stato possibile caricare i dati di mercato.</b> Controlla la connessione e ricarica la pagina.`'''
+
+[[t]]
+en = '''const moneyTick = (v) => money0.format(v);'''
+it = '''const moneyTick = (v) => (v < 1e6 ? money.format(v) : money0.format(v));'''
 
 
 
@@ -676,8 +680,8 @@ en = '''`The model needs savings above zero: it has no answer when debts are lar
 it = '''`Il modello ha bisogno di risparmi sopra lo zero: non ha una risposta se i debiti superano i risparmi.`'''
 
 [[t]]
-en = '''`Market data as of <b>${market.as_of}</b>, ` +'''
-it = '''`Dati di mercato al <b>${market.as_of}</b>, ` +'''
+en = '''`Market data as of <b>${longDate(market.as_of)}</b>, ` +'''
+it = '''`Dati di mercato al <b>${longDate(market.as_of)}</b>, ` +'''
 
 [[t]]
 en = '''${days} day${days === 1 ? "" : "s"} old</span>` +'''

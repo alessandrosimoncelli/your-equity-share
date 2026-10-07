@@ -40,6 +40,10 @@
   --green:  #06402B;
   /* Tints of the one green, so the palette stays at two colours. */
   --rule:   rgba(6, 64, 43, 0.30);
+  /* The edge of a field or a button. At 0.60 it is 3.7 to 1 against white,
+     over the 3 to 1 WCAG asks of the boundary of a control; --rule, at 1.8 to
+     1, is for lines that only divide. */
+  --field:  rgba(6, 64, 43, 0.60);
   --grid:   rgba(6, 64, 43, 0.11);
   --tint:   rgba(6, 64, 43, 0.10);
   --tint-2: rgba(6, 64, 43, 0.16);
@@ -140,20 +144,6 @@ h1 {
 
 .section-exhibits { padding-top: 0.4rem; }
 
-h2 {
-  font-size: var(--t-head);
-  font-weight: 700;
-  color: var(--green);
-  margin: 2.75rem 0 0.85rem;
-}
-
-h3 {
-  font-size: var(--t-body);
-  font-weight: 700;
-  color: var(--green);
-  margin: 0 0 0.9rem;
-}
-
 p { margin: 0.85rem 0 0; }
 .sub { font-size: var(--t-small); margin: 0.7rem 0 0; max-width: 40rem; }
 
@@ -203,7 +193,7 @@ p { margin: 0.85rem 0 0; }
   font-size: var(--t-small);
   color: var(--green);
   background: var(--paper);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--field);
   border-radius: 0;
   padding: 0.15rem 0.5rem;
   cursor: pointer;
@@ -295,7 +285,7 @@ input[type="number"], input[type="text"] {
   padding: 0.5rem 0.6rem;
   color: var(--ink);
   background: var(--paper);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--field);
   border-radius: 0;
 }
 
@@ -308,7 +298,7 @@ textarea.path {
   padding: 0.4rem 0.5rem;
   color: var(--ink);
   background: var(--paper);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--field);
   border-radius: 0;
   resize: vertical;
 }
@@ -349,6 +339,8 @@ input:disabled { opacity: 0.55; cursor: not-allowed; }
 .readout { font-size: var(--t-small); margin-top: 0.5rem; }
 .readout b { color: var(--green); }
 
+/* Inputs, Results and Exhibits are the page's sections, so they are h2, and
+   each exhibit's title is an h3: a screen reader lists them as headings. */
 .eyebrow {
   font-size: var(--t-section);
   font-weight: 700;
@@ -583,12 +575,20 @@ thead th:last-child, tbody td:last-child { padding-right: 0; }
 td.k { white-space: nowrap; }
 td.why { min-width: 15rem; }
 
+/* On a phone a label or a source wraps rather than push its table past the
+   screen. At 375px Exhibits 2 and 5 were wider than their box, and the
+   columns that fell off the edge were the figures. */
+@media (max-width: 40rem) {
+  td.k, thead th { white-space: normal; }
+  td.why { min-width: 0; }
+}
+
 /* --- charts -------------------------------------------------------------- */
 
 .chart { width: 100%; display: block; touch-action: pan-y; margin-top: 0.9rem; }
 .chart .grid { stroke: var(--grid); stroke-width: 1; }
-.chart .axis { stroke: var(--rule); stroke-width: 1; }
-.chart .tick, .chart .axis-title { fill: var(--ink); font-size: 14px; font-family: var(--body); }
+.chart .axis, .path-chart .axis { stroke: var(--rule); stroke-width: 1; }
+.chart .tick, .chart .axis-title, .path-chart .tick { fill: var(--ink); font-size: 14px; font-family: var(--body); }
 .chart .fill { fill: var(--tint); }
 .chart .line { fill: none; stroke: var(--green); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .chart .here { stroke: var(--green); stroke-width: 1; stroke-dasharray: 4 3; }
@@ -647,7 +647,7 @@ td.why { min-width: 15rem; }
 <div id="app" hidden>
 
   <section class="section-form">
-    <p class="eyebrow">Inputs</p>
+    <h2 class="eyebrow">Inputs</h2>
     <div class="form-grid">
 
       <div class="field">
@@ -834,7 +834,7 @@ td.why { min-width: 15rem; }
   </section>
 
   <section class="section-result">
-    <p class="eyebrow">Results</p>
+    <h2 class="eyebrow">Results</h2>
     <div class="result-row">
       <div>
         <p class="verdict">
@@ -852,11 +852,11 @@ td.why { min-width: 15rem; }
   </section>
 
   <section class="section-exhibits">
-    <p class="eyebrow">Exhibits</p>
+    <h2 class="eyebrow">Exhibits</h2>
     <div class="exhibit-grid">
 
     <section>
-      <p class="exhibit">Exhibit 1. Your total wealth</p>
+      <h3 class="exhibit">Exhibit 1. Your total wealth</h3>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Component</th><th class="n">Amount</th><th class="n">Share</th></tr></thead>
@@ -868,7 +868,7 @@ td.why { min-width: 15rem; }
     </section>
 
     <section>
-      <p class="exhibit">Exhibit 2. How the answer is reached</p>
+      <h3 class="exhibit">Exhibit 2. How the answer is reached</h3>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Step</th><th class="n">Equity share</th></tr></thead>
@@ -879,7 +879,7 @@ td.why { min-width: 15rem; }
     </section>
 
     <section>
-      <p class="exhibit">Exhibit 3. If stocks return more or less</p>
+      <h3 class="exhibit">Exhibit 3. If stocks return more or less</h3>
       <div class="figure">
         <svg class="chart" id="sensitivity" role="img"
              aria-label="Recommended equity share against the expected real return on equities"></svg>
@@ -889,7 +889,7 @@ td.why { min-width: 15rem; }
     </section>
 
     <section>
-      <p class="exhibit">Exhibit 4. With more or less savings</p>
+      <h3 class="exhibit">Exhibit 4. With more or less savings</h3>
       <div class="figure">
         <svg class="chart" id="glide" role="img"
              aria-label="Recommended equity share against investable net worth, age and salary held fixed"></svg>
@@ -899,7 +899,7 @@ td.why { min-width: 15rem; }
     </section>
 
     <section class="span-all">
-      <p class="exhibit">Exhibit 5. The market inputs</p>
+      <h3 class="exhibit">Exhibit 5. The market inputs</h3>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Input</th><th class="n">Value</th><th>Source</th></tr></thead>
@@ -961,6 +961,18 @@ const pct2 = new Intl.NumberFormat(VARIANT.locale, { style: "percent", minimumFr
 const money = new Intl.NumberFormat(VARIANT.locale, { style: "currency", currency: VARIANT.currency, maximumFractionDigits: 0 });
 // Compact form for axis ticks that span three orders of magnitude.
 const money0 = new Intl.NumberFormat(VARIANT.locale, { style: "currency", currency: VARIANT.currency, notation: "compact", maximumFractionDigits: 0 });
+// English shortens thousands ($10K). Italian does not, so the Italian page
+// writes them out (10.000 €) and shortens only millions (1 Mln €).
+const moneyTick = (v) => money0.format(v);
+
+// A date as a reader writes it, from the ISO date the data carry. Read in UTC,
+// so a reader west of Greenwich does not see the day before.
+function longDate(iso) {
+  const [y, mo, d] = String(iso).split("-").map(Number);
+  if (!y || !mo || !d) return String(iso);
+  return new Intl.DateTimeFormat(VARIANT.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(Date.UTC(y, mo - 1, d)));
+}
 const num1 = new Intl.NumberFormat(VARIANT.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const num2 = new Intl.NumberFormat(VARIANT.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -969,6 +981,20 @@ let market = null;
 // --- charts -----------------------------------------------------------------
 // Drawn by hand as SVG. The shapes here are a line, an area and a marker, which
 // is not worth a library and would not survive one gracefully anyway.
+
+// How wide a tick label is drawn, so that labels can be kept apart: measured
+// in the tick's own font where the browser can, estimated where it cannot.
+let measureContext = null;
+function textWidth(text) {
+  try {
+    measureContext = measureContext || document.createElement("canvas").getContext("2d");
+    if (measureContext) {
+      measureContext.font = `14px ${getComputedStyle(document.body).fontFamily}`;
+      return measureContext.measureText(text).width;
+    }
+  } catch (error) { /* no canvas here: the estimate below will do */ }
+  return 7.5 * String(text).length;
+}
 
 function drawChart(svg, tip, opts) {
   const { points, xDomain, yDomain, xFormat, yFormat, xTitle, markerX, markerY, tipLabel } = opts;
@@ -1000,10 +1026,30 @@ function drawChart(svg, tip, opts) {
     parts.push(`<line class="grid" x1="${m.left}" y1="${y}" x2="${m.left + iw}" y2="${y}"/>`);
     parts.push(`<text class="tick" x="${m.left - 8}" y="${y + 4}" text-anchor="end">${yFormat(v)}</text>`);
   }
+  // A label on either end of the axis is set inside it, as on the year-by-year
+  // chart: centred there, half of it fell outside the drawing and was cut off
+  // ("$10M", "10 Mln €"). On a narrow phone a middle label that would touch
+  // its neighbour is left out; the two ends always stay.
+  const labels = [];
   for (let i = 0; i <= ticksX; i += 1) {
     const v = opts.xTicks ? opts.xTicks[i] : inv(m.left + (iw * i) / ticksX);
     if (v === undefined) continue;
-    parts.push(`<text class="tick" x="${sx(v)}" y="${m.top + ih + 17}" text-anchor="middle">${xFormat(v)}</text>`);
+    const anchor = i === 0 && v <= xDomain[0] ? "start" : i === ticksX && v >= xDomain[1] ? "end" : "middle";
+    const text = xFormat(v), x = sx(v), w = textWidth(text);
+    const left = anchor === "start" ? x : anchor === "end" ? x - w : x - w / 2;
+    labels.push({ text, x, anchor, left, right: left + w });
+  }
+  const shown = [];
+  labels.forEach((l, i) => {
+    const last = shown[shown.length - 1];
+    if (last && l.left < last.right + 6) {
+      if (i !== labels.length - 1) return;
+      if (shown.length > 1) shown.pop();
+    }
+    shown.push(l);
+  });
+  for (const l of shown) {
+    parts.push(`<text class="tick" x="${l.x}" y="${m.top + ih + 17}" text-anchor="${l.anchor}">${l.text}</text>`);
   }
   parts.push(`<line class="axis" x1="${m.left}" y1="${m.top + ih}" x2="${m.left + iw}" y2="${m.top + ih}"/>`);
   if (xTitle) {
@@ -1633,7 +1679,7 @@ function render() {
     xScale: "log",
     xTicks: [10_000, 100_000, 1_000_000, 10_000_000],
     yDomain: [0, 1],
-    xFormat: (v) => money0.format(v),
+    xFormat: moneyTick,
     yFormat: (v) => pct0.format(v),
     xTitle: "Investable net worth",
     markerX: here,
@@ -1708,8 +1754,11 @@ async function boot() {
     if (!response.ok) throw new Error(`market.json returned ${response.status}`);
     market = await response.json();
   } catch (error) {
+    // The browser's own message is technical and in its own language, so it
+    // goes to the console, where it helps whoever fixes the site.
+    console.error(error);
     $("boot").innerHTML =
-      `<b>Could not load the market data.</b> ${String(error.message || error)}`;
+      `<b>Could not load the market data.</b> Check the connection and reload the page.`;
     return;
   }
 
@@ -1732,7 +1781,7 @@ async function boot() {
     }
   }
   $("foot").innerHTML =
-    `Market data as of <b>${market.as_of}</b>, ` +
+    `Market data as of <b>${longDate(market.as_of)}</b>, ` +
     `<span class="${fresh ? "ok" : "stale"}">${days} day${days === 1 ? "" : "s"} old</span>` +
     `${fresh ? "" : ", past the 90 day limit"}.` + histNote + " " +
     `Computed in your browser: nothing you enter is sent anywhere. ` +
