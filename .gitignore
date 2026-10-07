@@ -10,18 +10,10 @@ build/
 /web/
 /your-equity-share-site.zip
 
-# Single-file builds for hosts that serve one file
-/dist/
-
 # Other people's data, never committed: the Shiller workbook update.py keeps
 # for tools/analysis.py and tools/refresh_italy.py, MSCI's index levels, the
 # Jorda-Schularick-Taylor dataset, and Choi's spreadsheet if it is put here.
 /data/
-.mutate-backup/
-
-# A one-off package that points the old Netlify address at GitHub Pages.
-/netlify-redirect/
-/netlify-redirect.zip
 
 # Local editor and preview settings.
 /.claude/
