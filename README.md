@@ -197,7 +197,6 @@ asserted.
 | 7. Validated against nine published forecasts, and swept for properties | **done** |
 | 8. Italian variant: global equity, euro real safe rate, Italian career and pension; tax measured and left out | **done** |
 | 9. Weekly refresh and publication, unattended | **done** |
-| 10. Portfolio analytics and factor exposure | planned |
 
 What is known to be missing is listed, with the reason for each, in
 [docs/further-work.html](https://alessandrosimoncelli.github.io/your-equity-share/further-work.html).
@@ -212,7 +211,7 @@ Python and the verifier have all passed first.
 
 `python tools/build_web.py` writes the same thing locally to `web/`: the tool,
 its model and its market data, about 110 KB, and with the Italian page, the
-three documents and the two pictures a shared link shows, about 620 KB in
+three documents and the two pictures a shared link shows, under 600 KB in
 all. The Italian page in `web/it/` is not a
 second copy of the tool. The build writes it from `src/web/index.html`, swapping the page's VARIANT
 block (currency, number format, calibration) for the Italian one and

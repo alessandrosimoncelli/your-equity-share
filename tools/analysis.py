@@ -394,12 +394,11 @@ def part_three(workbook: Path) -> None:
                          (max(ends) - min(ends)) * 100))
         return rows
 
-    if "2026-06-01" not in dates or "2023-06-01" not in dates:
+    if "2026-06-01" not in dates:
         skip("Table 9 and the equation (6) example",
              "the workbook does not run through June 2026")
         return
     upto = earnings[:dates.index("2026-06-01") + 1]
-    upto_2023 = earnings[:dates.index("2023-06-01") + 1]
     t9 = re.search(r'id="t9">(.*?)</table>', doc_text(), re.S)
     printed = re.findall(r'<td class="num">(?:<strong>)?([\d.]+)%',
                          t9.group(1) if t9 else "")
@@ -407,11 +406,6 @@ def part_three(workbook: Path) -> None:
     check("Table 9, both columns, on the file to June 2026",
           printed == got,
           "window then end date, by estimator: %s" % ", ".join(got))
-    old = ["%.2f" % row[1] for row in table9(upto_2023)[:2]] + \
-          ["%.3f" % table9(upto_2023)[2][1]]
-    check("Table 9's end-date column on data ending in June 2023, as quoted",
-          in_doc("%s, %s and %s points" % (old[0], old[1], old[2].rstrip("0"))),
-          ", ".join(old))
     window = upto[-1200:]
     example = ("%.2f%%" % (point_to_point(window) * 100),
                "$%.2f" % window[0], "$%.2f" % window[-1],
@@ -427,7 +421,7 @@ def part_three(workbook: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def part_four() -> None:
-    head(4, "Tables 12, 13, 15, 17, 19 and 25, and section 8.4, recomputed from the model")
+    head(4, "Tables 11, 12, 14, 16, 17 and 23, and section 8.4, recomputed from the model")
     import dataclasses
 
     market = load_market_data(ROOT / "variants" / "us" / "snapshot.toml")
@@ -437,15 +431,15 @@ def part_four() -> None:
     compound = float(market.provenance["expected_return_compound"])
     default = Household(500_000.0, [Person(45, 100_000.0)], 5.0)
 
-    # --- Table 12, the conversion at three volatilities -------------------
+    # --- Table 11, the conversion at three volatilities -------------------
     for label, at, want in (("a bond held to maturity", 0.0, "2.98%"),
                             ("2% volatility", 0.02, "3.00%"),
                             ("equities", vol, "4.76%")):
         got = "%.2f%%" % (arithmetic_from_compound(rf, at) * 100)
-        check("Table 12, %s" % label, got == want and in_doc(want),
+        check("Table 11, %s" % label, got == want and in_doc(want),
               "%.2f%% compound becomes %s arithmetic" % (rf * 100, got))
 
-    # --- Table 13, what the safe asset is worth ---------------------------
+    # --- Table 12, what the safe asset is worth ---------------------------
     # The equity estimate is held at its compound value and converted, so only
     # the safe rate moves down the column.
     held = arithmetic_from_compound(compound, vol)
@@ -457,12 +451,12 @@ def part_four() -> None:
                               ("the 30-year TIPS, used here", rf, "37.3%")):
         share = recommend(default, held, rate, vol).equity_share
         drift = log_premium(held, rate, CALIB_VOL)
-        check("Table 13, %s" % label,
+        check("Table 12, %s" % label,
               "%.1f%%" % (share * 100) == want and in_doc(want),
               "a %.2f%% safe rate gives %.1f%%, drift %.2f%%"
               % (rate * 100, share * 100, drift * 100))
 
-    # --- Table 15, the corners of Choi's grid -----------------------------
+    # --- Table 14, the corners of Choi's grid -----------------------------
     corners = []
     for log_rf in (0.0, 0.01, 0.02):
         for log_prem in (0.02, 0.04):
@@ -472,20 +466,20 @@ def part_four() -> None:
             corners.append((compound_from_arithmetic(corner_mu, vol), share))
     missing = ["%.2f%%" % (c * 100) for c, _ in corners
                if "%.2f%%" % (c * 100) not in doc_text()]
-    check("Table 15, the implied return at each of the six corners", not missing,
+    check("Table 14, the implied return at each of the six corners", not missing,
           ", ".join("%.2f%%" % (c * 100) for c, _ in corners)
           if not missing else "absent: %s" % missing)
     # Three since the volatility became Choi's 18.5% in both layers: the
     # three 4% corners saturate, and the 2% corners give 72% to 87%.
     saturated = sum(1 for _, s in corners if s > 0.999)
     lowest = min(s for _, s in corners)
-    check("Table 15, three of the six corners saturate at 100%",
+    check("Table 14, three of the six corners saturate at 100%",
           saturated == 3 and "%.0f%% or more" % (lowest * 100) in doc_text(),
           "everywhere Choi solved, this household would hold far more equity "
           "than today's market tells it to: %.1f%% at the lowest corner"
           % (lowest * 100))
 
-    # --- Table 17, where the 9.7% comes from ------------------------------
+    # --- Table 16, where the 9.7% comes from ------------------------------
     # At the values the document states beside it: gamma 5, mu 5%, r 2%, age
     # 21. Not today's market data, which gives a different number entirely.
     g, ex_mu, ex_rf, age = 5.0, 0.05, 0.02, 21
@@ -506,12 +500,12 @@ def part_four() -> None:
     ]
     wrong = [name for name, value, want in terms
              if "%.2f" % abs(value * 100) != want]
-    check("Table 17, all eight terms of the wage discount rate", not wrong,
+    check("Table 16, all eight terms of the wage discount rate", not wrong,
           "at the values stated beside it, not today's" if not wrong
           else "%s" % wrong)
     total = sum(v for _, v, _ in terms)
     live = wage_discount_rate(age, g, ex_mu, ex_rf)
-    check("Table 17, the terms sum to what the model returns",
+    check("Table 16, the terms sum to what the model returns",
           abs(total - live) < 1e-12 and in_doc("9.75"),
           "%.2f%%, and wage_discount_rate agrees exactly" % (total * 100))
 
@@ -525,7 +519,7 @@ def part_four() -> None:
           "%.2f%% at 21, which is the floor, and %.1f%% at 67"
           % (at_21 * 100, at_67 * 100))
 
-    # --- Table 19, what each fixed constant is worth ----------------------
+    # --- Table 17, what each fixed constant is worth ----------------------
     # The range is the spread across all three columns, not the two ends: at
     # an 80% replacement rate the default household's pension reaches the
     # Social Security ceiling, so that row peaks at the value used.
@@ -544,7 +538,7 @@ def part_four() -> None:
               and "%.1f%%" % (shares[1] * 100) == want_high
               and "%.1f" % span == want_range
               and in_doc(want_low, want_high, "%s points" % want_range))
-        check("Table 19, %s" % field.replace("_", " "), ok,
+        check("Table 17, %s" % field.replace("_", " "), ok,
               "%.1f%% to %.1f%%, a range of %.1f points"
               % (shares[0] * 100, shares[1] * 100, span))
 
@@ -569,7 +563,7 @@ def part_four() -> None:
     # Read cell by cell from the table itself. Looking for each figure
     # anywhere in the document let a stale 47% at 65 pass, because "46%"
     # happened to appear in section 2.4.
-    t25 = re.search(r'id="t25">(.*?)</table>', doc_text(), re.S)
+    t25 = re.search(r'id="t23">(.*?)</table>', doc_text(), re.S)
     rows = {int(age): (today, hist) for age, today, hist in re.findall(
         r'<tr><td class="num">(\d+)</td><td class="num">\d+%</td>'
         r'<td class="num">(\d+)%</td><td class="num">(\d+)%</td></tr>',
@@ -577,7 +571,7 @@ def part_four() -> None:
     stale = [age for age in at_today
              if rows.get(age) != ("%.0f" % (at_today[age] * 100),
                                   "%.0f" % (at_historical[age] * 100))]
-    check("Table 25, the glide path at both expected returns", not stale,
+    check("Table 23, the glide path at both expected returns", not stale,
           "flat wage, 15% saved at the real safe rate, retiring at 67 on 40%: "
           + ", ".join("%d:%.0f%%/%.0f%%" % (a, at_today[a] * 100,
                                             at_historical[a] * 100)
@@ -588,7 +582,7 @@ def part_four() -> None:
               for a, b in zip(sorted(at_today), sorted(at_today)[1:])),
           "which is the shape the comparison is about")
 
-    check("Table 19 lists the replacement rate once",
+    check("Table 17 lists the replacement rate once",
           doc_text().count("replacement rate</td><td class=\"num\">3") <= 1,
           "it appeared twice, measured before and after that rate became a "
           "regressor in equation (12)")
@@ -616,10 +610,10 @@ def part_four() -> None:
         return low / 20_000.0
 
     years = {age: "%.1f" % years_of_pay(age) for age in (25, 35, 45, 55, 65)}
-    check("sections 4 and 8.4, years of pay below which the cap binds",
+    check("section 4, years of pay below which the cap binds",
           years == {25: "2.7", 35: "1.8", 45: "1.4", 55: "1.3", 65: "1.0"}
-          and in_doc("2.7 years of salary saved at age 25, 1.8 at 35, 1.4 at "
-                     "45, 1.3 at 55 and 1.0 at 65"),
+          and in_doc("it binds below 2.7 at age 25, 1.8 at 35, 1.4 at 45, 1.3 "
+                     "at 55 and 1.0 at 65"),
           ", ".join("%d: %s" % kv for kv in years.items()))
 
     # --- section 8.4, the 1,040-household grid ------------------------------
@@ -640,19 +634,15 @@ def part_four() -> None:
     middle = len(pinned) // 2
     median = (pinned[middle] if len(pinned) % 2
               else (pinned[middle - 1] + pinned[middle]) / 2)
-    double = grid(arithmetic_from_compound(
-        compound + float(market.provenance["buyback_yield_not_counted"]), vol))
     got = ("%.1f%%" % (100 * len(pinned) / len(today)),
-           "%.1f%%" % (100 * sum(r.uncapped_share > 1 for r in double)
-                       / len(double)),
            "%.1f times" % median, "%.0f times" % pinned[-1])
     zero = sum(r.equity_share <= 0 for r in today)
     check("section 8.4, the 1,040-household grid",
           len(today) == 1040 and zero == 0
-          and got == ("33.3%", "43.8%", "2.9 times", "81 times")
+          and got == ("33.3%", "2.9 times", "81 times")
           and in_doc("1,040 single-adult households", *got),
-          "%d households, %s pinned, %s with the double count, median ask "
-          "%s, largest %s, %d at zero" % ((len(today),) + got + (zero,)))
+          "%d households, %s pinned, median ask %s, largest %s, %d at zero"
+          % ((len(today),) + got + (zero,)))
 
 
 if __name__ == "__main__":

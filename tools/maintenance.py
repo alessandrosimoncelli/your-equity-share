@@ -31,7 +31,7 @@ ITEMS = (
         due=date(2027, 1, 1),
         where="SOCIAL_SECURITY_MAXIMUM in src/your_equity_share/human_capital.py, "
               "benefitCap in src/js/model.js and the figure tests/test_allocation.py "
-              "holds them to; the US methodology (section 7.7, Tables 1, 18 and 21, "
+              "holds them to; the US methodology (section 7.5, Tables 1 and 19, "
               "and the figures tools/verify_model.py and tools/analysis.py "
               "recompute from the cap), docs/inputs.md and variants/README.md; "
               "then rewrite tests/golden.json with python tools/make_golden.py, "

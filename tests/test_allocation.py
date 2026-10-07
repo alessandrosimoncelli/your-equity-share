@@ -26,7 +26,7 @@ GAMMA = 5.0
 MU = 0.05
 REAL_RF = 0.02
 # The Merton term in Choi's sheet uses the calibration volatility. The tool
-# holds the same 18.5% in both layers (methodology section 7.2), and the
+# holds the same 18.5% in both layers (methodology section 3.2), and the
 # value is passed explicitly wherever his output is the target.
 CHOI_SIGMA = 0.185
 

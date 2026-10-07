@@ -697,9 +697,8 @@ def test_the_document_states_the_pension_the_code_uses() -> None:
 
 
 def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
-    """The answers the document quotes for its household are recomputed:
-    the American and the Italian one in section 1, and in section 7 the one the
-    variant gave on the American career with the OECD's 79%.
+    """Section 1 quotes the American and the Italian answer for its
+    household; both are recomputed.
 
     On the snapshot the document is written against, for its household:
     45 years old, 100,000 of salary, 1,500,000 of savings, risk aversion 5.
@@ -715,14 +714,6 @@ def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
                    american.real_risk_free_rate, american.stock_volatility,
                    CGM_CALIBRATION).equity_share
     assert f"between a {us:.1%} American answer and a {share:.1%} Italian one" in doc
-    # The American career with the OECD's Italian 79%, as the variant had it:
-    # Social Security's maximum is no part of that counterfactual.
-    graduate = dataclasses.replace(CGM_CALIBRATION, benefit_replacement_rate=0.79,
-                                   benefit_cap=None)
-    with_79 = recommend(household, market.expected_stock_real_return,
-                        market.real_risk_free_rate, market.stock_volatility,
-                        graduate).equity_share
-    assert f"held {with_79:.1%}; with these, {share:.1%}" in doc
 
 
 # --- section 10, why the answer is so often 100% ----------------------------

@@ -432,7 +432,7 @@ def human_capital(
     carried on the wage chain. Choi's income process counts Social Security
     and other transfers as labour income (his footnote 5), which would put such
     a pension paid while working on the wage rate;
-    the American methodology's Table 21 measures the difference. A state
+    the American methodology's Table 19 measures the difference. A state
     pension entered as an estimate rides the chain, like the imputed one. For
     a retiree, whose whole path is on the benefit rate, the two are the same.
 

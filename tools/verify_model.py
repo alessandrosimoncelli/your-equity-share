@@ -191,7 +191,7 @@ def part_one() -> None:
           all(b < a for a, b in zip(hc, hc[1:])),
           f"${hc[0]:,.0f} at 25 down to ${hc[-1]:,.0f} at 99")
     # Linear only below the Social Security ceiling on the imputed pension
-    # (methodology section 7.7): at 45 it binds from about $105,000.
+    # (methodology section 7.5): at 45 it binds from about $105,000.
     check("human capital is linear in the current wage below the pension ceiling",
           close(human_capital(Person(45, 100_000.0), 5.0, 0.05, 0.02),
                 2 * human_capital(Person(45, 50_000.0), 5.0, 0.05, 0.02)))
@@ -373,7 +373,7 @@ def part_three() -> None:
 
     # The other two axes of the same grid. Until now nothing read these
     # constants in either language, though the document asserts what they
-    # say: Table 15 prints today's log safe rate, and section 3.6 states the
+    # say: Table 14 prints today's log safe rate, and section 3.6 states the
     # range the coefficients were fitted over.
     r_log = log_risk_free(rf)
     lo_r, hi_r = CHOI_FITTED_LOG_RISK_FREE_RANGE
@@ -383,7 +383,7 @@ def part_three() -> None:
           f"{'inside' if within_fitted_risk_free(rf) else 'OUTSIDE'}")
     doc = (ROOT / "variants" / "us" / "methodology.html").read_text(encoding="utf-8")
     check("the document's figure for today's log safe rate is current",
-          f"{r_log:.2%}" in doc, f"{r_log:.2%}, in Table 15")
+          f"{r_log:.2%}" in doc, f"{r_log:.2%}, in Table 14")
     lo_g, hi_g = CHOI_FITTED_RISK_AVERSION_RANGE
     grid = ", ".join(str(g) for g in range(int(lo_g), int(hi_g) + 1))
     check("the risk aversion grid is the seven values the document prints",
@@ -508,25 +508,20 @@ DOC = ROOT / "variants" / "us" / "methodology.html"
 # tables it held, and the check caught their disappearance rather than passing
 # over it.
 ANCHORS = [
-    (r"Table (\d+) measures the difference: a flat 5%",
-     "Error against the return that actually arrived"),
-    (r"points of the 9.7% in Table (\d+)", "9.7% wage discount rate"),
-    (r"The constants in Table (\d+) come from a calibration",
-     "Values fixed inside the approximation"),
     (r"college graduate values in Table (\d+)",
-     "Values fixed inside the approximation"),
+     "describes a particular kind of person"),
     (r"the figure in Table (\d+), measured from the standpoint",
      "Average welfare loss"),
     (r"columns in Table (\d+)",
      "Average welfare loss"),
     (r"wage shock volatilities from Table (\d+)",
-     "Values fixed inside the approximation"),
+     "describes a particular kind of person"),
 ]
 
 
 # The same idea as ANCHORS, for section numbers rather than table numbers.
 SECTION_ANCHORS = [
-    (r"for the reason given in section (\d+\.\d+)", "United States calibration"),
+    (r"for the reason given in section (\d+\.\d+)", "Who this is for"),
     (r"[Ss]ection (\d+\.\d+) shows that horizon does not appear", "horizon"),
 ]
 

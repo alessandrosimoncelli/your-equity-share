@@ -183,7 +183,7 @@ as the wage. An estimate of your own Social Security for a later claim is
 different: the rest of your career still moves it, so, ticked, it is
 discounted like the 40% estimate it replaces, on the wage rates until your
 wage stops. Treating a fixed pension as riskless departs from Choi's
-spreadsheet and from his paper (this project's methodology, section 7.6).
+spreadsheet and from his paper (this project's methodology, section 7.4).
 The model holds every pension constant in real terms, as Choi's spreadsheet
 does, so a pension that does not rise with prices, typed at its amount, is
 overvalued. The page offers no shortcut, as his spreadsheet offers none;
