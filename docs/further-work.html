@@ -26,6 +26,7 @@
 * { box-sizing: border-box; }
 
 body {
+  margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--body);
@@ -97,7 +98,9 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
   The contents open the document, after the title, in a ruled box like the
   tool's form: two or three columns where there is room, one on a phone. Every
   section ends with a link back to them, which does the work a panel beside
-  the text did by staying on screen.
+  the text did by staying on screen. On a phone the list runs to two screens
+  before the first section, so there it starts closed, under a heading that
+  opens it; the script after the box does that.
 */
 .contents-panel {
   border: 1px solid var(--rule);
@@ -105,11 +108,14 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
   margin: 0 0 2.4rem;
 }
 .contents-head {
+  display: block;
   font-size: var(--t-body);
   font-weight: 700;
   color: var(--navy);
   margin: 0 0 0.7rem;
+  cursor: default;
 }
+.contents-head::-webkit-details-marker { display: none; }
 .contents {
   margin: 0;
   padding: 0;
@@ -168,9 +174,26 @@ a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 .where dt { font-family: var(--mono); white-space: nowrap; }
 .where dd { margin: 0; }
 
-.src { padding-left: 2rem; font-size: var(--t-small); margin: 0.7rem 0 1.4rem; color: var(--green); }
+.src { padding-left: 2rem; font-size: var(--t-small); margin: 0.7rem 0 1.4rem; color: var(--green); overflow-wrap: anywhere; }  /* a series key breaks rather than widen a phone screen */
 
-.tablewrap { overflow-x: auto; margin: 1.2rem 0 1.7rem; }
+/*
+  A table wider than the screen scrolls on its own, and says so: a shadow of
+  the green at each edge that hides more columns, drawn with backgrounds that
+  scroll with the table and cover the shadow at either end (Verou's scrolling
+  shadows), so it shows only where there is more to see. The caption is held
+  to the width on screen and stays in place while the table moves, so a title
+  is never cut off half way.
+*/
+.tablewrap {
+  overflow-x: auto;
+  margin: 1.2rem 0 1.7rem;
+  container-type: inline-size;
+  background:
+    linear-gradient(to right, var(--bg) 30%, rgba(255, 255, 255, 0)) left top / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--bg) 30%, rgba(255, 255, 255, 0)) right top / 2rem 100% no-repeat local,
+    linear-gradient(to right, rgba(6, 64, 43, 0.22), rgba(6, 64, 43, 0)) left top / 0.8rem 100% no-repeat scroll,
+    linear-gradient(to left, rgba(6, 64, 43, 0.22), rgba(6, 64, 43, 0)) right top / 0.8rem 100% no-repeat scroll;
+}
 
 /*
   Tables sit in the text column, flush with it on both edges.
@@ -192,6 +215,9 @@ caption {
   font-weight: 700;
   padding-bottom: 0.5rem;
   font-size: var(--t-small);
+  max-width: 100cqw;
+  position: sticky;
+  left: 0;
 }
 
 th {
@@ -250,7 +276,32 @@ h4 {
   .eqn, .where, .src { padding-left: 0; }
   .eqn { gap: 0.75rem; }
   .where dl { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
-  .where dt { margin-top: 0.45rem; }
+  .where dt { margin-top: 0.45rem; white-space: normal; }
+}
+
+/*
+  A phone, held either way up. Cells sit closer, so more tables fit the
+  screen whole, and what is tapped is big enough to tap: the closed contents
+  are one bar, opened from anywhere on it, and their entries and the links
+  back to them gain height without moving the text.
+*/
+@media (max-width: 40rem) {
+  th, td { padding-right: 0.5rem; }
+  .contents-panel { padding: 0 1rem; }
+  .contents-head { cursor: pointer; padding: 0.8rem 0; margin: 0; }
+  .contents-head::before {
+    content: "";
+    display: inline-block;
+    border-style: solid;
+    border-width: 0.32em 0 0.32em 0.5em;
+    border-color: transparent transparent transparent currentColor;
+    margin-right: 0.55em;
+    vertical-align: 0.06em;
+  }
+  details[open] > .contents-head::before { transform: rotate(90deg); }
+  .contents { padding-bottom: 0.8rem; }
+  .contents a { display: inline-block; padding: 0.2rem 0; }
+  .totop a { display: inline-block; padding: 0.6rem 0 0.6rem 1.5rem; margin: -0.6rem 0; }
 }
 </style>
 
@@ -271,7 +322,8 @@ data of 3 September 2026, the American methodology's.</p>
 <hr class="titlerule">
 
 <nav class="contents-panel" id="contents" aria-label="Contents">
-<p class="contents-head">Contents</p>
+<details open>
+<summary class="contents-head">Contents</summary>
 <ol class="contents">
   <li><a href="#s1">1. The Italian variant</a>
     <ol>
@@ -297,7 +349,25 @@ data of 3 September 2026, the American methodology's.</p>
   </li>
   <li><a href="#s3">3. Not on this list, and why</a></li>
 </ol>
+</details>
 </nav>
+<script>
+/* On a phone the contents start closed, and open from their heading or from
+   any link back to them. Wider, they stay open and the heading is only a
+   heading. */
+(() => {
+  const fold = document.querySelector("#contents details");
+  const phone = matchMedia("(max-width: 40rem)");
+  if (phone.matches) fold.open = false;
+  phone.addEventListener("change", () => { if (!phone.matches) fold.open = true; });
+  fold.querySelector("summary").addEventListener("click", (event) => {
+    if (!phone.matches) event.preventDefault();
+  });
+  document.addEventListener("click", (event) => {
+    if (event.target.closest('a[href="#contents"]')) fold.open = true;
+  });
+})();
+</script>
 
 <p>This is the list of things the model deliberately does not do. It exists so
 that finishing can mean finishing rather than forgetting, and so that anyone

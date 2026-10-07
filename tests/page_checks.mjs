@@ -62,8 +62,11 @@ async function load(page) {
     getElementById: (id) => { if (!els[id]) throw new Error(`no element #${id}`); return els[id]; },
     querySelector: (sel) => (sel === ".section-exhibits" ? exhibits : scale[0]),
     querySelectorAll: (sel) => (sel === "[data-reset]" ? resets : scale),
+    addEventListener() {},
   };
   globalThis.window = { addEventListener() {} };
+  globalThis.matchMedia = () => ({ matches: false, addEventListener() {} });
+  globalThis.IntersectionObserver = class { observe() {} };
   globalThis.requestAnimationFrame = () => 0;
   globalThis.cancelAnimationFrame = () => {};
   const market = JSON.parse(fs.readFileSync(path.join(path.dirname(file), "market.json"), "utf8"));

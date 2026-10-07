@@ -629,6 +629,83 @@ td.why { min-width: 15rem; }
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
+
+/* --- a phone -------------------------------------------------------------- */
+/*
+  On a phone the form gives up some of its inner margin, so the fields and the
+  eleven boxes of the risk scale get the width. The scale stays one row, as on
+  a computer: turned into a column, the same question draws more answers at
+  its ends (Weijters, Millet and Cabooter 2021), and phone surveys are advised
+  to look the same on every device (Antoun and co-authors 2018). So its boxes
+  grow in height instead. The year-by-year box is set at 16 pixels, below
+  which an iPhone zooms the page when a field is tapped, and its lines do not
+  wrap, so a year stays on one line.
+*/
+@media (max-width: 40rem) {
+  .wrap { padding-left: 1rem; padding-right: 1rem; }
+  .section-form { padding: 1.3rem 0.8rem 1.5rem; }
+  .scale-row { gap: 0.125rem; }
+  textarea.path, .path-cols { font-size: 1rem; }
+  textarea.path { white-space: pre; overflow-x: auto; padding: 0.4rem 0.35rem; }
+  .path-cols { padding: 0 0.35rem 0.2rem; }
+}
+
+/*
+  On a touch screen the buttons and fields are at least 44 pixels high, the
+  size Apple's guidelines give for a touch target, and the ticks get a bigger
+  box and more room. Text links keep their place in the line and only their
+  reach grows, by padding that a negative margin takes back.
+*/
+@media (max-width: 40rem), (pointer: coarse) {
+  input[type="number"], input[type="text"] { min-height: 2.75rem; }
+  .scale, .choice { min-height: 2.75rem; }
+  .btn { min-height: 2.75rem; padding: 0.35rem 0.9rem; }
+  .btn-cta { padding: 0.75rem 1.25rem; }
+  .check { padding: 0.6rem 0; }
+  .check input { width: 1.25rem; height: 1.25rem; margin: 0; flex: none; }
+  .linkbtn { padding: 0.5rem 0.3rem; margin: -0.5rem -0.3rem; }
+  .foot { line-height: 2.4; }
+  .foot a { padding: 0.5rem 0.15rem; }
+}
+
+/*
+  The answer, kept in sight on a phone. There the form runs to nearly two
+  screens with the answer under it, so every change was made without seeing
+  what it did. While the answer is still below the screen, a bar at its foot
+  carries the share and leads to it; once the answer is in view, or passed,
+  the bar goes. Ruled like the form, with the paper behind it and no shadow.
+*/
+.answer-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 1rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+  background: var(--paper);
+  border-top: 1px solid var(--green);
+  color: var(--ink);
+  font-size: var(--t-body);
+  text-decoration: none;
+}
+.answer-bar b {
+  color: var(--green);
+  font-size: var(--t-section);
+  font-variant-numeric: tabular-nums;
+}
+.answer-bar .go {
+  color: var(--green);
+  font-size: var(--t-small);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+@media (min-width: 40.01rem) {
+  .answer-bar { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -834,7 +911,12 @@ td.why { min-width: 15rem; }
     </div>
   </section>
 
-  <section class="section-result">
+  <a class="answer-bar" id="answer-bar" href="#results" hidden>
+    <span><b id="answer-bar-figure"></b> in stocks</span>
+    <span class="go">Go to the results</span>
+  </a>
+
+  <section class="section-result" id="results">
     <h2 class="eyebrow">Results</h2>
     <div class="result-row">
       <div>
@@ -1053,8 +1135,12 @@ function drawChart(svg, tip, opts) {
     parts.push(`<text class="tick" x="${l.x}" y="${m.top + ih + 17}" text-anchor="${l.anchor}">${l.text}</text>`);
   }
   parts.push(`<line class="axis" x1="${m.left}" y1="${m.top + ih}" x2="${m.left + iw}" y2="${m.top + ih}"/>`);
+  // The title is centred under the plot but kept inside the drawing: on a
+  // narrow phone a long one ran off the right edge and was cut.
   if (xTitle) {
-    parts.push(`<text class="axis-title" x="${m.left + iw / 2}" y="${H - 3}" text-anchor="middle">${xTitle}</text>`);
+    const half = textWidth(xTitle) / 2;
+    const x = Math.min(Math.max(m.left + iw / 2, half), W - half);
+    parts.push(`<text class="axis-title" x="${x}" y="${H - 3}" text-anchor="middle">${xTitle}</text>`);
   }
 
   const d = points.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(2)},${sy(p.y).toFixed(2)}`).join("");
@@ -1106,7 +1192,14 @@ function drawChart(svg, tip, opts) {
   };
   hit.addEventListener("pointermove", move);
   hit.addEventListener("pointerenter", move);
-  hit.addEventListener("pointerleave", () => show(false));
+  hit.addEventListener("pointerdown", move);
+  // A finger lifting off a phone is not a pointer leaving: the reading stays
+  // until the next touch lands somewhere else (see boot). A swipe that turns
+  // into a scroll takes it away.
+  hit.addEventListener("pointerleave", (event) => {
+    if (event.pointerType !== "touch") show(false);
+  });
+  hit.addEventListener("pointercancel", () => show(false));
 }
 
 /**
@@ -1573,6 +1666,8 @@ function render() {
   // His guide's footnote 5 says a 30-year TIPS locks in a rate for 30 years,
   // the yield Exhibit 5 shows; that describes the asset, not a prescription.
   $("verdict-figure").textContent = noSavings ? "" : pct0.format(r.equityShare);
+  $("answer-bar-figure").textContent = $("verdict-figure").textContent;
+  placeAnswerBar();
   $("verdict-text").innerHTML =
     `of your ${money.format(r.financialWealth)} in stocks, or <b>${money.format(r.equityDollars)}</b>.` +
     (r.bondShare >= 0.005
@@ -1750,6 +1845,18 @@ function ageOfData(asOf) {
   return days;
 }
 
+// --- the answer, kept in sight on a phone --------------------------------
+
+const phone = matchMedia("(max-width: 40rem)");
+// Whether the answer is still below the screen, as the observer in boot last
+// saw it.
+let answerBelow = false;
+
+function placeAnswerBar() {
+  $("answer-bar").hidden =
+    !(phone.matches && answerBelow && $("answer-bar-figure").textContent !== "");
+}
+
 async function boot() {
   try {
     const response = await fetch("./market.json", { cache: "no-cache" });
@@ -1767,6 +1874,21 @@ async function boot() {
   $("mu").value = compoundShown();
   $("boot").hidden = true;
   $("app").hidden = false;
+
+  new IntersectionObserver(([entry]) => {
+    answerBelow = !entry.isIntersecting && entry.boundingClientRect.top > 0;
+    placeAnswerBar();
+  }).observe(document.querySelector(".section-result"));
+  phone.addEventListener("change", placeAnswerBar);
+
+  // A reading a finger left on a chart goes when the next touch lands
+  // anywhere else on the page.
+  document.addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".figure")) return;
+    for (const el of document.querySelectorAll(".figure .tip, .chart .cursor, .chart .cursor-dot")) {
+      el.style.opacity = "0";
+    }
+  });
 
   const days = ageOfData(market.as_of);
   const fresh = days <= 90;

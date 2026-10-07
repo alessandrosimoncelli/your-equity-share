@@ -321,6 +321,14 @@ it = '''Spunta <b>Secondo adulto nel nucleo familiare</b>
 # --- results and exhibits ---------------------------------------------------
 
 [[t]]
+en = '''<span><b id="answer-bar-figure"></b> in stocks</span>'''
+it = '''<span><b id="answer-bar-figure"></b> in azioni</span>'''
+
+[[t]]
+en = '''<span class="go">Go to the results</span>'''
+it = '''<span class="go">Vai ai risultati</span>'''
+
+[[t]]
 en = '''<h2 class="eyebrow">Results</h2>'''
 it = '''<h2 class="eyebrow">Risultati</h2>'''
 
@@ -568,7 +576,7 @@ it = '''`La formula chiede il ${pct1.format(r.uncappedShare)}, cioè ` +
 
 [[t]]
 en = '''xTitle: "Expected real return on equities, compound",'''
-it = '''xTitle: "Rendimento reale atteso delle azioni, composto",'''
+it = '''xTitle: "Rendimento reale atteso, composto",'''
 
 [[t]]
 en = '''tipLabel: (p) => `${pct2.format(p.x)} compound  ->  ${pct0.format(p.y)} in equities`,'''
