@@ -8,7 +8,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-10-05T12:17:39+00:00"
+generated_at = "2026-10-07T14:26:21+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
@@ -35,7 +35,7 @@ expected_stock_real_return = 0.051925
 # taxable account the inflation increase in the principal is taxed
 # too, so what is left is about r(1 - t) - t * inflation, not r(1 - t).
 # Methodology section 3.3.
-real_risk_free = 0.033679
+real_risk_free = 0.033781
 
 # Fixed at Choi, Liu and Liu's 18.5%: the annualised standard
 # deviation of monthly CRSP value-weighted log excess returns, July
@@ -43,7 +43,7 @@ real_risk_free = 0.033679
 # window moves the answer whenever a crash enters or leaves it.
 stock_volatility = 0.185000
 
-as_of = 2026-10-02
+as_of = 2026-10-06
 
 # Where each number came from. The model does not read this section.
 [provenance]
@@ -56,5 +56,5 @@ history_as_of = "2026-06-01"
 history_source = "Shiller's own site"
 volatility_source = "Choi, Liu and Liu (2025), section 1.2: 18.5%, monthly CRSP value-weighted log excess returns, July 1926 to July 2024, held fixed"
 real_risk_free_source = "US Treasury daily par real yield curve, 30 years"
-real_risk_free_quoted = 0.033400
+real_risk_free_quoted = 0.033500
 expected_return_source = "dividend yield compounded with long-run real growth in earnings per share, no repricing; see variants/us/methodology.html section 3"
