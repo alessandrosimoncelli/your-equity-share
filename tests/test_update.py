@@ -50,7 +50,7 @@ def history(last: date, months: int = 1400) -> ShillerHistory:
         real_prices=tuple(prices),
         real_dividends=tuple(DIVIDEND_YIELD * p for p in prices),
         real_earnings=tuple(earnings),
-        # Varying, because a cross-check regresses returns on it.
+        # Varying, as real data does, so nothing can lean on a constant ratio.
         cape=tuple(25.0 + 10.0 * math.sin(i / 37.0) for i in range(len(dates))),
     )
 

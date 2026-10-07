@@ -6,11 +6,11 @@ volatility of the stock market, which his spreadsheet fixes at 18.5% inside its
 formulas. They live in the `[market]` section and
 that section alone is required.
 
-The safe rate is stored as a *real* rate, taken from a long-dated TIPS yield.
-Deriving it instead as a nominal yield less an inflation expectation invites a
-maturity mismatch, since the obvious free sources are a 3-month bill and a
-10-year breakeven, and subtracting one from the other produces neither a
-3-month nor a 10-year real rate.
+The safe rate is stored as a *real* rate. The American variant reads it off
+the 30-year TIPS yield. The Italian one takes a 30-year nominal yield less the
+market break-even of the longest German linker, which keeps both legs long:
+the obvious free American pair, a 3-month bill and a 10-year breakeven, would
+produce neither a 3-month nor a 10-year real rate.
 
 The model never reaches the network. Data is refreshed by
 `update.py`, a separate program run deliberately, so a demo
@@ -69,12 +69,11 @@ class MarketData:
     def provisional_fields(self) -> tuple[str, ...]:
         """Inputs the configuration admits nobody has measured.
 
-        The Italian variant ships with a safe rate and a volatility that were
-        reasoned about rather than read off a market, and an answer built on
-        those is not the same kind of object as one built on measured data.
-        A tool that cannot tell the two apart will eventually present one as
-        the other, so the distinction is carried in the data and surfaced
-        everywhere the numbers are.
+        None is today. The Italian variant once shipped a safe rate and a
+        volatility that had been reasoned about rather than read off a market,
+        and an answer built on those is not the same kind of object as one
+        built on measured data, so a guess put in by hand is marked here, and
+        the Italian refresh clears the mark when it writes a measured rate.
         """
         raw = self.provenance.get("provisional_fields", "")
         return tuple(f.strip() for f in str(raw).split(",") if f.strip())
@@ -82,12 +81,6 @@ class MarketData:
     @property
     def is_provisional(self) -> bool:
         return bool(self.provisional_fields)
-
-    @property
-    def expected_return_source(self) -> str:
-        return str(
-            self.provenance.get("expected_return_source", "set by hand")
-        )
 
     @property
     def equity_risk_premium(self) -> float:

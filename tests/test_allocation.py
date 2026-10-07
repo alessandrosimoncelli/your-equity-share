@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from your_equity_share.allocation import Household, Recommendation, merton_share, recommend
+from your_equity_share.allocation import Household, merton_share, recommend
 from your_equity_share.human_capital import (
     CGM_CALIBRATION,
     RETIREMENT_AGE,
@@ -111,7 +111,8 @@ def test_risk_aversion_moves_the_wage_rate_but_not_the_benefit_rate() -> None:
 
 
 def test_permanent_shocks_dominate_the_wage_rate() -> None:
-    """Methodology Table 5: that term alone is 7.32 of the 9.75 points."""
+    """The methodology's table of where the 9.7% wage discount rate comes from:
+    that term alone is 7.32 of the 9.75 points."""
     from dataclasses import replace
 
     base = wage_discount_rate(21, GAMMA, MU, REAL_RF)

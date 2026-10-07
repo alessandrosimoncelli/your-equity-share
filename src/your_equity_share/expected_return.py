@@ -6,9 +6,9 @@ guide calls "roughly equal to what is implied by current stock market valuation
 ratios if those ratios stay constant and future dividend or earnings growth
 equals its long-run historical average". That is a construction, not a number, and this
 module builds it the way that sentence reads: the dividend yield compounded with
-long-run real growth in earnings per share, with repricing at zero. Section 3
-of the American methodology compares it, once, with three other estimators and
-says why each is worse for a lifetime horizon.
+long-run real growth in earnings per share, with repricing at zero. Section
+3.1 of the American methodology compares it, once, with four other estimators
+and says why each is worse for a lifetime horizon.
 
 A note on which premium is which. Choi fits his approximation over *log* excess
 drifts of 2%, 3% and 4%, where the drift is
@@ -79,8 +79,9 @@ def arithmetic_from_compound(compound: float, volatility: float) -> float:
 
     They are not the same number and the gap is not small. A compound return is
     what money actually grows at; an arithmetic mean is the average of the
-    yearly returns, and it sits higher by roughly half the variance. At 17%
-    volatility that is 1.5 percentage points.
+    yearly returns, and it sits higher by roughly half the variance. At the
+    18.5% volatility the American variant holds, that is 1.8 percentage
+    points: 3.41% compound is 5.19% as an average.
 
     This matters because every forward-looking estimate of equity returns is
     naturally compound. A discounted cash flow yields an internal rate of

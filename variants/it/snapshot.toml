@@ -2,6 +2,11 @@
 # can be checked against the numbers it actually quotes. The tool reads
 # market_data.toml, which refreshes; this file changes only when the
 # document is rewritten against newer data. See variants/README.md.
+# Its comments describe the pipeline as it was on that date, and it keeps
+# keys the weekly refresh no longer writes, the estimates and checks the
+# document quotes, which tools/verify_model.py and tools/analysis.py read. So
+# a rewrite updates this file by hand rather than copying market_data.toml
+# over it.
 
 # Market data for the Italian variant of Your Equity Share.
 #

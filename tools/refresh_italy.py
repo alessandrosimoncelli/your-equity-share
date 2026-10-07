@@ -1,4 +1,4 @@
-"""Refresh the euro safe rate and the expected return, and check AQR's.
+"""Refresh the Italian variant's safe rate and expected return.
 
     python tools/refresh_italy.py            report only
     python tools/refresh_italy.py --write    update variants/it/market_data.toml
@@ -45,11 +45,12 @@ annualised first, because the model reads annual rates. The Finanzagentur
 defines its break-even as a SIMPLE YIELD DIFFERENCE between the linker and the
 nominal Bund nearest in maturity, so it is subtracted, not divided out.
 
-The construction checks against itself: the break-even is derived from the
-2046, so subtracting it from a nominal yield comes within a few hundredths of
-a point of that bond's own traded real yield, the rest being a thirty-year
-nominal leg against a nineteen-year inflation leg (Italian methodology,
-section 5). The inflation leg shortens a year every year, and the refresh
+The construction was checked against itself on the snapshot of 8 September
+2026: the break-even is derived from the 2046, so subtracting it from a
+nominal yield came within two hundredths of a point of that bond's own traded
+real yield, the rest being a thirty-year nominal leg against a nineteen-year
+inflation leg (Italian methodology, section 5). The weekly refresh does not
+repeat that check. The inflation leg shortens a year every year, and the refresh
 refuses it below ten years.
 
 The ECB's survey of forecasters is not used. When it sits below the
@@ -131,10 +132,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from your_equity_share.expected_return import (  # noqa: E402
     arithmetic_from_compound,
 )
-from your_equity_share.providers import (  # noqa: E402
-    parse_shiller_csv,
-    parse_shiller_xls,
-)
+from your_equity_share.providers import parse_shiller_xls  # noqa: E402
 
 # The window the American variant fits its growth trend over. Kept equal to
 # update.py's constant on purpose: the two variants share one estimator, and a
@@ -352,18 +350,12 @@ def american_growth_trend() -> tuple[float, str] | tuple[None, None]:
     the same call, so the two variants cannot drift apart. If the workbook is
     not on this machine the report says so and the growth term is left alone.
     """
-    for candidate in (ROOT / "data" / "shiller.xls",
-                      ROOT / "data" / "shiller.csv",
-                      ROOT.parent / "shiller.xls"):
-        if not candidate.exists():
-            continue
-        raw = candidate.read_bytes()
-        history = (parse_shiller_csv(raw.decode("utf-8", "replace"))
-                   if candidate.suffix.lower() == ".csv"
-                   else parse_shiller_xls(raw))
-        return history.real_earnings_trend_growth(GROWTH_WINDOW_YEARS), \
-            history.dates[-1]
-    return None, None
+    workbook = ROOT / "data" / "shiller.xls"
+    if not workbook.exists():
+        return None, None
+    history = parse_shiller_xls(workbook.read_bytes())
+    return history.real_earnings_trend_growth(GROWTH_WINDOW_YEARS), \
+        history.dates[-1]
 
 
 # The ECB curve and the break-even are read on different pages. Their dates
@@ -379,7 +371,8 @@ MIN_BREAKEVEN_YEARS = 10
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--write", action="store_true",
-                        help="write the measured rate into the configuration")
+                        help="write the safe rate, the expected return and their "
+                             "sources into variants/it/market_data.toml")
     args = parser.parse_args(argv[1:])
 
     print("Measuring the euro real safe rate")

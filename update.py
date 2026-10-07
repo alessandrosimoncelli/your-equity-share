@@ -24,8 +24,9 @@ need no key or account; the third is fixed:
                               window moved the answer whenever a crash entered
                               or left it, with no change in long-run risk
 
-Section 3 of the American methodology compares this estimate with three
-others, once, on the data of September 2026. None of them is fetched here.
+Section 3.1 of the American methodology compares this estimate with four
+other estimators, once, on the data of September 2026. None of them is
+fetched here.
 
 Nothing here runs when you use the tool. The model reads the saved file, so a
 slow or unreachable provider can never break a demonstration.
@@ -311,8 +312,8 @@ def _keep(raw: bytes, name: str) -> None:
 
     That tool recomputes the measured tables in the methodology and needs the
     same history this refresh just read. Without a copy on disk it can only
-    skip, so anyone who has run a refresh gets the twenty-seven checks and
-    anyone who has not still gets the twelve that need no data.
+    skip, so anyone who has run a refresh gets every check, and anyone who has
+    not still gets the ones that need no data.
 
     The file is not committed. It is Shiller's series, not this project's, and
     .gitignore excludes the directory.
@@ -409,10 +410,9 @@ def main(argv: list[str]) -> int:
                 "  This script only knows how to refresh the United States "
                 "one, and refuses\n  to rebuild a file it would fill with the "
                 "wrong country's numbers.\n\n"
-                "  It would write " + FRED_REAL_RISK_FREE + ", the 30-year "
-                "United States TIPS, as the safe\n  rate, an American expected "
-                "return, and would drop the provenance saying\n  which of "
-                "those were provisional.\n"
+                "  It would write the 30-year United States TIPS yield as the "
+                "safe rate and an\n  American expected return, and would drop "
+                "the provenance the other\n  variant's file carries.\n"
             )
     except FileNotFoundError as exc:
         print(f"\n{exc}")

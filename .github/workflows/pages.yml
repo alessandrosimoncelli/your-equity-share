@@ -144,7 +144,7 @@ jobs:
           echo "Italian refresh:  ${{ steps.it.outcome }}"
           echo "A refresh did not complete. Publishing the committed data."
           git checkout -- variants/
-          rm -f data/shiller.xls data/shiller.csv
+          rm -f data/shiller.xls
 
       - name: Tests
         run: python -m pytest -q
@@ -247,7 +247,14 @@ jobs:
             echo "::error::A market data refresh failed. The site kept its previous data."
             exit 1
           fi
-          echo "Both refreshes succeeded."
+          # The refreshes can both work and the run still publish nothing, if a
+          # check, the build or the deploy fails after them; say which.
+          if [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.deploy.result }}" != "success" ]; then
+            echo "::error::Both refreshes worked, but a check, the build or the deploy failed, so nothing new was published."
+            exit 1
+          fi
+          echo "Both refreshes succeeded and the site was published."
 
   # A few figures come from annual publications and nothing refreshes them.
   # When one is out of date this job fails, after the site is published, so

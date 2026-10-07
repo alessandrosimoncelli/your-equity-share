@@ -12,10 +12,12 @@ That is now fixed. Everything here is recomputed from the stated method and
 compared with what the document says, so a claim cannot drift from its
 evidence without this failing.
 
-Tables 2, 3 and 6 need no data and always run. Tables 4, 7 and 8 need
-Shiller's workbook, which is his and not ours to redistribute, so it is
-looked for beside the repository and in ./data, and SHILLER_WORKBOOK
-overrides both. Its absence is a skip, not a failure.
+Tables 2, 3 and 6, and the tables the model produces, need no data and
+always run. Tables 4, 7, 8 and 9 need Shiller's workbook, which is his and
+not ours to redistribute, so it is looked for in ./data, where update.py
+saves it, and SHILLER_WORKBOOK overrides that. Its absence is a skip, not a
+failure. The workbook is cut at June 2026, the end the document states, so a
+later vintage cannot move a measurement the document has not moved.
 
 On conventions, because one of them was the bug. Every rate here is a
 compound annual rate, matching the rest of the document. The intervals in
@@ -51,10 +53,7 @@ from your_equity_share.human_capital import (  # noqa: E402
     wage_discount_rate,
 )
 from your_equity_share.market_data import load_market_data  # noqa: E402
-from your_equity_share.providers import (  # noqa: E402
-    parse_shiller_csv,
-    parse_shiller_xls,
-)
+from your_equity_share.providers import parse_shiller_xls  # noqa: E402
 
 DOC = ROOT / "variants" / "us" / "methodology.html"
 WORKBOOK_NAME = "shiller.xls"
@@ -204,18 +203,15 @@ def part_two() -> None:
 # ---------------------------------------------------------------------------
 
 def workbook_candidates(override: str | None) -> list[Path]:
-    """Where the history is looked for, in order.
+    """Where the history is looked for.
 
-    ./data is first because update.py puts it there on every successful
-    refresh, so the twenty-seven checks run for anyone who has refreshed
-    without their having to fetch anything by hand. The mirror serves CSV
-    rather than the workbook, so both forms are looked for.
+    ./data, because update.py puts it there on every successful refresh, so
+    every check runs for anyone who has refreshed without their having to
+    fetch anything by hand.
     """
     if override:
         return [Path(override)]
-    return [ROOT / "data" / WORKBOOK_NAME,
-            ROOT / "data" / "shiller.csv",
-            ROOT.parent / WORKBOOK_NAME]
+    return [ROOT / "data" / WORKBOOK_NAME]
 
 
 def find_workbook(override: str | None = None) -> Path | None:
@@ -226,11 +222,8 @@ def find_workbook(override: str | None = None) -> Path | None:
 
 
 def read_history(path: Path):
-    """Parse whichever form the refresh happened to save."""
-    raw = path.read_bytes()
-    if path.suffix.lower() == ".csv":
-        return parse_shiller_csv(raw.decode("utf-8", "replace"))
-    return parse_shiller_xls(raw)
+    """Parse the workbook the refresh saved."""
+    return parse_shiller_xls(path.read_bytes())
 
 
 def total_return_index(prices, dividends) -> list[float]:
@@ -276,14 +269,23 @@ def trend_growth(series, months: int) -> float | None:
 def part_three(workbook: Path) -> None:
     head(3, "Tables 4, 7 and 8, measured on Shiller's series")
     history = read_history(workbook)
-    prices = list(history.real_prices)
-    dividends = list(history.real_dividends)
-    earnings = list(history.real_earnings)
-    cape = list(history.cape)
+    # Every table here is stated on the file to June 2026, the end the
+    # document gives, so a later vintage is cut back to it: the months it adds
+    # would otherwise move the measurements with no change to the document.
+    every_date = list(history.dates)
+    if "2026-06-01" not in every_date:
+        skip("Tables 4, 7, 8 and 9", "the workbook does not run through June 2026")
+        return
+    end = every_date.index("2026-06-01") + 1
+    dates = every_date[:end]
+    prices = list(history.real_prices)[:end]
+    dividends = list(history.real_dividends)[:end]
+    earnings = list(history.real_earnings)[:end]
+    cape = list(history.cape)[:end]
     index = total_return_index(prices, dividends)
     print(f"  {workbook}")
-    print(f"  {len(history)} usable months, "
-          f"{history.dates[0]} to {history.last_date}\n")
+    print(f"  {len(dates)} usable months, {dates[0]} to {dates[-1]}"
+          f" (the file runs to {history.last_date})\n")
 
     one_year, _ = annualised_volatility(index, 12)
     WANT = {1: "18.30%", 2: "17.85%", 5: "16.44%",
@@ -392,7 +394,6 @@ def part_three(workbook: Path) -> None:
                          (max(ends) - min(ends)) * 100))
         return rows
 
-    dates = list(history.dates)
     if "2026-06-01" not in dates or "2023-06-01" not in dates:
         skip("Table 9 and the equation (6) example",
              "the workbook does not run through June 2026")

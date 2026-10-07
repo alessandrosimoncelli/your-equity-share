@@ -26,7 +26,6 @@ __all__ = [
     "parse_treasury_real_yield_csv",
     "read_xls_sheet",
     "parse_shiller_xls",
-    "parse_shiller_csv",
 ]
 
 
@@ -223,47 +222,11 @@ class ShillerHistory:
         return math.exp((sxy / sxx) * 12.0) - 1.0
 
 
-def parse_shiller_csv(text: str) -> ShillerHistory:
-    """Parse the Shiller dataset as published in CSV form."""
-    reader = csv.DictReader(io.StringIO(text))
-    required = {"Date", "Real Price", "Real Dividend", "Real Earnings", "PE10"}
-    if reader.fieldnames is None or not required.issubset(reader.fieldnames):
-        raise DataUnavailable(
-            f"Shiller data is missing columns; got {reader.fieldnames}"
-        )
-
-    dates, prices, dividends, earnings, cape = [], [], [], [], []
-    for row in reader:
-        try:
-            price = float(row["Real Price"])
-            dividend = float(row["Real Dividend"])
-            earning = float(row["Real Earnings"])
-            ratio = float(row["PE10"])
-        except (TypeError, ValueError):
-            continue
-        if price <= 0 or dividend <= 0 or ratio <= 0:
-            continue
-        dates.append(row["Date"])
-        prices.append(price)
-        dividends.append(dividend)
-        earnings.append(earning)
-        cape.append(ratio)
-
-    if len(dates) < 600:
-        raise DataUnavailable(
-            f"only {len(dates)} usable months of Shiller data, expected decades"
-        )
-    return ShillerHistory(
-        tuple(dates), tuple(prices), tuple(dividends), tuple(earnings), tuple(cape)
-    )
-
-
 # --- reading a legacy .xls, with the standard library only -------------------
 #
-# Shiller publishes his series as a 1997-era binary .xls and nothing else, and
-# Damodaran's long histories are the same. Both are authoritative and both are
-# maintained; the CSV mirror this project used instead stopped carrying CPI in
-# September 2023, and with it every deflated column.
+# Shiller publishes his series as a 1997-era binary .xls and nothing else. It
+# is authoritative and maintained; the CSV mirror this project once used
+# stopped carrying CPI in September 2023, and with it every deflated column.
 #
 # Two formats, both frozen since 2007, which is what makes owning a reader
 # reasonable. OLE2 is the container: a header, a table of sector links, and a
@@ -549,9 +512,8 @@ def parse_shiller_xls(data: bytes) -> "ShillerHistory":
 
     # The cyclically adjusted ratio needs ten years of earnings behind it, so
     # the first ten years cannot carry one. Those months are dropped rather
-    # than zero-filled, which is what the CSV parser does: a fallback source
-    # has to hand downstream code the same shape as the one it replaces, and
-    # a zero here divides by zero in the valuation regression.
+    # than zero-filled, because a zero here would divide by zero wherever the
+    # ratio is inverted.
     cape: list[float] = []
     for i in range(119, len(real_prices)):
         mean = sum(real_earnings[i - 119:i + 1]) / 120.0

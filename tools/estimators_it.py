@@ -68,7 +68,6 @@ figures quoted as published.
 from __future__ import annotations
 
 import json
-import math
 import ssl
 import sys
 import urllib.error
@@ -85,10 +84,7 @@ from your_equity_share.expected_return import (  # noqa: E402
 )
 from your_equity_share.human_capital import ITALY_CALIBRATION  # noqa: E402
 from your_equity_share.market_data import load_market_data  # noqa: E402
-from your_equity_share.providers import (  # noqa: E402
-    parse_shiller_csv,
-    parse_shiller_xls,
-)
+from your_equity_share.providers import parse_shiller_xls  # noqa: E402
 
 CONFIG = ROOT / "variants" / "it" / "market_data.toml"
 CACHE = ROOT / "data" / "msci_acwi_eur.json"
@@ -214,16 +210,11 @@ def dividend_series(levels, hicp):
 
 
 def american_growth_trend():
-    for candidate in (ROOT / "data" / "shiller.xls",
-                      ROOT / "data" / "shiller.csv"):
-        if not candidate.exists():
-            continue
-        raw = candidate.read_bytes()
-        history = (parse_shiller_csv(raw.decode("utf-8", "replace"))
-                   if candidate.suffix.lower() == ".csv"
-                   else parse_shiller_xls(raw))
-        return history.real_earnings_trend_growth(100), history.dates[-1]
-    return None, None
+    workbook = ROOT / "data" / "shiller.xls"
+    if not workbook.exists():
+        return None, None
+    history = parse_shiller_xls(workbook.read_bytes())
+    return history.real_earnings_trend_growth(100), history.dates[-1]
 
 
 def share(compound, market):
@@ -278,7 +269,7 @@ def main() -> int:
           % (growth * 100, growth_as_of))
     print("  safe rate, ECB 30y AAA deflated      %7.4f%%"
           % (market.real_risk_free_rate * 100))
-    print("  volatility, VWCE five years          %7.4f%%"
+    print("  volatility, MSCI ACWI EUR, fixed     %7.4f%%"
           % (market.stock_volatility * 100))
     print()
 

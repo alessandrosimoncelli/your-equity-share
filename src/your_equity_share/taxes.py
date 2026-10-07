@@ -17,7 +17,7 @@ as a sale (Circolare 19/E of 2013, section 2.4), and a loss on one fund cannot
 be set against a gain on another.
 
 A fund held for years is usually in gain when it is sold (on the snapshot,
-85% of the time at seven years and 98% at thirty), so the state takes a share
+81% of the time at seven years and 97% at thirty), so the state takes a share
 of the swings as well as of the average return, which is the
 effect Domar and Musgrave (1944) described. Taken through the law sale by sale,
 the tax lowers the equity share a household should choose by about a quarter

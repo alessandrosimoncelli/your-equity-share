@@ -314,7 +314,7 @@ def recommend_cases() -> list[dict]:
                 for gamma in [1.0, 5.0, 10.0]:
                     for mu, rf, sigma in [
                         (0.03, 0.0298, 0.185),      # premium near zero
-                        (0.0673, 0.0298, 0.1719),   # today
+                        (0.0673, 0.0298, 0.1719),   # a fixed early-2026 market
                         (0.10, 0.0, 0.12),          # far into the cap
                     ]:
                         household = Household(

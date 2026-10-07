@@ -58,7 +58,7 @@ def test_the_skip_says_what_is_missing_and_how_to_supply_it() -> None:
     assert "Choi, Liu and Liu (2025)" in result.stdout
 
 
-def test_the_other_four_parts_still_run_without_the_workbook() -> None:
+def test_every_other_part_still_runs_without_the_workbook() -> None:
     """Skipping part four must not skip anything else.
 
     The count is not asserted exactly, since checks get added. What is
@@ -68,7 +68,7 @@ def test_the_other_four_parts_still_run_without_the_workbook() -> None:
     """
     result = run_verifier("Z:/not/a/real/path/nothing.xlsx")
     for heading in ("1. The model", "2. Market data", "3. The expected return",
-                    "5. The methodology document"):
+                    "5. The methodology document", "6. The model and the document"):
         assert heading in result.stdout, heading
     passed = int(result.stdout.split(" passed,")[0].split("\n")[-1])
     assert passed > 50, f"only {passed} checks ran without the workbook"
@@ -115,8 +115,8 @@ def test_the_workbook_is_still_found_where_the_author_keeps_it() -> None:
     """The other direction: the search must keep working here.
 
     Making the path portable is worthless if it stops finding the file that
-    is actually there, since part four is 58 of the strongest checks in the
-    project.
+    is actually there, since part four holds some of the strongest checks in
+    the project.
     """
     result = run_verifier(None)
     assert result.returncode == 0, result.stdout[-2000:]
@@ -148,7 +148,7 @@ def run_analysis(shiller: str | None) -> subprocess.CompletedProcess[str]:
 
 
 def test_the_tables_that_need_no_data_still_match_the_document() -> None:
-    """Tables 2, 3 and 6, recomputed and compared with what is published.
+    """The tables that need no data, recomputed and compared with what is published.
 
     Table 2 stated its annualised bounds as log returns beside ending values
     in dollars, so the two could not be reconciled: $37,896 over ten years is

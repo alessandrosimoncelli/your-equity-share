@@ -435,9 +435,9 @@ def part_four() -> None:
         print(f"\n  This is the one part that needs a file the repository does "
               f"not carry.\n  It is the spreadsheet accompanying Choi, Liu and "
               f"Liu (2025). Put a copy at\n  one of the paths above, or set "
-              f"{CHOI_ENV} to point at it, and this part\n  will check 58 of "
-              f"our answers against theirs. Parts 1, 2, 3 and 5 do not\n  need "
-              f"it and have already run.")
+              f"{CHOI_ENV} to point at it, and this part\n  will check our "
+              f"answers against theirs. No other part needs it: parts\n  1 to 3 "
+              f"have run, and parts 5 and 6 run next.")
         return
     print(f"  workbook: {CHOI}")
     c = read_workbook()
@@ -502,11 +502,11 @@ def part_four() -> None:
 DOC = ROOT / "variants" / "us" / "methodology.html"
 
 # A reference that resolves to a table is not the same as a reference that
-# resolves to the right table. Three entries were retired when section 9
-# was cut: they pinned prose in the tables it held, and the check caught
-# their disappearance rather than passing over it.
 # resolves to the right table. Each entry pins one citation to a word that must
 # appear in the caption it lands on, so a renumbering cannot quietly move it.
+# Three entries were retired when section 9 was cut: they pinned prose in the
+# tables it held, and the check caught their disappearance rather than passing
+# over it.
 ANCHORS = [
     (r"Table (\d+) measures the difference: a flat 5%",
      "Error against the return that actually arrived"),

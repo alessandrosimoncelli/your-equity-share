@@ -68,8 +68,6 @@ from __future__ import annotations
 import math
 import os
 import re
-import statistics
-import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import defaultdict
@@ -80,11 +78,6 @@ NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 DATASET = "JSTdatasetR6.xlsx"
 JST_ENV = "JST_DATASET"
 JST_URL = "https://www.macrohistory.net/database/"
-
-# AQR, Alternative Thinking 2026 Issue 1, Exhibit 3A, as of 31 December 2025.
-AQR_GLOBAL_GROWTH = 0.026
-AQR_GLOBAL_YIELD = 0.016
-AQR_GLOBAL_RETURN = 0.042
 
 # The window the American variant uses, and how far it moves when that window
 # is changed by twenty years. Table 9 of the methodology.

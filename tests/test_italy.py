@@ -1,8 +1,8 @@
 """The Italian variant, and what it can honestly make Italian.
 
 The Italian tool changes the equity sleeve from the S&P 500 to a global
-index, the safe asset from a 30-year TIPS to a euro inflation-linked bond, and
-the household from an American college graduate to an Italian private-sector
+index, the safe asset from the 30-year TIPS yield to the euro AAA 30-year
+yield less the market's break-even inflation, and the household from an American college graduate to an Italian private-sector
 employee: Daminato and Padula's earnings process, estimated on the Bank of
 Italy's household survey, and the Ragioneria Generale dello Stato's 66.4%
 pension. Mortality
@@ -199,8 +199,7 @@ def test_our_measured_yield_agrees_with_aqr_s() -> None:
     published figure at nearly the same date would mean the gross-minus-price
     construction is wrong. Checked on the snapshot, not the weekly data: a
     20% fall in world equities lifts the yield past the band, which is the
-    market moving, not the construction failing, and the refresh prints the
-    distance from AQR every week.
+    market moving, not the construction failing.
     """
     snapshot = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
     measured = float(snapshot.provenance["dividend_yield_measured"])
@@ -283,9 +282,10 @@ def test_no_input_is_provisional_any_more(italy) -> None:
     """Both guesses have been replaced by measurements.
 
     The file shipped with a safe rate and a volatility that had been reasoned
-    about. The volatility is now five years of euro-priced closes and the safe
-    rate is an ECB curve deflated by an ECB survey. The field stays in the
-    configuration so that a guess added back has to declare itself.
+    about. The safe rate is now measured every week, an ECB curve less the
+    market's break-even, and the volatility is fixed at a measured 16.45%. The
+    field stays in the configuration so that a guess added back has to declare
+    itself.
     """
     assert italy.provisional_fields == ()
     assert not italy.is_provisional
@@ -309,7 +309,7 @@ def test_the_answer_discriminates_rather_than_saturating() -> None:
     """With the safe rate measured, the variant is no longer a constant.
 
     It saturated for three of four households when the safe rate was a guess
-    of 1.35%. The measured 1.71% leaves one at the cap, the household with two
+    of 1.35%. The snapshot's measured 1.47% leaves one at the cap, the household with two
     years of salary saved, which is where the American variant saturates too
     and for the same reason: the model wants leverage and the clip refuses it.
     """
@@ -538,7 +538,7 @@ def italy_provenance():
 # --- the Italian methodology, pinned to the configuration -------------------
 #
 # The document quoted a tax table computed before the safe rate changed, and
-# nothing noticed. The American methodology has 87 verifier checks holding its
+# nothing noticed. tools/verify_model.py holds the American methodology's
 # figures to the model; these hold the Italian one to its configuration.
 
 IT_DOC = ROOT / "variants" / "it" / "methodology.html"
@@ -676,7 +676,7 @@ def test_the_yield_window_is_written_as_two_dates(name) -> None:
     assert 300 <= (last - first).days <= 400
 
 
-# --- the Italian answer is after tax ------------------------------------------
+# --- the Italian answer is before tax, like the American -----------------------
 
 def test_the_italian_answer_is_before_tax_like_the_american() -> None:
     """One way of reading the market in both variants: the figures as stated."""
@@ -697,7 +697,9 @@ def test_the_document_states_the_pension_the_code_uses() -> None:
 
 
 def test_the_italian_answers_the_document_states_are_the_model_s() -> None:
-    """Section 1 quotes the answer before and after tax; both are recomputed.
+    """The answers the document quotes for its household are recomputed:
+    the American and the Italian one in section 1, and in section 7 the one the
+    variant gave on the American career with the OECD's 79%.
 
     On the snapshot the document is written against, for its household:
     45 years old, 100,000 of salary, 1,500,000 of savings, risk aversion 5.
