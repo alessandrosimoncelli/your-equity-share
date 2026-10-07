@@ -12,7 +12,6 @@ here, clears it.
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
 from datetime import date
 
@@ -31,8 +30,12 @@ ITEMS = (
              "$4,152 a month, the 2026 figure",
         due=date(2027, 1, 1),
         where="SOCIAL_SECURITY_MAXIMUM in src/your_equity_share/human_capital.py, "
-              "benefitCap in src/js/model.js, the US methodology (section 7.7 and "
-              "Tables 1, 18 and 21), docs/inputs.md, and the due date here",
+              "benefitCap in src/js/model.js and the figure tests/test_allocation.py "
+              "holds them to; the US methodology (section 7.7, Tables 1, 18 and 21, "
+              "and the figures tools/verify_model.py and tools/analysis.py "
+              "recompute from the cap), docs/inputs.md and variants/README.md; "
+              "then rewrite tests/golden.json with python tools/make_golden.py, "
+              "and move the due date here",
         source="SSA's cost-of-living adjustment fact sheet, published each "
                "October for the next January",
     ),
@@ -44,9 +47,11 @@ ITEMS = (
         where="benefit_replacement_rate in ITALY_CALIBRATION "
               "(src/your_equity_share/human_capital.py) and benefitReplacementRate "
               "in src/js/model.js, both 0.664 / 1.075; the Italian methodology "
-              "(sections 2 and 7.2 and every figure derived from 61.4%), the "
-              "Italian market files, docs/inputs.md, tests/test_italy.py, and the "
-              "due date here",
+              "(sections 2 and 7.2 and every figure derived from 61.8%), the "
+              "Italian market files, README.md, variants/README.md, "
+              "docs/inputs.md, docs/further-work.html (section 1.5) and "
+              "tests/test_italy.py; then rewrite tests/golden.json with python "
+              "tools/make_golden.py, and move the due date here",
         source="the Ragioneria's yearly report on the pension system, Table "
                "6.3.a: Rapporto n. 27 was dated July 2026 and went online on 22 "
                "September 2026, so the next is expected from July 2027",

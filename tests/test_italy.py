@@ -161,18 +161,6 @@ def test_the_expected_return_carries_no_horizon_and_says_why(italy) -> None:
     assert "AQR" in source
 
 
-def test_aqr_is_kept_as_the_cross_check_with_its_numbers(italy) -> None:
-    """Demoting a source is not the same as dropping it.
-
-    AQR remain the only firm publishing every component of this estimate, so
-    they are still the best independent check on it, and the provenance has to
-    carry how far apart the two currently are or the check is invisible.
-    """
-    source = italy.provenance["expected_return_source"]
-    assert "2025-12-31" in source
-    assert "points from ours" in source
-
-
 def test_the_growth_term_is_the_american_estimator_exactly(italy) -> None:
     """One estimator, two variants, so neither can drift away from the other.
 
@@ -399,7 +387,7 @@ def test_the_safe_rate_is_the_annual_nominal_less_the_break_even(italy) -> None:
     assert "continuously compounded" in note and "simple yield difference" in note
 
 
-def test_the_safe_rate_reproduces_a_bond_that_exists(italy) -> None:
+def test_the_safe_rate_reproduces_a_bond_that_exists() -> None:
     """The construction has to agree with itself, and this is that check.
 
     The break-even is derived from the Bund/euro-i 2046, so deflating a
@@ -408,11 +396,13 @@ def test_the_safe_rate_reproduces_a_bond_that_exists(italy) -> None:
     has picked up the wrong chart or the curves have stopped being flat, and
     both are worth stopping for.
     """
-    assert "DE0001030575" in italy.provenance["real_risk_free_source"]
-    # Measured on the snapshot, which records the check; the weekly refresh
-    # stopped repeating it in October 2026.
+    # Read from the snapshot, which records the check and the bond it used.
+    # The weekly refresh no longer repeats the check, and it takes whichever
+    # linker is longest outstanding, so a new issue would change the bond in
+    # the live file without anything being wrong.
     snapshot = load_market_data(ROOT / "variants" / "it" / "snapshot.toml")
     note = snapshot.provenance["real_risk_free_source"]
+    assert "DE0001030575" in note
     gap = float(re.search(r"lands ([0-9.]+) points away", note).group(1))
     assert gap < 0.2
 

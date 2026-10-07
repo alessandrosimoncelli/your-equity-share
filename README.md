@@ -141,7 +141,9 @@ annual publications that no source serves as data. `python tools/maintenance.py`
 lists them with the file to edit and where the new figure is published, and
 the weekly workflow runs it: when one is out of date that run turns red, after
 the site is published, so the data keeps refreshing in the meantime. Today the
-list is Social Security's maximum benefit, each January.
+list has two items: Social Security's maximum benefit, each January, and the
+Italian pension's replacement rate from the Ragioneria Generale dello Stato's
+yearly report, expected each July.
 
 ## Why this approach
 
