@@ -47,10 +47,11 @@ def _stub(monkeypatch, tmp_path, *, par=PAR_CC, breakeven_date=date(2026, 9, 30)
         return "2026-10-01", par
 
     monkeypatch.setattr(refresh_italy, "observe", observe)
+    monkeypatch.setattr(refresh_italy, "linker_page", lambda: "")
     monkeypatch.setattr(refresh_italy, "breakeven_inflation",
-                        lambda: ("DE0001030575", linker_years, BREAKEVEN, breakeven_date))
+                        lambda page=None: ("DE0001030575", linker_years, BREAKEVEN, breakeven_date))
     monkeypatch.setattr(refresh_italy, "traded_real_yield",
-                        lambda: ("DE0001030575", linker_years, traded, breakeven_date))
+                        lambda page=None: ("DE0001030575", linker_years, traded, breakeven_date))
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     def trailing(variant):
         if variant == "NETR" and net_window:
@@ -152,8 +153,9 @@ def test_the_chart_is_chosen_by_its_label_not_its_place(monkeypatch) -> None:
     assert (isin, years) == ("DE0001030575", 19.5)
     assert value == pytest.approx(0.0223)
     assert when == date(2026, 10, 1)
-    # and the check reads the other chart, by its label too
-    isin, years, value, when = refresh_italy.traded_real_yield()
+    # and the check reads the other chart, by its label too, off the same
+    # download when one is handed over
+    isin, years, value, when = refresh_italy.traded_real_yield(refresh_italy.linker_page())
     assert (isin, years, when) == ("DE0001030575", 19.5, date(2026, 10, 1))
     assert value == pytest.approx(0.0164)
 
@@ -184,7 +186,7 @@ def test_a_failed_check_warns_but_never_stops_the_refresh(monkeypatch, tmp_path,
     keeps the two variants together; the run turns red instead."""
     config = _stub(monkeypatch, tmp_path, traded=traded or 0.0)
     if traded is None:
-        def unreadable():
+        def unreadable(page=None):
             raise SystemExit("no chart on the page is labelled 'Real yield'")
         monkeypatch.setattr(refresh_italy, "traded_real_yield", unreadable)
     outputs = tmp_path / "github_output"

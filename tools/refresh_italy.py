@@ -217,28 +217,34 @@ LINKER_PAGE = ("https://www.deutsche-finanzagentur.de/en/federal-securities/"
                "types-of-federal-securities/inflation-linked-federal-securities")
 
 
-def linker_chart(axis_label: str) -> tuple[str, float, float, date]:
-    """The longest outstanding Bund/euro-i, off whichever chart is asked for.
-
-    The page carries two charts in the same shape, real yields and break-even
-    inflation. Taking the first set of series that appears would work today and
-    silently return the wrong quantity the day the order changes, so the chart
-    is selected by its axis label. The break-even is the one read.
-    """
+def linker_page() -> str:
+    """The finance agency's page, downloaded once a refresh: both charts the
+    refresh reads are on it, and a second download would only be a second
+    chance for a slow server to time out."""
     request = urllib.request.Request(LINKER_PAGE,
                                      headers={"User-Agent": USER_AGENT})
     for context in (None, _context()):
         try:
             with urllib.request.urlopen(request, timeout=TIMEOUT,
                                         context=context) as response:
-                page = response.read().decode("utf-8", "replace")
-            break
+                return response.read().decode("utf-8", "replace")
         except urllib.error.URLError:
             if context is not None:
                 raise
-    else:  # pragma: no cover
-        raise SystemExit("could not reach the German finance agency")
+    raise SystemExit("could not reach the German finance agency")  # pragma: no cover
 
+
+def linker_chart(axis_label: str, page: str | None = None) -> tuple[str, float, float, date]:
+    """The longest outstanding Bund/euro-i, off whichever chart is asked for.
+
+    The page carries two charts in the same shape, real yields and break-even
+    inflation. Taking the first set of series that appears would work today and
+    silently return the wrong quantity the day the order changes, so the chart
+    is selected by its axis label. The break-even is the deflator; the real
+    yield is the weekly check on the result.
+    """
+    if page is None:
+        page = linker_page()
     charts = re.split(r'"yAxis":\{"title":\{"text":"', page)
     wanted = [c for c in charts if c.startswith(axis_label)]
     if not wanted:
@@ -266,14 +272,14 @@ def linker_chart(axis_label: str) -> tuple[str, float, float, date]:
     return max(found, key=lambda row: row[1])
 
 
-def breakeven_inflation() -> tuple[str, float, float, date]:
+def breakeven_inflation(page: str | None = None) -> tuple[str, float, float, date]:
     """The same bond's break-even inflation, which is a price, not a forecast."""
-    return linker_chart("Break-even")
+    return linker_chart("Break-even", page)
 
 
-def traded_real_yield() -> tuple[str, float, float, date]:
+def traded_real_yield(page: str | None = None) -> tuple[str, float, float, date]:
     """The same bond's own traded real yield, off the page's other chart."""
-    return linker_chart("Real yield")
+    return linker_chart("Real yield", page)
 
 
 # How far the safe rate may land from the linker's own traded real yield
@@ -423,7 +429,8 @@ def main(argv: list[str]) -> int:
     # The ECB quotes its Svensson curve continuously compounded; the model
     # reads annual rates, so annualise before anything else touches them.
     aaa = math.expm1(aaa_continuous)
-    isin, breakeven_years, breakeven, breakeven_date = breakeven_inflation()
+    page = linker_page()
+    isin, breakeven_years, breakeven, breakeven_date = breakeven_inflation(page)
     # A chart that stopped updating would deflate today's nominal yield by an
     # old break-even under a fresh date, so the two have to be days apart at
     # most, not weeks.
@@ -453,7 +460,7 @@ def main(argv: list[str]) -> int:
     # off the same page. Read failures are caught here, because a check that
     # cannot run must not cost both pages their weekly data.
     try:
-        traded_isin, _, traded, traded_date = traded_real_yield()
+        traded_isin, _, traded, traded_date = traded_real_yield(page)
     except (SystemExit, OSError, ValueError) as exc:
         traded_isin, traded, traded_date = None, None, None
         print(f"  the linker's traded real yield could not be read: {exc}")
