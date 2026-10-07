@@ -65,7 +65,7 @@ jobs:
       us: ${{ steps.us.outcome }}
       it: ${{ steps.it.outcome }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # the commit step rebases, which needs history
           # The newest main, not the commit that triggered the run: a push
@@ -73,7 +73,7 @@ jobs:
           # the data that refresh committed, and publish last week's figures.
           ref: main
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -205,9 +205,9 @@ jobs:
           git pull --rebase origin main
           git push origin HEAD:main
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: web
 
@@ -222,8 +222,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # v5, as in GitHub's own starter workflow for a static site; the
-      # other Pages actions above are the versions that workflow uses too.
+      # Every action in this file is on a release that runs on Node.js 24.
+      # GitHub deprecated Node.js 20 for actions in 2025 and warned on every
+      # run until checkout, setup-python, configure-pages and
+      # upload-pages-artifact moved up, in October 2026.
       - id: deployment
         uses: actions/deploy-pages@v5
 
@@ -258,5 +260,5 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: python3 tools/maintenance.py
