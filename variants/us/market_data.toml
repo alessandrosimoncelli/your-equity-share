@@ -8,7 +8,7 @@
 # See docs/inputs.md for what each number means.
 
 [meta]
-generated_at = "2026-11-16T13:40:19+00:00"
+generated_at = "2026-11-23T15:59:22+00:00"
 generated_by = "update.py"
 
 # The three numbers the model uses. This section is required.
@@ -18,15 +18,15 @@ generated_by = "update.py"
 # growth matches its long-run average, which is Choi's own stated
 # rationale for his 5% default. An ARITHMETIC mean, converted from
 # the compound rate the building blocks produce.
-#   dividend yield         0.0110
-#   real growth per share  0.0229   100 year trend
+#   dividend yield         0.0107
+#   real growth per share  0.0230   100 year trend
 #   repricing              0.0000   ratios held constant
-#   compound               0.0341
-#   arithmetic             0.0519   + volatility drag
+#   compound               0.0339
+#   arithmetic             0.0518   + volatility drag
 # NOT counted as income: buybacks. Retiring shares is what makes
 # earnings per share grow, so the growth term already carries them
 # and adding them here would count them twice.
-expected_stock_real_return = 0.051925
+expected_stock_real_return = 0.051763
 
 # The 30-year TIPS yield, from the Treasury's real yield curve, which
 # FRED republishes as DFII30, annualised from its
@@ -35,7 +35,7 @@ expected_stock_real_return = 0.051925
 # taxable account the inflation increase in the principal is taxed
 # too, so what is left is about r(1 - t) - t * inflation, not r(1 - t).
 # Methodology section 3.3.
-real_risk_free = 0.033069
+real_risk_free = 0.031951
 
 # Fixed at Choi, Liu and Liu's 18.5%: the annualised standard
 # deviation of monthly CRSP value-weighted log excess returns, July
@@ -43,18 +43,18 @@ real_risk_free = 0.033069
 # window moves the answer whenever a crash enters or leaves it.
 stock_volatility = 0.185000
 
-as_of = 2026-11-13
+as_of = 2026-11-20
 
 # Where each number came from. The model does not read this section.
 [provenance]
 expected_return_method = "building blocks"
 expected_return_basis = "arithmetic mean, converted from compound"
-expected_return_compound = 0.034077
-dividend_yield = 0.010967
-real_growth = 0.022860
-history_as_of = "2026-06-01"
+expected_return_compound = 0.033918
+dividend_yield = 0.010690
+real_growth = 0.022982
+history_as_of = "2026-09-01"
 history_source = "Shiller's own site"
 volatility_source = "Choi, Liu and Liu (2025), section 1.2: 18.5%, monthly CRSP value-weighted log excess returns, July 1926 to July 2024, held fixed"
 real_risk_free_source = "US Treasury daily par real yield curve, 30 years"
-real_risk_free_quoted = 0.032800
+real_risk_free_quoted = 0.031700
 expected_return_source = "dividend yield compounded with long-run real growth in earnings per share, no repricing; see variants/us/methodology.html section 3"
